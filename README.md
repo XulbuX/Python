@@ -25,3 +25,4 @@ A lot of Python files, which can be added to the system paths, to be ran as comm
 ## SendToFriend
 > [!CAUTION]
 > These files will take actions on your PC, you might not want.
+Here are **harmless** prank scripts located (also in `.exe` form), that do all sorts of annoying things.
