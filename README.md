@@ -2,11 +2,11 @@
 This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
 
 ## Repositories
-* [Libraries](#libraries) | **[view repo](./Libraries)**
+* [Libraries](#libraries) | **[view](./Libraries)**
   * [XulbuX](#xulbux)
-* [Projects](#projects) | **[view repo](./Projects)**
+* [Projects](#projects) | **[view](./Projects)**
   * [Commands](#commands)</h5>
-* [Experiments](#experiments) | **[view repo](./Experiments)**
+* [Experiments](#experiments) | **[view](./Experiments)**
   * [SendToFriend](#sendtofriend)
 
 ## Libraries
