@@ -23,7 +23,7 @@ A lot of Python files, which can be added to the system paths, to be ran as comm
 ## Experiments
 
 ## SendToFriend
-These are **harmless** prank scripts (also as [executables](./Experiments/SendToFriend/executable)), that do all sorts of annoying things.
+These are **harmless** prank scripts (also as [executables](./Experiments/SendToFriend/executables)), that do all sorts of annoying things.
 > [!CAUTION]
 > These scripts lead to actions on your PC that you may not want.
 > However, it is important to note that none of these scripts will cause damage to your PC or leave permanent changes on your PC.
