@@ -1,18 +1,18 @@
 <div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
-  <a href="#release"><abbr title="go to bottom" style="text-decoration:none">
-    <div style="
-      font-size: 2em;
-      font-weight: bold;
-      background: #88889845;
-      border-radius: 0.2em;
-      text-align: center;
-      justify-content: center;
-    ">🠫</div>
-  </abbr></a>
+  <a href="#release"><abbr title="go to bottom" style="text-decoration:none">
+    <div style="
+      font-size: 2em;
+      font-weight: bold;
+      background: #88889845;
+      border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
+    ">🠫</div>
+  </abbr></a>
 </div>
 
 
-# <b>Changelog</b><br>
+# <br><b>Changelog</b><br>
 
 
 ## 18.10.2024 `v1.2.4` − `v1.2.5`
@@ -84,7 +84,7 @@
   **1:** No use of same quotes inside f-strings<br>
   **2:** No backslash escaping in f-strings
 
-## <span id="release" />14.10.2024 `v1.0.0`
+## <span id="release">14.10.2024 `v1.0.0`</span>
 $\color{#F90}\Huge\textsf{RELEASE!\ 🤩🎉}$<br>
 **At release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
 ```python
@@ -150,14 +150,14 @@ from XulbuX import rgb, hsl, hexa
 
 
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
-  <a href="#top"><abbr title="go to top" style="text-decoration:none">
-    <div style="
-      font-size: 2em;
-      font-weight: bold;
-      background: #88889845;
-      border-radius: 0.2em;
-      text-align: center;
-      justify-content: center;
-    ">🠩</div>
-  </abbr></a>
+  <a href="#top"><abbr title="go to top" style="text-decoration:none">
+    <div style="
+      font-size: 2em;
+      font-weight: bold;
+      background: #88889845;
+      border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
+    ">🠩</div>
+  </abbr></a>
 </div>
