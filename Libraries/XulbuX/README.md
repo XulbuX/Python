@@ -1,6 +1,6 @@
 # XulbuX
 
-`XulbuX` is a library which includes a lot of small but really helpful functions.
+$\color{#8085FF}\textsf{XulbuX}$ is a library which includes a lot of small but really helpful functions.
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).
 
 ---
