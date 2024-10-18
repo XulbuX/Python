@@ -13,11 +13,9 @@
 
 
 
-<div style="font-size:3em; font-weight:bold">Changelog</div><br>
+# <b>Changelog</b><br>
 
 
-
-<br>
 
 ## 18.10.2024 `v1.2.1` − `v1.2.2`
 
