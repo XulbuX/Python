@@ -19,9 +19,6 @@
 
 ## 18.10.2024 `v1.2.4` − `v1.2.5`
 
-### Features
-* Added project links to the Python-project-file
-
 ### Improvements
 * Renamed the class `rgb()` to `rgba()` to communicate more clearly, that it supports an alpha channel
 * Renamed the class `hsl()` to `hsla()` to communicate more clearly, that it supports an alpha channel
@@ -29,6 +26,9 @@
 <br>
 
 ## 18.10.2024 `v1.2.3`
+
+### Features
+* Added project links to the Python-project-file
 
 ### Improvements
 * `CHANGELOG.md` updates
