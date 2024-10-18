@@ -9,7 +9,7 @@ This script/exe will shut down your PC five seconds after being run and display 
 `WARNING: Virus detected. Starting system cleanup process...`<br>
 The script/exe are named a confusing and special looking name, to make it look like a very suspicious file.
 > [!NOTE]
-> This script/exe wors on all OSes.
+> This script/exe works on all OSes.
 
 ## addShutdownScriptToStartupFolderAndShutdownPC | [view script](./scripts/addShutdownScriptToStartupFolderAndShutdownPC.py)
 This script/exe will first create a second file `notSUS` in the user's startup directory.<br>
@@ -17,4 +17,4 @@ After that, it will start  PC shutdown in `{time}` minutes display a message: `P
 The `notSUS` file does the exact same thing (shutdown PC after `{time}` minutes and display message).<br>
 Per default, the **`{time}` before shutdown is set to `5 minutes`**
 > [!NOTE]
-> This script/exe wors on all OSes.
+> This script/exe works on all OSes.
