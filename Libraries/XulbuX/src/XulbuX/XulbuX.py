@@ -1461,7 +1461,10 @@ if __name__ == '__main__':
   [i|#FF806A]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
   [b|#75A2FF]Usage:[*]
+    [#555]# GENERAL LIBRARY[*]
     [#FF9E6A]import [#77EFEF]XulbuX [#FF9E6A]as [#77EFEF]xx[*]
+    [#555]# CUSTOM TYPES[*]
+    [#FF9E6A]from [#77EFEF]XulbuX [#FF9E6A]import [#77EFEF]rgba[#555], [#77EFEF]hsla[#555], [#77EFEF]hexa[*]
 
   [b|#75A2FF]Includes:[*]
     [dim](•) CUSTOM TYPES:
