@@ -17,10 +17,10 @@ pip install XulbuX
 ## Usage
 
 ```python
-import XulbuX as xx
-from XulbuX import rgb, hsl, hexa
+import XulbuX as xx  # GENERAL LIBRARY
+from XulbuX import rgb, hsl, hexa  # CUSTOM TYPES
 ```
-The library **$\color{#8085FF}\textsf{XulbuX}$** (below used as `xx`) contains the following modules:
+The library **$\color{#8085FF}\textsf{XulbuX}$** (below used as `xx` with types `rgb`, `hsl` and `hexa`) contains the following modules:
 ```python
   • CUSTOM TYPES:
      • rgba(int,int,int,float)
