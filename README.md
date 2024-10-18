@@ -24,5 +24,6 @@ A lot of Python files, which can be added to the system paths, to be ran as comm
 
 ## SendToFriend
 > [!CAUTION]
-> These files will take actions on your PC, you might not want.
+> These scripts lead to actions on your PC that you may not want.
+> However, it is important to note that none of these scripts will cause damage to your PC or leave permanent changes on your PC.
 Here are **harmless** prank scripts located (also in `.exe` form), that do all sorts of annoying things.
