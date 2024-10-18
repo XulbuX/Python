@@ -6,7 +6,7 @@ This repository contains various Python projects, libraries, and experiments I'v
   * [XulbuX](#xulbux)
 * [Projects](#projects) ([repo](./Commands))
   * [Commands](#commands)
-* [Experiments](#experiments) ([repo](./Experiments))
+* [Experiments](#experiments) ([repo](./Experiments))
 
 ## Libraries
 
