@@ -3,9 +3,9 @@ This repository contains various Python projects, libraries, and experiments I'v
 
 ## Contents
 * **[Libraries](#libraries)** | [open](./Libraries)
-  * [XulbuX](#xulbux)
+  * **[XulbuX](#xulbux)**
 * **[Projects](#projects)** | [open](./Commands)
-  * [Commands](#commands)
+  * **[Commands](#commands)**
 * **[Experiments](#experiments)** | [open](./Experiments)
 
 ## Libraries
