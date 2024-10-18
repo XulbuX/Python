@@ -13,7 +13,7 @@
 
 
 
-# <b>$\color{#8085FF}\Huge\textsf{Changelog}$</b><br>
+# <b>Changelog</b><br>
 
 
 
