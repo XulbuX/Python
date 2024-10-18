@@ -23,7 +23,7 @@ Inside `Commands` are a lot of Python files, which can be added to the system pa
 
 ## Experiments
 
-## SendToFriend
+### SendToFriend
 These are **harmless** prank scripts (also as [executables](./Experiments/SendToFriend/executables)), that do all sorts of annoying things.
 Every script or executable has a exact description of what it does in the `README.md`, inside the corresponding repo.
 > [!CAUTION]
