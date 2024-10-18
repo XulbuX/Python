@@ -3,16 +3,12 @@
 **$\color{#8085FF}\textsf{XulbuX}$** is a library which includes a lot of small but really helpful functions.<br>
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).
 
----
-
 ## Installation
 
 On all operating systems, run the following command:
 ```bash
 pip install XulbuX
 ```
-
----
 
 ## Usage
 
