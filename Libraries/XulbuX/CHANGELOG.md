@@ -22,6 +22,7 @@
 ### Improvements
 * Renamed the class `rgb()` to `rgba()` to communicate more clearly, that it supports an alpha channel
 * Renamed the class `hsl()` to `hsla()` to communicate more clearly, that it supports an alpha channel
+* Add more info to the `README.md` as well as additional links
 
 <br>
 
