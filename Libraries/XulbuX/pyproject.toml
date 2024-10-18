@@ -15,6 +15,5 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 
-# [project.urls]
-# Homepage = "https://github.com/pypa/xulbux"
-# Issues = "https://github.com/pypa/xulbux/issues"
+[project.urls]
+Changelog = "https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md"
