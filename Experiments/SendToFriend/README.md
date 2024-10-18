@@ -12,9 +12,9 @@ The script/exe are named a confusing and special looking name, to make it look l
 > This script/exe only works on Windows.
 
 ## addShutdownScriptToStartupFolderAndShutdownPC |  [open script](./scripts/addShutdownScriptToStartupFolderAndShutdownPC.py)
-This script/exe will first create a second file in the users startup directory.<br>
+This script/exe will first create a second file `notSUS` in the users startup directory.<br>
 After that, it will display a message: `PC is shutting down in {time} minutes.`
-The second file, that got created in the startup directory does the exact same thing (shutdown PC after `{time}` minutes and display message)
+The `notSUS` file does the exact same thing (shutdown PC after `{time}` minutes and display message)
 Per default, the `{time}` before shutdown is set to `5 minutes`
 > [!NOTE]
 > This script/exe wors on all OSes.
