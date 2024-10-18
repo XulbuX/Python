@@ -21,7 +21,6 @@ A lot of Python files, which can be added to the system paths, to be ran as comm
 
 
 ## Experiments
-[Describe any experimental code or concepts you're exploring]
 
-## Getting Started
+## SendToFriend
 [Provide instructions on how to clone the repository and set up the environment]
