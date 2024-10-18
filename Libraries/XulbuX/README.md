@@ -5,6 +5,16 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 
 ---
 
+## Installation
+
+```bash
+pip install XulbuX
+```
+
+---
+
+## Usage
+
 ```python
 import XulbuX as xx
 ```
