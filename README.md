@@ -18,7 +18,7 @@ For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
 ## Projects
 
 ### Commands
-A lot of Python files, which can be added to the system paths, to be ran as commands.
+Inside `Commands` are a lot of Python files, which can be added to the system paths, to be ran as commands.
 
 
 ## Experiments
