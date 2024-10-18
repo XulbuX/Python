@@ -38,5 +38,7 @@ The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with abo
   • REGEX PATTERN TEMPLATES  xx.Regex
 ```
 
-----------------------------------------------------------------
-[View this library on PyPi](https://pypi.org/project/XulbuX/).
+<br>
+--------------------------------------------------------------
+[View this library on PyPi](https://pypi.org/project/XulbuX/)
+--------------------------------------------------------------
