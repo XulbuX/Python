@@ -1,10 +1,12 @@
 <div id="top" style="width:45px; height:45px; right:10px; top:10px; position:absolute">
   <a href="#release"><abbr title="go to bottom" style="text-decoration:none">
-    <div class="center" style="
+    <div style="
       font-size: 2em;
       font-weight: bold;
       background: #88889845;
       border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
     ">🠫</div>
   </abbr></a>
 </div>
@@ -153,7 +155,7 @@ import XulbuX as xx
       <td>
         <code>rgb(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
         <code>hsl(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
-        <code>hexa(<em>str</em>)
+        <code>hexa(<em>str</em>)</code>
       </td>
     </tr><tr>
       <td>Directory Operations</td>
@@ -199,19 +201,13 @@ import XulbuX as xx
 
 <div id="bottom" style="width:45px; height:45px; right:10px; position:absolute">
   <a href="#top"><abbr title="go to top" style="text-decoration:none">
-    <div class="center" style="
+    <div style="
       font-size: 2em;
       font-weight: bold;
       background: #88889845;
       border-radius: 0.2em;
+      text-align: center;
+      justify-content: center;
     ">🠩</div>
   </abbr></a>
 </div>
-
-
-
-<style>
-.left { justify-content: left; text-align: left; }
-.center { justify-content: center; text-align: center; }
-.right { justify-content: right; text-align: right; }
-</style>
