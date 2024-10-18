@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "XulbuX"
+version = "1.2.2"
+authors = [{ name = "XulbuX", email = "xulbux.real@gmail.com" }]
+description = "A library which includes a lot of small but really helpful functions."
+readme = "README.md"
+requires-python = ">=3.10.0"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+# [project.urls]
+# Homepage = "https://github.com/pypa/xulbux"
+# Issues = "https://github.com/pypa/xulbux/issues"
