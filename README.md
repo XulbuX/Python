@@ -2,20 +2,23 @@
 This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
 
 ## Contents
-* [Libraries](#libraries) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Libraries))
+* [Libraries](#libraries) ([repo](./Libraries))
   * [XulbuX](#xulbux)
-* [Projects](#projects) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Commands))
+* [Projects](#projects) ([repo](./Commands))
   * [Commands](#commands)
-* [Experiments](#experiments) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Experiments))
+* [Experiments](#experiments) ([repo](./Experiments))
 
 ## Libraries
 
 ### XulbuX
-XulbuX is a custom Python library. [Add a brief description of what XulbuX does or is for]
+XulbuX is a custom Python library with a lot of small, but really usefull types and functions.
 For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
 
 ## Projects
-[List any significant projects in your repository, with brief descriptions]
+
+### Commands
+A lot of Python files, which can be added to the system paths, to be ran as commands.
+
 
 ## Experiments
 [Describe any experimental code or concepts you're exploring]
