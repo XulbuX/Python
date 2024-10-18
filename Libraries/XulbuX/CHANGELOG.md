@@ -17,6 +17,14 @@
 
 
 
+## 18.10.2024 `v1.2.3`
+
+### Improvements
+* `CHANGELOG.md` updates
+* `README.md` updates
+
+<br>
+
 ## 18.10.2024 `v1.2.1` − `v1.2.2`
 
 ### Bug Fixes
