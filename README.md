@@ -12,7 +12,7 @@ This repository contains various Python projects, libraries, and experiments I'v
 ## Libraries
 
 ### XulbuX
-XulbuX is a custom Python library with a lot of small, but really usefull types and functions.
+XulbuX is a custom Python library with a lot of small, but really useful types and functions.
 For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
 
 ## Projects
