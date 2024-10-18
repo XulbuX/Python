@@ -7,6 +7,7 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 
 ## Installation
 
+On all operating systems, run the following command:
 ```bash
 pip install XulbuX
 ```
