@@ -22,7 +22,7 @@ import XulbuX as xx
 # CUSTOM TYPES
 from XulbuX import rgba, hsla, hexa
 ```
-The library **$\color{#8085FF}\textsf{XulbuX}$** (below used as `xx` with types `rgba`, `hsla` and `hexa`) contains the following modules:
+The library **$\color{#8085FF}\textsf{XulbuX}$** (below used as `xx` with above imported types) contains the following modules:
 ```python
   • CUSTOM TYPES:
      • rgba(int,int,int,float)
