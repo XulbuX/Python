@@ -3,11 +3,11 @@ This repository contains various Python projects, libraries, and experiments I'v
 
 ## Repositories
 * [Libraries](#libraries) | **[view](./Libraries)**
-  * [XulbuX](#xulbux)
+  * [XulbuX](#xulbux) | **[view](./Libraries/XulbuX)**
 * [Projects](#projects) | **[view](./Projects)**
-  * [Commands](#commands)</h5>
+  * [Commands](#commands) | **[view](./Projects/Commands)**
 * [Experiments](#experiments) | **[view](./Experiments)**
-  * [SendToFriend](#sendtofriend)
+  * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
 
 ## Libraries
 
