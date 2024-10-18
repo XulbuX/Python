@@ -41,7 +41,5 @@ The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with abo
 <br>
 
 --------------------------------------------------------------
-
 [View this library on PyPi](https://pypi.org/project/XulbuX/)
-
 --------------------------------------------------------------
