@@ -1,7 +1,7 @@
 # Python Projects and Libraries
 This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
 
-## Contents
+## Repositories
 * [Libraries](#libraries) | **[open](./Libraries)**
   * [XulbuX](#xulbux)
 * [Projects](#projects) | **[open](./Projects)**
