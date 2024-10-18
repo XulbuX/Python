@@ -169,7 +169,7 @@ import XulbuX as xx
       <td><code>xx.System</code></td>
     </tr><tr>
       <td>Manage Environment Vars</td>
-      <td><code>xx.Env_vars</code></td>
+      <td><code>xx.EnvVars</code></td>
     </tr><tr>
       <td>CMD Log And Actions</td>
       <td><code>xx.Cmd</code></td>

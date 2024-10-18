@@ -18,7 +18,7 @@ The library `XulbuX` contains the following modules:
   • FILE OPERATIONS          xx.File
   • JSON FILE OPERATIONS     xx.Json
   • SYSTEM ACTIONS           xx.System
-  • MANAGE ENVIRONMENT VARS  xx.Env_vars
+  • MANAGE ENVIRONMENT VARS  xx.EnvVars
   • CMD LOG AND ACTIONS      xx.Cmd
   • PRETTY PRINTING          xx.FormatCodes
   • COLOR OPERATIONS         xx.Color
