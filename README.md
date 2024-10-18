@@ -2,10 +2,11 @@
 This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
 
 ## Contents
-* [Libraries](#libraries)
+* [Libraries](#libraries) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Libraries))
   * [XulbuX](#xulbux)
-* [Projects](#projects)
-* [Experiments](#experiments)
+* [Projects](#projects) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Commands))
+  * [Commands](#commands)
+* [Experiments](#experiments) ([repo](https://github.com/XulbuX-dev/Python/tree/main/Experiments))
 
 ## Libraries
 
