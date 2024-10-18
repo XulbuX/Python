@@ -21,7 +21,7 @@ import XulbuX as xx
 ```
 The library **$\color{#8085FF}\textsf{XulbuX}$** (below used as `xx`) contains the following modules:
 ```python
-  • CUSTOM TYPES:
+  • CUSTOM TYPES:  # from XulbuX import rgb, hsl, hexa
      • rgba(int,int,int,float)
      • hsla(int,int,int,float)
      • hexa(str)
