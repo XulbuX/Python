@@ -19,7 +19,7 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-VERSION = '1.2.4'
+VERSION = '1.2.5'
 
 
 def check_libs(libs:list[str], install_missing:bool = False, confirm_install:bool = True) -> None|list[str]:

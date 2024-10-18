@@ -13,11 +13,11 @@
 
 
 
-# <b>Changelog</b><br>
+# <b>$\color{#8085FF}\Huge\textsf{Changelog}$</b><br>
 
 
 
-## 18.10.2024 `v1.2.4`
+## 18.10.2024 `v1.2.4` − `v1.2.5`
 
 ### Features
 * Added project links to the Python-project-file
