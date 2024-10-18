@@ -7,6 +7,7 @@ This repository contains various Python projects, libraries, and experiments I'v
 * [Projects](#projects) | **[open](./Projects)**
   * [Commands](#commands)
 * [Experiments](#experiments) | **[open](./Experiments)**
+  * [SendToFriend](#sendtofriend)
 
 ## Libraries
 
