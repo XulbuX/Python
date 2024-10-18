@@ -19,7 +19,7 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-VERSION = '1.2.3'
+VERSION = '1.2.4'
 
 
 def check_libs(libs:list[str], install_missing:bool = False, confirm_install:bool = True) -> None|list[str]:
@@ -65,7 +65,7 @@ import re
 
 
 ################################################## CUSTOM TYPES ##################################################
-class rgb:
+class rgba:
   """An RGB/RGBA color: is a tuple of 3 integers, representing the red (`0`-`255`), green (`0`-`255`), and blue (`0`-`255`).<br>
   Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
   -------------------------------------------------------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ class rgb:
   - `.to_hex()` to convert to HEX color
   - `.has_alpha()` to check if the color has an alpha channel"""
   def __init__(self, r:int, g:int, b:int, a:float = None):
-    if any(isinstance(x, rgb) for x in (r, g, b)): raise ValueError('Color is already a rgb() color')
+    if any(isinstance(x, rgba) for x in (r, g, b)): raise ValueError('Color is already a rgb() color')
     if not all(isinstance(x, int) and 0 <= x <= 255 for x in (r, g, b)): raise ValueError('RGB color must consist of 3 integers in [0, 255]')
     if not a == None and not isinstance(a, (int, float)) and 0.0 <= float(a) <= 1.0: raise ValueError('Alpha channel must be a float in [0.0, 1.0]')
     self.r, self.g, self.b, self.a = r, g, b, (1.0 if a > 1.0 else float(a)) if a else None
@@ -84,16 +84,16 @@ class rgb:
   def __repr__(self): return f'rgb({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
   def __str__(self): return f'({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
   def __eq__(self, other):
-    if not isinstance(other, rgb): return False
+    if not isinstance(other, rgba): return False
     return (self.r, self.g, self.b) == (other.r, other.g, other.b) and self.a == other.a
   def list(self)      -> list: return [self.r, self.g, self.b] + ([self.a] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
   def dict(self)      -> dict: return dict(r=self.r, g=self.g, b=self.b, a=self.a) if self.a else dict(r=self.r, g=self.g, b=self.b)
-  def to_hsl(self)   -> 'hsl': return hsl(Color.to_hsl(self))
+  def to_hsl(self)   -> 'hsla': return hsla(Color.to_hsl(self))
   def to_hex(self)  -> 'hexa': return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255)}:02X" if self.a else ""}')
   def has_alpha(self) -> bool: return self.a != None
 
-class hsl:
+class hsla:
   """A HSL/HSLA color: is a tuple of 3 integers, representing hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).<br>
   Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
   ------------------------------------------------------------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ class hsl:
   - `.to_hex()` to convert to HEX color
   - `.has_alpha()` to check if the color has an alpha channel"""
   def __init__(self, h:int, s:int, l:int, a:float = None):
-    if any(isinstance(x, hsl) for x in (h, s, l)): raise ValueError('Color is already a hsl() color')
+    if any(isinstance(x, hsla) for x in (h, s, l)): raise ValueError('Color is already a hsl() color')
     if not all(isinstance(x, int) for x in (h, s, l)) and (not (0 <= h <= 360) or not (0 <= s <= 100) or not (0 <= l <= 100)): raise ValueError('HSL color must have H in [0, 360] and S L in [0, 100]')
     if not a == None and not isinstance(a, (int, float)) and 0.0 <= float(a) <= 1.0: raise ValueError('Alpha channel must be a float in [0.0, 1.0]')
     self.h, self.s, self.l, self.a = h, s, l, (1.0 if a > 1.0 else float(a)) if a else None
@@ -112,12 +112,12 @@ class hsl:
   def __repr__(self): return f'hsl({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
   def __str__(self): return f'({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
   def __eq__(self, other):
-    if not isinstance(other, hsl): return False
+    if not isinstance(other, hsla): return False
     return (self.h, self.s, self.l) == (other.h, other.s, other.l) and self.a == other.a
   def list(self)      -> list: return [self.h, self.s, self.l] + ([self.a] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
   def dict(self)      -> dict: return dict(h=self.h, s=self.s, l=self.l, a=self.a) if self.a else dict(h=self.h, s=self.s, l=self.l)
-  def to_rgb(self)   -> 'rgb': return Color.to_rgb(self)
+  def to_rgb(self)   -> 'rgba': return Color.to_rgb(self)
   def to_hex(self)  -> 'hexa': return self.to_rgb().to_hex()
   def has_alpha(self) -> bool: return self.a != None
 
@@ -150,8 +150,8 @@ class hexa:
   def list(self)      -> list: return [f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}'] + ([f'{int(self.a * 255)}:02X'] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
   def dict(self)      -> dict: return dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}', a=f'{int(self.a * 255)}:02X') if self.a else dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}')
-  def to_rgb(self)   -> 'rgb': return rgb(self.r, self.g, self.b)
-  def to_hsl(self)   -> 'hsl': return hsl(Color.to_hsl(self.to_rgb()))
+  def to_rgb(self)   -> 'rgba': return rgba(self.r, self.g, self.b)
+  def to_hsl(self)   -> 'hsla': return hsla(Color.to_hsl(self.to_rgb()))
   def has_alpha(self) -> bool: return self.a is not None
 
 
@@ -476,43 +476,43 @@ class Cmd:
     print('\033[0m', end='', flush=True)
 
   @staticmethod
-  def log(title:str, msg:str, start:str = '', end:str = '\n', title_bg_color:hexa|rgb = None, default_color:hexa|rgb = None) -> None:
+  def log(title:str, msg:str, start:str = '', end:str = '\n', title_bg_color:hexa|rgba = None, default_color:hexa|rgba = None) -> None:
     title_color = '_color' if not title_bg_color else Color.text_color_for_on_bg(title_bg_color)
     if title: FormatCodes.print(f'{start}  [bold][{title_color}]{f"[BG:{title_bg_color}]" if title_bg_color else ""} {title.upper()}: [_]\t{f"[{default_color}]" if default_color else ""}{str(msg)}[_]', default_color, end=end)
     else: FormatCodes.print(f'{start}  {f"[{default_color}]" if default_color else ""}{str(msg)}[_]', default_color, end=end)
 
   @staticmethod
-  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#FFD260', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FFD260', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DEBUG', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#77F', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#77F', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('INFO', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#49EAB7', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#49EAB7', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DONE', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#FF8C60', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = True) -> None:
+  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True) -> None:
     Cmd.log('WARN', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#FF606A', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF606A', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('FAIL', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgb = '#C860FF', default_color:hexa|rgb = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#C860FF', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('EXIT', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def confirm(msg:str = 'Are you sure?[_|dim] [Y/N]:  [_]', start = '\n', end = '\n', default_color:hexa|rgb = '#3EE6DE', default_is_yes:bool = False) -> None:
+  def confirm(msg:str = 'Are you sure?[_|dim] [Y/N]:  [_]', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = False) -> None:
     confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().upper() in (('', 'Y', 'YES') if default_is_yes else ('Y', 'YES'))
     if end: Cmd.log('', '') if end == '\n' else Cmd.log('', end[1:]) if end.startswith('\n') else Cmd.log('', end)
     return confirmed
@@ -591,19 +591,19 @@ class FormatCodes:
   This can also be changed by changing the param `_modifiers = ('+l', '-d')`."""
 
   @staticmethod
-  def print(prompt:str, default_color:hexa|rgb = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
+  def print(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
     FormatCodes.__config_console()
     ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
     print(ansi_prompt, sep=sep, end=end, flush=True)
 
   @staticmethod
-  def input(prompt:str, default_color:hexa|rgb = None, brightness_steps:int = 20) -> str:
+  def input(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
     FormatCodes.__config_console()
     ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
     return input(ansi_prompt)
 
   @staticmethod
-  def to_ansi(string:str, default_color:hexa|rgb = None, brightness_steps:int = 20, _default_start:bool = True) -> str:
+  def to_ansi(string:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _default_start:bool = True) -> str:
     result, use_default = '', default_color and (Color.is_valid_rgb(default_color) or Color.is_valid_hex(default_color))
     if use_default:
       string = re.sub(r'\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]', r'[\1_|default\2]', string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
@@ -634,7 +634,7 @@ class FormatCodes:
     kernel32.SetConsoleMode(h, mode.value | 0x0004)  # ENABLE VIRTUAL TERMINAL PROCESSING
 
   @staticmethod
-  def __get_default_ansi(default_color:hexa|rgb, format_key:str = None, brightness_steps:int = None, _modifiers:tuple[str, str] = ('+l', '-d')) -> str|None:
+  def __get_default_ansi(default_color:hexa|rgba, format_key:str = None, brightness_steps:int = None, _modifiers:tuple[str, str] = ('+l', '-d')) -> str|None:
     if Color.is_valid_hex(default_color): default_color = Color.to_rgb(default_color)
     if not brightness_steps or (format_key and re.search(r'(?i)((?:BG\s*:)?)\s*default', format_key)):
       if format_key and re.search(r'(?i)BG\s*:\s*default', format_key): return f'{ANSI_PREF}48;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
@@ -658,7 +658,7 @@ class FormatCodes:
     if new_rgb: return f'{ANSI_PREF}48;2;{new_rgb[0]};{new_rgb[1]};{new_rgb[2]}m' if is_bg else f'{ANSI_PREF}38;2;{new_rgb[0]};{new_rgb[1]};{new_rgb[2]}m'
 
   @staticmethod
-  def __get_replacement(format_key:str, default_color:hexa|rgb = None, brightness_steps:int = 20, _modifiers:tuple[str, str] = ('+l', '-d')) -> str:
+  def __get_replacement(format_key:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _modifiers:tuple[str, str] = ('+l', '-d')) -> str:
     """Gives you the corresponding ANSI code for the given format key.<br>
     If `default_color` is not `None`, the text color will be `default_color` if all formats<br>
     are reset or you can get lighter or darker version of `default_color` (also as BG) by<br>
@@ -712,12 +712,12 @@ class FormatCodes:
 
 class Color:
   @staticmethod
-  def has_alpha(color:rgb|hsl|hexa) -> bool:
+  def has_alpha(color:rgba|hsla|hexa) -> bool:
     """Check if the given color has an alpha channel.\n
     --------------------------------------------------------------------------------
     Input a HEX or RGB color as `color`.<br>
     Returns `True` if the color has an alpha channel and `False` otherwise."""
-    if isinstance(color, (rgb, hsl, hexa)): return color.has_alpha()
+    if isinstance(color, (rgba, hsla, hexa)): return color.has_alpha()
     if isinstance(color, str) and Color.is_valid_hex(color, has_alpha=True): return len(color.lstrip('#')) == 4 or len(color.lstrip('#')) == 8
     elif isinstance(color, (list, tuple, dict)) and len(color) == 4: return True
     else: return False
@@ -725,7 +725,7 @@ class Color:
   @staticmethod
   def is_valid_rgb(color:str|list|tuple|dict, allow_alpha:bool = False) -> bool:
     try:
-      if isinstance(color, (list, tuple, rgb)):
+      if isinstance(color, (list, tuple, rgba)):
         if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255 and 0 <= color[3] <= 255
         else: return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
       elif isinstance(color, dict):
@@ -737,7 +737,7 @@ class Color:
   @staticmethod
   def is_valid_hsl(color:str|list|tuple|dict, allow_alpha:bool = False) -> bool:
     try:
-      if isinstance(color, (list, tuple, hsl)):
+      if isinstance(color, (list, tuple, hsla)):
         if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100 and 0.0 <= color[3] <= 1.0
         else: return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
       elif isinstance(color, dict):
@@ -759,26 +759,26 @@ class Color:
     except: return False
 
   @staticmethod
-  def str_to_rgb(rgb_str:str) -> rgb|None:
+  def str_to_rgb(rgb_str:str) -> rgba|None:
     try: _rgba = re.match(Regex.rgb_str(allow_alpha=True), rgb_str).groups()
     except: return None
-    if _rgba[3] in ['', None]: return rgb(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]))
-    else: return rgb(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]), (int(_rgba[3]) if _rgba[3].count('.') == 0 else float(_rgba[3])))
+    if _rgba[3] in ['', None]: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]))
+    else: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]), (int(_rgba[3]) if _rgba[3].count('.') == 0 else float(_rgba[3])))
 
   @staticmethod
-  def to_hex(color:rgb|hsl) -> hexa:
-    if isinstance(color, rgb) or Color.is_valid_rgb(color): return rgb(color[0], color[1], color[2], color[3]).to_hex() if Color.has_alpha(color) else rgb(color[0], color[1], color[2]).to_hex()
-    if isinstance(color, hsl) or Color.is_valid_hsl(color): return hsl(color[0], color[1], color[2], color[3]).to_hex() if Color.has_alpha(color) else hsl(color[0], color[1], color[2]).to_hex()
+  def to_hex(color:rgba|hsla) -> hexa:
+    if isinstance(color, rgba) or Color.is_valid_rgb(color): return rgba(color[0], color[1], color[2], color[3]).to_hex() if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hex()
+    if isinstance(color, hsla) or Color.is_valid_hsl(color): return hsla(color[0], color[1], color[2], color[3]).to_hex() if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hex()
     raise ValueError('Invalid color format')
 
   @staticmethod
-  def to_rgb(color:hsl|hexa) -> rgb:
-    if isinstance(color, hsl) or Color.is_valid_hsl(color): return hsl(color[0], color[1], color[2], color[3]).to_rgb() if Color.has_alpha(color) else hsl(color[0], color[1], color[2]).to_rgb()
+  def to_rgb(color:hsla|hexa) -> rgba:
+    if isinstance(color, hsla) or Color.is_valid_hsl(color): return hsla(color[0], color[1], color[2], color[3]).to_rgb() if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_rgb()
     if isinstance(color, hexa) or Color.is_valid_hex(color): return hexa(color).to_rgb()
     raise ValueError('Invalid color format')
 
   @staticmethod
-  def to_hsl(color:rgb|hexa) -> hsl:
+  def to_hsl(color:rgba|hexa) -> hsla:
     if isinstance(color, hexa) or Color.is_valid_hex(color): color = Color.to_rgb(color)
     elif not Color.is_valid_rgb(color): raise ValueError('Invalid color format')
     r, g, b, a = color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a if Color.has_alpha(color) else None
@@ -792,17 +792,17 @@ class Color:
       elif max_c == g: h = ((b - r) / delta) + 2
       else: h = ((r - g) / delta) + 4
       h /= 6
-    return hsl(int(h * 360), int(s * 100), int(l * 100), a)
+    return hsla(int(h * 360), int(s * 100), int(l * 100), a)
 
   @staticmethod
-  def text_color_for_on_bg(title_bg_color:hexa|rgb = '#FFF') -> hexa|rgb:
+  def text_color_for_on_bg(title_bg_color:hexa|rgba = '#FFF') -> hexa|rgba:
     was_hex = False
     if Color.is_valid_hex(title_bg_color): was_hex, title_bg_color = True, Color.to_rgb(title_bg_color)
     brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
-    return (hexa('#FFF') if was_hex else rgb(255, 255, 255)) if brightness < 128 else (hexa('#000') if was_hex else rgb(0, 0, 0))
+    return (hexa('#FFF') if was_hex else rgba(255, 255, 255)) if brightness < 128 else (hexa('#000') if was_hex else rgba(0, 0, 0))
 
   @staticmethod
-  def adjust_brightness(color:hexa|rgb, brightness_change:float) -> hexa|rgb:
+  def adjust_brightness(color:hexa|rgba, brightness_change:float) -> hexa|rgba:
     """In- or decrease the brightness of the input color.\n
     -----------------------------------------------------------------------------------------------------------------
     **color** (hexa | rgb): HEX or RGB color.<br>
@@ -817,10 +817,10 @@ class Color:
     g = int(max(min(g + (255 - g) * brightness_change if brightness_change > 0 else g * (1 + brightness_change), 255), 0))
     b = int(max(min(b + (255 - b) * brightness_change if brightness_change > 0 else b * (1 + brightness_change), 255), 0))
     if isinstance(color, (str, hexa)): return Color.to_hex((r, g, b, a))
-    else: return rgb(r, g, b, a) if a else rgb(r, g, b)
+    else: return rgba(r, g, b, a) if a else rgba(r, g, b)
 
   @staticmethod
-  def adjust_saturation(color:hexa|rgb, saturation_change:float) -> hexa|rgb:
+  def adjust_saturation(color:hexa|rgba, saturation_change:float) -> hexa|rgba:
     if Color.is_valid_hex(color, allow_alpha=True): _rgb = Color.to_rgb(color)
     elif Color.is_valid_rgb(color, allow_alpha=True): _rgb = color
     else: raise ValueError(f'Invalid color format "{str(color)}". Use HEX (e.g. "#F00" and "#FF0000") or RGB (e.g. (255, 0, 0) and (255, 0, 0, 1.0))')
@@ -1465,8 +1465,8 @@ if __name__ == '__main__':
 
   [b|#75A2FF]Includes:[*]
     [dim](•) CUSTOM TYPES:
-       [dim](•) [#AA90FF]rgb[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
-       [dim](•) [#AA90FF]hsl[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
+       [dim](•) [#AA90FF]rgba[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
+       [dim](•) [#AA90FF]hsla[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
        [dim](•) [#AA90FF]hexa[#555]/([i|#60AAFF]str[_|#555])[*]
     [dim](•) PATH OPERATIONS          [#77EFEF]xx[#555].[#AA90FF]Path[*]
     [dim](•) FILE OPERATIONS          [#77EFEF]xx[#555].[#AA90FF]File[*]

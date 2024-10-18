@@ -1,6 +1,6 @@
 # XulbuX
 
-$\color{#8085FF}\Large\textsf{XulbuX}$ is a library which includes a lot of small but really helpful functions.
+$\color{#8085FF}\Large\textsf{XulbuX}$ is a library which includes a lot of small but really helpful functions.<br>
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).
 
 ---
@@ -19,11 +19,11 @@ pip install XulbuX
 ```python
 import XulbuX as xx
 ```
-The library `XulbuX` contains the following modules:
+The library `XulbuX` (below used as `xx`) contains the following modules:
 ```python
   • CUSTOM TYPES:
-     • rgb(int,int,int,float)
-     • hsl(int,int,int,float)
+     • rgba(int,int,int,float)
+     • hsla(int,int,int,float)
      • hexa(str)
   • PATH OPERATIONS          xx.Path
   • FILE OPERATIONS          xx.File

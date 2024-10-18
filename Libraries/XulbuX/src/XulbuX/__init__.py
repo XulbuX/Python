@@ -19,4 +19,4 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-from .XulbuX import rgb, hsl, hexa, Path, File, Json, System, EnvVars, Cmd, FormatCodes, Color, Data, String, Code, Regex
+from .XulbuX import rgba, hsla, hexa, Path, File, Json, System, EnvVars, Cmd, FormatCodes, Color, Data, String, Code, Regex
