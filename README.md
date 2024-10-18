@@ -28,4 +28,4 @@ These are **harmless** prank scripts (also as [executables](./Experiments/SendTo
 Every script or executable has a exact description of what it does in the `README.md`, inside the corresponding repo.
 > [!CAUTION]
 > These scripts lead to actions on your PC that you may not want.
-> However, it is important to note that none of these scripts will cause damage to your PC or leave permanent changes on your PC.
+> However, it is important to note that **none of these scripts will cause damage to your PC or leave permanent changes** on your PC.
