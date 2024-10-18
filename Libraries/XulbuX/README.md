@@ -7,7 +7,7 @@ For the libraries latest changes, see the [change log](https://github.com/XulbuX
 
 ## Installation
 
-```powershell
+```bash
 pip install XulbuX
 ```
 
