@@ -21,7 +21,6 @@ To be able to type one of the files' names in the console and through this run t
    * Open your terminal.
    * Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
    * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
-      
       ```bash
       export PATH="$PATH:/path/to/your/directory"
       ```
@@ -61,17 +60,14 @@ matrix
 ```
 This command will display a sort of matrix in your console with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` or `--color` you can make them be in random colors:
-   
    ```console
    matrix --color
    ```
 3. Normally, the matrix moves rather slow, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
-   
    ```console
    matrix --fast
    ```
 3. You can also make the matrix be in color and move fast, by applying both options:
-
    ```console
    matrix -c -f
    ```
