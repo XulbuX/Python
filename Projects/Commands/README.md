@@ -19,12 +19,12 @@ To be able to type one of the file's names in the console and, through this, run
 
    ### macOS and Linux:
    * Open your terminal.
-   * Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
+   * Edit your shell configuration file (*e.g.*, `~/.bash_profile`, `~/.bashrc`, *or* `~/.zshrc`) using a text editor.
    * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
      ```bash
      export PATH="$PATH:/path/to/your/directory"
      ```
-   * Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
+   * Save the file and run `source ~/.bash_profile` (*or the appropriate file you edited*) to apply changes.
 
 4. For macOS and Linux, make the files executable:
    ```s
@@ -35,7 +35,7 @@ To be able to type one of the file's names in the console and, through this, run
 After completing these steps, you should be able to run the commands described below.
 
 
-## <span id="whateachcommanddoes">What each file (command) does</span>
+## <span id="whateachcommanddoes">What each file (*command*) does</span>
 
 ### _.py
 Run with command:
