@@ -42,13 +42,15 @@ This command will display a sort of matrix in your console with a few options fo
    ```console
    matrix -c -f
    ```
+Can be cancelled by pressing `Ctrl ⌃`+`C` / `Cmd ⌘`+`C`).
 
-### x
+### sine-wave.py
 Run with command:
 ```console
-x
+sine-wave
 ```
-This 
+This command will just display a moving sine wave in your console.
+Can be cancelled by pressing `Ctrl ⌃`+`C` / `Cmd ⌘`+`C`).
 
 ### x
 Run with command:
