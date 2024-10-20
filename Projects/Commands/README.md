@@ -8,7 +8,6 @@ To be able to type a one of the files's names in the console and through this ru
 
 ### _.py
 Run with command:
-
 ```ps
 _
 ```
@@ -20,10 +19,9 @@ b) the command also resets all the console formats.
 Run with command:
 
 ```ps
-lib-publish
+publish
 ```
 This is just a single command, which runs the two requiered commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
-
 ### matrix.py
 Run with command:
 ```ps
