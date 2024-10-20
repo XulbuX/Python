@@ -29,17 +29,17 @@ matrix
 This command will display a sort of matrix in your console with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` or `--color` you can make them be in random colors:
    
-   ```fish
+   ```ahk
    matrix --color
    ```
 3. Normally, the matrix moves rather slow, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
    
-   ```pwsh-session
+   ```ahk
    matrix --fast
    ```
 3. You can also make the matrix be in color and move fast, by applying both options:
 
-   ```pwsh-session
+   ```ahk
    matrix -c -f
    ```
 
