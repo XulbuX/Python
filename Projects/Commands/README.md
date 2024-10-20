@@ -3,7 +3,7 @@ This repository contains quite a few Python files, which are supposed to be ran 
 
 
 ## Run the files as console commands
-To be able to type one of the files' names in the console and through this run that corresponding file, you need to follow these steps:
+To be able to type one of the file's names in the console and through this run that corresponding file, you need to follow these steps:
 
 1. Download the Python files you want to use as commands.
 2. Place all downloaded files in a single directory of your choice.
