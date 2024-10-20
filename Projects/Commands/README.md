@@ -84,7 +84,7 @@ x-dir-info --ignore scope
 x-dir-info --ignore size
 ```
 ```console
-x-dir-info -i scope size
+x-dir-info --ignore scope size
 ```
 
 ### x-process-list.py
