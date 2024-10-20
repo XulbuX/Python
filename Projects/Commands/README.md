@@ -3,7 +3,36 @@ This repository contains quite a few Python files, which are supposed to be ran 
 
 
 ## Run the files as console commands
-To be able to type a one of the files's names in the console and through this run that corresponding file, you have to do a few things:<br>
+To be able to type one of the files' names in the console and through this run that corresponding file, you need to follow these steps:
+
+1. Download the Python files you want to use as commands.
+2. Place all downloaded files in a single directory of your choice.
+3. Add the absolute path to that directory to your system's PATH environment variable. This process varies depending on your operating system:
+
+   ### Windows:
+   a. Press Win + X and select "System".
+   b. Click on "Advanced system settings".
+   c. Click on "Environment Variables".
+   d. Under "System variables", find and select "Path", then click "Edit".
+   e. Click "New" and add the full path to your directory.
+   f. Click "OK" to close all windows.
+
+   ### macOS and Linux:
+   a. Open your terminal.
+   b. Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
+   c. Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
+      ```
+      export PATH="$PATH:/path/to/your/directory"
+      ```
+   d. Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
+
+4. For macOS and Linux, make the files executable:
+   ```
+   chmod +x /path/to/your/directory/*.py
+   ```
+5. Restart your terminal or command prompt for the changes to take effect.
+
+After completing these steps, you should be able to run the commands like described below.
 
 
 ## What each file (command) does
