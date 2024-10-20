@@ -30,6 +30,6 @@ try:
       (random.choice(x) if random.randint(0, 1) == 1 else ' ') +
       '[_]' for _ in range(100))
     xx.FormatCodes.print(line)
-    if not (ARGS.__contains__('-s') or ARGS.__contains__('--speed')): time.sleep(0.025)
+    if not (ARGS.__contains__('-s') or ARGS.__contains__('--speed') or ARGS.__contains__('-f') or ARGS.__contains__('--fast')): time.sleep(0.025)
 except KeyboardInterrupt:
   print()
