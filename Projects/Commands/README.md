@@ -45,7 +45,7 @@ This command will display a sort of matrix in your console with a few options fo
 
 ### x
 Run with command:
-```ps
+```console
 x
 ```
 This 
