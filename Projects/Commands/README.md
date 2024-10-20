@@ -17,9 +17,8 @@ b) the command also resets all the console formats.
 
 ### lib-publish.py
 Run with command:
-
 ```ps
-publish
+matrix
 ```
 This is just a single command, which runs the two requiered commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
 ### matrix.py
