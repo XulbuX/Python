@@ -10,24 +10,24 @@ To be able to type one of the files' names in the console and through this run t
 3. Add the absolute path to that directory to your system's PATH environment variable. This process varies depending on your operating system:
 
    ### Windows:
-   a. Press Win + X and select "System".
-   b. Click on "Advanced system settings".
-   c. Click on "Environment Variables".
-   d. Under "System variables", find and select "Path", then click "Edit".
-   e. Click "New" and add the full path to your directory.
-   f. Click "OK" to close all windows.
+   * Press Win + X and select "System".
+   * Click on "Advanced system settings".
+   * Click on "Environment Variables".
+   * Under "System variables", find and select "Path", then click "Edit".
+   * Click "New" and add the full path to your directory.
+   * Click "OK" to close all windows.
 
    ### macOS and Linux:
-   a. Open your terminal.
-   b. Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
-   c. Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
-      ```
+   * Open your terminal.
+   * Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
+   * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
+      ```bash
       export PATH="$PATH:/path/to/your/directory"
       ```
-   d. Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
+   * Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
 
 4. For macOS and Linux, make the files executable:
-   ```
+   ```bash
    chmod +x /path/to/your/directory/*.py
    ```
 5. Restart your terminal or command prompt for the changes to take effect.
