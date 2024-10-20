@@ -71,7 +71,7 @@ Run with command:
 ```console
 x-dir-info
 ```
-This command will give you the following info about your current working directory `cwd`:
+This command will give you the following info about your current working directory (`cwd`):
 * the files count
 * the files scope (*lines count from all the files with text in them*)
 * the total size of the files
