@@ -134,5 +134,5 @@ This command generates an advanced directory tree. You have the following option
 
 The directories to ignore can also be given directly via the option `-i` or `--ignore`:
 ```console
-x-tree --ignore rel/path/to/dir1 rel/path/to/dir2
+x-tree --ignore cwd/to/dir1 cwd/to/dir2
 ```
