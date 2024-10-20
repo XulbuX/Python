@@ -1,5 +1,5 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff. [What does each command do?](#whateachcommanddoes)
+This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff. [Figure out what each command does.](#whateachcommanddoes)
 
 
 ## Run the files as console commands
