@@ -1,31 +1,23 @@
 # Custom Commands
-This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
+This repository contains quite a few Python files, which are supposed to be ran as command in the console and do some usefull stuff.
 
-## Repositories
-* [Libraries](#libraries) | **[view](./Libraries)**
-  * [XulbuX](#xulbux) | **[view](./Libraries/XulbuX)**
-* [Projects](#projects) | **[view](./Projects)**
-  * [Commands](#commands) | **[view](./Projects/Commands)**
-* [Experiments](#experiments) | **[view](./Experiments)**
-  * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
+## Run the files as console commands
+To be able to type a one of the files's names in the console and through this run that corresponding file, you have to do a few things:<br>
 
-## Libraries
+## What each file (command) does
 
-### XulbuX
-`XulbuX` is a custom Python library with a lot of small, but really useful types and functions.
-For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
+### _.py
+Run with command:
+```bash
+_
+```
+This is a better version of the `cls` or `clear` command, to clear your console. The command `_` is:<br>
+a) faster to type and
+b) the command also resets all the console formats.
 
-## Projects
-
-### Commands
-Inside `Commands` are a lot of Python files, which can be added to the system paths to be run as commands.
-
-
-## Experiments
-
-### SendToFriend
-These are **harmless** prank scripts (also as [executables](./Experiments/SendToFriend/executables)), that do all sorts of annoying things.
-Every script or executable has an exact description of what it does in the [`README.md`](./Experiments/SendToFriend/README.md), inside the corresponding repo.
-> [!CAUTION]
-> These scripts lead to actions on your PC that you may not want.
-> However, it is important to note that **none of these scripts will cause damage to your PC**.
+### lib-publish.py
+Run with command:
+```bash
+lib-publish
+```
+This is just a single command, which runs the two requiered commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/)
