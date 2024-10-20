@@ -34,7 +34,7 @@ This command will display a sort of matrix in your console with a few options fo
    ```
 3. Normally, the matrix moves rather slow, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
    
-   ```properties
+   ```perl
    matrix --fast
    ```
 3. You can also make the matrix be in color and move fast, by applying both options:
