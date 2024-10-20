@@ -40,7 +40,7 @@ This command will display a sort of matrix in your console with a few options fo
    ```
 3. You can also make the matrix be in color and move fast, by applying both options:
 
-   ```cmd
+   ```ps
    matrix -c -f
    ```
 
