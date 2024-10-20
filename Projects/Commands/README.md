@@ -45,7 +45,8 @@ This command will display a sort of matrix in your console with a few options fo
    ```console
    matrix -c -f
    ```
-Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
+> [!NOTE]
+> Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
 ### sine-wave.py
 Run with command:
@@ -53,7 +54,8 @@ Run with command:
 sine-wave
 ```
 This command will just display a moving sine wave in your console.<br>
-Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
+> [!NOTE]
+> Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
 ### x-convert.py
 Run with command:
