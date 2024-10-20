@@ -27,7 +27,7 @@ To be able to type one of the file's names in the console and through this run t
    * Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
 
 4. For macOS and Linux, make the files executable:
-   ```bash
+   ```s
    chmod +x /path/to/your/directory/*.py
    ```
 5. Restart your terminal or command prompt for the changes to take effect.
