@@ -52,26 +52,30 @@ sine-wave
 This command will just display a moving sine wave in your console.<br>
 Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
-### x
+### spaces-to-linebreaks.py
 Run with command:
 ```console
-x
+spaces-to-linebreaks
 ```
-This 
+This command simply lets you input text and will then output that text but go to the next line after every `space` character.
 
-### x
+### x-convert.py
 Run with command:
 ```console
-x
+x-convert
 ```
-This 
+This command is actually a whole program. It is used to convert one type of code into another type of code.<br>
+To see exactly how this command works and what types of conversions are currently supported, run the command with the `-h` or `--help` option:
+```console
+x-convert --help
+```
 
-### x
+### x-dir-info.py
 Run with command:
 ```console
-x
+x-dir-info
 ```
-This 
+This command will
 
 ### x
 Run with command:
