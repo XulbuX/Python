@@ -38,6 +38,11 @@ This command will display a sort of matrix in your console with a few options fo
    ```bash
    matrix --fast
    ```
+3. You can also make the matrix be in color and move fast, by applying both options:
+
+   ```shell
+   matrix -c -f
+   ```
 
 ### x
 Run with command:
