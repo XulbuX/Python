@@ -24,7 +24,7 @@ Inside `Commands` are a lot of Python files, which can be added to the system pa
 ## Experiments
 
 ### SendToFriend
-These are **harmless** prank scripts (also as [executables](./Experiments/SendToFriend/executables)), that do all sorts of annoying things.
+These are **harmless** prank scripts (*also as [executables](./Experiments/SendToFriend/executables)*), that do all sorts of annoying things.
 Every script or executable has an exact description of what it does in the [`README.md`](./Experiments/SendToFriend/README.md) of the corresponding repo.
 > [!CAUTION]
 > These scripts lead to actions on your PC that you may not want.
