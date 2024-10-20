@@ -49,7 +49,7 @@ Run with command:
 ```console
 sine-wave
 ```
-This command will just display a moving sine wave in your console.
+This command will just display a moving sine wave in your console.<br>
 Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
 ### x
