@@ -8,7 +8,7 @@ To be able to type a one of the files's names in the console and through this ru
 
 ### _.py
 Run with command:
-```ps
+```console
 _
 ```
 This is a better version of the `cls` or `clear` command, to clear your console. The command `_` is:<br>
@@ -17,13 +17,13 @@ b) the command also resets all the console formats.
 
 ### lib-publish.py
 Run with command:
-```shell
+```console
 lib-publish
 ```
 This is just a single command, which runs the two requiered commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
 ### matrix.py
 Run with command:
-```ps
+```console
 matrix
 ```
 This command will display a sort of matrix in your console with a few options for customizing:
@@ -34,12 +34,12 @@ This command will display a sort of matrix in your console with a few options fo
    ```
 3. Normally, the matrix moves rather slow, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
    
-   ```ps
+   ```console
    matrix --fast
    ```
 3. You can also make the matrix be in color and move fast, by applying both options:
 
-   ```ps
+   ```console
    matrix -c -f
    ```
 
