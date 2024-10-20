@@ -108,5 +108,5 @@ This command generates an advanced directory tree. You have the following option
 
 The directories to ignore can also directly be given via the option `-i` or `--ignore`:
 ```console
-x-tree --ignore dir1 dir2
+x-tree --ignore rel/path/to/dir1 rel/path/to/dir2
 ```
