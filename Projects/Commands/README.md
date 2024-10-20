@@ -21,6 +21,7 @@ To be able to type one of the files' names in the console and through this run t
    * Open your terminal.
    * Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
    * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
+      
       ```bash
       export PATH="$PATH:/path/to/your/directory"
       ```
