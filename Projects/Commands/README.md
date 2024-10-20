@@ -1,5 +1,5 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff. [What does each command?](#whateachfilecommanddoes)
+This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff. [What does each command?](#whateachcommanddoes)
 
 
 ## Run the files as console commands
@@ -35,7 +35,7 @@ To be able to type one of the file's names in the console and, through this, run
 After completing these steps, you should be able to run the commands described below.
 
 
-## What each file (command) does
+## <span id="whateachcommanddoes">What each file (command) does</span>
 
 ### _.py
 Run with command:
