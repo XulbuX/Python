@@ -123,16 +123,16 @@ def show_help():
 
   [i|#FF806A]         CONVERT ONE TYPE OF CODE INTO ANOTHER[*]
 
-  [b|#75A2FF]Usage:[*]
+  [b|#7090FF]Usage:[*]
     [#FF9E6A]x-convert [#77EFEF]<options>[*]
 
-  [b|#75A2FF]Arguments:[*]
+  [b|#7090FF]Arguments:[*]
     (Command executable without arguments ➜ will ask for them if not given)
     [#77EFEF]-f[dim](,) --file[dim](,) -p[dim](,) --path[dim](,) -fp[dim](,) --filepath[dim](,) --file-path    [#AA90FF]Path to the file containing the code to be formatted[*]
     [#77EFEF]-i[dim](,) --indent[dim](,) -is[dim](,) --indent-spaces                      [#AA90FF]Number of spaces to use for indentation in the formatted file[*]
     [#77EFEF][dim](<)conversion type: args under supported conversions ↓ [dim](>)  [#AA90FF]What type of code to convert into another type of code[*]
 
-  [b|#75A2FF]Examples [_b]((Blade ➜ Vue)):[*]
+  [b|#7090FF]Examples [_b]((Blade ➜ Vue)):[*]
     Full path with 2 spaces indentation:
       [_]C:\Users\{xx.Cmd.user()}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
 
@@ -140,9 +140,9 @@ def show_help():
       [_]C:\Users\{xx.Cmd.user()}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
       [_]D:\full\path> [#FF9E6A]x-convert [#7B7C8F]--file-path [#4DF1C2].\to\file.blade.php [#7B7C8F]--indent-spaces [#77EFEF]4 [#7B7C8F]--blade-to-vue[*]
 
-  [b|#75A2FF]Supported conversion:[*]
+  [b|#7090FF]Supported conversion:[*]
     [b|#FF5252]Laravel Blade [dim]((.blade.php))[*] to [b|#41B883]Vue.js [dim]((.vue))[*]             [*|#AA90FF]-bv[dim](,) --blade-vue[dim](,) --blade-to-vue[*]
-  [_]''', '#9AB8F7')
+  [_]''', '#809FFF')
 
 def get_json(args:dict) -> dict:
   try:
@@ -153,7 +153,7 @@ def get_json(args:dict) -> dict:
     if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?[_|dim] [Y/N]:  [_]', end=''):
       xx.Json.create(DEFAULT_JSON, indent=4, force=True)
       xx.Cmd.info(f'[white]{JSON_FILE}[_] created successfully.', end='\n')
-      xx.FormatCodes.print('        \t[dim]Restarting program...[_]', '#9AB8F7')
+      xx.FormatCodes.print('        \t[dim]Restarting program...[_]', '#809FFF')
       main(args)
       xx.Cmd.pause_exit(exit=True)
     else: xx.Cmd.exit()
@@ -172,12 +172,12 @@ def add_to_env_vars() -> dict:
   if JSON['is_in_env_vars'] != base_dir:
     if not xx.EnvVars.has_path(base_dir=True):
       xx.Cmd.warn('Path to program-directory doesn\'t exist in your environment variables.', exit=False, end='\n')
-      xx.FormatCodes.print(f'        \t[#75A2FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#75A2FF].[_]', '#9AB8F7')
+      xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', '#809FFF')
       if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables?[_|dim] [Y/N]:  [_]', start='', end=''):
         xx.EnvVars.add_path(base_dir=True)
         xx.Cmd.info(f'Successfully added [white]{base_dir}[_] to your environment variables.', end='\n')
-        xx.FormatCodes.print(f'        \t[#75A2FF]If the command [#FF9E6A]{COMMAND}[#75A2FF] doesn\'t work, you may need to restart the console.[_]', '#9AB8F7')
-        xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#9AB8F7')
+        xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#809FFF')
+        xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#809FFF')
     xx.Json.update(JSON_FILE, f'is_in_env_vars::{base_dir}')
 
 

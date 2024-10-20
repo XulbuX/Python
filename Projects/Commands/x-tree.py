@@ -81,17 +81,7 @@ def get_tree(base_dir, ignore_dirs=None, style=1, indent=3, level=0, prefix=''):
 
 
 def main():
-  if len(ARGS) > 0 and ARGS[0] not in ['-i', '--ignore']:
-    if is_valid_path(ARGS[0]):
-      if os.path.isdir(ARGS[0]): base_dir = ARGS[0]
-      else:
-        print(f'`{ARGS[0]}` was not found.')
-        return None
-    else:
-      print(f'`{ARGS[0]}` is not a valid path.')
-      return None
-  else: base_dir = os.getcwd()
-  base_dir = base_dir + os.sep if base_dir and not base_dir.endswith(os.sep) else base_dir
+  base_dir = os.getcwd()
 
   if len(ARGS) > 1:
     if ARGS[0] in ['-i', '--ignore']: ignore_dirs = ARGS[1:]

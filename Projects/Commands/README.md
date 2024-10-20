@@ -1,8 +1,10 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be ran as command in the console and do some usefull stuff.
+This repository contains quite a few Python files, which are supposed to be ran as command in the console and do some useful stuff.
+
 
 ## Run the files as console commands
 To be able to type a one of the files's names in the console and through this run that corresponding file, you have to do a few things:<br>
+
 
 ## What each file (command) does
 
@@ -12,15 +14,16 @@ Run with command:
 _
 ```
 This is a better version of the `cls` or `clear` command, to clear your console. The command `_` is:<br>
-a) faster to type and
-b) the command also resets all the console formats.
+* Faster to type and
+* the command also resets all the console formats.
 
 ### lib-publish.py
 Run with command:
 ```console
 lib-publish
 ```
-This is just a single command, which runs the two requiered commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
+This is just a single command, which runs the two required commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
+
 ### matrix.py
 Run with command:
 ```console
@@ -52,13 +55,6 @@ sine-wave
 This command will just display a moving sine wave in your console.<br>
 Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
-### spaces-to-linebreaks.py
-Run with command:
-```console
-spaces-to-linebreaks
-```
-This command simply lets you input text and will then output that text but go to the next line after every `space` character.
-
 ### x-convert.py
 Run with command:
 ```console
@@ -75,18 +71,42 @@ Run with command:
 ```console
 x-dir-info
 ```
-This command will
+This command will give you the following info about your current working directory `cwd`:
+* the files count
+* the files scope (*lines count from all the files with text in them*)
+* the total size of the files
 
-### x
+It can take quite a bit of time to get those informations, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
+```console
+x-dir-info --ignore scope
+```
+```console
+x-dir-info --ignore size
+```
+```console
+x-dir-info -i scope size
+```
+
+### x-process-list.py
 Run with command:
 ```console
-x
+x-process-list
 ```
-This 
+This command simply lets you input a list where each item is separated by a `space`. It will then simply output all the items, but each item on a new line.<br>
+When all the items are numbers, it will additionally output the average of all the items.
 
-### x
+### x-tree.py
 Run with command:
 ```console
-x
+x-tree
 ```
-This 
+This command generates an advanced directory tree. You have the following options when running the command:
+* directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
+* choose between different tree styles
+* set the tree's indentation size
+* output the tree into a file (*if it's too large to fit inside the console history*)
+
+The directories to ignore can also directly be given via the option `-i` or `--ignore`:
+```console
+x-tree --ignore dir1 dir2
+```

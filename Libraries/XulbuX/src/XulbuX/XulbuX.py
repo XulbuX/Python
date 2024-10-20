@@ -482,32 +482,32 @@ class Cmd:
     else: FormatCodes.print(f'{start}  {f"[{default_color}]" if default_color else ""}{str(msg)}[_]', default_color, end=end)
 
   @staticmethod
-  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FFD260', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FFD260', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DEBUG', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#77F', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#77F', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('INFO', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#49EAB7', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = False) -> None:
+  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#49EAB7', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DONE', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True) -> None:
+  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = True) -> None:
     Cmd.log('WARN', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF606A', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF606A', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('FAIL', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#C860FF', default_color:hexa|rgba = '#9AB8F7', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#C860FF', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('EXIT', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
@@ -1481,5 +1481,5 @@ if __name__ == '__main__':
     [dim](•) STR OPERATIONS           [#77EFEF]xx[#555].[#AA90FF]String[*]
     [dim](•) CODE STRING OPERATIONS   [#77EFEF]xx[#555].[#AA90FF]Code[*]
     [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#555].[#AA90FF]Regex[*]
-  [_]''', '#9AB8F7')
+  [_]''', '#809FFF')
   Cmd.pause_exit(pause=True)
