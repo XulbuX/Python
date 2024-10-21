@@ -26,7 +26,7 @@
 * `CHANGELOG.md` improvements
 * `README.md` improvements
 
-## 18.10.2024 `v1.2.1` − `v1.2.2`
+## 18.10.2024 `v1.2.1` `v1.2.2`
 * fixed bug in function `Path.get(base_dir=True)`:<br>
   Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
   This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
@@ -40,17 +40,17 @@
 ## 17.10.2024 `v1.1.8`
 * added support for all OSes to the OS-dependent functions
 
-## 17.10.2024 `v1.1.6` − `v1.1.7`
+## 17.10.2024 `v1.1.6` `v1.1.7`
 * fixed the `Cmd.cls()` function:<br>
   There was a bug where, on Windows 10, the ANSI formats weren't cleared.
 
-## 17.10.2024 `v1.1.4` − `v1.1.5`
+## 17.10.2024 `v1.1.4` `v1.1.5`
 * added link to `CHANGELOG.md` to the `README.md` file
 
 ## 17.10.2024 `v1.1.3`
 * changed the default value of the param `compactness:int` in the function `Data.print()` to `1` instead of `0`
 
-## 17.10.2024 `v1.1.1` − `v1.1.2`
+## 17.10.2024 `v1.1.1` `v1.1.2`
 * adjusted the library's description
 
 ## 16.10.2024 `v1.1.0`
@@ -69,7 +69,7 @@
   ```
   prints:  <code><u>(Automatically resetting) following text</u></code>
 
-## 16.10.2024 `v1.0.7` − `v1.0.8`
+## 16.10.2024 `v1.0.7` `v1.0.8`
 * added `input()` function to the `FormatCodes` class, so you can make pretty looking input prompts
 * added warning for no network connection when trying to [install missing libraries](#improvedlibimporting)
 
@@ -79,7 +79,7 @@
 * moved constant variables into a separate file
 * fixed issue where configuration file wasn't created and loaded correctly
 
-## 15.10.2024 `v1.0.1` − `v1.0.5`
+## 15.10.2024 `v1.0.1` `v1.0.2` `v1.0.3` `v1.0.4` `v1.0.5`
 * fixed `f-string` issues for Python 3.10:<br>
   **1:** no use of same quotes inside f-strings<br>
   **2:** no backslash escaping in f-strings
