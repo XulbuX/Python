@@ -70,18 +70,18 @@ class rgba:
   Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
   -------------------------------------------------------------------------------------------------------------------------------
   Includes methods:
-  - `.to_hsl()` to convert to HSL color
-  - `.to_hex()` to convert to HEX color
+  - `.to_hsla()` to convert to HSL color
+  - `.to_hexa()` to convert to HEX color
   - `.has_alpha()` to check if the color has an alpha channel"""
   def __init__(self, r:int, g:int, b:int, a:float = None):
-    if any(isinstance(x, rgba) for x in (r, g, b)): raise ValueError('Color is already a rgb() color')
+    if any(isinstance(x, rgba) for x in (r, g, b)): raise ValueError('Color is already a rgba() color')
     if not all(isinstance(x, int) and 0 <= x <= 255 for x in (r, g, b)): raise ValueError('RGB color must consist of 3 integers in [0, 255]')
     if not a == None and not isinstance(a, (int, float)) and 0.0 <= float(a) <= 1.0: raise ValueError('Alpha channel must be a float in [0.0, 1.0]')
     self.r, self.g, self.b, self.a = r, g, b, (1.0 if a > 1.0 else float(a)) if a else None
   def __len__(self): return 4 if self.a else 3
   def __iter__(self): return iter((self.r, self.g, self.b) + ((self.a,) if self.a else ()))
   def __getitem__(self, index): return ((self.r, self.g, self.b) + ((self.a,) if self.a else ()))[index]
-  def __repr__(self): return f'rgb({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
+  def __repr__(self): return f'rgba({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
   def __str__(self): return f'({self.r}, {self.g}, {self.b}{f", {self.a}" if self.a else ""})'
   def __eq__(self, other):
     if not isinstance(other, rgba): return False
@@ -89,8 +89,8 @@ class rgba:
   def list(self)      -> list: return [self.r, self.g, self.b] + ([self.a] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
   def dict(self)      -> dict: return dict(r=self.r, g=self.g, b=self.b, a=self.a) if self.a else dict(r=self.r, g=self.g, b=self.b)
-  def to_hsl(self)   -> 'hsla': return hsla(Color.to_hsl(self))
-  def to_hex(self)  -> 'hexa': return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255)}:02X" if self.a else ""}')
+  def to_hsla(self)   -> 'hsla': return hsla(Color.to_hsl(self))
+  def to_hexa(self)  -> 'hexa': return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
   def has_alpha(self) -> bool: return self.a != None
 
 class hsla:
@@ -98,18 +98,18 @@ class hsla:
   Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).\n
   ------------------------------------------------------------------------------------------------------------------------------------
   Includes methods:
-  - `.to_rgb()` to convert to RGB color
-  - `.to_hex()` to convert to HEX color
+  - `.to_rgba()` to convert to RGB color
+  - `.to_hexa()` to convert to HEX color
   - `.has_alpha()` to check if the color has an alpha channel"""
   def __init__(self, h:int, s:int, l:int, a:float = None):
-    if any(isinstance(x, hsla) for x in (h, s, l)): raise ValueError('Color is already a hsl() color')
+    if any(isinstance(x, hsla) for x in (h, s, l)): raise ValueError('Color is already a hsla() color')
     if not all(isinstance(x, int) for x in (h, s, l)) and (not (0 <= h <= 360) or not (0 <= s <= 100) or not (0 <= l <= 100)): raise ValueError('HSL color must have H in [0, 360] and S L in [0, 100]')
     if not a == None and not isinstance(a, (int, float)) and 0.0 <= float(a) <= 1.0: raise ValueError('Alpha channel must be a float in [0.0, 1.0]')
     self.h, self.s, self.l, self.a = h, s, l, (1.0 if a > 1.0 else float(a)) if a else None
   def __len__(self): return 4 if self.a else 3
   def __iter__(self): return iter((self.h, self.s, self.l) + ((self.a,) if self.a else ()))
   def __getitem__(self, index): return ((self.h, self.s, self.l) + ((self.a,) if self.a else ()))[index]
-  def __repr__(self): return f'hsl({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
+  def __repr__(self): return f'hsla({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
   def __str__(self): return f'({self.h}, {self.s}, {self.l}{f", {self.a}" if self.a else ""})'
   def __eq__(self, other):
     if not isinstance(other, hsla): return False
@@ -117,8 +117,8 @@ class hsla:
   def list(self)      -> list: return [self.h, self.s, self.l] + ([self.a] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
   def dict(self)      -> dict: return dict(h=self.h, s=self.s, l=self.l, a=self.a) if self.a else dict(h=self.h, s=self.s, l=self.l)
-  def to_rgb(self)   -> 'rgba': return Color.to_rgb(self)
-  def to_hex(self)  -> 'hexa': return self.to_rgb().to_hex()
+  def to_rgba(self)   -> 'rgba': return Color.to_rgb(self)
+  def to_hexa(self)  -> 'hexa': return self.to_rgb().to_hex()
   def has_alpha(self) -> bool: return self.a != None
 
 class hexa:
@@ -126,8 +126,8 @@ class hexa:
   -------------------------------------------------------------------------------------------------
   Supports formats: #RGB, #RGBA, #RRGGBB, #RRGGBBAA (with or without leading #)<br>
   Includes methods:
-  - `.to_rgb()` to convert to RGB color
-  - `.to_hsl()` to convert to HSL color
+  - `.to_rgba()` to convert to RGB color
+  - `.to_hsla()` to convert to HSL color
   - `.has_alpha()` to check if the color has an alpha channel"""
   def __init__(self, color:str):
     if isinstance(color, hexa): raise ValueError('Color is already a hexa() color')
@@ -140,18 +140,18 @@ class hexa:
     elif len(color) == 9: self.r, self.g, self.b, self.a = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16), int(color[7:9], 16) / 255.0          #RRGGBBAA
     else: raise ValueError('Hex color must be in format #RGB, #RGBA, #RRGGBB, or #RRGGBBAA')
   def __len__(self): return 4 if self.a else 3
-  def __iter__(self): return iter((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255)}:02X',) if self.a else ()))
-  def __getitem__(self, index): return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255)}:02X',) if self.a else ()))[index]
-  def __repr__(self): return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255)}:02X" if self.a else ""})'
-  def __str__(self): return f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255)}:02X" if self.a else ""}'
+  def __iter__(self): return iter((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))
+  def __getitem__(self, index): return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))[index]
+  def __repr__(self): return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""})'
+  def __str__(self): return f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}'
   def __eq__(self, other):
     if not isinstance(other, hexa): return False
     return (self.r, self.g, self.b) == (other.r, other.g, other.b) and self.a == other.a
-  def list(self)      -> list: return [f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}'] + ([f'{int(self.a * 255)}:02X'] if self.a else [])
+  def list(self)      -> list: return [f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}'] + ([f'{int(self.a * 255):02X}'] if self.a else [])
   def tuple(self)    -> tuple: return tuple(self.list())
-  def dict(self)      -> dict: return dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}', a=f'{int(self.a * 255)}:02X') if self.a else dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}')
-  def to_rgb(self)   -> 'rgba': return rgba(self.r, self.g, self.b)
-  def to_hsl(self)   -> 'hsla': return hsla(Color.to_hsl(self.to_rgb()))
+  def dict(self)      -> dict: return dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}', a=f'{int(self.a * 255):02X}') if self.a else dict(r=f'{self.r:02X}', g=f'{self.g:02X}', b=f'{self.b:02X}')
+  def to_rgba(self)   -> 'rgba': return rgba(self.r, self.g, self.b)
+  def to_hsla(self)   -> 'hsla': return hsla(Color.to_hsl(self.to_rgb()))
   def has_alpha(self) -> bool: return self.a is not None
 
 
