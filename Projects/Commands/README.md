@@ -1,9 +1,10 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be ran as command in the console and do some useful stuff.
+This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff.<br>
+[Figure out what each file (*command*) does.](#whateachcommanddoes)
 
 
 ## Run the files as console commands
-To be able to type one of the file's names in the console and through this run that corresponding file, you need to follow these steps:
+To be able to type one of the file's names in the console and, through this, run that corresponding file, you need to follow these steps:
 
 1. Download the Python files you want to use as commands.
 2. Place all downloaded files in a single directory of your choice.
@@ -11,20 +12,20 @@ To be able to type one of the file's names in the console and through this run t
 
    ### Windows:
    * Press Win + X and select "System".
-   * Click on "Advanced system settings".
+   * Click on "Advanced System Settings".
    * Click on "Environment Variables".
-   * Under "System variables", find and select "Path", then click "Edit".
+   * Under "System Variables", find and select "Path", then click "Edit".
    * Click "New" and add the full path to your directory.
    * Click "OK" to close all windows.
 
    ### macOS and Linux:
    * Open your terminal.
-   * Edit your shell configuration file (e.g., `~/.bash_profile`, `~/.bashrc`, or `~/.zshrc`) using a text editor.
+   * Edit your shell configuration file (*e.g.*, `~/.bash_profile`, `~/.bashrc`, *or* `~/.zshrc`) using a text editor.
    * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
-      ```bash
-      export PATH="$PATH:/path/to/your/directory"
-      ```
-   * Save the file and run `source ~/.bash_profile` (or the appropriate file you edited) to apply changes.
+     ```bash
+     export PATH="$PATH:/path/to/your/directory"
+     ```
+   * Save the file and run `source ~/.bash_profile` (*or the appropriate file you edited*) to apply changes.
 
 4. For macOS and Linux, make the files executable:
    ```s
@@ -32,17 +33,17 @@ To be able to type one of the file's names in the console and through this run t
    ```
 5. Restart your terminal or command prompt for the changes to take effect.
 
-After completing these steps, you should be able to run the commands like described below.
+After completing these steps, you should be able to run the commands described below.
 
 
-## What each file (command) does
+## <span id="whateachcommanddoes">What each file (*command*) does</span>
 
 ### _.py
 Run with command:
 ```console
 _
 ```
-This is a better version of the `cls` or `clear` command, to clear your console. The command `_` is:<br>
+This is a better version of the `cls` or `clear` command to clear your console. The command `_` is:<br>
 * Faster to type and
 * the command also resets all the console formats.
 
@@ -51,7 +52,7 @@ Run with command:
 ```console
 lib-publish
 ```
-This is just a single command, which runs the two required commands, to package and directly upload your own Python library to [PyPi](https://pypi.org/).
+This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPi](https://pypi.org/).
 
 ### matrix.py
 Run with command:
@@ -59,15 +60,15 @@ Run with command:
 matrix
 ```
 This command will display a sort of matrix in your console with a few options for customizing:
-1. By standard, the matrix symbols are not colored. With the option `-c` or `--color` you can make them be in random colors:
+1. By standard, the matrix symbols are not colored. With the option `-c` or `--color` you can make them in random colors:
    ```console
    matrix --color
    ```
-3. Normally, the matrix moves rather slow, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
+3. Normally, the matrix moves rather slowly, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
    ```console
    matrix --fast
    ```
-3. You can also make the matrix be in color and move fast, by applying both options:
+3. You can also make the matrix in color and move fast, by applying both options:
    ```console
    matrix -c -f
    ```
@@ -78,7 +79,7 @@ Run with command:
 ```console
 sine-wave
 ```
-This command will just display a moving sine wave in your console.<br>
+This command will just display a moving sine wave, inside your console.<br>
 Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
 
 ### x-convert.py
@@ -99,10 +100,10 @@ x-dir-info
 ```
 This command will give you the following info about your current working directory (`cwd`):
 * the files count
-* the files scope (*lines count from all the files with text in them*)
+* the total files scope (*lines count from all the files with text in them*)
 * the total size of the files
 
-It can take quite a bit of time to get those informations, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
+It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
 ```console
 x-dir-info --ignore scope
 ```
@@ -132,7 +133,7 @@ This command generates an advanced directory tree. You have the following option
 * set the tree's indentation size
 * output the tree into a file (*if it's too large to fit inside the console history*)
 
-The directories to ignore can also directly be given via the option `-i` or `--ignore`:
+The directories to ignore can also be given directly via the option `-i` or `--ignore`:
 ```console
 x-tree --ignore rel/path/to/dir1 rel/path/to/dir2
 ```

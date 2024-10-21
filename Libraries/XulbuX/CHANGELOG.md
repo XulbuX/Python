@@ -104,9 +104,9 @@ from XulbuX import rgb, hsl, hexa
     <tr>
       <td>Custom Types:</td>
       <td>
-        <code>rgb(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
-        <code>hsl(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
-        <code>hexa(<em>str</em>)</code>
+<code>rgb(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
+<code>hsl(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
+<code>hexa(<em>str</em>)</code>
       </td>
     </tr><tr>
       <td>Directory Operations</td>
