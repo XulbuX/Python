@@ -86,7 +86,7 @@
 
 ## <span id="release">14.10.2024 `v1.0.0`</span>
 $\color{#F90}\Huge\textsf{RELEASE!\ 🤩🎉}$<br>
-**At release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
+**at release**, the library **$\color{#8085FF}\textsf{XulbuX}$** looks like this:
 ```python
 # GENERAL LIBRARY
 import XulbuX as xx
