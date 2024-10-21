@@ -15,7 +15,7 @@
 # <br><b>Changelog</b><br>
 
 
-## 18.10.2024 <h2>`v1.2.4` − `v1.2.5`</h2>
+## 18.10.2024 `v1.2.4` − `v1.2.5`
 * renamed the class `rgb()` to `rgba()` to communicate, more clearly, that it supports an alpha channel
 * renamed the class `hsl()` to `hsla()` to communicate, more clearly, that it supports an alpha channel
 * added more info to the `README.md` as well as additional links
