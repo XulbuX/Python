@@ -636,7 +636,7 @@ class FormatCodes:
 
   @staticmethod
   def to_ansi(string:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _default_start:bool = True) -> str:
-    result, use_default = '', default_color and (Color.is_valid_rgba(default_color) or Color.is_valid_hexa(default_color))
+    result, use_default = '', default_color and (Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False))
     if use_default:
       string = re.sub(r'\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]', r'[\1_|default\2]', string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
       string = re.sub(r'\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]', r'[\1default\2]', string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
@@ -667,7 +667,7 @@ class FormatCodes:
 
   @staticmethod
   def __get_default_ansi(default_color:hexa|rgba, format_key:str = None, brightness_steps:int = None, _modifiers:tuple[str,str] = ('+l', '-d')) -> str|None:
-    if Color.is_valid_hexa(default_color): default_color = Color.to_rgba(default_color)
+    if Color.is_valid_hexa(default_color, False): default_color = Color.to_rgba(default_color)
     if not brightness_steps or (format_key and re.search(r'(?i)((?:BG\s*:)?)\s*default', format_key)):
       if format_key and re.search(r'(?i)BG\s*:\s*default', format_key): return f'{ANSI_PREF}48;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
       return f'{ANSI_PREF}38;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
@@ -705,7 +705,7 @@ class FormatCodes:
         if isinstance(map_key, tuple) and key in map_key: return CODES_MAP[map_key]
         elif key == map_key: return CODES_MAP[map_key]
       return None
-    use_default = default_color and (Color.is_valid_rgba(default_color) or Color.is_valid_hexa(default_color))
+    use_default = default_color and (Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False))
     _format_key, format_key = format_key, FormatCodes.__normalize(format_key)
     if use_default:
       new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps, _modifiers)
@@ -833,8 +833,8 @@ class Color:
     **brightness_change** (float): A float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`), inclusive.\n
     -----------------------------------------------------------------------------------------------------------------
     **returns** (hexa | rgb): The adjusted color in the format of the input color."""
-    if Color.is_valid_hexa(color, allow_alpha=True): _rgba = Color.to_rgba(color)
-    elif Color.is_valid_rgba(color, allow_alpha=True): _rgba = color
+    if Color.is_valid_hexa(color): _rgba = Color.to_rgba(color)
+    elif Color.is_valid_rgba(color): _rgba = color
     else: raise ValueError(f"Invalid color format '{str(color)}' Use HEX (e.g. '#F00' and '#FF0000') or RGB (e.g. (255, 0, 0) and (255, 0, 0, 1.0))")
     r, g, b, a = _rgba.r, _rgba.g, _rgba.b, _rgba.a if hasattr(_rgba, 'a') else None
     r = int(max(min(r + (255 - r) * brightness_change if brightness_change > 0 else r * (1 + brightness_change), 255), 0))
@@ -845,8 +845,8 @@ class Color:
 
   @staticmethod
   def adjust_saturation(color:hexa|rgba, saturation_change:float) -> hexa|rgba:
-    if Color.is_valid_hexa(color, allow_alpha=True): _rgb = Color.to_rgba(color)
-    elif Color.is_valid_rgba(color, allow_alpha=True): _rgb = color
+    if Color.is_valid_hexa(color): _rgb = Color.to_rgba(color)
+    elif Color.is_valid_rgba(color): _rgb = color
     else: raise ValueError(f'Invalid color format "{str(color)}". Use HEX (e.g. "#F00" and "#FF0000") or RGB (e.g. (255, 0, 0) and (255, 0, 0, 1.0))')
     hsl = Color.to_hsla(_rgb)
     h, s, l, a = hsl[0], hsl[1], hsl[2], hsl[3]
