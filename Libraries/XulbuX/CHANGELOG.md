@@ -15,6 +15,25 @@
 # <br><b>Changelog</b><br>
 
 
+## 21.10.2024 `v1.3.0`
+* fixed the custom types `rgba()`, `hsla()` and `hexa()`:<br>
+  - `rgba()`:<br>
+    the method `to_hsla()` works correctly now<br>
+    the method `to_hexa()` works correctly now
+  - `hsla()`:<br>
+    the method `to_rgba()` works correctly now<br>
+    the method `to_hexa()` works correctly now
+  - `hexa()`:<br>
+    the method `to_rgba()` works correctly now<br>
+    the method `to_hsla()` works correctly now
+* fixed functions from the `Color` class:<br>
+  `Color.has_alpha()` works correctly now<br>
+  `Color.to_rgba()` works correctly now<br>
+  `Color.to_hsla()` works correctly now<br>
+  `Color.to_hexa()` works correctly now
+* set default value for param `allow_alpha:bool` to `True` for functions:<br>
+  `Color.is_valid_rgba()`, `Color.is_valid_hsla()`, `Color.is_valid_hexa()`, `Color.is_valid()`
+
 ## 18.10.2024 `v1.2.4` `v1.2.5`
 * renamed the class `rgb()` to `rgba()` to communicate, more clearly, that it supports an alpha channel
 * renamed the class `hsl()` to `hsla()` to communicate, more clearly, that it supports an alpha channel
