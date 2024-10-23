@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../XulbuX') # IMPORT LIBRARY FROM ANY DIRECTORY
 import XulbuX as xx
 import regex as rx
 import re
@@ -89,4 +91,9 @@ _obj3 = {
 # print(f'GOT3 KEY: {xx.Data.get_value_by_path_id(obj3, id3, get_key=True)}')
 # print()
 
-print(xx.Path.get(True, True))
+clr = xx.rgba(255, 0, 0, 0.5)
+print(clr)
+clr = clr.to_hexa()
+print(clr)
+clr = clr.to_rgba()
+print(clr)
