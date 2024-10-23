@@ -15,6 +15,9 @@
 # <br><b>Changelog</b><br>
 
 
+## 23.10.2024 `v1.3.1`
+* Now rounds the alpha channel to maximal 2 decimals, if converting from `hexa()` to `rgba()` or `hsla()` 
+
 ## 21.10.2024 `v1.3.0`
 * fixed the custom types `rgba()`, `hsla()` and `hexa()`:<br>
   - `rgba()`:<br>
