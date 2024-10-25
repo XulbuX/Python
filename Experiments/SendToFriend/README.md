@@ -4,7 +4,7 @@ This repository contains **harmless** prank scripts (also as [executables](./exe
 > These scripts lead to actions on your PC that you may not want.
 > However, it is important to note that **none of these scripts will cause damage to your PC**.
 
-## @^INNOSTOR+ANTIVIRUS^_¬xj12$8-djgf!4-Gadfjd-af^AF-jd83a-dfhda-++dFa-9@~jd2-3Ha!f-d^afj1-D$$df-j8faH^-Dafja@-! | [view script](./scripts/@^INNOSTOR+ANTIVIRUS^_¬xj12$8-djgf!4-Gadfjd-af^AF-jd83a-dfhda-++dFa-9@~jd2-3Ha!f-d^afj1-D$$df-j8faH^-Dafja@-!.py)
+## @^INNOSTOR+ANTIVIRUS^_¬xj12$8-djgf!4-...-j8faH^-Dafja@-! | [view script](./scripts/@^INNOSTOR+ANTIVIRUS^_¬xj12$8-djgf!4-Gadfjd-af^AF-jd83a-dfhda-++dFa-9@~jd2-3Ha!f-d^afj1-D$$df-j8faH^-Dafja@-!.py)
 This script/exe will shut down your PC five seconds after being run and display a shutdown message:<br>
 `WARNING: Virus detected. Starting system clean up process...`<br>
 The script/exe are named a confusing and special looking name, to make it look like a very suspicious file.
