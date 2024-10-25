@@ -93,11 +93,11 @@
 * adjusted the library's description
 
 ## 16.10.2024 `v1.1.0`
-* made it possible to also auto-reset the color and not only the predefined formats, using the [auto-reset-format](#autoresetformat) (`[format](Automatically resetting)`)
+* made it possible to also auto-reset the color and not only the predefined formats, using the [auto-reset-format](#auto-reset-format) (`[format](Automatically resetting)`)
 
 ## 16.10.2024 `v1.0.9`
 * added a library description, which gets shown if it's ran directly
-* made it possible to escape an <span id="autoresetformat">auto-reset-format</span> (`[format](Automatically resetting)`) with a slash, so you can still have `()` brackets behind a `[format]`:
+* made it possible to escape an <span id="auto-reset-format">auto-reset-format</span> (`[format](Automatically resetting)`) with a slash, so you can still have `()` brackets behind a `[format]`:
   ```python
   FormatCodes.print('[u](Automatically resetting) following text')
   ```
@@ -110,10 +110,10 @@
 
 ## 16.10.2024 `v1.0.7` `v1.0.8`
 * added `input()` function to the `FormatCodes` class, so you can make pretty looking input prompts
-* added warning for no network connection when trying to [install missing libraries](#improvedlibimporting)
+* added warning for no network connection when trying to [install missing libraries](#improved-lib-importing)
 
 ## 15.10.2024 `v1.0.6`
-* <span id="improvedlibimporting">improved **$\color{#8085FF}\textsf{XulbuX}$** library importing:</span><br>
+* <span id="improved-lib-importing">improved **$\color{#8085FF}\textsf{XulbuX}$** library importing:</span><br>
   checks for missing required libraries and gives you the option to directly install them, if there are any
 * moved constant variables into a separate file
 * fixed issue where configuration file wasn't created and loaded correctly
