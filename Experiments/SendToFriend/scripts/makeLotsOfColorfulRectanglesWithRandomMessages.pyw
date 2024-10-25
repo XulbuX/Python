@@ -1,7 +1,7 @@
 import tkinter as tk
 import random
 
-windows = 250
+windows = 1000
 messages = [
   'What am I?',
   'What is this?',
