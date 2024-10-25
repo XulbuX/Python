@@ -15,6 +15,23 @@
 # <br><b>Changelog</b><br>
 
 
+## 25.10.2024 `v1.4.0`
+* Huge update to the custom color types:
+  - Now all type-methods support chaining
+  - Added new methods to each type:<br>
+    <code>lighten(*amount*) -> *self*</code><br>
+    <code>darken(*amount*) -> *self*</code><br>
+    <code>saturate(*amount*) -> *self*</code><br>
+    <code>desaturate(*amount*) -> *self*</code><br>
+    <code>rotate(*hue*) -> *self*</code><br>
+    <code>invert() -> *self*</code><br>
+    <code>grayscale() -> *self*</code><br>
+    <code>blend(*other*, *ratio*) -> *self*</code><br>
+    <code>is_dark() -> *bool*</code><br>
+    <code>is_light() -> *bool*</code><br>
+    <code>with_alpha(*alpha*) -> *self*</code><br>
+    <code>complementary() -> *self*</code>
+
 ## 23.10.2024 `v1.3.1`
 * Now rounds the alpha channel to maximal 2 decimals, if converting from `hexa()` to `rgba()` or `hsla()` 
 
@@ -49,7 +66,7 @@
 * `README.md` improvements
 
 ## 18.10.2024 `v1.2.1` `v1.2.2`
-* fixed bug in function `Path.get(base_dir=True)`:<br>
+* fixed bug in function <code>Path.get(*base_dir*=True)</code>:<br>
   Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
   This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
 
@@ -126,9 +143,9 @@ from XulbuX import rgb, hsl, hexa
     <tr>
       <td>Custom Types:</td>
       <td>
-<code>rgb(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
-<code>hsl(<em>int</em>, <em>int</em>, <em>int</em>, <em>float</em>)</code><br>
-<code>hexa(<em>str</em>)</code>
+<code>rgb(<i>int</i>, <i>int</i>, <i>int</i>, <i>float</i>)</code><br>
+<code>hsl(<i>int</i>, <i>int</i>, <i>int</i>, <i>float</i>)</code><br>
+<code>hexa(<i>str</i>)</code>
       </td>
     </tr><tr>
       <td>Directory Operations</td>
