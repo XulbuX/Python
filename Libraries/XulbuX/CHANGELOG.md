@@ -113,7 +113,7 @@
 * added warning for no network connection when trying to [install missing libraries](#improvedlibimporting)
 
 ## 15.10.2024 `v1.0.6`
-* <span id="improvedlibimporting">improved `XulbuX` library importing:</span><br>
+* <span id="improvedlibimporting">improved **$\color{#8085FF}\textsf{XulbuX}$** library importing:</span><br>
   checks for missing required libraries and gives you the option to directly install them, if there are any
 * moved constant variables into a separate file
 * fixed issue where configuration file wasn't created and loaded correctly
