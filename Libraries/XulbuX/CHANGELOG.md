@@ -98,15 +98,15 @@
 ## 16.10.2024 `v1.0.9`
 * added a library description, which gets shown if it's ran directly
 * made it possible to escape an <span id="autoresetformat">auto-reset-format</span> (`[format](Automatically resetting)`) with a slash, so you can still have `()` brackets behind a `[format]`:
-  ```python
-  FormatCodes.print('[u](Automatically resetting) following text')
-  ```
-  prints:  <code><u>Automatically resetting</u> following text</code>
+  ```python
+  FormatCodes.print('[u](Automatically resetting) following text')
+  ```
+  prints:  <code><u>Automatically resetting</u> following text</code>
 
-  ```python
-  FormatCodes.print('[u]/(Automatically resetting) following text')
-  ```
-  prints:  <code><u>(Automatically resetting) following text</u></code>
+  ```python
+  FormatCodes.print('[u]/(Automatically resetting) following text')
+  ```
+  prints:  <code><u>(Automatically resetting) following text</u></code>
 
 ## 16.10.2024 `v1.0.7` `v1.0.8`
 * added `input()` function to the `FormatCodes` class, so you can make pretty looking input prompts
