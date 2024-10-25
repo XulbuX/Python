@@ -22,3 +22,5 @@ Per default, the **`{time}` before shutdown is set to `5 minutes`**
 ## makeLotsOfColorfulRectanglesWithRandomMessages.pyw | [view script](./scripts/makeLotsOfColorfulRectanglesWithRandomMessages.pyw)
 This script/exe will simply create a bunch of colored rectangles on your screen and display a random message in each of them.<br>
 There will be no way of getting rid of them, except for restarting your PC.
+> [!NOTE]
+> This script/exe works on all OSes.
