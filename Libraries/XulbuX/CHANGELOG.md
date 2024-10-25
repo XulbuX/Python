@@ -67,8 +67,8 @@
 
 ## 18.10.2024 `v1.2.1` `v1.2.2`
 * fixed bug in function <code>Path.get(*base_dir*=True)</code>:<br>
-  Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
-  This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
+  Previously, setting `base_dir` to `True` would not return the actual base directory or even cause an error.<br>
+  This was now fixed, and setting `base_dir` to `True` will return the actual base directory of the current program (*except if not running from a file*).
 
 ## 17.10.2024 `v1.2.0`
 * new function in the `Path` class: `Path.remove()`
@@ -81,7 +81,7 @@
 
 ## 17.10.2024 `v1.1.6` `v1.1.7`
 * fixed the `Cmd.cls()` function:<br>
-  There was a bug where, on Windows 10, the ANSI formats weren't cleared.
+  There was a bug where, on Windows 10, the ANSI formats weren't cleared.
 
 ## 17.10.2024 `v1.1.4` `v1.1.5`
 * added link to `CHANGELOG.md` to the `README.md` file
@@ -114,14 +114,14 @@
 
 ## 15.10.2024 `v1.0.6`
 * <span id="improvedlibimporting">improved **$\color{#8085FF}\textsf{XulbuX}$** library importing:</span><br>
-  checks for missing required libraries and gives you the option to directly install them, if there are any
+  checks for missing required libraries and gives you the option to directly install them, if there are any
 * moved constant variables into a separate file
 * fixed issue where configuration file wasn't created and loaded correctly
 
 ## 15.10.2024 `v1.0.1` `v1.0.2` `v1.0.3` `v1.0.4` `v1.0.5`
 * fixed `f-string` issues for Python 3.10:<br>
-  **1:** no use of same quotes inside f-strings<br>
-  **2:** no backslash escaping in f-strings
+  **1:** no use of same quotes inside f-strings<br>
+  **2:** no backslash escaping in f-strings
 
 ## <span id="release">14.10.2024 `v1.0.0`</span>
 $\color{#F90}\Huge\textsf{RELEASE!\ 🤩🎉}$<br>
@@ -133,58 +133,58 @@ import XulbuX as xx
 from XulbuX import rgb, hsl, hexa
 ```
 <table>
-  <thead>
-    <tr>
-      <th>Features</th>
-      <th>class, type, function, ...</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Custom Types:</td>
-      <td>
+  <thead>
+    <tr>
+      <th>Features</th>
+      <th>class, type, function, ...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Custom Types:</td>
+      <td>
 <code>rgb(<i>int</i>, <i>int</i>, <i>int</i>, <i>float</i>)</code><br>
 <code>hsl(<i>int</i>, <i>int</i>, <i>int</i>, <i>float</i>)</code><br>
 <code>hexa(<i>str</i>)</code>
-      </td>
-    </tr><tr>
-      <td>Directory Operations</td>
-      <td><code>xx.Dir</code></td>
-    </tr><tr>
-      <td>File Operations</td>
-      <td><code>xx.File</code></td>
-    </tr><tr>
-      <td>JSON File Operations</td>
-      <td><code>xx.Json</code></td>
-    </tr><tr>
-      <td>System Actions</td>
-      <td><code>xx.System</code></td>
-    </tr><tr>
-      <td>Manage Environment Vars</td>
-      <td><code>xx.EnvVars</code></td>
-    </tr><tr>
-      <td>CMD Log And Actions</td>
-      <td><code>xx.Cmd</code></td>
-    </tr><tr>
-      <td>Pretty Printing</td>
-      <td><code>xx.FormatCodes</code></td>
-    </tr><tr>
-      <td>Color Operations</td>
-      <td><code>xx.Color</code></td>
-    </tr><tr>
-      <td>Data Operations</td>
-      <td><code>xx.Data</code></td>
-    </tr><tr>
-      <td>String Operations</td>
-      <td><code>xx.String</code></td>
-    </tr><tr>
-      <td>Code String Operations</td>
-      <td><code>xx.Code</code></td>
-    </tr><tr>
-      <td>Regex Pattern Templates</td>
-      <td><code>xx.Regex</code></td>
-    </tr>
-  </tbody>
+      </td>
+    </tr><tr>
+      <td>Directory Operations</td>
+      <td><code>xx.Dir</code></td>
+    </tr><tr>
+      <td>File Operations</td>
+      <td><code>xx.File</code></td>
+    </tr><tr>
+      <td>JSON File Operations</td>
+      <td><code>xx.Json</code></td>
+    </tr><tr>
+      <td>System Actions</td>
+      <td><code>xx.System</code></td>
+    </tr><tr>
+      <td>Manage Environment Vars</td>
+      <td><code>xx.EnvVars</code></td>
+    </tr><tr>
+      <td>CMD Log And Actions</td>
+      <td><code>xx.Cmd</code></td>
+    </tr><tr>
+      <td>Pretty Printing</td>
+      <td><code>xx.FormatCodes</code></td>
+    </tr><tr>
+      <td>Color Operations</td>
+      <td><code>xx.Color</code></td>
+    </tr><tr>
+      <td>Data Operations</td>
+      <td><code>xx.Data</code></td>
+    </tr><tr>
+      <td>String Operations</td>
+      <td><code>xx.String</code></td>
+    </tr><tr>
+      <td>Code String Operations</td>
+      <td><code>xx.Code</code></td>
+    </tr><tr>
+      <td>Regex Pattern Templates</td>
+      <td><code>xx.Regex</code></td>
+    </tr>
+  </tbody>
 </table>
 
 
