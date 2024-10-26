@@ -15,6 +15,15 @@
 # <br><b>Changelog</b><br>
 
 
+## 26.10.2024 `v1.4.1`
+* Added methods to each color type:<br>
+  <code>is_grayscale() -> *self*</code><br>
+  <code>is_opaque() -> *self*</code>
+* Added additional error checking to the color types
+* Made error messages for the color types clearer
+* Updated the <code>blend(*other*, *ratio*)</code> method of all color types to use additive blending except for the alpha-channel
+* Fixed problem with method-chaining for all color types
+
 ## 25.10.2024 `v1.4.0`
 * Huge update to the custom color types:
   - Now all type-methods support chaining
