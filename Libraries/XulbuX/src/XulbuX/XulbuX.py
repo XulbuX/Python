@@ -26,8 +26,6 @@ except: from consts import *
 
 System.check_libs(['keyboard', 'regex'], install_missing=True)
 
-import subprocess as _subprocess
-import platform as _platform
 import tempfile as _tempfile
 import keyboard as _keyboard
 import difflib as _difflib
