@@ -17,10 +17,20 @@ def get_latest_python_version() -> str:
   versions = []
   try:
     for d in os.listdir(py_dir):
-      if d.startswith('Python3'):
-        versions.append(d)
+      if d.startswith('Python3'): versions.append(d)
     return sorted(versions)[-1] if versions else 'Python312'
   except: return 'Python312'
+
+def find_twine_path() -> str:
+  python_paths = [
+    os.path.join(sys.base_prefix, 'Scripts', 'twine.exe'),
+    os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Programs', 'Python', get_latest_python_version(), 'Scripts', 'twine.exe'),
+    os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming', 'Python', get_latest_python_version(), 'Scripts', 'twine.exe')
+  ]
+  for path in python_paths:
+    if os.path.isfile(path): return path
+  print('Error: twine.exe not found in expected locations. Please verify installation.')
+  sys.exit(1)
 
 def run_command(command:str) -> None:
   try: subprocess.run(command, check=True, shell=True)
@@ -43,10 +53,9 @@ def remove_dir_contents(dir:str, remove_dir:bool = False) -> None:
 def main(args:dict) -> None:
   os.chdir(args['lib_base']['value'])
   run_command('py -m build')
-  scripts_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming', 'Python', get_latest_python_version(), 'Scripts')
-  twine_path = os.path.join(scripts_dir, 'twine.exe')
+  twine_path = find_twine_path()
   run_command(f'"{twine_path}" upload dist/*')
-  if input('\nDirectly remove dist directory? (default is YES):  ').upper() in ['', 'Y', 'YES']:
+  if input('\nDirectly remove dist directory? (Y/n):  ').lower() in ['', 'y', 'yes']:
     xx.Path.remove(os.path.join(os.getcwd(), 'dist'))
     print()
 
