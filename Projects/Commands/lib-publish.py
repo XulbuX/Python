@@ -1,3 +1,7 @@
+# ALSO REQUIRES MODULES:
+# - pip install build
+# - pip install twine
+
 import XulbuX as xx
 import subprocess
 import shutil
