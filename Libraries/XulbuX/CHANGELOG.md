@@ -17,6 +17,7 @@
 
 ## 27.10.2024 `v1.4.2`
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`
+* Removed unnecessary parts when checking for missing required libraries
 
 ## 26.10.2024 `v1.4.1`
 * Added methods to each color type:<br>
