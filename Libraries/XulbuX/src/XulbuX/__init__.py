@@ -21,4 +21,5 @@
 
 __version__ = '1.4.3'
 
-from .XulbuX import rgba, hsla, hexa, Path, File, Json, System, EnvVars, Cmd, FormatCodes, Color, Data, String, Code, Regex
+import System
+from .XulbuX import rgba, hsla, hexa, Path, File, Json, EnvVars, Cmd, FormatCodes, Color, Data, String, Code, Regex

@@ -19,42 +19,28 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-def check_libs(libs:list[str], install_missing:bool = False, confirm_install:bool = True) -> None|list[str]:
-  missing = []
-  for lib in libs:
-    try: __import__(lib)
-    except ImportError: missing.append(lib)
-  if not missing: return None
-  if not install_missing: return missing
-  if confirm_install:
-    print('The following required libraries are missing:')
-    for lib in missing: print(f'- {lib}')
-    if input('Do you want to install them now (Y/n):  ').strip().lower() not in ['', 'y', 'yes']: raise ImportError('Missing required libraries.')
-  try:
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
-    return None
-  except subprocess.CalledProcessError: return missing
-
-check_libs(['regex', 'subprocess', 'platform', 'tempfile', 'keyboard', 'difflib', 'getpass', 'ctypes', 'shutil', 'math', 'json', 'time', 'sys', 'os', 're'], install_missing=True)
+try: from .System import *
+except: from System import *
 try: from .consts import *
 except: from consts import *
-import regex as rx
-import subprocess
-import platform
-import tempfile
-import keyboard
-import difflib
-import getpass
-import ctypes
-import shutil
-import math
-import json
-import time
-import sys
-import os
-import re
+
+System.check_libs(['keyboard', 'regex'], install_missing=True)
+
+import subprocess as _subprocess
+import platform as _platform
+import tempfile as _tempfile
+import keyboard as _keyboard
+import difflib as _difflib
+import getpass as _getpass
+import ctypes as _ctypes
+import shutil as _shutil
+import regex as _regex
+import math as _math
+import json as _json
+import time as _time
+import sys as _sys
+import os as _os
+import re as _re
 
 
 
@@ -64,8 +50,8 @@ def get_version(var:str = '__version__') -> str:
     from . import var
     return var
   except ImportError:
-    init_path = os.path.join(os.path.dirname(__file__), '__init__.py')
-    if os.path.isfile(init_path):
+    init_path = _os.path.join(_os.path.dirname(__file__), '__init__.py')
+    if _os.path.isfile(init_path):
       with open(init_path, encoding='utf-8') as f:
         for line in f:
           if line.startswith(var): return line.split('=')[-1].strip().strip("'\"")
@@ -470,14 +456,14 @@ class Path:
   @staticmethod
   def get(cwd:bool = False, base_dir:bool = False) -> str|list:
     paths = []
-    if cwd: paths.append(os.getcwd())
+    if cwd: paths.append(_os.getcwd())
     if base_dir:
-      if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'): base_path = sys._MEIPASS
+      if getattr(_sys, 'frozen', False) and hasattr(_sys, '_MEIPASS'): base_path = _sys._MEIPASS
       else:
-        main_module = sys.modules['__main__']
-        if hasattr(main_module, '__file__'): base_path = os.path.dirname(os.path.abspath(main_module.__file__))
+        main_module = _sys.modules['__main__']
+        if hasattr(main_module, '__file__'): base_path = _os.path.dirname(_os.path.abspath(main_module.__file__))
         elif hasattr(main_module, '__spec__') and main_module.__spec__ and getattr(main_module.__spec__, 'origin', None):
-          base_path = os.path.dirname(os.path.abspath(main_module.__spec__.origin))
+          base_path = _os.path.dirname(_os.path.abspath(main_module.__spec__.origin))
         else: raise RuntimeError('Can only get base directory if ran from a file.')
       paths.append(base_path)
     return paths[0] if len(paths) == 1 else paths
@@ -486,54 +472,54 @@ class Path:
   def extend(path:str, search_in:str|list[str] = None, raise_error:bool = False) -> str:
     def get_closest_match(dir:str, part:str) -> str|None:
       try:
-        files_and_dirs = os.listdir(dir)
-        matches = difflib.get_close_matches(part, files_and_dirs, n=1, cutoff=0.6)
+        files_and_dirs = _os.listdir(dir)
+        matches = _difflib.get_close_matches(part, files_and_dirs, n=1, cutoff=0.6)
         return matches[0] if matches else None
       except: return None
     def find_path(start:str, parts:list[str]) -> str|None:
       current = start
       for part in parts:
-        if os.path.isfile(current): return current
+        if _os.path.isfile(current): return current
         closest_match = get_closest_match(current, part)
-        if closest_match: current = os.path.join(current, closest_match)
+        if closest_match: current = _os.path.join(current, closest_match)
         else: return None
-      return current if os.path.exists(current) and current != start else None
+      return current if _os.path.exists(current) and current != start else None
     def expand_env_path(p:str) -> str:
       if not '%' in p: return p
       parts = p.split('%')
       for i in range(1, len(parts), 2):
-        if parts[i].upper() in os.environ:
-          parts[i] = os.environ[parts[i].upper()]
+        if parts[i].upper() in _os.environ:
+          parts[i] = _os.environ[parts[i].upper()]
       return ''.join(parts)
-    path = os.path.normpath(expand_env_path(path))
-    if os.path.isabs(path):
-      drive, rel_path = os.path.splitdrive(path)
-      rel_path = rel_path.lstrip(os.sep)
-      search_dirs = [drive + os.sep] if drive else [os.sep]
+    path = _os.path.normpath(expand_env_path(path))
+    if _os.path.isabs(path):
+      drive, rel_path = _os.path.splitdrive(path)
+      rel_path = rel_path.lstrip(_os.sep)
+      search_dirs = [drive + _os.sep] if drive else [_os.sep]
     else:
-      rel_path = path.lstrip(os.sep)
+      rel_path = path.lstrip(_os.sep)
       base_dir = Path.get(base_dir=True)
-      search_dirs = [os.getcwd(), base_dir, os.path.expanduser('~'), tempfile.gettempdir()]
+      search_dirs = [_os.getcwd(), base_dir, _os.path.expanduser('~'), _tempfile.gettempdir()]
     if search_in: search_dirs.extend([search_in] if isinstance(search_in, str) else search_in)
-    path_parts = rel_path.split(os.sep)
+    path_parts = rel_path.split(_os.sep)
     for search_dir in search_dirs:
-      full_path = os.path.join(search_dir, rel_path)
-      if os.path.exists(full_path): return full_path
+      full_path = _os.path.join(search_dir, rel_path)
+      if _os.path.exists(full_path): return full_path
       match = find_path(search_dir, path_parts)
       if match: return match
     if raise_error: raise FileNotFoundError(f'Path \'{path}\' not found in specified directories.')
-    return os.path.join(search_dirs[0], rel_path)
+    return _os.path.join(search_dirs[0], rel_path)
 
   @staticmethod
   def remove(path:str, only_content:bool = False) -> None:
-    if not os.path.exists(path): return None
-    if not only_content: shutil.rmtree(path)
-    elif os.path.isdir(path):
-      for filename in os.listdir(path):
-        file_path = os.path.join(path, filename)
+    if not _os.path.exists(path): return None
+    if not only_content: _shutil.rmtree(path)
+    elif _os.path.isdir(path):
+      for filename in _os.listdir(path):
+        file_path = _os.path.join(path, filename)
         try:
-          if os.path.isfile(file_path) or os.path.islink(file_path): os.unlink(file_path)
-          elif os.path.isdir(file_path): shutil.rmtree(file_path)
+          if _os.path.isfile(file_path) or _os.path.islink(file_path): _os.unlink(file_path)
+          elif _os.path.isdir(file_path): _shutil.rmtree(file_path)
         except Exception as e: print(f'Failed to delete {file_path}. Reason: {e}')
 
 
@@ -551,15 +537,15 @@ class File:
     cwd if `prefer_base_dir` is set to `False`."""
     if not filename.lower().endswith(f'.{filetype.lower()}'): filename = f'{filename}.{filetype.lower()}'
     try: return Path.extend(filename, search_in, raise_error=True)
-    except FileNotFoundError: return os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else os.path.join(os.getcwd(), filename)
+    except FileNotFoundError: return _os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else _os.path.join(_os.getcwd(), filename)
 
   @staticmethod
   def rename_extension(file_path:str, new_extension:str) -> str:
-    directory, filename_with_ext = os.path.split(file_path)
+    directory, filename_with_ext = _os.path.split(file_path)
     filename = filename_with_ext.split('.')[0]
     camel_case_filename = String.to_camel_case(filename)
     new_filename = f'{camel_case_filename}{new_extension}'
-    new_file_path = os.path.join(directory, new_filename)
+    new_file_path = _os.path.join(directory, new_filename)
     return new_file_path
 
   @staticmethod
@@ -568,13 +554,13 @@ class File:
     ----------------------------------------------------------------------------
     The function will throw a `FileExistsError` if the file already exists.<br>
     To overwrite the file, set the `force` parameter to `True`."""
-    if os.path.exists(file) and not force:
+    if _os.path.exists(file) and not force:
       with open(file, 'r', encoding='utf-8') as existing_file:
         existing_content = existing_file.read()
         if existing_content == content: raise FileExistsError('Already created this file. (nothing changed)')
       raise FileExistsError('File already exists.')
     with open(file, 'w', encoding='utf-8') as f: f.write(content)
-    full_path = os.path.abspath(file)
+    full_path = _os.path.abspath(file)
     return full_path
 
 
@@ -594,8 +580,8 @@ class Json:
     additionally. (returns: `[processed_json, original_json]`)"""
     file_path = File._make_path(json_file, 'json', prefer_base_dir=True)
     with open(file_path, 'r') as file: content = file.read()
-    try: data = json.loads(content)
-    except json.JSONDecodeError as e: raise ValueError(f"Error parsing JSON in '{file_path}':  {str(e)}")
+    try: data = _json.loads(content)
+    except _json.JSONDecodeError as e: raise ValueError(f"Error parsing JSON in '{file_path}':  {str(e)}")
     processed_data = Data.remove_comments(data, comment_start, comment_end)
     if not processed_data: raise ValueError(f"The JSON file '{file_path}' is empty or contains only comments.")
     return (processed_data, data) if return_original else processed_data
@@ -603,13 +589,13 @@ class Json:
   @staticmethod
   def create(content:dict, new_file:str = 'config', indent:int = 2, compactness:int = 1, force:bool = False) -> str:
     file_path = File._make_path(new_file, 'json', prefer_base_dir=True)
-    if os.path.exists(file_path) and not force:
+    if _os.path.exists(file_path) and not force:
       with open(file_path, 'r', encoding='utf-8') as existing_file:
-        existing_content = json.load(existing_file)
+        existing_content = _json.load(existing_file)
         if existing_content == content: raise FileExistsError(f'Already created this file. (nothing changed)')
       raise FileExistsError('File already exists.')
     with open(file_path, 'w', encoding='utf-8') as f: f.write(Data.to_str(content, indent, compactness, as_json=True))
-    full_path = os.path.abspath(file_path)
+    full_path = _os.path.abspath(file_path)
     return full_path
 
   @staticmethod
@@ -654,32 +640,32 @@ class Json:
 class System:
   @staticmethod
   def restart(msg:str = None, wait:int = 0, continue_program:bool = False, force:bool = False) -> None:
-    system = platform.system().lower()
+    system = _platform.system().lower()
     if system == 'windows':
       if not force:
-        output = subprocess.check_output('tasklist', shell=True).decode()
+        output = _subprocess.check_output('tasklist', shell=True).decode()
         processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
         if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CMD
           raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
-      if msg: os.system(f'shutdown /r /t {wait} /c "{msg}"')
-      else: os.system('shutdown /r /t 0')
+      if msg: _os.system(f'shutdown /r /t {wait} /c "{msg}"')
+      else: _os.system('shutdown /r /t 0')
       if continue_program:
         print(f'Restarting in {wait} seconds...')
-        time.sleep(wait)
+        _time.sleep(wait)
     elif system in ['linux', 'darwin']:
       if not force:
-        output = subprocess.check_output(['ps', '-A']).decode()
+        output = _subprocess.check_output(['ps', '-A']).decode()
         processes = output.splitlines()[1:]  # EXCLUDE HEADER
         if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND PS
           raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
       if msg:
-        subprocess.Popen(['notify-send', 'System Restart', msg])
-        time.sleep(wait)
-      try: subprocess.run(['sudo', 'shutdown', '-r', 'now'])
-      except subprocess.CalledProcessError: raise PermissionError('Failed to restart: insufficient privileges. Ensure sudo permissions are granted.')
+        _subprocess.Popen(['notify-send', 'System Restart', msg])
+        _time.sleep(wait)
+      try: _subprocess.run(['sudo', 'shutdown', '-r', 'now'])
+      except _subprocess.CalledProcessError: raise PermissionError('Failed to restart: insufficient privileges. Ensure sudo permissions are granted.')
       if continue_program:
         print(f'Restarting in {wait} seconds...')
-        time.sleep(wait)
+        _time.sleep(wait)
     else: raise NotImplementedError(f'Restart not implemented for `{system}`')
 
 
@@ -693,31 +679,31 @@ class EnvVars:
   - `EnvVars.add_path()`"""
   @staticmethod
   def get_paths(as_list:bool = False) -> str|list:
-    paths = os.environ.get('PATH')
-    return paths.split(os.pathsep) if as_list else paths
+    paths = _os.environ.get('PATH')
+    return paths.split(_os.pathsep) if as_list else paths
 
   @staticmethod
   def has_path(path:str = None, cwd:bool = False, base_dir:bool = False) -> bool:
-    if cwd: path = os.getcwd()
+    if cwd: path = _os.getcwd()
     if base_dir: path = Path.get(base_dir=True)
     paths = EnvVars.get_paths()
     return path in paths
 
   @staticmethod
   def __add_sort_paths(add_path:str, current_paths:str) -> str:
-    final_paths = Data.remove_empty_items(Data.remove_duplicates(f'{add_path};{current_paths}'.split(os.pathsep)))
+    final_paths = Data.remove_empty_items(Data.remove_duplicates(f'{add_path};{current_paths}'.split(_os.pathsep)))
     final_paths.sort()
-    return f'{os.pathsep.join(final_paths)};'
+    return f'{_os.pathsep.join(final_paths)};'
 
   @staticmethod
   def add_path(add_path:str = None, cwd:bool = False, base_dir:bool = False, persistent:bool = True) -> None:
-    if cwd: add_path = os.getcwd()
+    if cwd: add_path = _os.getcwd()
     if base_dir: add_path = Path.get(base_dir=True)
     if not EnvVars.has_path(add_path):
       final_paths = EnvVars.__add_sort_paths(add_path, EnvVars.get_paths())
-      os.environ['PATH'] = final_paths
+      _os.environ['PATH'] = final_paths
       if persistent:
-        if os.name == 'nt':  # Windows
+        if _os.name == 'nt':  # Windows
           try:
             import winreg
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment', 0, winreg.KEY_ALL_ACCESS)
@@ -725,9 +711,9 @@ class EnvVars:
             winreg.CloseKey(key)
           except ImportError: raise ImportError('Unable to make persistent changes on Windows.')
         else:  # UNIX-LIKE (Linux/macOS)
-          shell_rc_file = os.path.expanduser('~/.bashrc' if os.path.exists(os.path.expanduser('~/.bashrc')) else '~/.zshrc')
+          shell_rc_file = _os.path.expanduser('~/.bashrc' if _os.path.exists(_os.path.expanduser('~/.bashrc')) else '~/.zshrc')
           with open(shell_rc_file, 'a') as f: f.write(f'\n# Added by XulbuX\nexport PATH="$PATH:{add_path}"\n')
-          os.system(f'source {shell_rc_file}')
+          _os.system(f'source {shell_rc_file}')
     else: raise ValueError(f'{add_path} is already in PATH.')
 
 
@@ -753,7 +739,7 @@ class Cmd:
   For more detailed information about formatting codes, see the `log` class description."""
   @staticmethod
   def get_args(find_args:dict) -> dict:
-    args = sys.argv[1:]
+    args = _sys.argv[1:]
     results = {}
     for arg_key, arg_group in find_args.items():
       value = None
@@ -769,25 +755,25 @@ class Cmd:
 
   @staticmethod
   def user() -> str:
-    return os.getenv('USER') or getpass.getuser()
+    return _os.getenv('USER') or _getpass.getuser()
 
   @staticmethod
   def is_admin() -> bool:
-    try: return ctypes.windll.shell32.IsUserAnAdmin() in [1, True]
+    try: return _ctypes.windll.shell32.IsUserAnAdmin() in [1, True]
     except AttributeError: return False
   
   @staticmethod
   def pause_exit(pause:bool = False, exit:bool = False, last_msg:str = '', exit_code:int = 0, reset_ansi:bool = False) -> None:
     print(last_msg, end='', flush=True)
     if reset_ansi: FormatCodes.print('[_]', end='')
-    if pause: keyboard.read_event()
-    if exit: sys.exit(exit_code)
+    if pause: _keyboard.read_event()
+    if exit: _sys.exit(exit_code)
 
   @staticmethod
   def cls() -> None:
     """Will clear the console in addition to completely resetting the ANSI formats."""
-    if shutil.which('cls'): os.system('cls')
-    elif shutil.which('clear'): os.system('clear')
+    if _shutil.which('cls'): _os.system('cls')
+    elif _shutil.which('clear'): _os.system('clear')
     print('\033[0m', end='', flush=True)
 
   @staticmethod
@@ -921,9 +907,9 @@ class FormatCodes:
   def to_ansi(string:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _default_start:bool = True) -> str:
     result, use_default = '', default_color and (Color.is_valid_rgba(default_color, False) or Color.is_valid_hexa(default_color, False))
     if use_default:
-      string = re.sub(r'\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]', r'[\1_|default\2]', string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
-      string = re.sub(r'\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]', r'[\1default\2]', string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
-    def replace_keys(match:rx.Match) -> str:
+      string = _re.sub(r'\[\s*([^]_]*?)\s*\*\s*([^]_]*?)\]', r'[\1_|default\2]', string)  # REPLACE `[…|*|…]` WITH `[…|_|default|…]`
+      string = _re.sub(r'\[\s*([^]_]*?)\s*\*color\s*([^]_]*?)\]', r'[\1default\2]', string)  # REPLACE `[…|*color|…]` WITH `[…|default|…]`
+    def replace_keys(match:_regex.Match) -> str:
       format_keys, esc, auto_reset_txt = match.group(1), match.group(2), match.group(3)
       if not format_keys: return match.group(0)
       else:
@@ -936,25 +922,25 @@ class FormatCodes:
           ansi_resets = [r for k in reset_keys if (r := FormatCodes.__get_replacement(k, default_color, brightness_steps)).startswith(ANSI_PREF)]
       if not all(f.startswith(ANSI_PREF) for f in ansi_formats): return match.group(0)
       return ''.join(ansi_formats) + ((f'({FormatCodes.to_ansi(auto_reset_txt, default_color, brightness_steps, False)})' if esc else auto_reset_txt) if auto_reset_txt else '') + ('' if esc else ''.join(ansi_resets))
-    result = '\n'.join(rx.sub(Regex.brackets('[', ']', is_group=True) + r'(?:\s*([/\\]?)\s*' + Regex.brackets('(', ')', is_group=True) + r')?', replace_keys, line) for line in string.splitlines())
+    result = '\n'.join(_regex.sub(Regex.brackets('[', ']', is_group=True) + r'(?:\s*([/\\]?)\s*' + Regex.brackets('(', ')', is_group=True) + r')?', replace_keys, line) for line in string.splitlines())
     return (FormatCodes.__get_default_ansi(default_color) if _default_start else '') + result if use_default else result
 
   @staticmethod
   def __config_console() -> None:
-    sys.stdout.flush()
-    kernel32 = ctypes.windll.kernel32
+    _sys.stdout.flush()
+    kernel32 = _ctypes.windll.kernel32
     h = kernel32.GetStdHandle(-11)
-    mode = ctypes.c_ulong()
-    kernel32.GetConsoleMode(h, ctypes.byref(mode))
+    mode = _ctypes.c_ulong()
+    kernel32.GetConsoleMode(h, _ctypes.byref(mode))
     kernel32.SetConsoleMode(h, mode.value | 0x0004)  # ENABLE VIRTUAL TERMINAL PROCESSING
 
   @staticmethod
   def __get_default_ansi(default_color:hexa|rgba, format_key:str = None, brightness_steps:int = None, _modifiers:tuple[str,str] = ('+l', '-d')) -> str|None:
     if Color.is_valid_hexa(default_color, False): default_color = Color.to_rgba(default_color)
-    if not brightness_steps or (format_key and re.search(r'(?i)((?:BG\s*:)?)\s*default', format_key)):
-      if format_key and re.search(r'(?i)BG\s*:\s*default', format_key): return f'{ANSI_PREF}48;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
+    if not brightness_steps or (format_key and _re.search(r'(?i)((?:BG\s*:)?)\s*default', format_key)):
+      if format_key and _re.search(r'(?i)BG\s*:\s*default', format_key): return f'{ANSI_PREF}48;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
       return f'{ANSI_PREF}38;2;{default_color[0]};{default_color[1]};{default_color[2]}m'
-    match = re.match(rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{re.escape(m)}+" for m in _modifiers[0] + _modifiers[1]])})$', format_key)
+    match = _re.match(rf'(?i)((?:BG\s*:)?)\s*({"|".join([f"{_re.escape(m)}+" for m in _modifiers[0] + _modifiers[1]])})$', format_key)
     if not match or not match.group(2): return None
     is_bg, modifier = match.group(1), match.group(2)
     new_rgb, lighten, darken = None, None, None
@@ -994,8 +980,8 @@ class FormatCodes:
       new_default_color = FormatCodes.__get_default_ansi(default_color, format_key, brightness_steps, _modifiers)
       if new_default_color: return new_default_color
     if key_exists(format_key): return ANSI_PREF + get_value(format_key)
-    rgb_match = re.match(r'(?i)\s*(BG\s*:)?\s*(rgb)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*', format_key)
-    hex_match = re.match(r'(?i)\s*(BG\s*:)?\s*#?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})\s*', format_key)
+    rgb_match = _re.match(r'(?i)\s*(BG\s*:)?\s*(rgb)?\s*\(?\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?\s*', format_key)
+    hex_match = _re.match(r'(?i)\s*(BG\s*:)?\s*#?([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})\s*', format_key)
     try:
       if rgb_match:
         is_bg = rgb_match.group(1)
@@ -1046,7 +1032,7 @@ class Color:
       elif isinstance(color, dict):
         if allow_alpha and Color.has_alpha(color): return 0 <= color['r'] <= 255 and 0 <= color['g'] <= 255 and 0 <= color['b'] <= 255 and 0 <= color['a'] <= 255
         else: return 0 <= color['r'] <= 255 and 0 <= color['g'] <= 255 and 0 <= color['b'] <= 255
-      elif isinstance(color, str): return bool(re.fullmatch(Regex.rgb_str(), color))
+      elif isinstance(color, str): return bool(_re.fullmatch(Regex.rgb_str(), color))
     except: return False
 
   @staticmethod
@@ -1058,7 +1044,7 @@ class Color:
       elif isinstance(color, dict):
         if allow_alpha and Color.has_alpha(color): return 0 <= color['h'] <= 360 and 0 <= color['s'] <= 100 and 0 <= color['l'] <= 100 and 0.0 <= color['a'] <= 1.0
         else: return 0 <= color['h'] <= 360 and 0 <= color['s'] <= 100 and 0 <= color['l'] <= 100
-      elif isinstance(color, str): return bool(re.fullmatch(Regex.hsl_str(), color))
+      elif isinstance(color, str): return bool(_re.fullmatch(Regex.hsl_str(), color))
     except: return False
 
   @staticmethod
@@ -1066,7 +1052,7 @@ class Color:
     try:
       if allow_alpha: pattern = r'(?i)^([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3})$'
       else: pattern = r'(?i)^([0-9A-F]{6}|[0-9A-F]{3})$'
-      return bool(re.fullmatch(pattern, color.lstrip('#')))
+      return bool(_re.fullmatch(pattern, color.lstrip('#')))
     except: return False
 
   @staticmethod
@@ -1075,7 +1061,7 @@ class Color:
 
   @staticmethod
   def str_to_rgba(rgb_str:str) -> rgba|None:
-    try: _rgba = re.match(Regex.rgb_str(allow_alpha=True), rgb_str).groups()
+    try: _rgba = _re.match(Regex.rgb_str(allow_alpha=True), rgb_str).groups()
     except: return None
     if _rgba[3] in ['', None]: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]))
     else: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]), (int(_rgba[3]) if _rgba[3].count('.') == 0 else float(_rgba[3])))
@@ -1251,7 +1237,7 @@ class Data:
       elif isinstance(item, list):  return [v for v in (process_item(val) for val in item) if v is not None]
       elif isinstance(item, tuple): return tuple(v for v in (process_item(val) for val in item) if v is not None)
       elif isinstance(item, str):
-        if comment_end: no_comments = re.sub(rf'^((?:(?!{re.escape(comment_start)}).)*){re.escape(comment_start)}(?:(?:(?!{re.escape(comment_end)}).)*)(?:{re.escape(comment_end)})?(.*?)$',
+        if comment_end: no_comments = _re.sub(rf'^((?:(?!{_re.escape(comment_start)}).)*){_re.escape(comment_start)}(?:(?:(?!{_re.escape(comment_end)}).)*)(?:{_re.escape(comment_end)})?(.*?)$',
             lambda m: f'{m.group(1).strip()}{comment_sep if (m.group(1).strip() not in ["", None]) and (m.group(2).strip() not in ["", None]) else ""}{m.group(2).strip()}', item)
         else: no_comments = None if item.lstrip().startswith(comment_start) else item
         return no_comments.strip() if no_comments and no_comments.strip() != '' else None
@@ -1458,7 +1444,7 @@ class Data:
       elif hasattr(value, '__dict__'): return format_dict(value.__dict__, current_indent + indent)
       elif isinstance(value, (list, tuple, set, frozenset)): return format_sequence(value, current_indent + indent)
       elif isinstance(value, bool): return str(value).lower() if as_json else str(value)
-      elif isinstance(value, (int, float)): return 'null' if as_json and (math.isinf(value) or math.isnan(value)) else str(value)
+      elif isinstance(value, (int, float)): return 'null' if as_json and (_math.isinf(value) or _math.isnan(value)) else str(value)
       elif isinstance(value, complex): return f'[{value.real}, {value.imag}]' if as_json else str(value)
       elif value is None: return 'null' if as_json else 'None'
       else: return '"' + escape_string(str(value), '"') + '"' if as_json else "'" + escape_string(str(value), "'") + "'"
@@ -1544,7 +1530,7 @@ class String:
 
   @staticmethod
   def decompose(case_string:str, seps:str = '-_') -> list:
-    return [part.lower() for part in re.split(rf'(?<=[a-z])(?=[A-Z])|[{seps}]', case_string)]
+    return [part.lower() for part in _re.split(rf'(?<=[a-z])(?=[A-Z])|[{seps}]', case_string)]
 
   @staticmethod
   def to_camel_case(string:str) -> str:
@@ -1565,7 +1551,7 @@ class String:
 
   @staticmethod
   def remove_consecutive_empty_lines(string:str, max_consecutive:int = 0) -> str:
-    return re.sub(r'(\n\s*){2,}', r'\1' * (max_consecutive + 1), string)
+    return _re.sub(r'(\n\s*){2,}', r'\1' * (max_consecutive + 1), string)
 
   @staticmethod
   def multi_strip(string:str, strip_chars:str = ' _-') -> str:
@@ -1626,16 +1612,16 @@ class Code:
 
   @staticmethod
   def get_func_calls(code:str) -> list:
-    funcs, nested_func_calls = rx.findall(r'(?i)' + Regex.func_call(), code), []
+    funcs, nested_func_calls = _regex.findall(r'(?i)' + Regex.func_call(), code), []
     for _, func_attrs in funcs:
-      nested_calls = rx.findall(r'(?i)' + Regex.func_call(), func_attrs)
+      nested_calls = _regex.findall(r'(?i)' + Regex.func_call(), func_attrs)
       if nested_calls: nested_func_calls.extend(nested_calls)
     return Data.remove_duplicates(funcs + nested_func_calls)
 
   @staticmethod
   def is_js(code:str, funcs:list = ['__', '$t', '$lang']) -> bool:
     funcs = '|'.join(funcs)
-    js_pattern = rx.compile(Regex.outside_strings(r'''^(?:
+    js_pattern = _regex.compile(Regex.outside_strings(r'''^(?:
       (\$[\w_]+)\s*                      # JQUERY-STYLE VARIABLES
       |(\$[\w_]+\s*\()                   # JQUERY-STYLE FUNCTION CALLS
       |((''' + funcs + r')' + Regex.brackets('()') + r'''\s*) # PREDEFINED FUNCTION CALLS
@@ -1671,7 +1657,7 @@ class Code:
       |(\bdelete\b)                      # DELETE OPERATOR
       |(\btypeof\b)                      # TYPEOF OPERATOR
       |(\bvoid\b)                        # VOID OPERATOR
-    )[\s\S]*$'''), rx.VERBOSE | rx.IGNORECASE)
+    )[\s\S]*$'''), _regex.VERBOSE | _regex.IGNORECASE)
     return bool(js_pattern.fullmatch(code))
 
 
@@ -1703,7 +1689,7 @@ class Regex:
     """Match everything inside brackets, including other nested brackets.\n
     ------------------------------------------------------------------------------------
     **Attention:** Requires non standard library `regex` not standard library `re`!"""
-    g, b1, b2 = '' if is_group else '?:', re.escape(bracket1) if len(bracket1) == 1 else bracket1, re.escape(bracket2) if len(bracket2) == 1 else bracket2
+    g, b1, b2 = '' if is_group else '?:', _re.escape(bracket1) if len(bracket1) == 1 else bracket1, _re.escape(bracket2) if len(bracket2) == 1 else bracket2
     return rf'{b1}\s*({g}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|{b1}(?:[^{b1}{b2}"\']|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|(?R))*{b2})*)\s*{b2}'
 
   @staticmethod
@@ -1744,7 +1730,7 @@ class Regex:
     If the `fix_sep` is set to nothing, and char which is not a letter or number<br>
     can be used to separate the RGB values, including just a space."""
     if fix_sep in ['', None]: fix_sep = r'[^0-9A-Z]'
-    else: fix_sep = re.escape(fix_sep)
+    else: fix_sep = _re.escape(fix_sep)
     rgb_part = rf'''((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
       (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
       (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))'''
@@ -1768,25 +1754,27 @@ if __name__ == '__main__':
   [i|#FF806A]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
   [b|#75A2FF]Usage:[*]
-    [#FF9E6A]import [#77EFEF]XulbuX [#FF9E6A]as [#77EFEF]xx[*]
-    [#FF9E6A]from [#77EFEF]XulbuX [#FF9E6A]import [#77EFEF]rgba[#555], [#77EFEF]hsla[#555], [#77EFEF]hexa[*]
+    [#666]# GENERAL LIBRARY[*]
+    [#FF606A]import [#77EFEF]XulbuX [#FF606A]as [#77EFEF]xx[*]
+    [#666]# CUSTOM TYPES[*]
+    [#FF606A]from [#77EFEF]XulbuX [#FF606A]import [#77EFEF]rgba[#666], [#77EFEF]hsla[#666], [#77EFEF]hexa[*]
 
   [b|#75A2FF]Includes:[*]
     [dim](•) CUSTOM TYPES:
-       [dim](•) [#AA90FF]rgba[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
-       [dim](•) [#AA90FF]hsla[#555]/([i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]int[_|#555],[i|#60AAFF]float[_|#555])[*]
-       [dim](•) [#AA90FF]hexa[#555]/([i|#60AAFF]str[_|#555])[*]
-    [dim](•) PATH OPERATIONS          [#77EFEF]xx[#555].[#AA90FF]Path[*]
-    [dim](•) FILE OPERATIONS          [#77EFEF]xx[#555].[#AA90FF]File[*]
-    [dim](•) JSON FILE OPERATIONS     [#77EFEF]xx[#555].[#AA90FF]Json[*]
-    [dim](•) SYSTEM ACTIONS           [#77EFEF]xx[#555].[#AA90FF]System[*]
-    [dim](•) MANAGE ENVIRONMENT VARS  [#77EFEF]xx[#555].[#AA90FF]Env_vars[*]
-    [dim](•) CMD LOG AND ACTIONS      [#77EFEF]xx[#555].[#AA90FF]Cmd[*]
-    [dim](•) PRETTY PRINTING          [#77EFEF]xx[#555].[#AA90FF]FormatCodes[*]
-    [dim](•) COLOR OPERATIONS         [#77EFEF]xx[#555].[#AA90FF]Color[*]
-    [dim](•) DATA OPERATIONS          [#77EFEF]xx[#555].[#AA90FF]Data[*]
-    [dim](•) STR OPERATIONS           [#77EFEF]xx[#555].[#AA90FF]String[*]
-    [dim](•) CODE STRING OPERATIONS   [#77EFEF]xx[#555].[#AA90FF]Code[*]
-    [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#555].[#AA90FF]Regex[*]
+       [dim](•) [#AA90FF]rgba[#666]/([i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]float[_|#666])[*]
+       [dim](•) [#AA90FF]hsla[#666]/([i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]float[_|#666])[*]
+       [dim](•) [#AA90FF]hexa[#666]/([i|#60AAFF]str[_|#666])[*]
+    [dim](•) PATH OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]Path[*]
+    [dim](•) FILE OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]File[*]
+    [dim](•) JSON FILE OPERATIONS     [#77EFEF]xx[#666].[#AA90FF]Json[*]
+    [dim](•) SYSTEM ACTIONS           [#77EFEF]xx[#666].[#AA90FF]System[*]
+    [dim](•) MANAGE ENVIRONMENT VARS  [#77EFEF]xx[#666].[#AA90FF]Env_vars[*]
+    [dim](•) CMD LOG AND ACTIONS      [#77EFEF]xx[#666].[#AA90FF]Cmd[*]
+    [dim](•) PRETTY PRINTING          [#77EFEF]xx[#666].[#AA90FF]FormatCodes[*]
+    [dim](•) COLOR OPERATIONS         [#77EFEF]xx[#666].[#AA90FF]Color[*]
+    [dim](•) DATA OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]Data[*]
+    [dim](•) STR OPERATIONS           [#77EFEF]xx[#666].[#AA90FF]String[*]
+    [dim](•) CODE STRING OPERATIONS   [#77EFEF]xx[#666].[#AA90FF]Code[*]
+    [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#666].[#AA90FF]Regex[*]
   [_]''', '#809FFF')
   Cmd.pause_exit(pause=True)
