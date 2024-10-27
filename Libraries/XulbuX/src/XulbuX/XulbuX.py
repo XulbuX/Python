@@ -635,41 +635,6 @@ class Json:
 
 
 
-################################################## SYSTEM ACTIONS ##################################################
-
-class System:
-  @staticmethod
-  def restart(msg:str = None, wait:int = 0, continue_program:bool = False, force:bool = False) -> None:
-    system = _platform.system().lower()
-    if system == 'windows':
-      if not force:
-        output = _subprocess.check_output('tasklist', shell=True).decode()
-        processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
-        if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CMD
-          raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
-      if msg: _os.system(f'shutdown /r /t {wait} /c "{msg}"')
-      else: _os.system('shutdown /r /t 0')
-      if continue_program:
-        print(f'Restarting in {wait} seconds...')
-        _time.sleep(wait)
-    elif system in ['linux', 'darwin']:
-      if not force:
-        output = _subprocess.check_output(['ps', '-A']).decode()
-        processes = output.splitlines()[1:]  # EXCLUDE HEADER
-        if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND PS
-          raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
-      if msg:
-        _subprocess.Popen(['notify-send', 'System Restart', msg])
-        _time.sleep(wait)
-      try: _subprocess.run(['sudo', 'shutdown', '-r', 'now'])
-      except _subprocess.CalledProcessError: raise PermissionError('Failed to restart: insufficient privileges. Ensure sudo permissions are granted.')
-      if continue_program:
-        print(f'Restarting in {wait} seconds...')
-        _time.sleep(wait)
-    else: raise NotImplementedError(f'Restart not implemented for `{system}`')
-
-
-
 ################################################## PATH ACTIONS ##################################################
 
 class EnvVars:
