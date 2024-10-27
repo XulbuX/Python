@@ -35,7 +35,6 @@ import shutil as _shutil
 import regex as _regex
 import math as _math
 import json as _json
-import time as _time
 import sys as _sys
 import os as _os
 import re as _re
