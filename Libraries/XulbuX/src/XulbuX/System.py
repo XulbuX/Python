@@ -9,6 +9,11 @@ import os as _os
 class System:
   @staticmethod
   def restart(msg:str = None, wait:int = 0, continue_program:bool = False, force:bool = False) -> None:
+    """Starts a system restart:<br>
+    `msg` is the message to be displayed in the systems restart notification.<br>
+    `wait` is the time to wait until restarting.<br>
+    `continue_program` is whether to continue the current Python program after calling this function.<br>
+    `force` is whether to force a restart even if other processes are still running."""
     system = _platform.system().lower()
     if system == 'windows':
       if not force:
