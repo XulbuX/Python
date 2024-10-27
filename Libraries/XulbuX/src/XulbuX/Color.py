@@ -22,6 +22,7 @@ The `Color` class, which contains all sorts of different color-related methods:
   - color to hexa
 - recognize colors inside strings and convert them to color types:
   - string to rgba
+- get the optimal text color for on a colored background
 - adjust different color channels:
   - brightness
   - saturation
