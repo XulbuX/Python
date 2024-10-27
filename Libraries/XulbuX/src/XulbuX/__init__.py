@@ -19,4 +19,6 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
+__version__ = '1.4.2'
+
 from .XulbuX import rgba, hsla, hexa, Path, File, Json, System, EnvVars, Cmd, FormatCodes, Color, Data, String, Code, Regex

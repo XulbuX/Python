@@ -19,9 +19,6 @@
   *  REGEX PATTERN TEMPLATES  xx.Regex
 """
 
-VERSION = '1.4.1'
-
-
 def check_libs(libs:list[str], install_missing:bool = False, confirm_install:bool = True) -> None|list[str]:
   missing = []
   for lib in libs:
@@ -40,8 +37,9 @@ def check_libs(libs:list[str], install_missing:bool = False, confirm_install:boo
     return None
   except subprocess.CalledProcessError: return missing
 
-
 check_libs(['regex', 'subprocess', 'platform', 'tempfile', 'keyboard', 'difflib', 'getpass', 'ctypes', 'shutil', 'math', 'json', 'time', 'sys', 'os', 're'], install_missing=True)
+try: from .__init__ import __version__
+except: from __init__ import __version__
 try: from .consts import *
 except: from consts import *
 import regex as rx
@@ -1750,7 +1748,7 @@ if __name__ == '__main__':
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
   [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , < 
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:#7B7C8F|#000] v[b]{VERSION} [*]
+  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:#7B7C8F|#000] v[b]{__version__} [*]
 
   [i|#FF806A]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
