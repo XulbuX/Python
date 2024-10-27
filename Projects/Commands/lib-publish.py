@@ -8,6 +8,16 @@ FIND_ARGS = {'lib_base': ['-f', '--file', '-p', '--path', '-fp', '--filepath', '
 
 
 
+def get_latest_python_version() -> str:
+  py_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming', 'Python')
+  versions = []
+  try:
+    for d in os.listdir(py_dir):
+      if d.startswith('Python3'):
+        versions.append(d)
+    return sorted(versions)[-1] if versions else 'Python312'
+  except: return 'Python312'
+
 def run_command(command:str) -> None:
   try: subprocess.run(command, check=True, shell=True)
   except subprocess.CalledProcessError as e:
@@ -29,7 +39,7 @@ def remove_dir_contents(dir:str, remove_dir:bool = False) -> None:
 def main(args:dict) -> None:
   os.chdir(args['lib_base']['value'])
   run_command('py -m build')
-  scripts_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming', 'Python', 'Python312', 'Scripts')
+  scripts_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming', 'Python', get_latest_python_version(), 'Scripts')
   twine_path = os.path.join(scripts_dir, 'twine.exe')
   run_command(f'"{twine_path}" upload dist/*')
   if input('\nDirectly remove dist directory? (default is YES):  ').upper() in ['', 'Y', 'YES']:
