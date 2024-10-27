@@ -812,7 +812,7 @@ class Cmd:
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def confirm(msg:str = 'Are you sure?[_|dim] (Y/n):  [_]', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = True) -> None:
+  def confirm(msg:str = 'Are you sure? [_|dim]((Y/n):  )', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = True) -> None:
     confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().lower() in (('', 'y', 'yes') if default_is_yes else ('y', 'yes'))
     if end: Cmd.log('', '') if end == '\n' else Cmd.log('', end[1:]) if end.startswith('\n') else Cmd.log('', end)
     return confirmed
