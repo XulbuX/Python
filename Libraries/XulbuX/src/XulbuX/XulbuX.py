@@ -38,8 +38,6 @@ def check_libs(libs:list[str], install_missing:bool = False, confirm_install:boo
   except subprocess.CalledProcessError: return missing
 
 check_libs(['regex', 'subprocess', 'platform', 'tempfile', 'keyboard', 'difflib', 'getpass', 'ctypes', 'shutil', 'math', 'json', 'time', 'sys', 'os', 're'], install_missing=True)
-try: from .__init__ import __version__
-except: from __init__ import __version__
 try: from .consts import *
 except: from consts import *
 import regex as rx
@@ -57,6 +55,23 @@ import time
 import sys
 import os
 import re
+
+
+
+################################################## LIBRARY INITIALIZING ##################################################
+def get_version(var:str = '__version__') -> str:
+  try:
+    from . import var
+    return var
+  except ImportError:
+    init_path = os.path.join(os.path.dirname(__file__), '__init__.py')
+    if os.path.isfile(init_path):
+      with open(init_path, encoding='utf-8') as f:
+        for line in f:
+          if line.startswith(var): return line.split('=')[-1].strip().strip("'\"")
+    return 'unknown'
+
+__version__ = get_version()
 
 
 
