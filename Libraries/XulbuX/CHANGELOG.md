@@ -15,7 +15,20 @@
 # <br><b>Changelog</b><br>
 
 
-## 27.10.2024 `v1.4.2` `v1.4.3`
+## 27.10.2024 `v1.5.0`
+* Split all classes into separate files, so users can download only parts of the library more easily
+* Added a `__help__.py` file, which will show some information about the library and how to use it, when run as a script
+* Added a lot more metadata to the library:<br>
+  `__version__` (*was already added in update [v1.4.2](#update-1-4-2)*)<br>
+  `__author__`<br>
+  `__email__`<br>
+  `__license__`<br>
+  `__copyright__`<br>
+  `__url__`<br>
+  `__description__`<br>
+  `__all__`
+
+## <span id="update-1-4-2">27.10.2024 `v1.4.2` `v1.4.3`</span>
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`
 * Removed unnecessary parts when checking for missing required libraries
 * You can now get the libraries current version by accessing the attribute `XulbuX.__version__`
