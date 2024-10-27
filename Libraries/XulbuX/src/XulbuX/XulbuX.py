@@ -201,7 +201,7 @@ class rgba:
       elif max_c == g: h = ((b - r) / delta) + 2
       else: h = ((r - g) / delta) + 4
       h /= 6
-    return int(h * 360), int(s * 100), int(l * 100)
+    return int(round(h * 360)), int(round(s * 100)), int(round(l * 100))
 
 class hsla:
   """A HSL/HSLA color: is a tuple of 3 integers, representing hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).<br>
@@ -331,9 +331,9 @@ class hsla:
         return p
       q = l * (1 + s) if l < 0.5 else l + s - l * s
       p = 2 * l - q
-      r = int(hue_to_rgb(p, q, h + 1/3) * 255)
-      g = int(hue_to_rgb(p, q, h) * 255)
-      b = int(hue_to_rgb(p, q, h - 1/3) * 255)
+      r = int(round(hue_to_rgb(p, q, h + 1/3) * 255))
+      g = int(round(hue_to_rgb(p, q, h) * 255))
+      b = int(round(hue_to_rgb(p, q, h - 1/3) * 255))
     return r, g, b
 
 class hexa:
