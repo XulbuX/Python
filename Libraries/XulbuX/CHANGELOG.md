@@ -15,7 +15,7 @@
 # <br><b>Changelog</b><br>
 
 
-## 27.10.2024 `v1.4.2`
+## 27.10.2024 `v1.4.2` `v1.4.3`
 * <code>Path.extend(*rel_path*) -> *abs_path*</code> now also extends system variables like `%USERPROFILE%` and `%APPDATA%`
 * Removed unnecessary parts when checking for missing required libraries
 * You can now get the libraries current version with `get_version()`
