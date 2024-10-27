@@ -95,7 +95,7 @@ def main():
   tree_style = int(tree_style) if tree_style.isnumeric() and int(tree_style) in Tree.get_valid_styles() else DEFAULTS['tree_style']
   indent = xx.FormatCodes.input(f'Enter the indent [dim]([default is {DEFAULTS["indent"]}] >  )').strip()
   indent = int(indent) if indent.isnumeric() and int(indent) >= 0 else DEFAULTS['indent']
-  into_file = True if xx.FormatCodes.input('Output tree into file (Y/N) [dim]([default is NO] >  )').strip().upper() in ['Y', 'YES'] else DEFAULTS['into_file']
+  into_file = True if xx.FormatCodes.input('Output tree into file (Y/n) [dim]([default is NO] >  )').strip().lower() in ['', 'y', 'yes'] else DEFAULTS['into_file']
 
   xx.Cmd.info('generating tree ...', end='\n')
   result = get_tree(base_dir, ignore_dirs, tree_style, indent)
@@ -104,7 +104,7 @@ def main():
     file = None
     try: file = xx.File.create(result, 'tree.txt')
     except FileExistsError:
-      if xx.Cmd.confirm(f'[white]tree.txt[_] already exists. Overwrite? [dim]([Y/N]:  )', end=''): file = xx.File.create(result, 'tree.txt', force=True)
+      if xx.Cmd.confirm(f'[white]tree.txt[_] already exists. Overwrite? [dim]((Y/n):  )', end=''): file = xx.File.create(result, 'tree.txt', force=True)
       else: xx.Cmd.exit()
     if file: xx.Cmd.done(f'[white]{file}[_] successfully created.')
     else: xx.Cmd.fail('File is empty or failed to create file.')

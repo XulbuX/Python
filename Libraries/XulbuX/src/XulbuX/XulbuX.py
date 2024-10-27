@@ -25,25 +25,23 @@ VERSION = '1.4.1'
 def check_libs(libs:list[str], install_missing:bool = False, confirm_install:bool = True) -> None|list[str]:
   missing = []
   for lib in libs:
-    if ' as ' in lib: lib, alias = lib.split(' as ')
-    else: alias = lib
     try: __import__(lib)
-    except ImportError: missing.append((lib, alias))
-  if missing and install_missing:
-    if confirm_install:
-      print('The following required libraries are missing:')
-      for lib, _ in missing: print(f'- {lib}')
-      if input('Do you want to install them now [Y/N]:  ').strip().lower() not in ['y', 'yes']: raise ImportError('Missing required libraries.')
-    import sys
+    except ImportError: missing.append(lib)
+  if not missing: return None
+  if not install_missing: return missing
+  if confirm_install:
+    print('The following required libraries are missing:')
+    for lib in missing: print(f'- {lib}')
+    if input('Do you want to install them now (Y/n):  ').strip().lower() not in ['', 'y', 'yes']: raise ImportError('Missing required libraries.')
+  try:
     import subprocess
-    for lib, _ in missing:
-      try: subprocess.check_call([sys.executable, '-m', 'pip', 'install', lib])
-      except subprocess.CalledProcessError:
-        print(f'Failed to install {lib}. Please check your network connection.')
-        raise ImportError('Unable to install required libraries.')
-  return [lib for lib, _ in missing] if missing else None
+    import sys
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
+    return None
+  except subprocess.CalledProcessError: return missing
 
-check_libs(['regex as rx', 'subprocess', 'platform', 'tempfile', 'keyboard', 'difflib', 'getpass', 'ctypes', 'shutil', 'math', 'json', 'time', 'sys', 'os', 're'], install_missing=True)
+
+check_libs(['regex', 'subprocess', 'platform', 'tempfile', 'keyboard', 'difflib', 'getpass', 'ctypes', 'shutil', 'math', 'json', 'time', 'sys', 'os', 're'], install_missing=True)
 try: from .consts import *
 except: from consts import *
 import regex as rx
@@ -487,7 +485,14 @@ class Path:
         if closest_match: current = os.path.join(current, closest_match)
         else: return None
       return current if os.path.exists(current) and current != start else None
-    path = os.path.normpath(path)
+    def expand_env_path(p:str) -> str:
+      if not '%' in p: return p
+      parts = p.split('%')
+      for i in range(1, len(parts), 2):
+        if parts[i].upper() in os.environ:
+          parts[i] = os.environ[parts[i].upper()]
+      return ''.join(parts)
+    path = os.path.normpath(expand_env_path(path))
     if os.path.isabs(path):
       drive, rel_path = os.path.splitdrive(path)
       rel_path = rel_path.lstrip(os.sep)
@@ -809,8 +814,8 @@ class Cmd:
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def confirm(msg:str = 'Are you sure?[_|dim] [Y/N]:  [_]', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = False) -> None:
-    confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().upper() in (('', 'Y', 'YES') if default_is_yes else ('Y', 'YES'))
+  def confirm(msg:str = 'Are you sure?[_|dim] (Y/n):  [_]', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = True) -> None:
+    confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().lower() in (('', 'y', 'yes') if default_is_yes else ('y', 'yes'))
     if end: Cmd.log('', '') if end == '\n' else Cmd.log('', end[1:]) if end.startswith('\n') else Cmd.log('', end)
     return confirmed
 
