@@ -148,7 +148,6 @@ def get_json(args:dict) -> dict:
   try:
     global JSON, _JSON
     JSON, _JSON = xx.Json.read(JSON_FILE, comment_start='>>', comment_end='<<', return_original=True)
-    print(JSON, _JSON)
   except FileNotFoundError:
     xx.Cmd.fail(f'File not found:  [white]{JSON_FILE}', exit=False, end='')
     if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory? [_|dim]((Y/n):  )', end=''):

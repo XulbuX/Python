@@ -437,11 +437,12 @@ class Color:
   @staticmethod
   def is_valid_rgba(color:str|list|tuple|dict, allow_alpha:bool = True) -> bool:
     try:
-      if isinstance(color, (list, tuple, rgba)):
-        if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255 and 0 <= color[3] <= 255
+      if isinstance(color, rgba): return True
+      if isinstance(color, (list, tuple)):
+        if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255 and (0 <= color[3] <= 1 or color[3] is None)
         else: return 0 <= color[0] <= 255 and 0 <= color[1] <= 255 and 0 <= color[2] <= 255
       elif isinstance(color, dict):
-        if allow_alpha and Color.has_alpha(color): return 0 <= color['r'] <= 255 and 0 <= color['g'] <= 255 and 0 <= color['b'] <= 255 and 0 <= color['a'] <= 255
+        if allow_alpha and Color.has_alpha(color): return 0 <= color['r'] <= 255 and 0 <= color['g'] <= 255 and 0 <= color['b'] <= 255 and (0 <= color['a'] <= 1 or color['a'] is None)
         else: return 0 <= color['r'] <= 255 and 0 <= color['g'] <= 255 and 0 <= color['b'] <= 255
       elif isinstance(color, str): return bool(_re.fullmatch(Regex.rgb_str(), color))
     except: return False
@@ -449,11 +450,12 @@ class Color:
   @staticmethod
   def is_valid_hsla(color:str|list|tuple|dict, allow_alpha:bool = True) -> bool:
     try:
-      if isinstance(color, (list, tuple, hsla)):
-        if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100 and 0.0 <= color[3] <= 1.0
+      if isinstance(color, hsla): return True
+      if isinstance(color, (list, tuple)):
+        if allow_alpha and Color.has_alpha(color): return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100 and (0 <= color[3] <= 1 or color[3] is None)
         else: return 0 <= color[0] <= 360 and 0 <= color[1] <= 100 and 0 <= color[2] <= 100
       elif isinstance(color, dict):
-        if allow_alpha and Color.has_alpha(color): return 0 <= color['h'] <= 360 and 0 <= color['s'] <= 100 and 0 <= color['l'] <= 100 and 0.0 <= color['a'] <= 1.0
+        if allow_alpha and Color.has_alpha(color): return 0 <= color['h'] <= 360 and 0 <= color['s'] <= 100 and 0 <= color['l'] <= 100 and (0 <= color['a'] <= 1 or color['a'] is None)
         else: return 0 <= color['h'] <= 360 and 0 <= color['s'] <= 100 and 0 <= color['l'] <= 100
       elif isinstance(color, str): return bool(_re.fullmatch(Regex.hsl_str(), color))
     except: return False
@@ -461,6 +463,7 @@ class Color:
   @staticmethod
   def is_valid_hexa(color:str, allow_alpha:bool = True, get_prefix:bool = False) -> bool|tuple[bool,str]:
     try:
+      if isinstance(color, hexa): return True
       if color.startswith('#'): prefix, color = '#', color[1:]
       elif color.startswith('0x'): prefix, color = '0x', color[2:]
       else: prefix = ''
@@ -485,7 +488,8 @@ class Color:
       if color.startswith('#'): color = color[1:]
       elif color.startswith('0x'): color = color[2:]
       return len(color) == 4 or len(color) == 8
-    elif isinstance(color, (list, tuple, dict)) and len(color) == 4: return True
+    elif isinstance(color, (list, tuple)) and len(color) == 4 and color[3] is not None: return True
+    elif isinstance(color, dict) and len(color) == 4 and color['a'] is not None: return True
     else: return False
 
   @staticmethod
@@ -553,7 +557,7 @@ class Color:
     was_hex, hex_prefix = Color.is_valid_hexa(color, get_prefix=True)
     color = Color.to_hsla(color)
     h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
-    l = max(0, min(100, l + brightness_change * 100))
+    l = int(max(0, min(100, l + brightness_change * 100)))
     if was_hex: return Color.to_hexa((h, s, l, a), hex_prefix)
     else: return Color.to_rgba((h, s, l, a))
 
@@ -568,6 +572,6 @@ class Color:
     was_hex, hex_prefix = Color.is_valid_hexa(color, get_prefix=True)
     color = Color.to_hsla(color)
     h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
-    s = max(0, min(100, s + saturation_change * 100))
+    s = int(max(0, min(100, s + saturation_change * 100)))
     if was_hex: return Color.to_hexa((h, s, l, a), hex_prefix)
     return Color.to_rgba((h, s, l, a))

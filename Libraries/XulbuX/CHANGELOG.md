@@ -15,6 +15,13 @@
 # <br><b>Changelog</b><br>
 
 
+## 28.10.2024 `v1.5.2`
+* Fixed color validation bug:
+  `Color.is_valid_rgba()`and `Color.is_valid_hsla()` would not accept an alpha channel of `None`
+  `Color.is_valid_rgba()` was still checking for an alpha channel from `0` to `255` instead of `0` to `1`
+* Fixed bug for `Color.has_alpha()`:
+  Previously, it would return `True` if the alpha channel was `None`. Now in such cases it will return `False`.
+
 ## 28.10.2024 `v1.5.1`
 * Renamed all library files for a better naming convention
 * Now all functions in `xx_color` support both HEX prefixes (`#` and `0x`)
