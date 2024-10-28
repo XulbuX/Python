@@ -55,7 +55,7 @@ def help():
     [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#666].[#AA90FF]Regex[*]
   [_]
   [dim](Press any key to exit...)
-  ''', '#809FFF')
+  ''', '#95B5FF')
   Cmd.pause_exit(pause=True)
 
 

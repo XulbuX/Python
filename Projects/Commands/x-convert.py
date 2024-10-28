@@ -142,7 +142,7 @@ def show_help():
 
   [b|#7090FF]Supported conversion:[*]
     [b|#FF5252]Laravel Blade [dim]((.blade.php))[*] to [b|#41B883]Vue.js [dim]((.vue))[*]             [*|#AA90FF]-bv[dim](,) --blade-vue[dim](,) --blade-to-vue[*]
-  [_]''', '#809FFF')
+  [_]''', '#95B5FF')
 
 def get_json(args:dict) -> dict:
   try:
@@ -153,7 +153,7 @@ def get_json(args:dict) -> dict:
     if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory? [_|dim]((Y/n):  )', end=''):
       xx.Json.create(DEFAULT_JSON, indent=4, force=True)
       xx.Cmd.info(f'[white]{JSON_FILE}[*] created successfully.', end='\n')
-      xx.FormatCodes.print('        \t[dim]Restarting program...[_]', '#809FFF')
+      xx.FormatCodes.print('        \t[dim]Restarting program...[_]', '#95B5FF')
       main(args)
       xx.Cmd.pause_exit(exit=True)
     else: xx.Cmd.exit()
@@ -173,12 +173,12 @@ def add_to_env_vars() -> dict:
     if JSON['is_in_env_vars'] != base_dir:
       if not xx.EnvVars.has_path(base_dir=True):
         xx.Cmd.warn('Path to program-directory doesn\'t exist in your environment variables.', exit=False, end='\n')
-        xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', '#809FFF')
+        xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', '#95B5FF')
         if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables? [_|dim]((Y/n):  )', start='', end=''):
           xx.EnvVars.add_path(base_dir=True)
           xx.Cmd.info(f'Successfully added [white]{base_dir}[_] to your environment variables.', end='\n')
-          xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#809FFF')
-          xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#809FFF')
+          xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#95B5FF')
+          xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#95B5FF')
       xx.Json.update(JSON_FILE, f'is_in_env_vars::{base_dir}')
   except KeyError: xx.Cmd.fail(f'Not all required keys were found in JSON file:  [white]{JSON_FILE}', pause=DEBUG)
 
