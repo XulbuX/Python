@@ -464,8 +464,11 @@ class Color:
       if allow_alpha: pattern = r'(?i)^[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$'
       else: pattern = r'(?i)^[0-9A-F]{6}|[0-9A-F]{3}$'
       is_valid = bool(_re.fullmatch(pattern, color))
-      return (is_valid, prefix) if get_prefix else is_valid
-    except: return (False, None) if not get_prefix else False
+      if get_prefix: return is_valid, prefix
+      else: return is_valid
+    except:
+      if not get_prefix: return False, None
+      else: return False
 
   @staticmethod
   def is_valid(color:str|list|tuple|dict, allow_alpha:bool = True) -> bool:
