@@ -24,6 +24,7 @@ class Path:
 
   @staticmethod
   def extend(path:str, search_in:str|list[str] = None, raise_error:bool = False, correct_path:bool = False) -> str:
+    if path in (None, ''): return path
     def get_closest_match(dir:str, part:str) -> str|None:
       try:
         files_and_dirs = _os.listdir(dir)

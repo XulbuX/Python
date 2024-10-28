@@ -70,7 +70,7 @@ class Regex:
     ---------------------------------------------------------------------------------
     If the `fix_sep` is set to nothing, and char which is not a letter or number<br>
     can be used to separate the RGB values, including just a space."""
-    if fix_sep in ['', None]: fix_sep = r'[^0-9A-Z]'
+    if fix_sep in (None, ''): fix_sep = r'[^0-9A-Z]'
     else: fix_sep = _re.escape(fix_sep)
     rgb_part = rf'''((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))
       (?:\s*{fix_sep}\s*)((?:0*(?:25[0-5]|2[0-4][0-9]|1?[0-9]{{1,2}})))

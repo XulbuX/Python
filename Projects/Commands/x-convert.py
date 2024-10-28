@@ -152,7 +152,7 @@ def get_json(args:dict) -> dict:
     xx.Cmd.fail(f'File not found:  [white]{JSON_FILE}', exit=False, end='')
     if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory? [_|dim]((Y/n):  )', end=''):
       xx.Json.create(DEFAULT_JSON, indent=4, force=True)
-      xx.Cmd.info(f'[white]{JSON_FILE}[_] created successfully.', end='\n')
+      xx.Cmd.info(f'[white]{JSON_FILE}[*] created successfully.', end='\n')
       xx.FormatCodes.print('        \t[dim]Restarting program...[_]', '#809FFF')
       main(args)
       xx.Cmd.pause_exit(exit=True)
@@ -216,7 +216,7 @@ class blade_to_vue:
         if (isinstance(js_func, list) and js_func[1]  and js_func[1] not in ['', [], None] and len(js_func[1]) == 2
             and js_func[1][0] not in JS_IMPORTS): JS_IMPORTS[js_func[1][0]] = js_func[1][1]
         js_func = js_func if not isinstance(js_func, list) else js_func[0]
-        if js_func and js_func not in ['', None] and js_func not in ADD_JS: ADD_JS.append(js_func)
+        if js_func and js_func not in (None, '') and js_func not in ADD_JS: ADD_JS.append(js_func)
 
   @staticmethod
   def transform_script_lang_funcs(code:str) -> str:
@@ -435,7 +435,9 @@ def main(args:dict):
   if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths='is_in_env_vars'): xx.Cmd.debug('config.json does not match the default json.', end='\n')
   add_to_env_vars()
   args = get_missing_args(args)
+  if args['filepath']['value'] in (None, ''): xx.Cmd.fail('No filepath was provided.', pause=DEBUG)
   args['filepath']['value'] = xx.Path.extend(args['filepath']['value'], raise_error=True, correct_path=True)
+  if not os.path.isfile(args['filepath']['value']): xx.Cmd.fail(f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG)
 
   with open(args['filepath']['value'], 'r') as file: file_content = file.read()
   converter = blade_to_vue()
@@ -456,7 +458,7 @@ def main(args:dict):
       else: xx.Cmd.exit(reset_ansi=True)
     with open(new_file_path, 'w') as file: file.write(converted_content)
     xx.Cmd.done(f'Formatted into file: [white]{new_file_path}', pause=DEBUG)
-  else: xx.Cmd.fail('Empty file or invalid conversion chosen.', pause=DEBUG, reset_ansi=True)
+  else: xx.Cmd.fail('Empty file or invalid conversion chosen.', pause=DEBUG)
   xx.Cmd.pause_exit(exit=True, reset_ansi=True)
 
 

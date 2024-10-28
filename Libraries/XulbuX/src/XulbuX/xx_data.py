@@ -34,7 +34,7 @@ class Data:
         if isinstance(value, (list, tuple, dict)):
           filtered_value = Data.remove_empty_items(value, spaces_are_empty)
           if filtered_value: filtered_dict[key] = filtered_value
-        elif value not in ['', None] and not ((spaces_are_empty and isinstance(value, str)) and value.strip() in ['', None]): filtered_dict[key] = value
+        elif value not in (None, '') and not ((spaces_are_empty and isinstance(value, str)) and value.strip() in (None, '')): filtered_dict[key] = value
       return filtered_dict
     filtered = []
     for item in data:
@@ -43,7 +43,7 @@ class Data:
         if deduped_item:
           if isinstance(item, tuple): deduped_item = tuple(deduped_item)
           filtered.append(deduped_item)
-      elif item not in ['', None] and not ((spaces_are_empty and isinstance(item, str)) and item.strip() in ['', None]): filtered.append(item)
+      elif item not in (None, '') and not ((spaces_are_empty and isinstance(item, str)) and item.strip() in (None, '')): filtered.append(item)
     return tuple(filtered) if isinstance(data, tuple) else filtered
 
   @staticmethod
