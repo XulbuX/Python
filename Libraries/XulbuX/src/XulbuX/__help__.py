@@ -20,6 +20,7 @@ def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
     return 'unknown'
 
 def help():
+  """Show some info about the library, with a brief explanation of how to use it, in the console."""
   FormatCodes.print(
   rf'''  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
