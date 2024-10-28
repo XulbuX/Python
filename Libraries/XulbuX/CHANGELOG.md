@@ -16,6 +16,8 @@
 
 
 ## 28.10.2024 `v1.5.2`
+* New parameter <code>correct_path:*bool*</code> in `Path.extend()`:
+  This makes sure, that typos in the path will only be corrected if this parameter is set to `True`
 * Fixed color validation bug:
   `Color.is_valid_rgba()`and `Color.is_valid_hsla()` would not accept an alpha channel of `None`
   `Color.is_valid_rgba()` was still checking for an alpha channel from `0` to `255` instead of `0` to `1`
