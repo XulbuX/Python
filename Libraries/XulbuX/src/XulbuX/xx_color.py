@@ -22,6 +22,7 @@ The `Color` class, which contains all sorts of different color-related methods:
   - color to hexa
 - recognize colors inside strings and convert them to color types:
   - string to rgba
+- get a HEX colors prefix
 - get the optimal text color for on a colored background
 - adjust different color channels:
   - brightness
@@ -29,8 +30,8 @@ The `Color` class, which contains all sorts of different color-related methods:
 """
 
 
-try: from .Regex import *
-except: from Regex import *
+try: from .xx_regex import *
+except: from xx_regex import *
 
 import re as _re
 
@@ -88,9 +89,9 @@ class rgba:
   def to_hsla(self) -> 'hsla':
     """Converts the color to HSLA format"""
     return hsla(self.h, self.s, self.l, self.a)
-  def to_hexa(self) -> 'hexa':
+  def to_hexa(self, prefix:str = '#') -> 'hexa':
     """Converts the color to hexadecimal format, including alpha if present"""
-    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
+    return hexa(f'{prefix}{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
   def has_alpha(self) -> bool:
     """Returns True if the color has an alpha channel"""
     return self.a != None
@@ -226,9 +227,9 @@ class hsla:
   def to_rgba(self) -> 'rgba':
     """Converts the color to RGBA format"""
     return rgba(self.r, self.g, self.b, self.a)
-  def to_hexa(self) -> 'hexa':
+  def to_hexa(self, prefix = '#') -> 'hexa':
     """Converts the color to hexadecimal format, including alpha if present"""
-    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
+    return hexa(f'{prefix}{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
   def has_alpha(self) -> bool:
     """Returns True if the color has an alpha channel"""
     return self.a != None
@@ -496,25 +497,31 @@ class Color:
     raise ValueError('Invalid color format')
 
   @staticmethod
-  def to_hexa(color:rgba|hsla) -> hexa:
-    if isinstance(color, (rgba, hsla)): return color.to_hexa()
-    if Color.is_valid_rgba(color): return rgba(color[0], color[1], color[2], color[3]).to_hexa() if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa()
-    if Color.is_valid_hsla(color): return hsla(color[0], color[1], color[2], color[3]).to_hexa() if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hexa()
+  def to_hexa(color:rgba|hsla, prefix:str = '#') -> hexa:
+    if isinstance(color, (rgba, hsla)): return color.to_hexa(prefix)
+    if Color.is_valid_rgba(color): return rgba(color[0], color[1], color[2], color[3]).to_hexa(prefix) if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa(prefix)
+    if Color.is_valid_hsla(color): return hsla(color[0], color[1], color[2], color[3]).to_hexa(prefix) if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hexa(prefix)
     raise ValueError('Invalid color format')
 
   @staticmethod
-  def str_to_rgba(rgb_str:str) -> rgba|None:
-    try: _rgba = _re.match(Regex.rgb_str(allow_alpha=True), rgb_str).groups()
+  def str_to_rgba(string:str) -> rgba|None:
+    try: _rgba = _re.match(Regex.rgb_str(allow_alpha=True), string).groups()
     except: return None
     if _rgba[3] in ['', None]: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]))
     else: return rgba(int(_rgba[0]), int(_rgba[1]), int(_rgba[2]), (int(_rgba[3]) if _rgba[3].count('.') == 0 else float(_rgba[3])))
 
   @staticmethod
+  def get_hex_prefix(color:hexa) -> str|None:
+    if isinstance(color, hexa): return color.prefix
+    if color.startswith('#'): return '#'
+    elif color.startswith('0x'): return '0x'
+    else: return None
+
+  @staticmethod
   def text_color_for_on_bg(title_bg_color:hexa|rgba = '#FFF') -> hexa|rgba:
-    was_hex = False
-    if Color.is_valid_hexa(title_bg_color): was_hex, title_bg_color = True, Color.to_rgba(title_bg_color)
+    was_hex, hex_prefix, title_bg_color = Color.is_valid_hexa(title_bg_color, get_prefix=True), Color.to_rgba(title_bg_color)
     brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
-    return (hexa('#FFF') if was_hex else rgba(255, 255, 255)) if brightness < 128 else (hexa('#000') if was_hex else rgba(0, 0, 0))
+    return (hexa(f'{hex_prefix}FFF') if was_hex else rgba(255, 255, 255)) if brightness < 128 else (hexa(f'{hex_prefix}000') if was_hex else rgba(0, 0, 0))
 
   @staticmethod
   def adjust_brightness(color:hexa|rgba, brightness_change:float) -> hexa|rgba:
@@ -527,7 +534,7 @@ class Color:
     if Color.is_valid_hexa(color): _rgba = Color.to_rgba(color)
     elif Color.is_valid_rgba(color): _rgba = color
     else: raise ValueError(f"Invalid color format '{str(color)}' Use HEX (e.g. '#F00', '0xF00' and '#FF0000', '0xFF0000') or RGBA (e.g. (255, 0, 0) and (255, 0, 0, 1.0))")
-    r, g, b, a = _rgba.r, _rgba.g, _rgba.b, _rgba.a if hasattr(_rgba, 'a') else None
+    r, g, b, a = _rgba[0], _rgba[1], _rgba[2], _rgba[3] if Color.has_alpha(_rgba) else None
     r = int(max(min(r + (255 - r) * brightness_change if brightness_change > 0 else r * (1 + brightness_change), 255), 0))
     g = int(max(min(g + (255 - g) * brightness_change if brightness_change > 0 else g * (1 + brightness_change), 255), 0))
     b = int(max(min(b + (255 - b) * brightness_change if brightness_change > 0 else b * (1 + brightness_change), 255), 0))
@@ -536,10 +543,10 @@ class Color:
 
   @staticmethod
   def adjust_saturation(color:hexa|rgba, saturation_change:float) -> hexa|rgba:
-    if Color.is_valid_hexa(color): _rgb = Color.to_rgba(color)
-    elif Color.is_valid_rgba(color): _rgb = color
+    if Color.is_valid_hexa(color): _rgba = Color.to_rgba(color)
+    elif Color.is_valid_rgba(color): _rgba = color
     else: raise ValueError(f"Invalid color format '{str(color)}'. Use HEX (e.g. '#F00', '0xF00' and '#FF0000', '0xFF0000') or RGBA (e.g. (255, 0, 0) and (255, 0, 0, 1.0))")
-    hsl = Color.to_hsla(_rgb)
+    hsl = Color.to_hsla(_rgba)
     h, s, l, a = hsl[0], hsl[1], hsl[2], hsl[3]
     s = max(0, min(100, s + saturation_change * 100))
     if isinstance(color, (str, hexa)): return Color.to_hexa(Color.to_rgba((h, s, l, a)))

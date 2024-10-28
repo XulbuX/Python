@@ -1,9 +1,9 @@
-try: from .String import *
-except: from String import *
-try: from .Regex import *
-except: from Regex import *
-try: from .Data import *
-except: from Data import *
+try: from .xx_string import *
+except: from xx_string import *
+try: from .xx_regex import *
+except: from xx_regex import *
+try: from .xx_data import *
+except: from xx_data import *
 
 import regex as _regex
 

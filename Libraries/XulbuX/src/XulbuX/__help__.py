@@ -1,7 +1,7 @@
-try: from .FormatCodes import *
-except: from FormatCodes import *
-try: from .Cmd import *
-except: from Cmd import *
+try: from .xx_format_codes import *
+except: from xx_format_codes import *
+try: from .xx_cmd import *
+except: from xx_cmd import *
 
 import os as _os
 

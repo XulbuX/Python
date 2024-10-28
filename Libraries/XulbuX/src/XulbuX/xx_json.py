@@ -1,7 +1,7 @@
-try: from .Data import *
-except: from Data import *
-try: from .File import *
-except: from File import *
+try: from .xx_data import *
+except: from xx_data import *
+try: from .xx_file import *
+except: from xx_file import *
 
 import json as _json
 import os as _os

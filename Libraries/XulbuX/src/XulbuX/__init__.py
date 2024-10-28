@@ -27,19 +27,19 @@ __copyright__ = 'Copyright (c) 2024 XulbuX'
 __url__ = 'https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX'
 __description__ = 'A library which includes a lot of really helpful functions.'
 __all__ = [
-  'Cmd', 'Code', 'Color', 'Data', 'EnvVars', 'File', 'FormatCodes',
-  'Json', 'Path', 'Regex', 'String', 'System'
+  'xx_cmd', 'xx_code', 'xx_color', 'xx_data', 'xx_env_vars', 'xx_file', 'xx_format_codes',
+  'xx_json', 'xx_path', 'xx_regex', 'xx_string', 'xx_system'
 ]
 
-from .Cmd import *
-from .Code import *
-from .Color import *
-from .Data import *
-from .EnvVars import *
-from .File import *
-from .FormatCodes import *
-from .Json import *
-from .Path import *
-from .Regex import *
-from .String import *
-from .System import *
+from .xx_cmd import *
+from .xx_code import *
+from .xx_color import *
+from .xx_data import *
+from .xx_env_vars import *
+from .xx_file import *
+from .xx_format_codes import *
+from .xx_json import *
+from .xx_path import *
+from .xx_regex import *
+from .xx_string import *
+from .xx_system import *

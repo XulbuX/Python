@@ -6,10 +6,10 @@ Functions for modifying and checking the systems environment-variables:
 """
 
 
-try: from .Data import *
-except: from Data import *
-try: from .Path import *
-except: from Path import *
+try: from .xx_data import *
+except: from xx_data import *
+try: from .xx_path import *
+except: from xx_path import *
 
 import os as _os
 

@@ -19,8 +19,12 @@ For more detailed information about formatting codes, see the `log` class descri
 """
 
 
-try: from .FormatCodes import *
-except: from FormatCodes import *
+try: from .xx_format_codes import *
+except: from xx_format_codes import *
+try: from .xx_string import *
+except: from xx_string import *
+try: from .xx_color import *
+except: from xx_color import *
 
 import keyboard as _keyboard
 import getpass as _getpass

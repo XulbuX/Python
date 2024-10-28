@@ -1,7 +1,7 @@
-try: from .String import *
-except: from String import *
-try: from .Path import *
-except: from Path import *
+try: from .xx_string import *
+except: from xx_string import *
+try: from .xx_path import *
+except: from xx_path import *
 
 import os as _os
 
