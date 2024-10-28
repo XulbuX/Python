@@ -15,6 +15,9 @@
 # <br><b>Changelog</b><br>
 
 
+## 28.10.2024 `v1.5.1`
+* Renamed all library files for a better naming convention
+
 ## 27.10.2024 `v1.5.0`
 * Split all classes into separate files, so users can download only parts of the library more easily
 * Added a `__help__.py` file, which will show some information about the library and how to use it, when run as a script
