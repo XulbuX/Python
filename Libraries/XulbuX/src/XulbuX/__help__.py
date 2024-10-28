@@ -19,9 +19,7 @@ def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
           if line.startswith(var): return line.split('=')[-1].strip().strip("'\"")
     return 'unknown'
 
-
-
-if __name__ == '__main__':
+def help():
   FormatCodes.print(
   rf'''  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
@@ -54,5 +52,12 @@ if __name__ == '__main__':
     [dim](•) STR OPERATIONS           [#77EFEF]xx[#666].[#AA90FF]String[*]
     [dim](•) CODE STRING OPERATIONS   [#77EFEF]xx[#666].[#AA90FF]Code[*]
     [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#666].[#AA90FF]Regex[*]
-  [_]''', '#809FFF')
+  [_]
+  [dim](Press any key to exit...)
+  ''', '#809FFF')
   Cmd.pause_exit(pause=True)
+
+
+
+if __name__ == '__main__':
+  help()
