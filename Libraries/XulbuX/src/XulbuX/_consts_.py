@@ -10,4 +10,4 @@ CODES_MAP = {
 COLOR_MAP = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 
 class DEFAULT:
-  hex_prefix = '0x'
+  hex_prefix = '#'
