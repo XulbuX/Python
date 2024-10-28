@@ -436,7 +436,7 @@ def main(args:dict):
   if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths='is_in_env_vars'): xx.Cmd.debug('config.json does not match the default json.', end='\n')
   add_to_env_vars()
   args = get_missing_args(args)
-  args['filepath']['value'] = xx.Path.extend(args['filepath']['value'], raise_error=True)
+  args['filepath']['value'] = xx.Path.extend(args['filepath']['value'], raise_error=True, correct_path=True)
 
   with open(args['filepath']['value'], 'r') as file: file_content = file.read()
   converter = blade_to_vue()

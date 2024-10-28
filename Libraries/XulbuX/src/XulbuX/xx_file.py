@@ -9,7 +9,7 @@ import os as _os
 
 class File:
   @staticmethod
-  def _make_path(filename:str, filetype:str, search_in:str|list[str] = None, prefer_base_dir:bool = True) -> str:
+  def _make_path(filename:str, filetype:str, search_in:str|list[str] = None, prefer_base_dir:bool = True, correct_path:bool = False) -> str:
     """Get the path to a file in the cwd, the base-dir, or predefined directories.\n
     --------------------------------------------------------------------------------------
     If the `filename` is not found in the above directories, it will be searched<br>
@@ -17,7 +17,7 @@ class File:
     return the path to the file in the base-dir per default or to the file in the<br>
     cwd if `prefer_base_dir` is set to `False`."""
     if not filename.lower().endswith(f'.{filetype.lower()}'): filename = f'{filename}.{filetype.lower()}'
-    try: return Path.extend(filename, search_in, raise_error=True)
+    try: return Path.extend(filename, search_in, True, correct_path)
     except FileNotFoundError: return _os.path.join(Path.get(base_dir=True), filename) if prefer_base_dir else _os.path.join(_os.getcwd(), filename)
 
   @staticmethod

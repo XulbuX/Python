@@ -23,7 +23,7 @@ class Path:
     return paths[0] if len(paths) == 1 else paths
 
   @staticmethod
-  def extend(path:str, search_in:str|list[str] = None, raise_error:bool = False) -> str:
+  def extend(path:str, search_in:str|list[str] = None, raise_error:bool = False, correct_path:bool = False) -> str:
     def get_closest_match(dir:str, part:str) -> str|None:
       try:
         files_and_dirs = _os.listdir(dir)
@@ -34,9 +34,9 @@ class Path:
       current = start
       for part in parts:
         if _os.path.isfile(current): return current
-        closest_match = get_closest_match(current, part)
-        if closest_match: current = _os.path.join(current, closest_match)
-        else: return None
+        closest_match = get_closest_match(current, part) if correct_path else part
+        current = _os.path.join(current, closest_match) if closest_match else None
+        if current is None: return None
       return current if _os.path.exists(current) and current != start else None
     def expand_env_path(p:str) -> str:
       if not '%' in p: return p
@@ -59,7 +59,7 @@ class Path:
     for search_dir in search_dirs:
       full_path = _os.path.join(search_dir, rel_path)
       if _os.path.exists(full_path): return full_path
-      match = find_path(search_dir, path_parts)
+      match = find_path(search_dir, path_parts) if correct_path else None
       if match: return match
     if raise_error: raise FileNotFoundError(f'Path \'{path}\' not found in specified directories.')
     return _os.path.join(search_dirs[0], rel_path)
