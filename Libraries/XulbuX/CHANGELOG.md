@@ -17,6 +17,9 @@
 
 ## 28.10.2024 `v1.5.1`
 * Renamed all library files for a better naming convention
+* Now all functions in `xx_color` support both HEX prefixes (`#` and `0x`)
+* Fixed bug when initializing a `hexa()` object:<br>
+  Would throw an error, even if the color was valid
 
 ## 27.10.2024 `v1.5.0`
 * Split all classes into separate files, so users can download only parts of the library more easily

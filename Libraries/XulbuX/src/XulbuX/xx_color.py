@@ -338,11 +338,13 @@ class hexa:
     elif color.startswith('0x'): self.prefix, color = '0x', color[2:]  # REMOVE `0x` AND SAVE PREFIX
     else: self.prefix = '#'  # DEFAULT PREFIX
     color = color.upper()
-    if len(color) == 4: self.r, self.g, self.b, self.a = int(color[1] * 2, 16), int(color[2] * 2, 16), int(color[3] * 2, 16), None                             #RGB
-    elif len(color) == 5: self.r, self.g, self.b, self.a = int(color[1] * 2, 16), int(color[2] * 2, 16), int(color[3] * 2, 16), int(color[4] * 2, 16) / 255.0  #RGBA
-    elif len(color) == 7: self.r, self.g, self.b, self.a = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16), None                                 #RRGGBB
-    elif len(color) == 9: self.r, self.g, self.b, self.a = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16), int(color[7:9], 16) / 255.0          #RRGGBBAA
-    else: raise ValueError("Hex color must be in format RGB, RGBA, RRGGBB or RRGGBBAA and with prefix '#' or '0x'")
+    try:
+      if len(color) == 3: self.r, self.g, self.b, self.a = int(color[0] * 2, 16), int(color[1] * 2, 16), int(color[2] * 2, 16), None                             #RGB
+      elif len(color) == 4: self.r, self.g, self.b, self.a = int(color[0] * 2, 16), int(color[1] * 2, 16), int(color[2] * 2, 16), int(color[3] * 2, 16) / 255.0  #RGBA
+      elif len(color) == 6: self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), None                                 #RRGGBB
+      elif len(color) == 8: self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), int(color[6:8], 16) / 255.0          #RRGGBBAA
+      else: raise ValueError
+    except: raise ValueError("Hex color must be in format RGB, RGBA, RRGGBB or RRGGBBAA and with prefix '#' or '0x'")
   def __len__(self): return 4 if self.a else 3
   def __iter__(self): return iter((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))
   def __getitem__(self, index): return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))[index]
