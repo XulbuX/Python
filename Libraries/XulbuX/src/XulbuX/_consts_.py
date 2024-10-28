@@ -8,8 +8,6 @@ CODES_MAP = {
   ('bg:bright:black', 'bg:br:black'):'100m', ('bg:bright:red', 'bg:br:red'):'101m', ('bg:bright:green', 'bg:br:green'):'102m', ('bg:bright:yellow', 'bg:br:yellow'):'103m', ('bg:bright:blue', 'bg:br:blue'):'104m', ('bg:bright:magenta', 'bg:br:magenta'):'105m', ('bg:bright:cyan', 'bg:br:cyan'):'106m', ('bg:bright:white', 'bg:br:white'):'107m',
 }
 COLOR_MAP = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-CHARS_MAP = {
-  'nums': '0123456789',
-  'letters': 'abcdefghijklmnopqrstuvwxyz',
-  'ascii': '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|\\:;\"\'<>?,./`~',
-}
+
+class DEFAULT:
+  hex_prefix = '0x'

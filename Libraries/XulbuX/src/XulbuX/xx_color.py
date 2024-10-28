@@ -6,7 +6,7 @@
   An HSL/HSB color: is a tuple of 3 integers, representing the hue (`0`-`360`), saturation (`0`-`100`), and lightness (`0`-`100`).
   Also includes an optional 4th param, which is a float, that represents the alpha channel (`0.0`-`1.0`).
 `hexa`:
-  A HEX color: is a string in the format `#RRGGBB` or `#RRGGBBAA` (where `RR`, `GG`, `BB`, and `AA` are hexadecimal digits).
+  A HEX color: is a string in the format `RGB`, `RGBA`, `RRGGBB` or `RRGGBBAA` (where `R` `G` `B` `A` are hexadecimal digits).
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 The `Color` class, which contains all sorts of different color-related methods:
@@ -30,6 +30,8 @@ The `Color` class, which contains all sorts of different color-related methods:
 """
 
 
+try: from ._consts_ import DEFAULT
+except: from _consts_ import DEFAULT
 try: from .xx_regex import *
 except: from xx_regex import *
 
@@ -89,7 +91,7 @@ class rgba:
   def to_hsla(self) -> 'hsla':
     """Converts the color to HSLA format"""
     return hsla(self.h, self.s, self.l, self.a)
-  def to_hexa(self, prefix:str = '#') -> 'hexa':
+  def to_hexa(self, prefix:str = DEFAULT.hex_prefix) -> 'hexa':
     """Converts the color to hexadecimal format, including alpha if present"""
     return hexa(f'{prefix}{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
   def has_alpha(self) -> bool:
@@ -227,7 +229,7 @@ class hsla:
   def to_rgba(self) -> 'rgba':
     """Converts the color to RGBA format"""
     return rgba(self.r, self.g, self.b, self.a)
-  def to_hexa(self, prefix = '#') -> 'hexa':
+  def to_hexa(self, prefix = DEFAULT.hex_prefix) -> 'hexa':
     """Converts the color to hexadecimal format, including alpha if present"""
     return hexa(f'{prefix}{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
   def has_alpha(self) -> bool:
@@ -312,7 +314,7 @@ class hsla:
 class hexa:
   """A HEX color: is a string representing a hexadecimal color code with optional alpha channel.\n
   -------------------------------------------------------------------------------------------------
-  Supports formats: #RGB, #RGBA, #RRGGBB, #RRGGBBAA (with or without leading #)<br>
+  Supports formats: RGB, RGBA, RRGGBB, RRGGBBAA (with or without prefix)<br>
   Includes methods:
   - `to_rgba()` to convert to RGB color
   - `to_hsla()` to convert to HSL color
@@ -336,7 +338,7 @@ class hexa:
     if not isinstance(color, str): raise TypeError('Color must be a string')
     if color.startswith('#'): self.prefix, color = '#', color[1:]      # REMOVE `#` AND SAVE PREFIX
     elif color.startswith('0x'): self.prefix, color = '0x', color[2:]  # REMOVE `0x` AND SAVE PREFIX
-    else: self.prefix = '#'  # DEFAULT PREFIX
+    else: self.prefix = DEFAULT.hex_prefix
     color = color.upper()
     try:
       if len(color) == 3: self.r, self.g, self.b, self.a = int(color[0] * 2, 16), int(color[1] * 2, 16), int(color[2] * 2, 16), None                             #RGB
@@ -461,14 +463,12 @@ class Color:
     try:
       if color.startswith('#'): prefix, color = '#', color[1:]
       elif color.startswith('0x'): prefix, color = '0x', color[2:]
+      else: prefix = ''
       if allow_alpha: pattern = r'(?i)^[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$'
       else: pattern = r'(?i)^[0-9A-F]{6}|[0-9A-F]{3}$'
       is_valid = bool(_re.fullmatch(pattern, color))
-      if get_prefix: return is_valid, prefix
-      else: return is_valid
-    except:
-      if not get_prefix: return False, None
-      else: return False
+      return (is_valid, prefix) if get_prefix else is_valid
+    except: return (False, '') if get_prefix else False
 
   @staticmethod
   def is_valid(color:str|list|tuple|dict, allow_alpha:bool = True) -> bool:
@@ -509,7 +509,7 @@ class Color:
     raise ValueError(f"Invalid color format '{color}'")
 
   @staticmethod
-  def to_hexa(color:rgba|hsla, prefix:str = '#') -> hexa:
+  def to_hexa(color:rgba|hsla, prefix:str = DEFAULT.hex_prefix) -> hexa:
     if not prefix in ('#', '0x'): raise ValueError("HEX prefix must be either '#' or '0x'")
     if isinstance(color, (rgba, hsla)): return color.to_hexa(prefix)
     if Color.is_valid_rgba(color): return rgba(color[0], color[1], color[2], color[3]).to_hexa(prefix) if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa(prefix)
@@ -537,7 +537,8 @@ class Color:
 
   @staticmethod
   def text_color_for_on_bg(title_bg_color:hexa|rgba = '#FFF') -> hexa|rgba:
-    was_hex, hex_prefix, title_bg_color = Color.is_valid_hexa(title_bg_color, get_prefix=True), Color.to_rgba(title_bg_color)
+    was_hex, hex_prefix = Color.is_valid_hexa(title_bg_color, get_prefix=True)
+    title_bg_color = Color.to_rgba(title_bg_color)
     brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
     return (hexa(f'{hex_prefix}FFF') if was_hex else rgba(255, 255, 255)) if brightness < 128 else (hexa(f'{hex_prefix}000') if was_hex else rgba(0, 0, 0))
 
@@ -549,7 +550,8 @@ class Color:
     **brightness_change** (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
     ----------------------------------------------------------------------------------------------------
     **returns** (hexa|rgba): the adjusted color in the format of the input color"""
-    was_hex, hex_prefix, color = Color.is_valid_hexa(color, get_prefix=True), Color.to_hsla(color)
+    was_hex, hex_prefix = Color.is_valid_hexa(color, get_prefix=True)
+    color = Color.to_hsla(color)
     h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
     l = max(0, min(100, l + brightness_change * 100))
     if was_hex: return Color.to_hexa((h, s, l, a), hex_prefix)
@@ -563,7 +565,8 @@ class Color:
     **saturation_change** (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
     ---------------------------------------------------------------------------------------------------------
     **returns** (hexa|rgba): the adjusted color in the format of the input color"""
-    was_hex, hex_prefix, color = Color.is_valid_hexa(color, get_prefix=True), Color.to_hsla(color)
+    was_hex, hex_prefix = Color.is_valid_hexa(color, get_prefix=True)
+    color = Color.to_hsla(color)
     h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
     s = max(0, min(100, s + saturation_change * 100))
     if was_hex: return Color.to_hexa((h, s, l, a), hex_prefix)
