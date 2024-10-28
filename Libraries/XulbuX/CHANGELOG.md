@@ -15,6 +15,16 @@
 # <br><b>Changelog</b><br>
 
 
+## 28.10.2024 `v1.5.3`
+* Restructured the values in `_consts_.py`
+* Added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
+* Added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
+* Refactored the whole `xx_color` module after [`PEP`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/)
+* Added new methods to `Color`:<br>
+  <code>rgba_to_hexa_int(*r*, *g*, *b*, *a*) -> *int*</code><br>
+  <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
+* All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` instead of only `"#8085FF"`)
+
 ## 28.10.2024 `v1.5.2`
 * New parameter <code>correct_path:*bool*</code> in `Path.extend()`:
   This makes sure, that typos in the path will only be corrected if this parameter is set to `True`
@@ -27,7 +37,7 @@
 
 ## 28.10.2024 `v1.5.1`
 * Renamed all library files for a better naming convention
-* Now all functions in `xx_color` support both HEX prefixes (`#` and `0x`)
+* Now all functions in `xx_color` support both HEX prefixes (`#` *and* `0x`)
 * Added the default HEX prefix to `_consts_.py`
 * Fixed bug when initializing a `hexa()` object:<br>
   Would throw an error, even if the color was valid

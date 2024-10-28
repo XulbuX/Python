@@ -21,10 +21,6 @@ For more detailed information about formatting codes, see the `log` class descri
 
 try: from .xx_format_codes import *
 except: from xx_format_codes import *
-try: from .xx_string import *
-except: from xx_string import *
-try: from .xx_color import *
-except: from xx_color import *
 
 import keyboard as _keyboard
 import getpass as _getpass
@@ -82,37 +78,37 @@ class Cmd:
     else: FormatCodes.print(f'{start}  {f"[{default_color}]" if default_color else ""}{str(msg)}[_]', default_color, end=end)
 
   @staticmethod
-  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FFD260', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = False) -> None:
+  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['yellow'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DEBUG', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#7075FF', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = False) -> None:
+  def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['blue'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
     Cmd.log('INFO', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#49EAB7', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = False) -> None:
+  def done(msg:str = 'Program finished.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['teal'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
     Cmd.log('DONE', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = False) -> None:
+  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['orange'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
     Cmd.log('WARN', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF606A', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def fail(msg:str = 'Program error.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['red'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('FAIL', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#C860FF', default_color:hexa|rgba = '#95B5FF', pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
+  def exit(msg:str = 'Program ended.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['magenta'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = True, reset_ansi=True) -> None:
     Cmd.log('EXIT', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit, reset_ansi=reset_ansi)
 
   @staticmethod
-  def confirm(msg:str = 'Are you sure? [_|dim]((Y/n):  )', start = '\n', end = '\n', default_color:hexa|rgba = '#3EE6DE', default_is_yes:bool = True) -> None:
+  def confirm(msg:str = 'Are you sure? [_|dim]((Y/n):  )', start = '\n', end = '\n', default_color:hexa|rgba = DEFAULT.color['cyan'], default_is_yes:bool = True) -> None:
     confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().lower() in (('', 'y', 'yes') if default_is_yes else ('y', 'yes'))
     if end: Cmd.log('', '') if end == '\n' else Cmd.log('', end[1:]) if end.startswith('\n') else Cmd.log('', end)
     return confirmed
