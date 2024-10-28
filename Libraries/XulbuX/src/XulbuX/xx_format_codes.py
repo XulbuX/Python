@@ -142,14 +142,14 @@ class FormatCodes:
     for mod in _modifiers[0]:
       lighten = String.get_repeated_symbol(modifier, mod)
       if lighten and lighten > 0:
-        new_rgb = Color.adjust_brightness(default_color, (brightness_steps / 100) * lighten)
+        new_rgb = Color.adjust_lightness(default_color, (brightness_steps / 100) * lighten)
         break
     if not new_rgb:
       for mod in _modifiers[1]:
         darken = String.get_repeated_symbol(modifier, mod)
         if darken and darken > 0:
           print(-(brightness_steps / 100) * darken)
-          new_rgb = Color.adjust_brightness(default_color, -(brightness_steps / 100) * darken)
+          new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
           break
     if new_rgb: return f'{ANSI_PREF}48;2;{new_rgb[0]};{new_rgb[1]};{new_rgb[2]}m' if is_bg else f'{ANSI_PREF}38;2;{new_rgb[0]};{new_rgb[1]};{new_rgb[2]}m'
 

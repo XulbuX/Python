@@ -148,6 +148,7 @@ def get_json(args:dict) -> dict:
   try:
     global JSON, _JSON
     JSON, _JSON = xx.Json.read(JSON_FILE, comment_start='>>', comment_end='<<', return_original=True)
+    print(JSON, _JSON)
   except FileNotFoundError:
     xx.Cmd.fail(f'File not found:  [white]{JSON_FILE}', exit=False, end='')
     if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory? [_|dim]((Y/n):  )', end=''):
@@ -169,16 +170,18 @@ def get_missing_args(args:list) -> list:
 
 def add_to_env_vars() -> dict:
   base_dir = xx.Path.get(base_dir=True)
-  if JSON['is_in_env_vars'] != base_dir:
-    if not xx.EnvVars.has_path(base_dir=True):
-      xx.Cmd.warn('Path to program-directory doesn\'t exist in your environment variables.', exit=False, end='\n')
-      xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', '#809FFF')
-      if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables? [_|dim]((Y/n):  )', start='', end=''):
-        xx.EnvVars.add_path(base_dir=True)
-        xx.Cmd.info(f'Successfully added [white]{base_dir}[_] to your environment variables.', end='\n')
-        xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#809FFF')
-        xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#809FFF')
-    xx.Json.update(JSON_FILE, f'is_in_env_vars::{base_dir}')
+  try:
+    if JSON['is_in_env_vars'] != base_dir:
+      if not xx.EnvVars.has_path(base_dir=True):
+        xx.Cmd.warn('Path to program-directory doesn\'t exist in your environment variables.', exit=False, end='\n')
+        xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', '#809FFF')
+        if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables? [_|dim]((Y/n):  )', start='', end=''):
+          xx.EnvVars.add_path(base_dir=True)
+          xx.Cmd.info(f'Successfully added [white]{base_dir}[_] to your environment variables.', end='\n')
+          xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#809FFF')
+          xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#809FFF')
+      xx.Json.update(JSON_FILE, f'is_in_env_vars::{base_dir}')
+  except KeyError: xx.Cmd.fail(f'Not all required keys were found in JSON file:  [white]{JSON_FILE}', exit=False, end='')
 
 
 
