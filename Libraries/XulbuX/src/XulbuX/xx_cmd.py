@@ -97,7 +97,7 @@ class Cmd:
     Cmd.pause_exit(pause, exit)
 
   @staticmethod
-  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = True) -> None:
+  def warn(msg:str = 'Important message.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = '#FF8C60', default_color:hexa|rgba = '#809FFF', pause:bool = False, exit:bool = False) -> None:
     Cmd.log('WARN', msg, start, end, title_bg_color, default_color)
     Cmd.pause_exit(pause, exit)
 

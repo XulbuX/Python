@@ -180,7 +180,7 @@ def add_to_env_vars() -> dict:
           xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', '#809FFF')
           xx.FormatCodes.print('        \t[dim]Continuing program...[_]', '#809FFF')
       xx.Json.update(JSON_FILE, f'is_in_env_vars::{base_dir}')
-  except KeyError: xx.Cmd.fail(f'Not all required keys were found in JSON file:  [white]{JSON_FILE}', exit=False, end='')
+  except KeyError: xx.Cmd.fail(f'Not all required keys were found in JSON file:  [white]{JSON_FILE}', pause=DEBUG)
 
 
 
