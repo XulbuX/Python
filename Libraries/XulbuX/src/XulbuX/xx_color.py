@@ -62,7 +62,7 @@ class rgba:
   - `complementary()` to get the complementary color"""
   def __init__(self, r:int, g:int, b:int, a:float = None):
     if any(isinstance(x, rgba) for x in (r, g, b)): raise ValueError('Color is already a rgba() color')
-    if not all(isinstance(x, int) and 0 <= x <= 255 for x in (r, g, b)): raise ValueError('RGB color must consist of 3 integers in [0, 255]')
+    if not all(isinstance(x, int) and 0 <= x <= 255 for x in (r, g, b)): raise ValueError('RGBA color must have R G B in [0, 255]')
     if not a is None and not (isinstance(a, (int, float)) and 0 <= a <= 1): raise ValueError('Alpha channel must be a float/int in [0.0, 1.0]')
     self.r, self.g, self.b, self.a = r, g, b, (1.0 if a > 1.0 else float(a)) if a else None
     self.h, self.s, self.l = self._rgb_to_hsl(r, g, b)
@@ -343,8 +343,8 @@ class hexa:
       elif len(color) == 4: self.r, self.g, self.b, self.a = int(color[0] * 2, 16), int(color[1] * 2, 16), int(color[2] * 2, 16), int(color[3] * 2, 16) / 255.0  #RGBA
       elif len(color) == 6: self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), None                                 #RRGGBB
       elif len(color) == 8: self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), int(color[6:8], 16) / 255.0          #RRGGBBAA
-      else: raise ValueError("Invalid hex color")
-    except: raise ValueError("Hex color must be in format RGB, RGBA, RRGGBB or RRGGBBAA and with prefix '#' or '0x'")
+      else: raise ValueError("Invalid HEX color")
+    except: raise ValueError("HEX color must be in format RGB, RGBA, RRGGBB or RRGGBBAA and with prefix '#' or '0x'")
   def __len__(self): return 4 if self.a else 3
   def __iter__(self): return iter((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))
   def __getitem__(self, index): return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))[index]
@@ -493,7 +493,7 @@ class Color:
     if Color.is_valid_rgba(color):
       if isinstance(color, rgba): return color
       else: return rgba(color[0], color[1], color[2], color[3]) if Color.has_alpha(color) else rgba(color[0], color[1], color[2])
-    raise ValueError('Invalid color format')
+    raise ValueError(f"Invalid color format '{color}'")
 
   @staticmethod
   def to_hsla(color:rgba|hexa) -> hsla:
@@ -503,17 +503,18 @@ class Color:
     if Color.is_valid_hsla(color):
       if isinstance(color, hsla): return color
       else: return hsla(color[0], color[1], color[2], color[3]) if Color.has_alpha(color) else hsla(color[0], color[1], color[2])
-    raise ValueError('Invalid color format')
+    raise ValueError(f"Invalid color format '{color}'")
 
   @staticmethod
   def to_hexa(color:rgba|hsla, prefix:str = '#') -> hexa:
+    if not prefix in ('#', '0x'): raise ValueError("HEX prefix must be either '#' or '0x'")
     if isinstance(color, (rgba, hsla)): return color.to_hexa(prefix)
     if Color.is_valid_rgba(color): return rgba(color[0], color[1], color[2], color[3]).to_hexa(prefix) if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa(prefix)
     if Color.is_valid_hsla(color): return hsla(color[0], color[1], color[2], color[3]).to_hexa(prefix) if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hexa(prefix)
     if Color.is_valid_hexa(color):
       if isinstance(color, hexa): return color
       else: return hexa(f'{prefix}{color}')
-    raise ValueError('Invalid color format')
+    raise ValueError(f"Invalid color format '{color}'")
 
   @staticmethod
   def str_to_rgba(string:str, only_first:bool = False) -> rgba|tuple[rgba]|None:
