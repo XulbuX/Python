@@ -380,7 +380,7 @@ class hsla:
     """Returns the complementary color (180 degrees on the color wheel)"""
     return hsla((self.h + 180) % 360, self.s, self.l, self.a)
 
-  def _hsl_to_rgb(self, h:int, s:int, l:int) -> tuple[int,int,int]:
+  def _hsl_to_rgb(self, h:int, s:int, l:int) -> tuple:
     h, s, l = h / 360, s / 100, l / 100
     if s == 0:
       r = g = b = int(l * 255)
@@ -443,19 +443,13 @@ class hexa:
         self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), None
       elif len(color) == 8:  # RRGGBBAA
         self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), int(color[6:8], 16) / 255.0
-      raise ValueError(f"Invalid HEX color string format '{color}'")
+      else:
+        raise ValueError(f"Invalid HEX color string format '{color}'")
     elif isinstance(color, int):
       self.hex_type = int
-      if 0x000 <= color <= 0xFFF:  # RGB (3 hex digits)
-        self.r, self.g, self.b, self.a = ((color >> 8) & 0xF) * 17, ((color >> 4) & 0xF) * 17, (color & 0xF) * 17, None
-      elif 0x0000 <= color <= 0xFFFF:  # RGBA (4 hex digits)
-        self.r, self.g, self.b, self.a = ((color >> 12) & 0xF) * 17, ((color >> 8) & 0xF) * 17, ((color >> 4) & 0xF) * 17, ((color & 0xF) * 17) / 255.0
-      elif 0x000000 <= color <= 0xFFFFFF:  # RRGGBB (6 hex digits)
-        self.r, self.g, self.b, self.a = (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, None
-      elif 0x00000000 <= color <= 0xFFFFFFFF:  # RRGGBBAA (8 hex digits)
-        self.r, self.g, self.b, self.a = (color >> 24) & 0xFF, (color >> 16) & 0xFF, (color >> 8) & 0xFF, (color & 0xFF) / 255.0
-      raise ValueError(f"Invalid HEX color integer format '{color}'")
-    raise TypeError("HEX color must be of type 'str' or 'int'")
+      self.r, self.g, self.b, self.a = Color.hexa_int_to_rgba(color)
+    else:
+      raise TypeError("HEX color must be of type 'str' or 'int'")
 
   def __len__(self):
     return 4 if self.a else 3
@@ -467,10 +461,10 @@ class hexa:
     return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))[index]
 
   def __repr__(self):
-    return f'hexa({Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a)})'
+    return f'hexa(0x{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""})'
 
   def __str__(self):
-    return f'{Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a)}'
+    return f'0x{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}'
 
   def __eq__(self, other):
     if not isinstance(other, hexa): return False
@@ -703,7 +697,7 @@ class Color:
     raise ValueError(f"Invalid color format '{color}'")
 
   @staticmethod
-  def str_to_rgba(string:str, only_first:bool = False) -> rgba|tuple[rgba]|None:
+  def str_to_rgba(string:str, only_first:bool = False) -> rgba|list[rgba]|None:
     """Will try to recognize RGBA colors inside a string and output the found ones as RGBA objects.<br>
     If `only_first` is `True` only the first found color will be returned (not as a list)."""
     matches = _re.findall(Regex.rgb_str(allow_alpha=True), string)
@@ -723,6 +717,24 @@ class Color:
     b = max(0, min(255, b))
     a = max(0, min(255, a))
     return int((r << 24) | (g << 16) | (b << 8) | a)
+
+  @staticmethod
+  def hexa_int_to_rgba(hex_int:int) -> tuple[int,int,int,float|int|None]:
+    if not isinstance(hex_int, int):
+      raise ValueError('Input must be an integer (hex value)')
+    hex_str = f'{hex_int:x}'
+    if len(hex_str) < 3:
+      raise ValueError(f"Invalid HEX color integer format '{hex_int}' (0x{hex_str})")
+    length = len(hex_str)
+    if length not in [3, 4, 6, 8]:
+      raise ValueError(f"Invalid HEX color integer format '{hex_int}' (0x{hex_str})")
+    if length <= 4:
+      hex_str = ''.join(c + c for c in hex_str)
+    a = None if len(hex_str) == 6 else int(hex_str[6:8], 16)
+    r = int(hex_str[0:2], 16)
+    g = int(hex_str[2:4], 16)
+    b = int(hex_str[4:6], 16)
+    return r, g, b, a
 
   @staticmethod
   def luminance(color:rgba|hsla|hexa, precision:int = 2, round_to:int = None) -> float|int:

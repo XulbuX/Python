@@ -16,7 +16,7 @@ def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
     if _os.path.isfile(init_path):
       with open(init_path, encoding='utf-8') as f:
         for line in f:
-          if line.startswith(var): return line.split('=')[-1].strip().strip("'\"")
+          if line.startswith(var): return line.split('=')[-1].strip().strip('\'"')
     return 'unknown'
 
 def help():
