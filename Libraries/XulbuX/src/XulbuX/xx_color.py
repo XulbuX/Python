@@ -24,7 +24,7 @@ The `Color` class, which contains all sorts of different color-related methods:
     - string to rgba
 - convert an RGBA color to a HEX integer
 - convert a HEX integer to an RGBA color
-- get a colors luminance
+- get a colors luminance from the RGB channels
 - get the optimal text color for on a colored background
 - adjust different color channels:
     - brightness
@@ -70,9 +70,9 @@ class rgba:
         if any(isinstance(x, rgba) for x in (r, g, b)):
             raise ValueError('Color is already a rgba() color')
         elif not all(isinstance(x, int) and 0 <= x <= 255 for x in (r, g, b)):
-            raise ValueError('RGBA color must have R G B in [0, 255]')
+            raise ValueError('RGBA color must have R G B as integers in [0, 255]: got', (r, g, b))
         elif not a is None and not (isinstance(a, (int, float)) and 0 <= a <= 1):
-            raise ValueError('Alpha channel must be a float/int in [0.0, 1.0]')
+            raise ValueError('Alpha channel must be a float/int in [0.0, 1.0]: got', a)
         self.r, self.g, self.b, self.a = r, g, b, (1.0 if a > 1.0 else float(a)) if a else None
 
     def __len__(self):
@@ -147,9 +147,10 @@ class rgba:
         self.r, self.g, self.b, self.a = self.to_hsla().rotate(degrees).to_rgba().values()
         return rgba(self.r, self.g, self.b, self.a)
 
-    def invert(self) -> 'rgba':
+    def invert(self, invert_alpha:bool = False) -> 'rgba':
         """Inverts the color by rotating hue by 180 degrees and inverting lightness"""
         self.r, self.g, self.b = 255 - self.r, 255 - self.g, 255 - self.b
+        if invert_alpha: self.a = 1 - self.a
         return rgba(self.r, self.g, self.b, self.a)
 
     def grayscale(self) -> 'rgba':
@@ -169,16 +170,21 @@ class rgba:
                 other = rgba(*other)
             else:
                 raise TypeError("'other' must be a valid RGBA color")
-        alpha = (other[3] if other[3] is not None else 1) if len(other) > 3 else 1
         ratio *= 2
         self.r = max(0, min(255, int(round((self.r * (2 - ratio)) + (other.r * ratio)))))
         self.g = max(0, min(255, int(round((self.g * (2 - ratio)) + (other.g * ratio)))))
         self.b = max(0, min(255, int(round((self.b * (2 - ratio)) + (other.b * ratio)))))
-        if additive_alpha:
-            self.a = max(0, min(1, (self.a * (2 - ratio)) + (alpha * ratio)))
+        none_alpha = self.a is None and (len(other) <= 3 or other[3] is None)
+        if not none_alpha:
+            self_a = self.a if self.a is not None else 1
+            other_a = (other[3] if other[3] is not None else 1) if len(other) > 3 else 1
+            if additive_alpha:
+                self.a = max(0, min(1, (self_a * (2 - ratio)) + (other_a * ratio)))
+            else:
+                self.a = max(0, min(1, (self_a * (1 - (ratio / 2))) + (other_a * (ratio / 2))))
         else:
-            self.a = max(0, min(1, (self.a * (1 - (ratio / 2))) + (alpha * (ratio / 2))))
-        return rgba(self.r, self.g, self.b, self.a)
+            self.a = None
+        return rgba(self.r, self.g, self.b, None if none_alpha else self.a)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (luminance < 128)"""
@@ -251,9 +257,9 @@ class hsla:
         if any(isinstance(x, hsla) for x in (h, s, l)):
             raise ValueError('Color is already a hsla() color')
         elif not (isinstance(h, int) and (0 <= h <= 360) and all(isinstance(x, int) and (0 <= x <= 100) for x in (s, l))):
-            raise ValueError('HSL color must have H in [0, 360] and S L in [0, 100]')
+            raise ValueError('HSL color must have H as integer in [0, 360] and S L as integers in [0, 100]: got', (h, s, l))
         elif not a is None and (not isinstance(a, (int, float)) or not 0 <= a <= 1):
-            raise ValueError('Alpha channel must be a float/int in [0.0, 1.0]')
+            raise ValueError('Alpha channel must be a float/int in [0.0, 1.0]: got', a)
         self.h, self.s, self.l, self.a = h, s, l, (1.0 if a > 1.0 else float(a)) if a else None
 
     def __len__(self):
@@ -338,15 +344,17 @@ class hsla:
         self.h = (self.h + degrees) % 360
         return hsla(self.h, self.s, self.l, self.a)
 
-    def invert(self) -> 'hsla':
+    def invert(self, invert_alpha:bool = False) -> 'hsla':
         """Inverts the color by rotating hue by 180 degrees and inverting lightness"""
         self.h = (self.h + 180) % 360
         self.l = 100 - self.l
+        if invert_alpha: self.a = 1 - self.a
         return hsla(self.h, self.s, self.l, self.a)
 
     def grayscale(self) -> 'hsla':
         """Converts the color to grayscale using the luminance formula"""
-        self.h, self.s, self.l = rgba(*Color.luminance(*self._hsl_to_rgb(self.h, self.s, self.l)), a=None).to_hsla().values()
+        l = Color.luminance(*self._hsl_to_rgb(self.h, self.s, self.l))
+        self.h, self.s, self.l, _ = rgba(l, l, l).to_hsla().values()
         return hsla(self.h, self.s, self.l, self.a)
 
     def blend(self, other:'hsla', ratio:float = 0.5, additive_alpha:bool = False) -> 'rgba':
@@ -448,7 +456,7 @@ class hexa:
         elif isinstance(color, int):
             self.r, self.g, self.b, self.a = Color.hex_to_rgba(color)
         else:
-            raise TypeError("HEX color must be of type 'str' or 'int'")
+            raise TypeError("HEX color must be of type 'str' or 'int': got", type(color))
 
     def __len__(self):
         return 4 if self.a else 3
@@ -522,9 +530,10 @@ class hexa:
         self.r, self.g, self.b, self.a = self.to_rgba(False).rotate(degrees).values()
         return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
-    def invert(self) -> 'hexa':
+    def invert(self, invert_alpha:bool = False) -> 'hexa':
         """Inverts the color by rotating hue by 180 degrees and inverting lightness"""
         self.r, self.g, self.b, self.a = self.to_rgba(False).invert().values()
+        if invert_alpha: self.a = 1 - self.a
         return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
     def grayscale(self) -> 'hexa':
@@ -739,23 +748,26 @@ class Color:
             raise ValueError(f"Invalid HEX integer '0x{hex_str}': expected in range [0x000000, 0xFFFFFF]")
 
     @staticmethod
-    def luminance(color:rgba|hsla|hexa, precision:int = 2, round_to:int = None) -> float|int:
+    def luminance(r:int, g:int, b:int, output_type:type = None) -> int|float:
         """Gets the colors luminance using the luminance formula.\n
         ------------------------------------------------------------
-        The param `precision` can set to 0, 1 or 2.<br>
-        ⇾ **Lower means better performance but less accuracy.**"""
-        r, g, b, _ = Color.to_rgba(color).values()
-        if precision == 0:
-            luminance = (r + r + r + b + g + g + g + g) >> 3
-        if precision == 1:
-            luminance = 0.299 * r + 0.587 * g + 0.114 * b
-        elif precision == 2:
-            luminance = _math.sqrt((0.299 * r) ** 2 + (0.587 * g) ** 2 + (0.114 * b) ** 2)
-        return round(luminance, round_to) if round_to is not None else luminance
+        The param `output_type` can be set to:<br>
+        *`int`*   =⠀integer in [0, 100]<br>
+        *`float`* =⠀float in [0.0, 1.0]<br>
+        `None`    =⠀integer in [0, 255]"""
+        r, g, b = r / 255.0, g / 255.0, b / 255.0
+        if r < 0.03928: r = r / 12.92
+        else: r = ((r + 0.055) / 1.055) ** 2.4
+        if g < 0.03928: g = g / 12.92
+        else: g = ((g + 0.055) / 1.055) ** 2.4
+        if b < 0.03928: b = b / 12.92
+        else: b = ((b + 0.055) / 1.055) ** 2.4
+        l = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return round(l * 100) if isinstance(output_type, int) else round(l * 255) if output_type is None else l
 
     @staticmethod
     def text_color_for_on_bg(title_bg_color:rgba|hexa = 0xFFF) -> rgba|hexa:
-        was_hexa, hexa_prefix, was_int = Color.is_valid_hexa(title_bg_color, get_prefix=True), isinstance(title_bg_color, int)
+        (was_hexa, hexa_prefix), was_int = Color.is_valid_hexa(title_bg_color, get_prefix=True), isinstance(title_bg_color, int)
         title_bg_color = Color.to_rgba(title_bg_color)
         brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
         return (hexa(f'{hexa_prefix}FFF') if was_hexa else rgba(255, 255, 255)) if brightness < 128 else ((0x000 if was_int else hexa(f'{hexa_prefix}000')) if was_hexa else rgba(0, 0, 0))

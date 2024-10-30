@@ -26,6 +26,9 @@
   <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
   <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
   <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
+* Fixed the `grayscale()` method of `rgba()`, `hsla()` and `hexa()`:<br>
+  The method would previously just return the color, fully desaturated (*not grayscale*)<br>
+  Now this is fixed, and the method uses the luminance formula, to get the actual grayscale value
 * All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
 
 ## 28.10.2024 `v1.5.2`
