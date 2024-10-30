@@ -23,7 +23,7 @@
 * Added new methods to `Color`:<br>
   <code>rgba_to_hexa_int(*r*, *g*, *b*, *a*) -> *int*</code><br>
   <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
-* All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` instead of only `"#8085FF"`)
+* All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
 
 ## 28.10.2024 `v1.5.2`
 * New parameter <code>correct_path:*bool*</code> in `Path.extend()`:

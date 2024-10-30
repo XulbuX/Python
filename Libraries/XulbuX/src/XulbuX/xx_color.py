@@ -22,7 +22,8 @@ The `Color` class, which contains all sorts of different color-related methods:
   - color to hexa
 - recognize colors inside strings and convert them to color types:
   - string to rgba
-- convert an RGBA color to a HEXA integer
+- convert an RGBA color to a HEX integer
+- convert a HEX integer to an RGBA color
 - get a colors luminance
 - get the optimal text color for on a colored background
 - adjust different color channels:
@@ -115,7 +116,7 @@ class rgba:
 
   def to_hexa(self) -> 'hexa':
     """Returns the color as a `hexa()` color"""
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def has_alpha(self) -> bool:
     """Returns `True` if the color has an alpha channel and `False` otherwise"""
@@ -297,7 +298,8 @@ class hsla:
 
   def to_hexa(self) -> 'hexa':
     """Returns the color as a `hexa()` color"""
-    return hexa(Color.rgba_to_hexa_int(*self._hsl_to_rgb(self.h, self.s, self.l), self.a))
+    r, g, b = self._hsl_to_rgb(self.h, self.s, self.l)
+    return hexa(f'#{r:02X}{g:02X}{b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def has_alpha(self) -> bool:
     """Returns `True` if the color has an alpha channel and `False` otherwise"""
@@ -425,16 +427,14 @@ class hexa:
   - `with_alpha(alpha)` to create a new color with different alpha
   - `complementary()` to get the complementary color"""
 
-  def __init__(self, color:str):
+  def __init__(self, color:str|int):
     if isinstance(color, hexa):
       raise ValueError('Color is already a hexa() color')
     if isinstance(color, str):
-      self.hex_type = str
       if color.startswith('#'):
-        self.hex_type, color = '#', color[1:]
+        color = color[1:].upper()
       elif color.startswith('0x'):
-        self.hex_type, color = '0x', color[2:]
-      color = color.upper()
+        color = color[2:].upper()
       if len(color) == 3:  # RGB
         self.r, self.g, self.b, self.a = int(color[0] * 2, 16), int(color[1] * 2, 16), int(color[2] * 2, 16), None
       elif len(color) == 4:  # RGBA
@@ -444,10 +444,9 @@ class hexa:
       elif len(color) == 8:  # RRGGBBAA
         self.r, self.g, self.b, self.a = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), int(color[6:8], 16) / 255.0
       else:
-        raise ValueError(f"Invalid HEX color string format '{color}'")
+        raise ValueError(f"Invalid HEX format '{color}'")
     elif isinstance(color, int):
-      self.hex_type = int
-      self.r, self.g, self.b, self.a = Color.hexa_int_to_rgba(color)
+      self.r, self.g, self.b, self.a = Color.hex_to_rgba(color)
     else:
       raise TypeError("HEX color must be of type 'str' or 'int'")
 
@@ -461,10 +460,10 @@ class hexa:
     return ((f'{self.r:02X}', f'{self.g:02X}', f'{self.b:02X}') + ((f'{int(self.a * 255):02X}',) if self.a else ()))[index]
 
   def __repr__(self):
-    return f'hexa(0x{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""})'
+    return f'hexa(#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""})'
 
   def __str__(self):
-    return f'0x{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}'
+    return f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}'
 
   def __eq__(self, other):
     if not isinstance(other, hexa): return False
@@ -504,37 +503,37 @@ class hexa:
   def lighten(self, amount:float) -> 'hexa':
     """Increases the colors lightness by the specified amount (`0.0`-`1.0`)"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).lighten(amount).values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def darken(self, amount:float) -> 'hexa':
     """Decreases the colors lightness by the specified amount (`0.0`-`1.0`)"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).darken(amount).values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def saturate(self, amount:float) -> 'hexa':
     """Increases the colors saturation by the specified amount (`0.0`-`1.0`)"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).saturate(amount).values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def desaturate(self, amount:float) -> 'hexa':
     """Decreases the colors saturation by the specified amount (`0.0`-`1.0`)"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).desaturate(amount).values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def rotate(self, degrees:int) -> 'hexa':
     """Rotates the colors hue by the specified number of degrees"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).rotate(degrees).values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def invert(self) -> 'hexa':
     """Inverts the color by rotating hue by 180 degrees and inverting lightness"""
     self.r, self.g, self.b, self.a = self.to_rgba(False).invert().values()
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def grayscale(self) -> 'hexa':
     """Converts the color to grayscale using the luminance formula"""
     self.r = self.g = self.b = Color.luminance(self.r, self.g, self.b)
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, self.a))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def blend(self, other:'hexa', ratio:float = 0.5, additive_alpha:bool = False) -> 'rgba':
     """Blends the current color with another color using the specified ratio (`0.0`-`1.0`):<br>
@@ -563,7 +562,7 @@ class hexa:
     """Returns a new color with the specified alpha value"""
     if not (isinstance(alpha, (int, float)) and 0 <= alpha <= 1):
       raise ValueError("'alpha' must be in [0.0, 1.0]")
-    return hexa(Color.rgba_to_hexa_int(self.r, self.g, self.b, alpha))
+    return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
   def complementary(self) -> 'hexa':
     """Returns the complementary color (180 degrees on the color wheel)"""
@@ -706,35 +705,42 @@ class Color:
     return result[0] if len(result) == 1 or only_first else result
 
   @staticmethod
-  def rgba_to_hexa_int(r:int, g:int, b:int, a:float = None) -> int:
-    """Convert RGBA channels to a HEXA integer (alpha is optional)."""
+  def rgba_to_hex(r:int, g:int, b:int, a:float = None, _preserve_original:bool = False) -> int:
+    """Convert RGBA channels to a HEXA integer (alpha is optional).\n
+    -------------------------------------------------------------------------------------------------------------------------
+    To preserve leading zeros, the function will add a `1` at the beginning, if the HEX value would start with a `0`.<br>
+    This could affect the color a little bit, but will make sure, that it won't be interpreted as a completely different<br>
+    color, when initializing it as a `hexa()` color or changing it back to RGBA using `Color.hex_to_rgba()`.\n
+    ⇾ **You can disable this behavior by setting `_preserve_original` to `True`**"""
+    r = max(0, min(255, int(r)))
+    g = max(0, min(255, int(g)))
+    b = max(0, min(255, int(b)))
     if a is not None:
-      a = int(round(a * 255))
+      if isinstance(a, float):
+        a = int(a * 255)
+      a = max(0, min(255, int(a)))
+      hex_int = (r << 24) | (g << 16) | (b << 8) | a
+      if not _preserve_original and r == 0:
+        hex_int |= 0x01000000
     else:
-      a = 255
-    r = max(0, min(255, r))
-    g = max(0, min(255, g))
-    b = max(0, min(255, b))
-    a = max(0, min(255, a))
-    return int((r << 24) | (g << 16) | (b << 8) | a)
+      hex_int = (r << 16) | (g << 8) | b
+      if not _preserve_original and (hex_int & 0xF00000) == 0:
+        hex_int |= 0x010000
+    return hex_int
 
   @staticmethod
-  def hexa_int_to_rgba(hex_int:int) -> tuple[int,int,int,float|int|None]:
+  def hex_to_rgba(hex_int:int) -> tuple[int,int,int,float|int|None]:
     if not isinstance(hex_int, int):
       raise ValueError('Input must be an integer (hex value)')
     hex_str = f'{hex_int:x}'
-    if len(hex_str) < 3:
-      raise ValueError(f"Invalid HEX color integer format '{hex_int}' (0x{hex_str})")
-    length = len(hex_str)
-    if length not in [3, 4, 6, 8]:
-      raise ValueError(f"Invalid HEX color integer format '{hex_int}' (0x{hex_str})")
-    if length <= 4:
-      hex_str = ''.join(c + c for c in hex_str)
-    a = None if len(hex_str) == 6 else int(hex_str[6:8], 16)
-    r = int(hex_str[0:2], 16)
-    g = int(hex_str[2:4], 16)
-    b = int(hex_str[4:6], 16)
-    return r, g, b, a
+    if len(hex_str) <= 6:
+      hex_str = hex_str.zfill(6)
+      return int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), None
+    elif len(hex_str) <= 8:
+      hex_str = hex_str.zfill(8)
+      return int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16), int(hex_str[6:8], 16) / 255.0
+    else:
+      raise ValueError(f"Invalid HEX integer '0x{hex_str}': expected in range [0x000000, 0xFFFFFF]")
 
   @staticmethod
   def luminance(color:rgba|hsla|hexa, precision:int = 2, round_to:int = None) -> float|int:

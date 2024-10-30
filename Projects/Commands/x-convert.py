@@ -422,24 +422,28 @@ class blade_to_vue:
     vue_content = (f'<template>\n{xx.Code.add_indent(code.strip(), xx.Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}')
     if isinstance(args['indent']['value'], int):
       vue_content = xx.String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
-      if DEBUG: xx.Cmd.debug('Removed consecutive empty lines to [b|+]max_consecutive=1[_].', end='\n')
+      xx.Cmd.debug('Removed consecutive empty lines to [b|+]max_consecutive=1[_].', DEBUG, end='\n')
       if not args['indent']['value'] < 1:
         vue_content = xx.Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
-        if DEBUG: xx.Cmd.debug(f'Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.', end='\n')
+        xx.Cmd.debug(f'Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.', DEBUG, end='\n')
     return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
 
 
 
 def main(args:dict):
   get_json(args)
-  if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths='is_in_env_vars'): xx.Cmd.debug('config.json does not match the default json.', end='\n')
+  if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths='is_in_env_vars'):
+    xx.Cmd.debug('config.json does not match the default json.', end='\n')
   add_to_env_vars()
   args = get_missing_args(args)
-  if args['filepath']['value'] in (None, ''): xx.Cmd.fail('No filepath was provided.', pause=DEBUG)
+  if args['filepath']['value'] in (None, ''):
+    xx.Cmd.fail('No filepath was provided.', pause=DEBUG)
   args['filepath']['value'] = xx.Path.extend(args['filepath']['value'], raise_error=True, correct_path=True)
-  if not os.path.isfile(args['filepath']['value']): xx.Cmd.fail(f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG)
+  if not os.path.isfile(args['filepath']['value']):
+    xx.Cmd.fail(f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG)
 
-  with open(args['filepath']['value'], 'r') as file: file_content = file.read()
+  with open(args['filepath']['value'], 'r') as file:
+    file_content = file.read()
   converter = blade_to_vue()
   converted_content = (
     converter.convert(file_content, args['indent']['value']) if args['blade-vue']['exists'] else
@@ -449,16 +453,21 @@ def main(args:dict):
   if converted_content:
     new_file_path = xx.File.rename_extension(args['filepath']['value'], '.vue')
     if os.path.exists(new_file_path):
-      with open(new_file_path, 'r') as existing_file: existing_content = existing_file.read()
+      with open(new_file_path, 'r') as existing_file:
+        existing_content = existing_file.read()
       if existing_content == converted_content:
         xx.Cmd.info('Already formatted this file. [dim](nothing changed)', pause=DEBUG)
         xx.Cmd.pause_exit(exit=True, reset_ansi=True)
       xx.Cmd.warn(f'File already exists: [white]{new_file_path}', exit=False, end='')
-      if xx.Cmd.confirm(f'      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]? [_|dim]((Y/n):  )', end=''): pass
-      else: xx.Cmd.exit(reset_ansi=True)
-    with open(new_file_path, 'w') as file: file.write(converted_content)
+      if xx.Cmd.confirm(f'      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]? [_|dim]((Y/n):  )', end=''):
+        pass
+      else:
+        xx.Cmd.exit(reset_ansi=True)
+    with open(new_file_path, 'w') as file:
+      file.write(converted_content)
     xx.Cmd.done(f'Formatted into file: [white]{new_file_path}', pause=DEBUG)
-  else: xx.Cmd.fail('Empty file or invalid conversion chosen.', pause=DEBUG)
+  else:
+    xx.Cmd.fail('Empty file or invalid conversion chosen.', pause=DEBUG)
   xx.Cmd.pause_exit(exit=True, reset_ansi=True)
 
 

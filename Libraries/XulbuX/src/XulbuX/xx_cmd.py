@@ -78,9 +78,10 @@ class Cmd:
     else: FormatCodes.print(f'{start}  {f"[{default_color}]" if default_color else ""}{str(msg)}[_]', default_color, end=end)
 
   @staticmethod
-  def debug(msg:str = 'Point in program reached.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['yellow'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
-    Cmd.log('DEBUG', msg, start, end, title_bg_color, default_color)
-    Cmd.pause_exit(pause, exit)
+  def debug(msg:str = 'Point in program reached.', active:bool = True, start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['yellow'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
+    if active:
+      Cmd.log('DEBUG', msg, start, end, title_bg_color, default_color)
+      Cmd.pause_exit(pause, exit)
 
   @staticmethod
   def info(msg:str = 'Program running.', start:str = '\n', end:str = '\n\n', title_bg_color:hexa|rgba = DEFAULT.color['blue'], default_color:hexa|rgba = DEFAULT.text_color, pause:bool = False, exit:bool = False) -> None:
