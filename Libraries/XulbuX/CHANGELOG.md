@@ -19,9 +19,12 @@
 * Restructured the values in `_consts_.py`
 * Added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
 * Added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
-* Refactored the whole `xx_color` module after [`PEP`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/)
+* Refactored the whole library's code after [`PEP`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/) 🫡:
+  - changed the indent to 4 spaces
+  - no more inline control statements (*except its only a really small statement and body*)
 * Added new methods to `Color`:<br>
-  <code>rgba_to_hexa_int(*r*, *g*, *b*, *a*) -> *int*</code><br>
+  <code>rgba_to_hex(*r*, *g*, *b*, *a*) -> *int*</code><br>
+  <code>hex_to_rgba(*hex_int*) -> *tuple*</code><br>
   <code>luminance(*r*, *g*, *b*, *precision*, *round_to*) -> *float*|*int*</code>
 * All the methods in the `xx_color` module now support HEXA integers (*e.g.* `0x8085FF` *instead of only strings:* `"#8085FF"` `"0x8085FF"`)
 
