@@ -8,20 +8,20 @@ import os as _os
 
 
 def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
-  try:
-    from . import var
-    return var
-  except ImportError:
-    init_path = _os.path.join(_os.path.dirname(__file__), file)
-    if _os.path.isfile(init_path):
-      with open(init_path, encoding='utf-8') as f:
-        for line in f:
-          if line.startswith(var): return line.split('=')[-1].strip().strip('\'"')
-    return 'unknown'
+    try:
+        from . import var
+        return var
+    except ImportError:
+        init_path = _os.path.join(_os.path.dirname(__file__), file)
+        if _os.path.isfile(init_path):
+            with open(init_path, encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith(var): return line.split('=')[-1].strip().strip('\'"')
+        return 'unknown'
 
 def help():
-  """Show some info about the library, with a brief explanation of how to use it, in the console."""
-  FormatCodes.print(
+    """Show some info about the library, with a brief explanation of how to use it, in the console."""
+    FormatCodes.print(
   rf'''  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
@@ -56,9 +56,9 @@ def help():
   [_]
   [dim](Press any key to exit...)
   ''', DEFAULT.text_color)
-  Cmd.pause_exit(pause=True)
+    Cmd.pause_exit(pause=True)
 
 
 
 if __name__ == '__main__':
-  help()
+    help()
