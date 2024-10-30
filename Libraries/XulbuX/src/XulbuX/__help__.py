@@ -20,39 +20,46 @@ def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
         return 'unknown'
 
 def help():
+    color = {
+        'lib': DEFAULT.color['ice'],
+        'import': DEFAULT.color['red'],
+        'class': DEFAULT.color['lavender'],
+        'types': DEFAULT.color['lightblue'],
+        'punctuators': DEFAULT.color['darkgray'],
+    }
     """Show some info about the library, with a brief explanation of how to use it, in the console."""
     FormatCodes.print(
   rf'''  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __
   [b|#7075FF] | |/ // / / / / / __ \/ / / | |/ /
   [b|#7075FF] > , </ /_/ / /_/ /_/ / /_/ /> , < 
-  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:#7B7C8F|#000] v[b]{get_version()} [*]
+  [b|#7075FF]/_/|_|\____/\__/\____/\____//_/|_|  [*|BG:{DEFAULT.color['gray']}|#000] v[b]{get_version()} [*]
 
-  [i|#FF806A]A TON OF COOL FUNCTIONS, YOU NEED![*]
+  [i|{DEFAULT.color['coral']}]A TON OF COOL FUNCTIONS, YOU NEED![*]
 
   [b|#75A2FF]Usage:[*]
-    [#666]# GENERAL LIBRARY[*]
-    [#FF606A]import [#77EFEF]XulbuX [#FF606A]as [#77EFEF]xx[*]
-    [#666]# CUSTOM TYPES[*]
-    [#FF606A]from [#77EFEF]XulbuX [#FF606A]import [#77EFEF]rgba[#666], [#77EFEF]hsla[#666], [#77EFEF]hexa[*]
+    [{color['punctuators']}]# GENERAL LIBRARY[*]
+    [{color['import']}]import [{color['lib']}]XulbuX [{color['import']}]as [{color['lib']}]xx[*]
+    [{color['punctuators']}]# CUSTOM TYPES[*]
+    [{color['import']}]from [{color['lib']}]XulbuX [{color['import']}]import [{color['lib']}]rgba[{color['punctuators']}], [{color['lib']}]hsla[{color['punctuators']}], [{color['lib']}]hexa[*]
 
   [b|#75A2FF]Includes:[*]
     [dim](•) CUSTOM TYPES:
-       [dim](•) [#AA90FF]rgba[#666]/([i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]float[_|#666])[*]
-       [dim](•) [#AA90FF]hsla[#666]/([i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]int[_|#666],[i|#60AAFF]float[_|#666])[*]
-       [dim](•) [#AA90FF]hexa[#666]/([i|#60AAFF]str[_|#666])[*]
-    [dim](•) PATH OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]Path[*]
-    [dim](•) FILE OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]File[*]
-    [dim](•) JSON FILE OPERATIONS     [#77EFEF]xx[#666].[#AA90FF]Json[*]
-    [dim](•) SYSTEM ACTIONS           [#77EFEF]xx[#666].[#AA90FF]System[*]
-    [dim](•) MANAGE ENVIRONMENT VARS  [#77EFEF]xx[#666].[#AA90FF]Env_vars[*]
-    [dim](•) CMD LOG AND ACTIONS      [#77EFEF]xx[#666].[#AA90FF]Cmd[*]
-    [dim](•) PRETTY PRINTING          [#77EFEF]xx[#666].[#AA90FF]FormatCodes[*]
-    [dim](•) COLOR OPERATIONS         [#77EFEF]xx[#666].[#AA90FF]Color[*]
-    [dim](•) DATA OPERATIONS          [#77EFEF]xx[#666].[#AA90FF]Data[*]
-    [dim](•) STR OPERATIONS           [#77EFEF]xx[#666].[#AA90FF]String[*]
-    [dim](•) CODE STRING OPERATIONS   [#77EFEF]xx[#666].[#AA90FF]Code[*]
-    [dim](•) REGEX PATTERN TEMPLATES  [#77EFEF]xx[#666].[#AA90FF]Regex[*]
+       [dim](•) [{color['class']}]rgba[{color['punctuators']}]/([i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]float[_|{color['punctuators']}])[*]
+       [dim](•) [{color['class']}]hsla[{color['punctuators']}]/([i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]int[_|{color['punctuators']}],[i|{color['types']}]float[_|{color['punctuators']}])[*]
+       [dim](•) [{color['class']}]hexa[{color['punctuators']}]/([i|{color['types']}]str[_|{color['punctuators']}])[*]
+    [dim](•) PATH OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Path[*]
+    [dim](•) FILE OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]File[*]
+    [dim](•) JSON FILE OPERATIONS     [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Json[*]
+    [dim](•) SYSTEM ACTIONS           [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]System[*]
+    [dim](•) MANAGE ENVIRONMENT VARS  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Env_vars[*]
+    [dim](•) CMD LOG AND ACTIONS      [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Cmd[*]
+    [dim](•) PRETTY PRINTING          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]FormatCodes[*]
+    [dim](•) COLOR OPERATIONS         [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Color[*]
+    [dim](•) DATA OPERATIONS          [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Data[*]
+    [dim](•) STR OPERATIONS           [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]String[*]
+    [dim](•) CODE STRING OPERATIONS   [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Code[*]
+    [dim](•) REGEX PATTERN TEMPLATES  [{color['lib']}]xx[{color['punctuators']}].[{color['class']}]Regex[*]
   [_]
   [dim](Press any key to exit...)
   ''', DEFAULT.text_color)

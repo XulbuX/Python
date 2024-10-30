@@ -2,10 +2,11 @@ class DEFAULT:
     hex_type = int
     text_color:int = 0x95B5FF
     color:dict = {
-        'white':       0xF1F1FF,
-        'lightgray':   0xB6B6C0,
-        'darkgray':    0x67676C,
-        'black':       0x202025,
+        'white':       0xF1F2FF,
+        'lightgray':   0xB6B7C0,
+        'gray':        0x7B7C8D,
+        'darkgray':    0x67686C,
+        'black':       0x202125,
         'red':         0xFF606A,
         'coral':       0xFF7069,
         'orange':      0xFF876A,
@@ -15,6 +16,7 @@ class DEFAULT:
         'green':       0x7EE787,
         'teal':        0x50EAAF,
         'cyan':        0x3EE6DE,
+        'ice':         0x77EFEF,
         'lightblue':   0x60AAFF,
         'blue':        0x8085FF,
         'lavender':    0x9B7DFF,
@@ -26,12 +28,19 @@ class DEFAULT:
 
 
 class ANSI:
-    char:str  = '\x1b'
-    start:str = '['
-    sep:str   = ';'
-    end:str   = 'm'
-    seq_color:str = char + start + '38' + sep + '2' + sep + '{}' + sep + '{}' + sep + '{}' + end
-    seq_bg_color:str = char + start + '48' + sep + '2' + sep + '{}' + sep + '{}' + sep + '{}' + end
+    global CHAR, START, SEP, END
+
+    CHAR  = char  = '\x1b'
+    START = start = '['
+    SEP   = sep   = ';'
+    END   = end   = 'm'
+
+    def seq(parts:int = 1) -> str:
+        return CHAR + START + SEP.join(['{}' for _ in range(parts)]) + END
+
+    seq_color:str = CHAR + START + '38' + SEP + '2' + SEP + '{}' + SEP + '{}' + SEP + '{}' + END
+    seq_bg_color:str = CHAR + START + '48' + SEP + '2' + SEP + '{}' + SEP + '{}' + SEP + '{}' + END
+
     color_map:list[str] = [
         ########### DEFAULT CONSOLE COLOR NAMES ############
         'black',
@@ -43,6 +52,7 @@ class ANSI:
         'cyan',
         'white'
     ]
+
     codes_map:dict = {
         ###################### RESETS ######################
         '_':                         0,
