@@ -1,29 +1,28 @@
 class DEFAULT:
-    hex_type = int
-    text_color:int = 0x95B5FF
+    text_color:int = '#95B5FF'
     color:dict = {
-        'white':       0xF1F2FF,
-        'lightgray':   0xB6B7C0,
-        'gray':        0x7B7C8D,
-        'darkgray':    0x67686C,
-        'black':       0x202125,
-        'red':         0xFF606A,
-        'coral':       0xFF7069,
-        'orange':      0xFF876A,
-        'tangerine':   0xFF9962,
-        'gold':        0xFFAF60,
-        'yellow':      0xFFD260,
-        'green':       0x7EE787,
-        'teal':        0x50EAAF,
-        'cyan':        0x3EE6DE,
-        'ice':         0x77EFEF,
-        'lightblue':   0x60AAFF,
-        'blue':        0x8085FF,
-        'lavender':    0x9B7DFF,
-        'purple':      0xAD68FF,
-        'magenta':     0xC860FF,
-        'pink':        0xEE60BB,
-        'rose':        0xFF6090,
+        'white':       '#F1F2FF',
+        'lightgray':   '#B6B7C0',
+        'gray':        '#7B7C8D',
+        'darkgray':    '#67686C',
+        'black':       '#202125',
+        'red':         '#FF606A',
+        'coral':       '#FF7069',
+        'orange':      '#FF876A',
+        'tangerine':   '#FF9962',
+        'gold':        '#FFAF60',
+        'yellow':      '#FFD260',
+        'green':       '#7EE787',
+        'teal':        '#50EAAF',
+        'cyan':        '#3EE6DE',
+        'ice':         '#77EFEF',
+        'lightblue':   '#60AAFF',
+        'blue':        '#8085FF',
+        'lavender':    '#9B7DFF',
+        'purple':      '#AD68FF',
+        'magenta':     '#C860FF',
+        'pink':        '#EE60BB',
+        'rose':        '#FF6090',
     }
 
 
@@ -36,6 +35,7 @@ class ANSI:
     END   = end   = 'm'
 
     def seq(parts:int = 1) -> str:
+        """Generate an ANSI sequence with `parts` amount of placeholders."""
         return CHAR + START + SEP.join(['{}' for _ in range(parts)]) + END
 
     seq_color:str = CHAR + START + '38' + SEP + '2' + SEP + '{}' + SEP + '{}' + SEP + '{}' + END

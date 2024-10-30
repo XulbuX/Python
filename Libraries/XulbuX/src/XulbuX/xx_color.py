@@ -609,21 +609,22 @@ class Color:
             return False
 
     @staticmethod
-    def is_valid_hexa(color:str, allow_alpha:bool = True) -> bool|tuple[bool,str]:
+    def is_valid_hexa(color:str, allow_alpha:bool = True, get_prefix:bool = False) -> bool|tuple[bool,str]:
         try:
             if isinstance(color, hexa):
-                return (True, color)
+                return (True, '#')
             elif isinstance(color, int):
-                return 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF) and len(f'{color:X}') in ((3, 4, 6, 8) if allow_alpha else (3, 6))
+                is_valid = 0 <= color <= (0xFFFFFFFF if allow_alpha else 0xFFFFFF)
+                return (is_valid, '0x') if get_prefix else is_valid
             else:
                 if color.startswith('#'):
-                    color = color[1:]
+                    color, prefix = color[1:], '#'
                 elif color.startswith('0x'):
-                    color = color[2:]
+                    color, prefix = color[2:], '0x'
                 pattern = r'(?i)^[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{4}|[0-9A-F]{3}$' if allow_alpha else r'(?i)^[0-9A-F]{6}|[0-9A-F]{3}$'
-                return bool(_re.fullmatch(pattern, color))
+                return (bool(_re.fullmatch(pattern, color)), prefix) if get_prefix else bool(_re.fullmatch(pattern, color))
         except:
-            return False
+            return (False, None) if get_prefix else False
 
     @staticmethod
     def is_valid(color:str|list|tuple|dict, allow_alpha:bool = True) -> bool:
@@ -678,16 +679,16 @@ class Color:
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
-    def to_hexa(color:rgba|hsla, hex_type:type = DEFAULT.hex_type) -> hexa:
+    def to_hexa(color:rgba|hsla) -> hexa:
         """Will try to convert any color type to a color of type HEXA."""
         if isinstance(color, (rgba, hsla)):
-            return color.to_hexa(hex_type)
+            return color.to_hexa()
         elif Color.is_valid_rgba(color):
-            return rgba(*color).to_hexa(hex_type) if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa(hex_type)
+            return rgba(*color).to_hexa() if Color.has_alpha(color) else rgba(color[0], color[1], color[2]).to_hexa()
         elif Color.is_valid_hsla(color):
-            return hsla(*color).to_hexa(hex_type) if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hexa(hex_type)
+            return hsla(*color).to_hexa() if Color.has_alpha(color) else hsla(color[0], color[1], color[2]).to_hexa()
         elif Color.is_valid_hexa(color):
-            return color if isinstance(color, hexa) else hexa(f'{hex_type}{color}')
+            return color if isinstance(color, hexa) else hexa(f'#{color}')
         raise ValueError(f"Invalid color format '{color}'")
 
     @staticmethod
@@ -753,11 +754,11 @@ class Color:
         return round(luminance, round_to) if round_to is not None else luminance
 
     @staticmethod
-    def text_color_for_on_bg(title_bg_color:rgba|hexa = '#FFF') -> rgba|hexa:
-        was_hex, hex_prefix = Color.is_valid_hexa(title_bg_color, get_type=True)
+    def text_color_for_on_bg(title_bg_color:rgba|hexa = 0xFFF) -> rgba|hexa:
+        was_hexa, hexa_prefix, was_int = Color.is_valid_hexa(title_bg_color, get_prefix=True), isinstance(title_bg_color, int)
         title_bg_color = Color.to_rgba(title_bg_color)
         brightness = 0.2126 * title_bg_color[0] + 0.7152 * title_bg_color[1] + 0.0722 * title_bg_color[2]
-        return (hexa(f'{hex_prefix}FFF') if was_hex else rgba(255, 255, 255)) if brightness < 128 else (hexa(f'{hex_prefix}000') if was_hex else rgba(0, 0, 0))
+        return (hexa(f'{hexa_prefix}FFF') if was_hexa else rgba(255, 255, 255)) if brightness < 128 else ((0x000 if was_int else hexa(f'{hexa_prefix}000')) if was_hexa else rgba(0, 0, 0))
 
     @staticmethod
     def adjust_lightness(color:rgba|hexa, brightness_change:float) -> rgba|hexa:
@@ -767,11 +768,11 @@ class Color:
         **brightness_change** (float): float between -1.0 (darken by `100%`) and 1.0 (lighten by `100%`)\n
         ----------------------------------------------------------------------------------------------------
         **returns** (rgba|hexa): the adjusted color in the format of the input color"""
-        was_hex, hex_prefix = Color.is_valid_hexa(color, get_type=True)
+        was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
         l = int(max(0, min(100, l + brightness_change * 100)))
-        return Color.to_hexa((h, s, l, a), hex_prefix) if was_hex else Color.to_rgba((h, s, l, a))
+        return Color.to_hexa((h, s, l, a)) if was_hexa else Color.to_rgba((h, s, l, a))
 
     @staticmethod
     def adjust_saturation(color:rgba|hexa, saturation_change:float) -> rgba|hexa:
@@ -781,8 +782,8 @@ class Color:
         **saturation_change** (float): float between -1.0 (saturate by `100%`) and 1.0 (desaturate by `100%`)\n
         ---------------------------------------------------------------------------------------------------------
         **returns** (rgba|hexa): the adjusted color in the format of the input color"""
-        was_hex, hex_prefix = Color.is_valid_hexa(color, get_type=True)
+        was_hexa = Color.is_valid_hexa(color)
         color = Color.to_hsla(color)
         h, s, l, a = color[0], color[1], color[2], color[3] if Color.has_alpha(color) else None
         s = int(max(0, min(100, s + saturation_change * 100)))
-        return Color.to_hexa((h, s, l, a), hex_prefix) if was_hex else Color.to_rgba((h, s, l, a))
+        return Color.to_hexa((h, s, l, a)) if was_hexa else Color.to_rgba((h, s, l, a))
