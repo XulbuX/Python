@@ -15,7 +15,10 @@
 # <br><b>Changelog</b><br>
 
 
-## 28.10.2024 `v1.5.3`
+## 31.10.2024 `v1.5.4`
+* Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
+
+## 30.10.2024 `v1.5.3`
 * Restructured the values in `_consts_.py`
 * Added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
 * Added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)

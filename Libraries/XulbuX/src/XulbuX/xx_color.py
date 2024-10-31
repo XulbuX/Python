@@ -362,7 +362,8 @@ class hsla:
         If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
         If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)"""
-        return self.to_rgba().blend(Color.to_rgba(other), ratio, additive_alpha).to_hsla()
+        self.h, self.s, self.l, self.a = self.to_hsla().blend(Color.to_hsla(other), ratio, additive_alpha).values()
+        return hsla(self.h, self.s, self.l, self.a)
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (`lightness < 50`)"""
@@ -546,7 +547,8 @@ class hexa:
         If `ratio` is `0.0` it means 100% of the current color and 0% of the `other` color (1:0 mixture)<br>
         If `ratio` is `0.5` it means 50% of both colors (1:1 mixture)<br>
         If `ratio` is `1.0` it means 0% of the current color and 100% of the `other` color (0:1 mixture)"""
-        return self.to_rgba(False).blend(Color.to_rgba(other), ratio, additive_alpha).to_hexa()
+        self.r, self.g, self.b, self.a = self.to_rgba(False).blend(Color.to_rgba(other), ratio, additive_alpha).values()
+        return hexa(f'#{self.r:02X}{self.g:02X}{self.b:02X}{f"{int(self.a * 255):02X}" if self.a else ""}')
 
     def is_dark(self) -> bool:
         """Returns `True` if the color is considered dark (converted `lightness < 50`)"""
