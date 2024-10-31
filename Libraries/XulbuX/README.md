@@ -42,4 +42,4 @@ The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with abo
 
 --------------------------------------------------------------
 
-[View this library on PyPi](https://pypi.org/project/XulbuX/)
+[View this library on PyPI](https://pypi.org/project/XulbuX/)

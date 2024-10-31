@@ -73,7 +73,7 @@ Run with command:
 ```console
 lib-publish
 ```
-This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPi](https://pypi.org/).
+This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPI](https://pypi.org/).
 
 ### matrix.py
 Run with command:
@@ -103,7 +103,7 @@ process-list
 This command simply lets you input a list of items. It will then output all the items, but each item on a new line.<br>
 In addition to that it will display some info about the items. When all the items are numbers, it will also output more info like the min, max, sum and average.
 
-Per default, the list items are seperated by a `space`, but this can be changed to anything else with the option `-s` or `--sep`:
+Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` or `--sep`:
 ```console
 process-list --sep ","
 ```
