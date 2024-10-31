@@ -50,7 +50,7 @@ This is a better version of the `cls` or `clear` command to clear your console. 
 ### dir-info.py
 Run with command:
 ```console
-x-dir-info
+dir-info
 ```
 This command will give you the following info about your current working directory (`cwd`):
 * the files count
@@ -59,13 +59,13 @@ This command will give you the following info about your current working directo
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
 ```console
-x-dir-info --ignore scope
+dir-info --ignore scope
 ```
 ```console
-x-dir-info --ignore size
+dir-info --ignore size
 ```
 ```console
-x-dir-info --ignore scope size
+dir-info -i scope size
 ```
 
 ### lib-publish.py
@@ -98,7 +98,7 @@ Can be cancelled by pressing `Ctrl(⌘) + C`.
 ### process-list.py
 Run with command:
 ```console
-x-process-list
+process-list
 ```
 This command simply lets you input a list of items. It will then output all the items, but each item on a new line.<br>
 In addition to that it will display some info about the items. When all the items are numbers, it will also output more info like the min, max, sum and average.
@@ -111,10 +111,10 @@ process-list --sep ","
 ### sine.py
 Run with command:
 ```console
-sine-wave
+sine
 ```
 This command will just display a moving sine wave, inside your console.<br>
-Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
+Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 ### x-convert.py
 Run with command:
