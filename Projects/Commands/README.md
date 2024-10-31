@@ -47,6 +47,27 @@ This is a better version of the `cls` or `clear` command to clear your console. 
 * Faster to type and
 * the command also resets all the console formats.
 
+### dir-info.py
+Run with command:
+```console
+x-dir-info
+```
+This command will give you the following info about your current working directory (`cwd`):
+* the files count
+* the total files scope (*lines count from all the files with text in them*)
+* the total size of the files
+
+It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
+```console
+x-dir-info --ignore scope
+```
+```console
+x-dir-info --ignore size
+```
+```console
+x-dir-info --ignore scope size
+```
+
 ### lib-publish.py
 Run with command:
 ```console
@@ -72,9 +93,22 @@ This command will display a sort of matrix in your console with a few options fo
    ```console
    matrix -c -f
    ```
-Can be cancelled by pressing `Ctrl`+`C` or `Cmd ⌘`+`C`.
+Can be cancelled by pressing `Ctrl(⌘) + C`.
 
-### sine-wave.py
+### process-list.py
+Run with command:
+```console
+x-process-list
+```
+This command simply lets you input a list of items. It will then output all the items, but each item on a new line.<br>
+In addition to that it will display some info about the items. When all the items are numbers, it will also output more info like the min, max, sum and average.
+
+Per default, the list items are seperated by a `space`, but this can be changed to anything else with the option `-s` or `--sep`:
+```console
+process-list --sep ","
+```
+
+### sine.py
 Run with command:
 ```console
 sine-wave
@@ -92,35 +126,6 @@ To see exactly how this command works and what types of conversions are currentl
 ```console
 x-convert --help
 ```
-
-### x-dir-info.py
-Run with command:
-```console
-x-dir-info
-```
-This command will give you the following info about your current working directory (`cwd`):
-* the files count
-* the total files scope (*lines count from all the files with text in them*)
-* the total size of the files
-
-It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
-```console
-x-dir-info --ignore scope
-```
-```console
-x-dir-info --ignore size
-```
-```console
-x-dir-info --ignore scope size
-```
-
-### x-process-list.py
-Run with command:
-```console
-x-process-list
-```
-This command simply lets you input a list where each item is separated by a `space`. It will then simply output all the items, but each item on a new line.<br>
-When all the items are numbers, it will additionally output the average of all the items.
 
 ### x-tree.py
 Run with command:
