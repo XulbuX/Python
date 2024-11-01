@@ -25,7 +25,7 @@ There will be no way of getting rid of them, except for restarting your PC.
 > [!NOTE]
 > This script/exe works on all OSes.
 
-## notClosableMathsProblemsUntilCorrectAnswer | [view script](./scripts/notClosableMathsProblemsUntilCorrectAnswer.pyw)
+## notClosableTimedMathsProblemsUntilCorrectAnswer | [view script](./scripts/notClosableTimedMathsProblemsUntilCorrectAnswer.pyw)
 This script/exe will create a small window with a math problem and a timer.<br>
 If you enter the wrong answer to the problem or the timer runs out, the window will renew the problem and open a second math-problem-window.<br>
 Trying to close or iconify the window will not work. The only way to close a math-problem-window is by entering the correct answer in time.
