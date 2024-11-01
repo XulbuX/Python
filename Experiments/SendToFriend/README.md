@@ -1,5 +1,5 @@
 # Send To Friend
-This repository contains **harmless** prank scripts (also as [executables](./executables)), that do all sorts of annoying things.
+This repository contains **harmless** prank scripts (*also as [executables](./executables)*), that do all sorts of annoying things.
 > [!CAUTION]
 > These scripts lead to actions on your PC that you may not want.
 > However, it is important to note that **none of these scripts will cause damage to your PC**.
