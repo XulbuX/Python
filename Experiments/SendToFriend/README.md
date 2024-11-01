@@ -24,3 +24,10 @@ This script/exe will simply create a bunch of colored rectangles on your screen 
 There will be no way of getting rid of them, except for restarting your PC.
 > [!NOTE]
 > This script/exe works on all OSes.
+
+## notClosableMathsProblemsUntilCorrectAnswer | [view script](./scripts/notClosableMathsProblemsUntilCorrectAnswer.pyw)
+This script/exe will create a small window with a math problem and a timer.<br>
+If you enter the wrong answer to the problem or the timer runs out, the window will renew the problem and open a second math-problem-window.<br>
+Trying to close or iconify the window will not work. The only way to close a math-problem-window is by entering the correct answer in time.
+> [!NOTE]
+> This script/exe works on all OSes.
