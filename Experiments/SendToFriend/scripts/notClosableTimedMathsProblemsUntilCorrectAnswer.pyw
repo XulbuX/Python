@@ -23,13 +23,6 @@ SETTINGS = {
 class MathsProblemWindow:
     window_count = 0
 
-    @classmethod
-    def create_multiple(cls, parent_window, count):
-        def create():
-            for _ in range(count):
-                parent_window.after(1, MathsProblemWindow)
-        parent_window.after(1, create)
-
     def __init__(self, no_focus_on_open:bool = True):
         MathsProblemWindow.window_count += 1
         ctk.set_default_color_theme(SETTINGS['color_themes'][random.randint(0, len(SETTINGS['color_themes']) - 1)])
@@ -72,8 +65,7 @@ class MathsProblemWindow:
         return num1, num2, operation, question, int(eval(question))
 
     def reset(self, timer:int):
-        if self.timer_id:
-            self.win.after_cancel(self.timer_id)
+        if self.timer_id: self.win.after_cancel(self.timer_id)
         self.num1, self.num2, self.operation, self.question, self.answer = self.problem()
         self.question_label.configure(text=self.question)
         self.result_label.configure(text='')
@@ -94,14 +86,11 @@ class MathsProblemWindow:
     def check_answer(self):
         user_answer = self.entry.get()
         if user_answer.isdigit() and int(user_answer) == self.answer:
-            if self.timer_id:
-                self.win.after_cancel(self.timer_id)
+            if self.timer_id: self.win.after_cancel(self.timer_id)
             for after_id in self.win.tk.call('after', 'info'):
                 self.win.after_cancel(after_id)
             OPEN_WINDOWS.remove(self.win)
             self.win.destroy()
-            if len(OPEN_WINDOWS) == 0:
-                MathsProblemWindow(no_focus_on_open=False)
         else:
             self.result_label.configure(text='Wrong answer! Try again.', text_color='red')
             self.reset(SETTINGS['problem_timer'])
