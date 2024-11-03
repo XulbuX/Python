@@ -12,12 +12,20 @@ import regex as _rx
 class Code:
 
     @staticmethod
+    def normalize_spaces(string:str, tab_spaces:int = 4) -> str:
+        """Replaces all special space characters with normal spaces.<br>
+        Also replaces tab characters with `tab_spaces` spaces."""
+        return string.replace('\t', ' ' * tab_spaces).replace('\u2000', ' ').replace('\u2001', ' ').replace('\u2002', ' ').replace('\u2003', ' ').replace('\u2004', ' ').replace('\u2005', ' ').replace('\u2006', ' ').replace('\u2007', ' ').replace('\u2008', ' ').replace('\u2009', ' ').replace('\u200A', ' ')
+
+    @staticmethod
     def add_indent(code:str, indent:int) -> str:
+        """Adds `indent` spaces at the beginning of each line."""
         indented_lines = [' ' * indent + line for line in code.splitlines()]
         return '\n'.join(indented_lines)
 
     @staticmethod
     def get_tab_spaces(code:str) -> int:
+        """Will try to get the amount of spaces used for indentation."""
         code_lines = String.get_string_lines(code, remove_empty_lines=True)
         indents = [len(line) - len(line.lstrip()) for line in code_lines]
         non_zero_indents = [i for i in indents if i > 0]
@@ -25,6 +33,8 @@ class Code:
 
     @staticmethod
     def change_tab_size(code:str, new_tab_size:int, remove_empty_lines:bool = False) -> str:
+        """Replaces all tabs with `new_tab_size` spaces.<br>
+        If `remove_empty_lines` is `True`, empty lines will be removed in the process."""
         code_lines = String.get_string_lines(code, remove_empty_lines=True)
         lines = code_lines if remove_empty_lines else String.get_string_lines(code)
         tab_spaces = Code.get_tab_spaces(code)
@@ -42,6 +52,7 @@ class Code:
 
     @staticmethod
     def get_func_calls(code:str) -> list:
+        """Will try to get all function calls and return them as a list."""
         funcs, nested_func_calls = _rx.findall(r'(?i)' + Regex.func_call(), code), []
         for _, func_attrs in funcs:
             nested_calls = _rx.findall(r'(?i)' + Regex.func_call(), func_attrs)
@@ -51,6 +62,7 @@ class Code:
 
     @staticmethod
     def is_js(code:str, funcs:list = ['__', '$t', '$lang']) -> bool:
+        """Will check if the code is likely to be JavaScript."""
         funcs = '|'.join(funcs)
         js_pattern = _rx.compile(Regex.outside_strings(r'''^(?:
             (\$[\w_]+)\s*                      # JQUERY-STYLE VARIABLES

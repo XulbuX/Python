@@ -94,7 +94,8 @@ class Tree:
                             with open(item_path, 'r', encoding='utf-8', errors='replace') as f:
                                 lines = f.readlines()
                                 if lines:
-                                    lines = [' '.join(l.replace('\t', '    ').split()) for l in lines]  # NORMALIZE SPACE CHARACTERS
+                                    lines = [l.replace('\t', '    ').replace('\u2000', ' ').replace('\u2001', ' ').replace('\u2002', ' ').replace('\u2003', ' ').replace('\u2004', ' ')
+                                        .replace('\u2005', ' ').replace('\u2006', ' ').replace('\u2007', ' ').replace('\u2008', ' ').replace('\u2009', ' ').replace('\u200A', ' ') for l in lines]  # NORMALIZE SPACE CHARACTERS
                                     content_width = max(len(line.rstrip()) for line in lines)
                                     hor_border = self._line_hor * (content_width + 2)
                                     result_parts.append(f'{content_prefix}{self._branch_new}{hor_border}{self._corners[2]}\n')

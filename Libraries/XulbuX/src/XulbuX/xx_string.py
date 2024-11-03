@@ -33,6 +33,8 @@ class String:
 
     @staticmethod
     def get_repeated_symbol(string:str, symbol:str) -> int|bool:
+        """If the string consists of one repeating `symbol`, it returns the number of times it is repeated.<br>
+        If the string doesn't consist of one repeating symbol, it returns `False`."""
         if len(string) == len(symbol) * string.count(symbol):
             return string.count(symbol)
         else:
