@@ -65,7 +65,7 @@ dir-info --ignore scope
 dir-info --ignore size
 ```
 ```console
-dir-info -i scope size
+dir-info --ignore scope size
 ```
 
 ### lib-publish.py
@@ -134,6 +134,7 @@ x-tree
 ```
 This command generates an advanced directory tree. You have the following options when running the command:
 * directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
+* display the contents of the files (*utf-8*) directly included in the tree
 * choose between different tree styles
 * set the tree's indentation size
 * output the tree into a file (*if it's too large to fit inside the console history*)
