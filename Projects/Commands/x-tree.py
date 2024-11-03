@@ -16,10 +16,10 @@ DEFAULTS = {
 
 class Tree:
     styles = {
-        1: {'line_ver':'│', 'line_hor':'─', 'branch_new':'├', 'branch_end':'└', 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
-        2: {'line_ver':'│', 'line_hor':'─', 'branch_new':'├', 'branch_end':'╰', 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
-        3: {'line_ver':'┃', 'line_hor':'━', 'branch_new':'┣', 'branch_end':'┗', 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
-        4: {'line_ver':'║', 'line_hor':'═', 'branch_new':'╠', 'branch_end':'╚', 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
+        1: {'line_ver':'│', 'line_hor':'─', 'branch_new':'├', 'corners':['└', '┘', '┐'], 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
+        2: {'line_ver':'│', 'line_hor':'─', 'branch_new':'├', 'corners':['╰', '╯', '╮'], 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
+        3: {'line_ver':'┃', 'line_hor':'━', 'branch_new':'┣', 'corners':['┗', '┛', '┓'], 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
+        4: {'line_ver':'║', 'line_hor':'═', 'branch_new':'╠', 'corners':['╚', '╝', '╗'], 'error':'⚠', 'skipped':'...', 'dirname_end':'/'},
     }
 
     @staticmethod
@@ -33,7 +33,7 @@ class Tree:
     @staticmethod
     def show_styles() -> None:
         for style, details in Tree.styles.items():
-            style_example = details['branch_end'] + details['line_hor'] + details['skipped'] + details['dirname_end']
+            style_example = details['corners'][0] + details['line_hor'] + details['skipped'] + details['dirname_end']
             print(f'{style}: {style_example}', flush=True)
 
 
@@ -57,46 +57,43 @@ def get_tree(base_dir:str, ignore_dirs:list[str] = None, file_contents:bool = Fa
     try:
         if ignore_dirs in [None, '']:
             ignore_dirs = []
-        is_last = False
-        tab = ' ' * indent
-        tree = Tree.get_style(style)
-        items = sorted(os.listdir(base_dir))
-        line_hor = tree['line_hor'] * (indent - 1)
-        base_dir_name = os.path.basename(base_dir.rstrip(os.sep))
-        error_prefix = _prefix + tree['branch_end'] + (tree['line_hor'] * (indent - 1))
         excluded_extensions = {'.exe', '.dll', '.so', '.dylib', '.bin', '.dat', '.db', '.sqlite', '.pyc', '.pyo'}
+        is_last, items, tree, tab = False, sorted(os.listdir(base_dir)), Tree.get_style(style), ' ' * indent
+        base_dir_name, line_hor = os.path.basename(base_dir.rstrip(os.sep)), tree['line_hor'] * (indent - 2 if indent > 2 else 1 if indent == 2 else 0)
+        error_prefix = _prefix + tree['corners'][0] + (tree['line_hor'] * (indent - 1))
         if _level == 0:
             if base_dir_name == '':
                 drive_letter = os.path.splitdrive(base_dir)[0]
                 base_dir_name = drive_letter
-            result += f'{base_dir_name}{tree['dirname_end']}\n'
+            result += f'{base_dir_name}{tree["dirname_end"]}\n'
         for index, item in enumerate(items):
-            item_path = os.path.join(base_dir, item)
-            is_last = index == len(items) - 1
+            item_path, is_last = os.path.join(base_dir, item), index == len(items) - 1
+            is_dir = os.path.isdir(item_path)
             if item in ignore_dirs:
-                result += _prefix + (tree['branch_end'] if is_last else tree['branch_new']) + line_hor + item + tree['dirname_end'] + '\n'
-                skipped_prefix = _prefix + (tab if is_last else tree['line_ver'] + tab[:-1])
-                result += skipped_prefix + tree['branch_end'] + line_hor + tree['skipped'] + '\n'
+                result += _prefix + (tree['corners'][0] if is_last else tree['branch_new']) + line_hor + item + (tree['dirname_end'] if is_dir else '') + '\n'
+                if is_dir:
+                    result += _prefix + (tab if is_last else tree['line_ver'] + tab[:-1]) + tree['corners'][0] + line_hor + tree['skipped'] + '\n'
                 continue
-            if os.path.isdir(item_path):
-                result += _prefix + (tree['branch_end'] if is_last else tree['branch_new']) + line_hor + item + tree['dirname_end'] + '\n'
+            if is_dir:
+                result += _prefix + (tree['corners'][0] if is_last else tree['branch_new']) + line_hor + item + tree['dirname_end'] + '\n'
                 new_prefix = _prefix + (tab if is_last else (tree['line_ver'] + tab[:-1]))
                 result += get_tree(item_path, ignore_dirs, file_contents, style, indent, new_prefix, _level + 1)
             else:
-                result += _prefix + (tree['branch_end'] if is_last else tree['branch_new']) + line_hor + item + '\n'
+                result += _prefix + (tree['corners'][0] if is_last else tree['branch_new']) + line_hor + item + '\n'
                 if file_contents and os.path.splitext(item)[1].lower() not in excluded_extensions:
                     try:
                         content_prefix = _prefix + (tab if is_last else tree['line_ver'] + tab[:-1])
                         with open(item_path, 'r', encoding='utf-8', errors='replace') as f:
                             lines = f.readlines()
-                            max_line_num_len = len(str(len(lines)))
-                            for i, line in enumerate(lines, 1):
-                                result += f'{content_prefix} {" " * (max_line_num_len - len(str(i)))}{i}  {line.rstrip()}\n'
-                            result += content_prefix + '\n'
+                            content_width = max(len(l.rstrip()) for l in lines)
+                            result += f'{content_prefix}{tree["branch_new"]}{tree["line_hor"] * (content_width + 2)}{tree["corners"][2]}\n'
+                            for l in lines:
+                                result += f'{content_prefix}{tree["line_ver"]} {l.rstrip()}{" " * (content_width - len(l.rstrip()))} {tree["line_ver"]}\n'
+                            result += f'{content_prefix}{tree["corners"][0]}{tree["line_hor"] * (content_width + 2)}{tree["corners"][1]}\n'
                     except:
-                        result += f'{content_prefix}{error_prefix}{tree['error']} [Error reading file contents]\n'
+                        result += f'{content_prefix}{error_prefix}{tree["error"]} [Error reading file contents]\n'
     except Exception as e:
-        result += f'{error_prefix}{tree['error']} [Error: {str(e)}]\n'
+        result += f'{error_prefix}{tree["error"]} [Error: {str(e)}]\n'
     return result
 
 
@@ -108,9 +105,9 @@ def main():
         elif ARGS[1] in ['-i', '--ignore']:
             ignore_dirs = ARGS[2:]
     else:
-        ignore_dirs = xx.FormatCodes.input('Enter directories to ignore [dim]((`/` separated) >  )').strip().split('/')
+        ignore_dirs = xx.FormatCodes.input("Enter directories or files which's content should be ignore [dim]((`/` separated) >  )").strip().split('/')
     ignore_dirs = [subitem for item in ignore_dirs for subitem in item.split('/')]
-    file_contents = True if xx.FormatCodes.input(f'Add file contents to tree [dim]({"(Y/n)" if DEFAULTS["file_contents"] else "(y/N)"} >  )').strip().lower() in ['y', 'yes'] else DEFAULTS['file_contents']
+    file_contents = True if xx.FormatCodes.input(f'Display the file contents in the tree [dim]({"(Y/n)" if DEFAULTS["file_contents"] else "(y/N)"} >  )').strip().lower() in ['y', 'yes'] else DEFAULTS['file_contents']
     print('Enter the tree style (1-4): ')
     Tree.show_styles()
     tree_style = xx.FormatCodes.input(f'[dim]([default is {DEFAULTS["tree_style"]}] >  )').strip()
