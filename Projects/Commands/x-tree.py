@@ -17,7 +17,6 @@ DEFAULTS = {
 
 
 
-
 class Tree:
 
     def __init__(self):
@@ -37,7 +36,6 @@ class Tree:
         self._skipped = None
         self._dirname_end = None
 
-
     def _set_style(self, style:int) -> None:
         """Set current style attributes for faster access"""
         if self._current_style != style:
@@ -51,52 +49,42 @@ class Tree:
             self._skipped = style_dict['skipped']
             self._dirname_end = style_dict['dirname_end']
 
-
     def show_styles(self) -> None:
         for style, details in self.styles.items():
             print(f'{style}: {details["corners"][0]}{details["line_hor"]}{details["skipped"]}{details["dirname_end"]}', flush=True)
 
-
     def generate(self, base_dir:str, ignore_dirs:Optional[list[str]] = None, file_contents:bool = False, style:int = 1, indent:int = 3, _prefix:str = '', _level:int = 0) -> str:
         self._set_style(style)
         result_parts = []
-
         try:
             ignore_set = set(ignore_dirs) if ignore_dirs else set()
-
             tab = ' ' * indent
             line_hor_mult = indent - 2 if indent > 2 else 1 if indent == 2 else 0
             line_hor = self._line_hor * line_hor_mult
             error_prefix = _prefix + self._corners[0] + (self._line_hor * (indent - 1))
-
             if _level == 0:
                 base_dir_name = os.path.basename(base_dir.rstrip(os.sep))
                 if not base_dir_name:
                     base_dir_name = os.path.splitdrive(base_dir)[0]
                 result_parts.append(f'{base_dir_name}{self._dirname_end}\n')
-
             items = sorted(os.listdir(base_dir))
             items_count = len(items)
-
             for index, item in enumerate(items):
                 is_last = index == items_count - 1
                 item_path = os.path.join(base_dir, item)
                 is_dir = os.path.isdir(item_path)
                 branch = self._corners[0] if is_last else self._branch_new
                 current_line = _prefix + branch + line_hor
-
                 if item in ignore_set:
                     result_parts.append(f'{current_line}{item}{self._dirname_end if is_dir else ""}\n')
                     if is_dir:
                         next_prefix = _prefix + (tab if is_last else self._line_ver + tab[:-1])
                         result_parts.append(f'{next_prefix}{self._corners[0]}{line_hor}{self._skipped}\n')
                     continue
-
                 if is_dir:
                     result_parts.append(f'{current_line}{item}{self._dirname_end}\n')
                     new_prefix = _prefix + (tab if is_last else (self._line_ver + tab[:-1]))
                     result_parts.append(self.generate(item_path, list(ignore_set), file_contents, style, indent, new_prefix, _level + 1))
-
                 else:
                     result_parts.append(f'{current_line}{item}\n')
                     if file_contents:
@@ -115,11 +103,9 @@ class Tree:
                                     result_parts.append(f'{content_prefix}{self._corners[0]}{hor_border}{self._corners[1]}\n')  # BOTTOM BORDER
                         except:
                             result_parts.append(f'{content_prefix}{error_prefix}{self._error} [Error reading file contents]\n')
-
         except Exception as e:
             result_parts.append(f'{error_prefix}{self._error} [Error: {str(e)}]\n')
         return ''.join(result_parts)
-
 
 
 
@@ -132,7 +118,6 @@ def is_valid_path(path: str) -> bool:
         return not bool(re.search(invalid_chars, path))
     except:
         return False
-
 
 
 
@@ -183,7 +168,6 @@ def main():
         xx.FormatCodes.print('[white]')
         print(result, end='', flush=True)
         xx.FormatCodes.print('[_]')
-
 
 
 
