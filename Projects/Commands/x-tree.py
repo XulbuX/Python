@@ -3,7 +3,6 @@ import sys
 import os
 import re
 from functools import lru_cache
-from typing import List, Set, Dict, Optional
 from itertools import chain
 
 ARGS = sys.argv[1:]
@@ -50,10 +49,10 @@ class Tree:
             self._dirname_end = style_dict['dirname_end']
 
     def show_styles(self) -> None:
-        for style, details in self.styles.items():
+        for style, details in self._styles.items():
             print(f'{style}: {details["corners"][0]}{details["line_hor"]}{details["skipped"]}{details["dirname_end"]}', flush=True)
 
-    def generate(self, base_dir:str, ignore_dirs:Optional[list[str]] = None, file_contents:bool = False, style:int = 1, indent:int = 3, _prefix:str = '', _level:int = 0) -> str:
+    def generate(self, base_dir:str, ignore_dirs:list[str] = None, file_contents:bool = False, style:int = 1, indent:int = 3, _prefix:str = '', _level:int = 0) -> str:
         self._set_style(style)
         result_parts = []
         try:
@@ -89,18 +88,21 @@ class Tree:
                     result_parts.append(f'{current_line}{item}\n')
                     if file_contents:
                         content_prefix = _prefix + (tab if is_last else self._line_ver + tab[:-1])
+                        if not is_text_file(item_path):
+                            continue
                         try:
                             with open(item_path, 'r', encoding='utf-8', errors='replace') as f:
                                 lines = f.readlines()
-                                if lines:  # ONLY PROCESS IF FILE HAS CONTENT
+                                if lines:
+                                    lines = [' '.join(l.replace('\t', '    ').split()) for l in lines]  # NORMALIZE SPACE CHARACTERS
                                     content_width = max(len(line.rstrip()) for line in lines)
                                     hor_border = self._line_hor * (content_width + 2)
-                                    result_parts.append(f'{content_prefix}{self._branch_new}{hor_border}{self._corners[2]}\n')  # TOP BORDER
-                                    for line in lines:  # CONTENT LINES
+                                    result_parts.append(f'{content_prefix}{self._branch_new}{hor_border}{self._corners[2]}\n')
+                                    for line in lines:
                                         stripped = line.rstrip()
                                         padding = ' ' * (content_width - len(stripped))
                                         result_parts.append(f'{content_prefix}{self._line_ver} {stripped}{padding} {self._line_ver}\n')
-                                    result_parts.append(f'{content_prefix}{self._corners[0]}{hor_border}{self._corners[1]}\n')  # BOTTOM BORDER
+                                    result_parts.append(f'{content_prefix}{self._corners[0]}{hor_border}{self._corners[1]}\n')
                         except:
                             result_parts.append(f'{content_prefix}{error_prefix}{self._error} [Error reading file contents]\n')
         except Exception as e:
@@ -116,6 +118,22 @@ def is_valid_path(path: str) -> bool:
     try:
         invalid_chars = r'[\\/:*?"<>|]' if os.name == 'nt' else r'\0'
         return not bool(re.search(invalid_chars, path))
+    except:
+        return False
+
+@lru_cache(maxsize=1024)
+def is_text_file(filepath:str) -> bool:
+    binary_extensions = {
+        '.exe', '.dll', '.so', '.dylib', '.bin', '.dat', '.db', '.sqlite', '.jpg', '.jpeg', '.png', '.gif', '.ico', '.cur',
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.tar', '.gz', '.7z', '.rar', '.mp3', '.mp4', '.avi', '.mov'
+    }
+    if os.path.splitext(filepath)[1].lower() in binary_extensions:
+        return False
+    try:
+        with open(filepath, 'rb') as f:
+            chunk = f.read(1024)
+            text_characters = bytes(range(32, 127)) + b'\n\r\t\f\b'
+            return bool(chunk) and all(byte in text_characters for byte in chunk)
     except:
         return False
 
@@ -136,7 +154,7 @@ def main():
     ).strip().lower() in ['y', 'yes']
 
     print('Enter the tree style (1-4): ')
-    Tree.show_styles()
+    Tree().show_styles()
     tree_style = xx.FormatCodes.input(f'[dim]([default is {DEFAULTS["tree_style"]}] >  )').strip()
     tree_style = int(tree_style) if tree_style.isnumeric() and 1 <= int(tree_style) <= 4 else DEFAULTS['tree_style']
 
