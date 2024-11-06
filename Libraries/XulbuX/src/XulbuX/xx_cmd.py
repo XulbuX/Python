@@ -177,7 +177,7 @@ class Cmd:
                     _sys.stdout.flush()
             elif (not allowed_chars or char in allowed_chars) and (max_length is None or len(result) < max_length):
                 result += char
-                _sys.stdout.write(mask_char if mask_char is not None else char)
+                _sys.stdout.write(char if mask_char is None else (mask_char if char not in (None, '') else ''))
                 _sys.stdout.flush()
 
     @staticmethod
