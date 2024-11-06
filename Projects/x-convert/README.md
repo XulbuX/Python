@@ -5,7 +5,7 @@ The program is used to convert one type of code into another type of code. Curre
 * `Laravel Blade` to `Vue.js`
 
 
-## running x-convert for the first time
+## Running x-convert for the first time
 
 After you download the file (*Python or EXE, it doesn't matter*), you can first run it normally.<br>
 If you don't have a `config.json` in the directory you run it in, you will be prompted to create one. (*You have to say* `Yes` *to be able to use it.*)
@@ -13,7 +13,7 @@ Then you will be asked if you want to add the base directory to the path. (*Only
 
 After you did everything from above, you should be able to execute the command `x-convert` in the console.
 
-## console command
+## Console command
 
 The command to use it with will look something like this:
 ```gas
