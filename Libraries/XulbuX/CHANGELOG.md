@@ -18,8 +18,9 @@
 ## 31.10.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
 * Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
-* Added new doc-strings to `xx_code`
+* Added new doc-strings to `xx_code` and `xx_cmd`
 * Added a custom `input()` function to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
+* Added the function `pwd_input()` to `Cmd`, which works just like the `Cmd.input()` but masks the input characters with `*`
 * Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a function
 
 ## 30.10.2024 `v1.5.3`
