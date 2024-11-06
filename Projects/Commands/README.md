@@ -116,16 +116,6 @@ sine
 This command will just display a moving sine wave, inside your console.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
-### x-convert.py
-Run with command:
-```console
-x-convert
-```
-This command is actually a whole program. It is used to convert one type of code into another type of code.<br>
-To see exactly how this command works and what types of conversions are currently supported, run the command with the `-h` or `--help` option:
-```console
-x-convert --help
-```
 
 ### x-tree.py
 Run with command:
