@@ -6,6 +6,7 @@ This repository contains various Python projects, libraries, and experiments I'v
   * [XulbuX](#xulbux) | **[view](./Libraries/XulbuX)**
 * [Projects](#projects) | **[view](./Projects)**
   * [Commands](#commands) | **[view](./Projects/Commands)**
+  * [x-convert](#xconvert) | **[view](./Projects/x-convert)**
 * [Experiments](#experiments) | **[view](./Experiments)**
   * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
 
@@ -19,6 +20,9 @@ For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
 
 ### Commands
 Inside `Commands` are a lot of Python files, which can be added to the system paths to be run as commands. You can figure out what each command does in the [`README.md`](./Projects/Commands/README.md) of the corresponding repo.
+
+### x-convert
+Inside `x-convert` is a file, supposed to be run as a command, used for converting one type of code into another type of code. For more information, take a look at the [`README.md`](./Projects/x-convert/README.md) of the corresponding repo.
 
 
 ## Experiments
