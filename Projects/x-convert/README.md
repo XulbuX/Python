@@ -6,7 +6,7 @@ The program is used to convert one type of code into another type of code. Curre
 
 The program will create a new file with the formatted code inside, in the same directory as the file with the old code.
 
-[Download the executable.](https://github.com/XulbuX-dev/Python/raw/refs/heads/main/Projects/x-convert/x-convert.exe)
+[download the executable](https://github.com/XulbuX-dev/Python/raw/refs/heads/main/Projects/x-convert/x-convert.exe)
 
 
 ## Running x-convert for the first time
