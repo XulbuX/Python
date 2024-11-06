@@ -4,6 +4,8 @@ The goal of this file is to run it as a command inside the console.
 The program is used to convert one type of code into another type of code. Currently, it supports the following conversions:
 * `Laravel Blade` to `Vue.js`
 
+The command will create a new file with the formatted code inside, in the same directory as the file with the old code.
+
 
 ## Running x-convert for the first time
 
@@ -12,6 +14,7 @@ If you don't have a `config.json` in the directory you run it in, you will be pr
 Then you will be asked if you want to add the base directory to the path. (*Only if you say* `Yes` *you will be able to run it as a command in the console.*)
 
 After you did everything from above, you should be able to execute the command `x-convert` in the console.
+
 
 ## Console command
 
