@@ -15,8 +15,8 @@ class Path:
         if cwd:
             paths.append(_os.getcwd())
         if base_dir:
-            if getattr(_sys, 'frozen', False) and hasattr(_sys, '_MEIPASS'):
-                base_path = _sys._MEIPASS
+            if getattr(_sys, 'frozen', False):
+                base_path = _os.path.dirname(_sys.executable)
             else:
                 main_module = _sys.modules['__main__']
                 if hasattr(main_module, '__file__'):
