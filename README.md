@@ -6,7 +6,7 @@ This repository contains various Python projects, libraries, and experiments I'v
   * [XulbuX](#xulbux) | **[view](./Libraries/XulbuX)**
 * [Projects](#projects) | **[view](./Projects)**
   * [Commands](#commands) | **[view](./Projects/Commands)**
-  * [x-convert](#xconvert) | **[view](./Projects/x-convert)**
+  * [x-convert](#x-convert) | **[view](./Projects/x-convert)**
 * [Experiments](#experiments) | **[view](./Experiments)**
   * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
 
