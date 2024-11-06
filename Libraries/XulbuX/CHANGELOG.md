@@ -15,7 +15,7 @@
 # <br><b>Changelog</b><br>
 
 
-## 31.10.2024 `v1.5.4`
+## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
 * Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
 * Added new doc-strings to `xx_code` and `xx_cmd`
