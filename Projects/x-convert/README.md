@@ -26,6 +26,6 @@ x-convert -bv -i 2 -f /some/relative/path/to/file.blade.php
 ```
 
 To see exactly how this command works and some other info, run the command with the `-h` or `--help` option:
-```gas
+```ps
 x-convert --help
 ```
