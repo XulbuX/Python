@@ -9,7 +9,7 @@ The program will create a new file with the formatted code inside, in the same d
 
 ## Running x-convert for the first time
 
-After you download the file (*[Python](https://github.com/XulbuX-dev/Python/raw/refs/heads/main/Projects/x-convert/x-convert.py) or [EXE](https://github.com/XulbuX-dev/Python/raw/refs/heads/main/Projects/x-convert/x-convert.exe), it doesn't matter*), you can first run it normally.<br>
+After you download the file (*[Python](./x-convert.py) or [EXE](https://github.com/XulbuX-dev/Python/raw/refs/heads/main/Projects/x-convert/x-convert.exe), it doesn't matter*), you can first run it normally.<br>
 If you don't have a `config.json` in the directory you run it in, you will be prompted to create one. (*You have to say* `Yes` *to be able to use it.*)
 Then you will be asked if you want to add the base directory to the path. (*Only if you say* `Yes` *you will be able to run it as a command in the console.*)
 
