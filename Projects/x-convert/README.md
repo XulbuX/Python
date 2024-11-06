@@ -7,7 +7,7 @@ The program is used to convert one type of code into another type of code. Curre
 
 ## running x-convert for the first time
 
-After you download the file (Python or EXE), you can first run it normally.<br>
+After you download the file (*Python or EXE, doesn't matter*), you can first run it normally.<br>
 If you don't have a `config.json` in the directory you run it in, you will be prompted to create one. (*You have to say* `Yes` *to be able to use it.*)
 Then you will be asked if you want to add the base directory to the path. (*Only if you say* `Yes` *you will be able to run it as a command in the console.*)
 
