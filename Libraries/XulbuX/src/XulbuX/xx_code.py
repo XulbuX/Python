@@ -1,11 +1,9 @@
-try: from .xx_string import *
-except: from xx_string import *
-try: from .xx_regex import *
-except: from xx_regex import *
-try: from .xx_data import *
-except: from xx_data import *
+from .xx_string import *
+from .xx_regex import *
+from .xx_data import *
 
 import regex as _rx
+
 
 
 

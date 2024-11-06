@@ -151,7 +151,7 @@ def get_json(args:dict) -> dict:
         JSON, _JSON = xx.Json.read(JSON_FILE, comment_start='>>', comment_end='<<', return_original=True)
     except FileNotFoundError:
         xx.Cmd.fail(f'File not found:  [white]{JSON_FILE}', exit=False, end='')
-        if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory? [_|dim]((Y/n):  )', end=''):
+        if xx.Cmd.confirm(f'      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?', end=''):
             xx.Json.create(DEFAULT_JSON, indent=4, force=True)
             xx.Cmd.info(f'[white]{JSON_FILE}[*] created successfully.', end='\n')
             xx.FormatCodes.print('        \t[dim]Restarting program...[_]', xx.DEFAULT.text_color)
@@ -175,7 +175,7 @@ def add_to_env_vars() -> dict:
             if not xx.EnvVars.has_path(base_dir=True):
                 xx.Cmd.warn('Path to program-directory doesn\'t exist in your environment variables.', exit=False, end='\n')
                 xx.FormatCodes.print(f'        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]', xx.DEFAULT.text_color)
-                if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables? [_|dim]((Y/n):  )', start='', end=''):
+                if xx.Cmd.confirm('      \tAdd the [+|b]program directory[*] to your environment variables?', start='', end=''):
                     xx.EnvVars.add_path(base_dir=True)
                     xx.Cmd.info(f'Successfully added [white]{base_dir}[_] to your environment variables.', end='\n')
                     xx.FormatCodes.print(f'        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn\'t work, you may need to restart the console.[_]', xx.DEFAULT.text_color)
@@ -462,7 +462,7 @@ def main(args:dict):
                 xx.Cmd.info('Already formatted this file. [dim](nothing changed)', pause=DEBUG)
                 xx.Cmd.pause_exit(exit=True, reset_ansi=True)
             xx.Cmd.warn(f'File already exists: [white]{new_file_path}', exit=False, end='')
-            if xx.Cmd.confirm(f'      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]? [_|dim]((Y/n):  )', end=''):
+            if xx.Cmd.confirm(f'      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?', end=''):
                 pass
             else:
                 xx.Cmd.exit(reset_ansi=True)

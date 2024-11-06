@@ -1,9 +1,12 @@
+try: from ._consts_ import DEFAULT
+except: from _consts_ import DEFAULT
 try: from .xx_format_codes import *
 except: from xx_format_codes import *
 try: from .xx_cmd import *
 except: from xx_cmd import *
 
 import os as _os
+
 
 
 
@@ -20,6 +23,7 @@ def get_version(file:str = '__init__.py', var:str = '__version__') -> str:
         return 'unknown'
 
 def help():
+    """Show some info about the library, with a brief explanation of how to use it."""
     color = {
         'lib': DEFAULT.color['ice'],
         'import': DEFAULT.color['red'],
@@ -27,7 +31,6 @@ def help():
         'types': DEFAULT.color['lightblue'],
         'punctuators': DEFAULT.color['darkgray'],
     }
-    """Show some info about the library, with a brief explanation of how to use it, in the console."""
     FormatCodes.print(
   rf'''  [_|b|#7075FF]               __  __              
   [b|#7075FF]  _  __ __  __/ / / /_  __  ___  __

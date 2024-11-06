@@ -1,10 +1,9 @@
-try: from .xx_data import *
-except: from xx_data import *
-try: from .xx_file import *
-except: from xx_file import *
+from .xx_data import *
+from .xx_file import *
 
 import json as _json
 import os as _os
+
 
 
 

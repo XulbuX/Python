@@ -1,4 +1,5 @@
 class DEFAULT:
+
     text_color:str = '#95B5FF'
     color:dict[str,str] = {
         'white':       '#F1F2FF',
@@ -24,6 +25,7 @@ class DEFAULT:
         'pink':        '#EE60BB',
         'rose':        '#FF6090',
     }
+
     char_map:dict[str,str] = {
         'int':         '0123456789',
         'float':       '0123456789.',
@@ -40,7 +42,10 @@ class DEFAULT:
     }
 
 
+
+
 class ANSI:
+
     global CHAR, START, SEP, END
 
     CHAR  = char  = '\x1b'

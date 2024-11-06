@@ -69,14 +69,11 @@ This can also be changed by changing the param `_modifiers = ('+l', '-d')`.
 """
 
 
-try: from ._consts_ import *
-except: from _consts_ import *
-try: from .xx_string import *
-except: from xx_string import *
-try: from .xx_color import *
-except: from xx_color import *
-try: from .xx_data import *
-except: from xx_data import *
+from ._consts_ import ANSI
+from .xx_string import *
+from .xx_regex import *
+from .xx_color import *
+from .xx_data import *
 
 import ctypes as _ctypes
 import regex as _rx
@@ -85,7 +82,9 @@ import re as _re
 
 
 
+
 class FormatCodes:
+
     @staticmethod
     def print(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
         FormatCodes.__config_console()

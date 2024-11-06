@@ -1,9 +1,8 @@
-try: from .xx_string import *
-except: from xx_string import *
-try: from .xx_path import *
-except: from xx_path import *
+from .xx_string import *
+from .xx_path import *
 
 import os as _os
+
 
 
 

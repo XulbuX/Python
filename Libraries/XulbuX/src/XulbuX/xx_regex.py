@@ -14,6 +14,7 @@ import re as _re
 
 
 
+
 class Regex:
 
     @staticmethod

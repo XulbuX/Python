@@ -19,6 +19,8 @@
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
 * Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
 * Added new doc-strings to `xx_code`
+* Added a custom `input()` function to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
+* Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a function
 
 ## 30.10.2024 `v1.5.3`
 * Restructured the values in `_consts_.py`
@@ -55,7 +57,7 @@
 
 ## 27.10.2024 `v1.5.0`
 * Split all classes into separate files, so users can download only parts of the library more easily
-* Added a `__help__.py` file, which will show some information about the library and how to use it, when run as a script
+* Added a `__help__.py` file, which will show some information about the library and how to use it, when it's run as a script or when the `help()` function is called
 * Added a lot more metadata to the library:<br>
   `__version__` (*was already added in update [v1.4.2](#update-1-4-2)*)<br>
   `__author__`<br>

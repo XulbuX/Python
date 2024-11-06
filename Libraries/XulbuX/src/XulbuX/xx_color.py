@@ -32,12 +32,8 @@ The `Color` class, which contains all sorts of different color-related methods:
 """
 
 
-try: from ._consts_ import DEFAULT
-except: from _consts_ import DEFAULT
-try: from .xx_regex import *
-except: from xx_regex import *
+from .xx_regex import *
 
-import math as _math
 import re as _re
 
 

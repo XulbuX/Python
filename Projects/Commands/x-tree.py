@@ -175,7 +175,7 @@ def main():
         try:
             file = xx.File.create(result, 'tree.txt')
         except FileExistsError:
-            if xx.Cmd.confirm('[white]tree.txt[_] already exists. Overwrite? [dim]((Y/n) >  )', end=''):
+            if xx.Cmd.confirm('[white]tree.txt[_] already exists. Overwrite?', end=''):
                 file = xx.File.create(result, 'tree.txt', force=True)
             else:
                 xx.Cmd.exit()
