@@ -22,6 +22,9 @@
 * Added a custom `input()` function to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
 * Added the function `pwd_input()` to `Cmd`, which works just like the `Cmd.input()` but masks the input characters with `*`
 * Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a function
+* Fixed bug when trying to get the base directory from a compiled script (*EXE*):<br>
+  Would get the path to the temporary extracted directory, which is created when running the EXE file<br>
+  Now it gets the actual base directory of the currently running file
 
 ## 30.10.2024 `v1.5.3`
 * Restructured the values in `_consts_.py`
