@@ -16,11 +16,16 @@ After you did everything from above, you should be able to execute the command `
 ## console command
 
 The command to use it with will look something like this:
-```console
-x-convert -bv -i <indent after conversion [int]> -f <path to the file to be converted>
+```gas
+x-convert -bv -i <indent after conversion> -f <path to the file to be converted>
+```
+
+For example if:
+```ps
+x-convert -bv -i 2 -f /some/relative/path/to/file.blade.php
 ```
 
 To see exactly how this command works and some other info, run the command with the `-h` or `--help` option:
-```console
+```gas
 x-convert --help
 ```
