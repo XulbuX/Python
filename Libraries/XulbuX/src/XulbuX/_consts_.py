@@ -1,6 +1,6 @@
 class DEFAULT:
-    text_color:int = '#95B5FF'
-    color:dict = {
+    text_color:str = '#95B5FF'
+    color:dict[str,str] = {
         'white':       '#F1F2FF',
         'lightgray':   '#B6B7C0',
         'gray':        '#7B7C8D',
@@ -23,6 +23,20 @@ class DEFAULT:
         'magenta':     '#C860FF',
         'pink':        '#EE60BB',
         'rose':        '#FF6090',
+    }
+    char_map:dict[str,str] = {
+        'int':         '0123456789',
+        'float':       '0123456789.',
+        'hex':         '#0123456789abcdefABCDEF',
+        'l_letters':   'abcdefghijklmnopqrstuvwxyz',
+        'l_letters*':  'abcdefghijklmnopqrstuvwxyzäëïöüÿàèìòùáéíóúýâêîôûãñõåæç',
+        'u_letters':   'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'u_letters*':  'ABCDEFGHIJKLMNOPQRSTUVWXYZÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß',
+        'letters':     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'letters*':    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäëïöüÿàèìòùáéíóúýâêîôûãñõåæçÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß',
+        'special':     ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
+        'ascii':       ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',
+        'ascii*':      ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»░▒▓│┤ÁÂÀ©╣║╗╝¢¥┐└┴┬├─┼ãÃ╚╔╩╦╠═╬¤ðÐÊËÈıÍÎÏ┘┌█▄¦Ì▀ÓßÔÒõÕµþÞÚÛÙýÝ¯´≡­±‗¾¶§÷¸°¨·¹³²■ ',
     }
 
 
@@ -53,7 +67,7 @@ class ANSI:
         'white'
     ]
 
-    codes_map:dict = {
+    codes_map:dict[str|tuple[str], int] = {
         ###################### RESETS ######################
         '_':                         0,
         ('_bold','_b'):              22,

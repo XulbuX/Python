@@ -26,6 +26,7 @@ import keyboard as _keyboard
 import getpass as _getpass
 import ctypes as _ctypes
 import shutil as _shutil
+import msvcrt as _msvcrt
 import sys as _sys
 import os as _os
 
@@ -117,3 +118,24 @@ class Cmd:
         confirmed = input(FormatCodes.to_ansi(f'{start}  {str(msg)}', default_color)).strip().lower() in (('', 'y', 'yes') if default_is_yes else ('y', 'yes'))
         if end: Cmd.log('', '') if end == '\n' else Cmd.log('', end[1:]) if end.startswith('\n') else Cmd.log('', end)
         return confirmed
+
+    @staticmethod
+    def restricted_input(prompt:str = '', allowed_chars:str = '0123456789', min_length:int = None, max_length:int = None):
+        print(prompt, end='', flush=True)
+        result = ''
+        while True:
+            char = _msvcrt.getch().decode('utf-8', errors='ignore')
+            if char == '\r':
+                if min_length is not None and len(result) < min_length:
+                    continue
+                print()
+                return result
+            elif char == '\b':
+                if result:
+                    result = result[:-1]
+                    _sys.stdout.write('\b \b')
+                    _sys.stdout.flush()
+            elif (not allowed_chars or char in allowed_chars) and (max_length is None or len(result) < max_length):
+                result += char
+                _sys.stdout.write(char)
+                _sys.stdout.flush()
