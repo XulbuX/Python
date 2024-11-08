@@ -15,6 +15,12 @@
 # <br><b>Changelog</b><br>
 
 
+## ... `v1.5.5`
+* Added functions to get the width and height of the console (*in characters and lines*):<br>
+  <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
+  <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
+  <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
+
 ## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
 * Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
@@ -30,7 +36,7 @@
 * Restructured the values in `_consts_.py`
 * Added the default text color to the `_consts_.py` so it's easier to change it (*and used it in the library*)
 * Added a bunch of other default colors to the `_consts_.py` (*and used them in the library*)
-* Refactored the whole library's code after [`PEP`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/) 🫡:
+* Refactored the whole library's code after the [`PEPs`](https://peps.python.org/) and [`The Zen of Python`](https://peps.python.org/pep-0020/#the-zen-of-python) 🫡:
   - changed the indent to 4 spaces
   - no more inline control statements (*except its only a really small statement and body*)
 * Added new methods to `Color`:<br>
