@@ -56,15 +56,21 @@ class Cmd:
             results[arg_key] = {'exists': exists, 'value': value}
         return results
 
-    @staticmethod
-    def user() -> str:
-        return _os.getenv('USER') or _getpass.getuser()
+    def w() -> int: return getattr(_shutil.get_terminal_size(), 'columns', 80)
+    def h() -> int: return getattr(_shutil.get_terminal_size(), 'lines', 24)
+    def wh() -> tuple[int,int]: return Cmd.w(), Cmd.h()
+    def user() -> str: return _os.getenv('USER') or _os.getenv('USERNAME') or _getpass.getuser()
 
     @staticmethod
     def is_admin() -> bool:
         try:
-            return _ctypes.windll.shell32.IsUserAnAdmin() in [1, True]
-        except AttributeError:
+            if _os.name == 'nt':
+                return _ctypes.windll.shell32.IsUserAnAdmin() != 0
+            elif _os.name == 'posix':
+                return _os.geteuid() == 0
+            else:
+                return False
+        except:
             return False
 
     @staticmethod
