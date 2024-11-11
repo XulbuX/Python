@@ -10,9 +10,9 @@ import os as _os
 class System:
 
     @staticmethod
-    def restart(msg:str = None, wait:int = 0, continue_program:bool = False, force:bool = False) -> None:
+    def restart(prompt:object = None, wait:int = 0, continue_program:bool = False, force:bool = False) -> None:
         """Starts a system restart:<br>
-        `msg` is the message to be displayed in the systems restart notification.<br>
+        `prompt` is the message to be displayed in the systems restart notification.<br>
         `wait` is the time to wait until restarting in seconds.<br>
         `continue_program` is whether to continue the current Python program after calling this function.<br>
         `force` is whether to force a restart even if other processes are still running."""
@@ -23,8 +23,8 @@ class System:
                 processes = [line.split()[0] for line in output.splitlines()[3:] if line.strip()]
                 if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND CMD
                     raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
-            if msg:
-                _os.system(f'shutdown /r /t {wait} /c "{msg}"')
+            if prompt:
+                _os.system(f'shutdown /r /t {wait} /c "{prompt}"')
             else:
                 _os.system('shutdown /r /t 0')
             if continue_program:
@@ -36,8 +36,8 @@ class System:
                 processes = output.splitlines()[1:]  # EXCLUDE HEADER
                 if len(processes) > 2:  # EXCLUDING THE PYTHON PROCESS AND PS
                     raise RuntimeError('Processes are still running. Use the parameter `force=True` to restart anyway.')
-            if msg:
-                _subprocess.Popen(['notify-send', 'System Restart', msg])
+            if prompt:
+                _subprocess.Popen(['notify-send', 'System Restart', prompt])
                 _time.sleep(wait)
             try:
                 _subprocess.run(['sudo', 'shutdown', '-r', 'now'])

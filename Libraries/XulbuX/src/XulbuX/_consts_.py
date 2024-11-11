@@ -26,20 +26,34 @@ class DEFAULT:
         'rose':        '#FF6090',
     }
 
-    char_map:dict[str,str] = {
-        'int':         '0123456789',
-        'float':       '0123456789.',
-        'hex':         '#0123456789abcdefABCDEF',
-        'l_letters':   'abcdefghijklmnopqrstuvwxyz',
-        'l_letters*':  'abcdefghijklmnopqrstuvwxyzäëïöüÿàèìòùáéíóúýâêîôûãñõåæç',
-        'u_letters':   'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'u_letters*':  'ABCDEFGHIJKLMNOPQRSTUVWXYZÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß',
-        'letters':     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'letters*':    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäëïöüÿàèìòùáéíóúýâêîôûãñõåæçÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß',
-        'special':     ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
-        'ascii':       ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',
-        'ascii*':      ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»░▒▓│┤ÁÂÀ©╣║╗╝¢¥┐└┴┬├─┼ãÃ╚╔╩╦╠═╬¤ðÐÊËÈıÍÎÏ┘┌█▄¦Ì▀ÓßÔÒõÕµþÞÚÛÙýÝ¯´≡­±‗¾¶§÷¸°¨·¹³²■ ',
-    }
+
+
+
+class CHARS:
+
+    # CODE TO SIGNAL, ALL CHARACTERS ARE ALLOWED
+    all =                     '<*allowed>'
+
+    # DIGIT SETS
+    digits =                  '0123456789'
+    float_digits =            digits + '.'
+    hex_digits =              digits + '#abcdefABCDEF'
+
+    # LETTER CATEGORIES
+    lowercase =               'abcdefghijklmnopqrstuvwxyz'
+    lowercase_extended =      lowercase + 'äëïöüÿàèìòùáéíóúýâêîôûãñõåæç'
+    uppercase =               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    uppercase_extended =      uppercase + 'ÄËÏÖÜÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÅÆÇß'
+
+    # COMBINED LETTER SETS
+    letters =                 lowercase + uppercase
+    letters_extended =        lowercase_extended + uppercase_extended
+
+    # ASCII sets
+    special_ascii =           ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    special_ascii_extended =  special_ascii + 'ø£Ø×ƒªº¿®¬½¼¡«»░▒▓│┤©╣║╗╝¢¥┐└┴┬├─┼╚╔╩╦╠═╬¤ðÐı┘┌█▄¦▀µþÞ¯´≡­±‗¾¶§÷¸°¨·¹³²■ '
+    standard_ascii =          special_ascii + digits + letters
+    full_ascii =              special_ascii_extended + digits + letters_extended
 
 
 

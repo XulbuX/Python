@@ -7,6 +7,7 @@ class String:
 
     @staticmethod
     def to_type(value:str) -> any:
+        """Will convert a string to a type."""
         if value.lower() in ['true', 'false']:  # BOOLEAN
             return value.lower() == 'true'
         elif value.lower() in ['none', 'null', 'undefined']:  # NONE
@@ -42,19 +43,23 @@ class String:
             return False
 
     @staticmethod
-    def decompose(case_string:str, seps:str = '-_') -> list:
-        return [part.lower() for part in _re.split(rf'(?<=[a-z])(?=[A-Z])|[{seps}]', case_string)]
+    def decompose(case_string:str, seps:str = '-_', lower_all:bool = True) -> list[str]:
+        """Will decompose the string (*any type of casing, also mixed*) into parts."""
+        return [(part.lower() if lower_all else part) for part in _re.split(rf'(?<=[a-z])(?=[A-Z])|[{seps}]', case_string)]
 
     @staticmethod
     def to_camel_case(string:str) -> str:
+        """Will convert the string of any type of casing to camel case."""
         return ''.join(part.capitalize() for part in String.decompose(string))
 
     @staticmethod
     def to_snake_case(string:str, sep:str = '_', screaming:bool = False) -> str:
+        """Will convert the string of any type of casing to snake case."""
         return sep.join(part.upper() if screaming else part for part in String.decompose(string))
 
     @staticmethod
-    def get_string_lines(string:str, remove_empty_lines:bool = False) -> list:
+    def get_string_lines(string:str, remove_empty_lines:bool = False) -> list[str]:
+        """Will split the string into lines."""
         if not remove_empty_lines:
             return string.splitlines()
         lines = string.splitlines()
@@ -67,10 +72,21 @@ class String:
 
     @staticmethod
     def remove_consecutive_empty_lines(string:str, max_consecutive:int = 0) -> str:
+        """Will remove consecutive empty lines from the string.\n
+        ----------------------------------------------------------------------------------------------
+        If `max_consecutive` is `0`, it will remove all consecutive empty lines.<br>
+        If `max_consecutive` is bigger than `0`, it will only allow `max_consecutive` consecutive<br>
+        empty lines and everything above it will be cut down to `max_consecutive` empty lines."""
         return _re.sub(r'(\n\s*){2,}', r'\1' * (max_consecutive + 1), string)
 
     @staticmethod
+    def split_every_chars(string:str, split:int) -> list[str]:
+        """Will split the string every `split` characters."""
+        return [string[i:i + split] for i in range(0, len(string), split)]
+
+    @staticmethod
     def multi_strip(string:str, strip_chars:str = ' _-') -> str:
+        """Will remove all leading and trailing `strip_chars` from the string."""
         for char in string:
             if char in strip_chars:
                 string = string[1:]
@@ -83,6 +99,7 @@ class String:
 
     @staticmethod
     def multi_lstrip(string:str, strip_chars:str = ' _-') -> str:
+        """Will remove all leading `strip_chars` from the string."""
         for char in string:
             if char in strip_chars:
                 string = string[1:]
@@ -91,6 +108,7 @@ class String:
 
     @staticmethod
     def multi_rstrip(string:str, strip_chars:str = ' _-') -> str:
+        """Will remove all trailing `strip_chars` from the string."""
         for char in string[::-1]:
             if char in strip_chars:
                 string = string[:-1]

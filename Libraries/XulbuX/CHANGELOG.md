@@ -20,13 +20,15 @@
   <code>Cmd.w() -> *int*</code> how many text characters the console is wide<br>
   <code>Cmd.h() -> *int*</code> how many lines the console is high<br>
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
+* Added the function <code>split_every_chars(*string*, *split_every*) -> *list*[*str*]</code> to `xx_string`
+* Added doc-strings to every function in `xx_string`
 
 ## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
 * Added a new function <code>normalize_spaces(*code*) -> *str*</code> to `Code`
 * Added new doc-strings to `xx_code` and `xx_cmd`
 * Added a custom `input()` function to `Cmd`, which lets you specify the allowed text characters the user can type, as well as the minimum and maximum length of the input
-* Added the function `pwd_input()` to `Cmd`, which works just like the `Cmd.input()` but masks the input characters with `*`
+* Added the function `pwd_input()` to `Cmd`, which works just like the `Cmd.restricted_input()` but masks the input characters with `*`
 * Restructured the whole library's imports, so you the custom types won't get displayed as `Any` when hovering over a function
 * Fixed bug when trying to get the base directory from a compiled script (*EXE*):<br>
   Would get the path to the temporary extracted directory, which is created when running the EXE file<br>
