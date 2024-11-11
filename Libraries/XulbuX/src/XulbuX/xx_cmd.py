@@ -168,7 +168,7 @@ class Cmd:
         return confirmed
 
     @staticmethod
-    def restricted_input(prompt:object = '', allowed_chars:str = CHARS.all, min_length:int = None, max_length:int = None, mask_char:str = None) -> str:
+    def restricted_input(prompt:object = '', allowed_chars:str = CHARS.all, min_length:int = None, max_length:int = None, mask_char:str = None) -> str|None:
         """Acts like a standard Python `input()` with the advantage, that you can specify:
         - what text characters the user is allowed to type and
         - the minimum and/or maximum length of the users input
@@ -179,10 +179,9 @@ class Cmd:
         print(prompt, end='', flush=True)
         result, select_all, last_line_count, last_console_width = '', False, 1, 0
         def filter_pasted_text(text:str) -> str:
-            if allowed_chars == CHARS.all:
-                return text
+            if allowed_chars == CHARS.all: return text
             return ''.join(char for char in text if char in allowed_chars)
-        def update_display(console_width:int = Cmd.w()) -> None:
+        def update_display(console_width:int) -> None:
             nonlocal select_all, last_line_count, last_console_width
             lines = String.split_every_chars(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
             line_count = len(lines)
@@ -195,42 +194,45 @@ class Cmd:
             _sys.stdout.write('\033[2K\r' + prompt_str + ('\033[7m' if select_all else '') + input_str + '\033[0m')
             last_line_count, last_console_width = line_count, console_width
         while True:
-            with suppress(KeyboardInterrupt):  # PREVENT CTRL+C FROM RAISING A `KeyboardInterrupt` EXCEPTION
-                event = _keyboard.read_event()
-                if event.event_type == 'down':
-                    if event.name == 'enter':
-                        if min_length is not None and len(result) < min_length:
-                            continue
-                        print()
-                        return result
-                    elif event.name == 'backspace':
-                        if select_all:
-                            result, select_all = '', False
-                            update_display()
-                        if result:
-                            result = result[:-1]
-                            update_display()
-                    elif event.name == 'space':
-                        if (allowed_chars == CHARS.all or ' ' in allowed_chars) and (max_length is None or len(result) < max_length):
-                            result += ' '
-                            update_display()
-                    elif (event.name == 'v' and _keyboard.is_pressed('ctrl')) or _mouse.is_pressed('right'):
-                        pasted_text = _pyperclip.paste()
-                        filtered_text = filter_pasted_text(pasted_text)
-                        if max_length is None or len(result) + len(filtered_text) <= max_length:
-                            result += filtered_text
-                            update_display()
-                    elif event.name == 'a' and _keyboard.is_pressed('ctrl'):
-                        select_all = True
-                        update_display()
-                    elif event.name == 'c' and _keyboard.is_pressed('ctrl') and select_all:
-                        _pyperclip.copy(result)
+            event = _keyboard.read_event()
+            if event.event_type == 'down':
+                if event.name == 'enter':
+                    if min_length is not None and len(result) < min_length:
+                        continue
+                    print()
+                    return result.rstrip('\n')
+                elif event.name in ('backspace', 'delete', 'entf'):
+                    if select_all: result, select_all = '', False
+                    elif result and event.name == 'backspace':
+                        result = result[:-1]
+                    update_display(Cmd.w())
+                elif (event.name == 'v' and _keyboard.is_pressed('ctrl')) or _mouse.is_pressed('right'):
+                    if select_all: result, select_all = '', False
+                    filtered_text = filter_pasted_text(_pyperclip.paste())
+                    if max_length is None or len(result) + len(filtered_text) <= max_length:
+                        result += filtered_text
+                        update_display(Cmd.w())
+                elif event.name == 'a' and _keyboard.is_pressed('ctrl'):
+                    select_all = True
+                    update_display(Cmd.w())
+                elif event.name == 'c' and _keyboard.is_pressed('ctrl') and select_all:
+                    with suppress(KeyboardInterrupt):  # PREVENT CTRL+C FROM RAISING A `KeyboardInterrupt` EXCEPTION
                         select_all = False
-                        update_display()
-                    elif len(event.name) == 1:
-                        if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_length is None or len(result) < max_length):
-                            result += event.name
-                            update_display()
+                        update_display(Cmd.w())
+                        _pyperclip.copy(result)
+                elif event.name == 'esc':
+                    return
+                elif event.name == 'space':
+                    if (allowed_chars == CHARS.all or ' ' in allowed_chars) and (max_length is None or len(result) < max_length):
+                        result += ' '
+                        update_display(Cmd.w())
+                elif len(event.name) == 1:
+                    if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_length is None or len(result) < max_length):
+                        result += event.name
+                        update_display(Cmd.w())
+                else:  # ANY DISALLOWED OR NON-DEFINED KEY PRESSED
+                    select_all = False
+                    update_display(Cmd.w())
 
     @staticmethod
     def pwd_input(prompt:object = 'Password: ', allowed_chars:str = CHARS.standard_ascii, min_length:int = None, max_length:int = None) -> str:

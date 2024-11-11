@@ -22,6 +22,10 @@
   <code>Cmd.wh() -> *tuple[int,int]*</code> a tuple with width and height
 * Added the function <code>split_every_chars(*string*, *split_every*) -> *list*[*str*]</code> to `xx_string`
 * Added doc-strings to every function in `xx_string`
+* Updated the `Cmd.restricted_input()` function:
+  - paste text from the clipboard
+  - select all text to delete everything at once
+  - write and backspace over multiple lines
 
 ## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
