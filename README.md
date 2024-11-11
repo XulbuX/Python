@@ -1,20 +1,14 @@
 # Python Projects and Libraries
 This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
 
+
 ## Repositories
-* [Libraries](#libraries) | **[view](./Libraries)**
-  * [XulbuX](#xulbux) | **[view](./Libraries/XulbuX)**
 * [Projects](#projects) | **[view](./Projects)**
   * [Commands](#commands) | **[view](./Projects/Commands)**
   * [x-convert](#x-convert) | **[view](./Projects/x-convert)**
 * [Experiments](#experiments) | **[view](./Experiments)**
   * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
 
-## Libraries
-
-### XulbuX
-`XulbuX` is a custom Python library with a lot of small, but really useful types and functions.
-For more information, see the [XulbuX README](./Libraries/XulbuX/README.md).
 
 ## Projects
 
