@@ -26,6 +26,7 @@
   - paste text from the clipboard
   - select all text to delete everything at once
   - write and backspace over multiple lines
+* Added required non-standard libraries to the project file
 
 ## 06.11.2024 `v1.5.4`
 * Made the `blend()` method from all the color types modify the *`self`* object as well as returning the result
