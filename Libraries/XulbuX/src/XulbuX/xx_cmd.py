@@ -31,6 +31,7 @@ import keyboard as _keyboard
 import getpass as _getpass
 import ctypes as _ctypes
 import shutil as _shutil
+import mouse as _mouse
 import sys as _sys
 import os as _os
 
@@ -174,22 +175,22 @@ class Cmd:
         The input can be formatted with special formatting codes. For more detailed<br>
         information about formatting codes, see the `xx_format_codes` description."""
         print(prompt, end='', flush=True)
-        result, last_line_count = '', 1
+        result, select_all, last_line_count, last_console_width = '', False, 1, 0
         def filter_pasted_text(text:str) -> str:
             if allowed_chars == CHARS.all:
                 return text
             return ''.join(char for char in text if char in allowed_chars)
-        def update_display(console_width:int = Cmd.w(), last_line_count:int = last_line_count) -> None:
+        def update_display(console_width:int = Cmd.w()) -> None:
+            nonlocal select_all, last_line_count, last_console_width
             lines = String.split_every_chars(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
             line_count = len(lines)
-            if line_count > 1 and (last_line_count == 1 or line_count > last_line_count):
-                for _ in range(line_count):
+            if (line_count > 1 or line_count < last_line_count) and not last_line_count == 1:
+                if last_console_width > console_width: line_count *= 2
+                for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else line_count - 2 if line_count > last_line_count else line_count - 1):
                     _sys.stdout.write('\033[2K\r\033[A')
-            else:
-                _sys.stdout.write('\033[2K\r')
-            _sys.stdout.write('\n'.join(lines))
+            _sys.stdout.write('\033[2K\r' + ('[inverse]' if select_all else '') + '\n'.join(lines))
             _sys.stdout.flush()
-            last_line_count = line_count
+            last_line_count, last_console_width = line_count, console_width
         while True:
             event = _keyboard.read_event()
             if event.event_type == 'down':
@@ -199,6 +200,9 @@ class Cmd:
                     print()
                     return result
                 elif event.name == 'backspace':
+                    if select_all:
+                        result, select_all = '', False
+                        update_display()
                     if result:
                         result = result[:-1]
                         update_display()
@@ -206,19 +210,18 @@ class Cmd:
                     if (allowed_chars == CHARS.all or ' ' in allowed_chars) and (max_length is None or len(result) < max_length):
                         result += ' '
                         update_display()
-                elif event.name == 'v' and _keyboard.is_pressed('ctrl'):
-                    try:
-                        pasted_text = _pyperclip.paste()
-                        filtered_text = filter_pasted_text(pasted_text)
-                        if max_length is None or len(result) + len(filtered_text) <= max_length:
-                            result += filtered_text
-                            update_display()
-                    except ImportError:
-                        pass
+                elif (event.name == 'v' and _keyboard.is_pressed('ctrl')) or _mouse.is_pressed('right'):
+                    pasted_text = _pyperclip.paste()
+                    filtered_text = filter_pasted_text(pasted_text)
+                    if max_length is None or len(result) + len(filtered_text) <= max_length:
+                        result += filtered_text
+                        update_display()
+                elif event.name == 'a' and _keyboard.is_pressed('ctrl'):
+                    select_all = True
+                    update_display()
                 elif len(event.name) == 1:
-                    char = event.name
-                    if (allowed_chars == CHARS.all or char in allowed_chars) and (max_length is None or len(result) < max_length):
-                        result += char
+                    if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_length is None or len(result) < max_length):
+                        result += event.name
                         update_display()
 
     @staticmethod

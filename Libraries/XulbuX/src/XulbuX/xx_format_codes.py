@@ -89,7 +89,7 @@ class FormatCodes:
     def print(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
         FormatCodes.__config_console()
         ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
-        print(ansi_prompt, sep=sep, end=end, flush=True)
+        _sys.stdout.write(ansi_prompt, sep=sep, end=end, flush=True)
 
     @staticmethod
     def input(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
@@ -151,7 +151,6 @@ class FormatCodes:
             for mod in _modifiers[1]:
                 darken = String.get_repeated_symbol(modifier, mod)
                 if darken and darken > 0:
-                    print(-(brightness_steps / 100) * darken)
                     new_rgb = Color.adjust_lightness(default_color, -(brightness_steps / 100) * darken)
                     break
         if new_rgb:
