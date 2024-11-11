@@ -50,5 +50,5 @@ classifiers = [
 "Homepage" = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX"
 "Bug Tracker" = "https://github.com/XulbuX-dev/Python/issues"
 "Documentation" = "https://github.com/XulbuX-dev/Python/wiki"
-"Source Code" = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX"
+"Source Code" = "https://github.com/XulbuX-dev/Python/tree/main/Libraries/XulbuX/src"
 "Changelog" = "https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md"
