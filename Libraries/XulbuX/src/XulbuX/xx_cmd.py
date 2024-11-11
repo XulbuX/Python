@@ -174,21 +174,22 @@ class Cmd:
         The input can be formatted with special formatting codes. For more detailed<br>
         information about formatting codes, see the `xx_format_codes` description."""
         print(prompt, end='', flush=True)
-        result = ''
+        result, last_line_count = '', 1
         def filter_pasted_text(text:str) -> str:
             if allowed_chars == CHARS.all:
                 return text
             return ''.join(char for char in text if char in allowed_chars)
-        def update_display(console_width:int = Cmd.w()) -> None:
-            line_count = (len(prompt) + len(result) + console_width - 1) // console_width
-            for _ in range(line_count):
-                _sys.stdout.write('\033[2K\r\033[A')
-            _sys.stdout.write(str(prompt))
-            if mask_char:
-                _sys.stdout.write(mask_char * len(result))
+        def update_display(console_width:int = Cmd.w(), last_line_count:int = last_line_count) -> None:
+            lines = String.split_every_chars(str(prompt) + (mask_char * len(result) if mask_char else result), console_width)
+            line_count = len(lines)
+            if line_count > 1 and (last_line_count == 1 or line_count > last_line_count):
+                for _ in range(line_count):
+                    _sys.stdout.write('\033[2K\r\033[A')
             else:
-                _sys.stdout.write(result)
+                _sys.stdout.write('\033[2K\r')
+            _sys.stdout.write('\n'.join(lines))
             _sys.stdout.flush()
+            last_line_count = line_count
         while True:
             event = _keyboard.read_event()
             if event.event_type == 'down':
