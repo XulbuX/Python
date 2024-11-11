@@ -188,8 +188,7 @@ class Cmd:
                 if last_console_width > console_width: line_count *= 2
                 for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else line_count - 2 if line_count > last_line_count else line_count - 1):
                     _sys.stdout.write('\033[2K\r\033[A')
-            _sys.stdout.write('\033[2K\r' + ('[inverse]' if select_all else '') + '\n'.join(lines))
-            _sys.stdout.flush()
+            FormatCodes.print('\033[2K\r' + ('[inverse]' if select_all else '') + '\n'.join(lines))
             last_line_count, last_console_width = line_count, console_width
         while True:
             event = _keyboard.read_event()

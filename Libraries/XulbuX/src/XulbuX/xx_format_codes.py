@@ -86,13 +86,13 @@ import re as _re
 class FormatCodes:
 
     @staticmethod
-    def print(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
+    def print(*args, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
         FormatCodes.__config_console()
-        ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
-        _sys.stdout.write(ansi_prompt, sep=sep, end=end, flush=True)
+        _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, args)), default_color, brightness_steps) + end)
+        _sys.stdout.flush()
 
     @staticmethod
-    def input(prompt:str, default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
+    def input(prompt:object = '', default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
         FormatCodes.__config_console()
         ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
         return input(ansi_prompt)
