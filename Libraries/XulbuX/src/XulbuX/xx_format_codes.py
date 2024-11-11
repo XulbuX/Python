@@ -94,8 +94,7 @@ class FormatCodes:
     @staticmethod
     def input(prompt:object = '', default_color:hexa|rgba = None, brightness_steps:int = 20) -> str:
         FormatCodes.__config_console()
-        ansi_prompt = FormatCodes.to_ansi(prompt, default_color, brightness_steps)
-        return input(ansi_prompt)
+        return input(FormatCodes.to_ansi(prompt, default_color, brightness_steps))
 
     @staticmethod
     def to_ansi(string:str, default_color:hexa|rgba = None, brightness_steps:int = 20, _default_start:bool = True) -> str:

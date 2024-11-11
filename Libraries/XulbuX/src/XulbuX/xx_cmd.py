@@ -26,6 +26,8 @@ from .xx_format_codes import *
 from .xx_string import *
 from .xx_color import *
 
+from contextlib import suppress
+import subprocess as _subprocess
 import pyperclip as _pyperclip
 import keyboard as _keyboard
 import getpass as _getpass
@@ -188,40 +190,47 @@ class Cmd:
                 if last_console_width > console_width: line_count *= 2
                 for _ in range(line_count if line_count < last_line_count and not line_count > last_line_count else line_count - 2 if line_count > last_line_count else line_count - 1):
                     _sys.stdout.write('\033[2K\r\033[A')
-            FormatCodes.print('\033[2K\r' + ('[inverse]' if select_all else '') + '\n'.join(lines))
+            prompt_len = len(str(prompt)) if prompt else 0
+            prompt_str, input_str = lines[0][:prompt_len], lines[0][prompt_len:] if len(lines) == 1 else '\n'.join([lines[0][prompt_len:]] + lines[1:])  # SEPARATE THE PROMPT AND THE INPUT
+            _sys.stdout.write('\033[2K\r' + prompt_str + ('\033[7m' if select_all else '') + input_str + '\033[0m')
             last_line_count, last_console_width = line_count, console_width
         while True:
-            event = _keyboard.read_event()
-            if event.event_type == 'down':
-                if event.name == 'enter':
-                    if min_length is not None and len(result) < min_length:
-                        continue
-                    print()
-                    return result
-                elif event.name == 'backspace':
-                    if select_all:
-                        result, select_all = '', False
+            with suppress(KeyboardInterrupt):  # PREVENT CTRL+C FROM RAISING A `KeyboardInterrupt` EXCEPTION
+                event = _keyboard.read_event()
+                if event.event_type == 'down':
+                    if event.name == 'enter':
+                        if min_length is not None and len(result) < min_length:
+                            continue
+                        print()
+                        return result
+                    elif event.name == 'backspace':
+                        if select_all:
+                            result, select_all = '', False
+                            update_display()
+                        if result:
+                            result = result[:-1]
+                            update_display()
+                    elif event.name == 'space':
+                        if (allowed_chars == CHARS.all or ' ' in allowed_chars) and (max_length is None or len(result) < max_length):
+                            result += ' '
+                            update_display()
+                    elif (event.name == 'v' and _keyboard.is_pressed('ctrl')) or _mouse.is_pressed('right'):
+                        pasted_text = _pyperclip.paste()
+                        filtered_text = filter_pasted_text(pasted_text)
+                        if max_length is None or len(result) + len(filtered_text) <= max_length:
+                            result += filtered_text
+                            update_display()
+                    elif event.name == 'a' and _keyboard.is_pressed('ctrl'):
+                        select_all = True
                         update_display()
-                    if result:
-                        result = result[:-1]
+                    elif event.name == 'c' and _keyboard.is_pressed('ctrl') and select_all:
+                        _pyperclip.copy(result)
+                        select_all = False
                         update_display()
-                elif event.name == 'space':
-                    if (allowed_chars == CHARS.all or ' ' in allowed_chars) and (max_length is None or len(result) < max_length):
-                        result += ' '
-                        update_display()
-                elif (event.name == 'v' and _keyboard.is_pressed('ctrl')) or _mouse.is_pressed('right'):
-                    pasted_text = _pyperclip.paste()
-                    filtered_text = filter_pasted_text(pasted_text)
-                    if max_length is None or len(result) + len(filtered_text) <= max_length:
-                        result += filtered_text
-                        update_display()
-                elif event.name == 'a' and _keyboard.is_pressed('ctrl'):
-                    select_all = True
-                    update_display()
-                elif len(event.name) == 1:
-                    if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_length is None or len(result) < max_length):
-                        result += event.name
-                        update_display()
+                    elif len(event.name) == 1:
+                        if (allowed_chars == CHARS.all or event.name in allowed_chars) and (max_length is None or len(result) < max_length):
+                            result += event.name
+                            update_display()
 
     @staticmethod
     def pwd_input(prompt:object = 'Password: ', allowed_chars:str = CHARS.standard_ascii, min_length:int = None, max_length:int = None) -> str:
