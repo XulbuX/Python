@@ -1,8 +1,10 @@
 # **$\color{#8085FF}\Huge\textsf{XulbuX}$**
 
-**$\color{#8085FF}\textsf{XulbuX}$** is a library which includes a lot of really helpful classes, types and functions.<br>
+**$\color{#8085FF}\textsf{XulbuX}$** is a library which includes a lot of really helpful classes, types and functions.
+
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).<br>
 For precise information about the library, see the library's [Wiki page](https://github.com/XulbuX-dev/Python/wiki).
+
 
 ## Installation
 
@@ -10,6 +12,7 @@ On all operating systems, run the following command:
 ```bash
 pip install XulbuX
 ```
+
 
 ## Usage
 
@@ -39,8 +42,8 @@ The library **$\color{#8085FF}\textsf{XulbuX}$** (*below used as* `xx` *with abo
   • REGEX PATTERN TEMPLATES  xx.Regex
 ```
 
+
 <br>
 
 --------------------------------------------------------------
-
 [View this library on PyPI](https://pypi.org/project/XulbuX/)
