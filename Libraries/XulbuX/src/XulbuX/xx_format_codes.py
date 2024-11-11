@@ -86,9 +86,9 @@ import re as _re
 class FormatCodes:
 
     @staticmethod
-    def print(*args, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
+    def print(*values:object, default_color:hexa|rgba = None, brightness_steps:int = 20, sep:str = ' ', end:str = '\n') -> None:
         FormatCodes.__config_console()
-        _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, args)), default_color, brightness_steps) + end)
+        _sys.stdout.write(FormatCodes.to_ansi(sep.join(map(str, values)), default_color, brightness_steps) + end)
         _sys.stdout.flush()
 
     @staticmethod
