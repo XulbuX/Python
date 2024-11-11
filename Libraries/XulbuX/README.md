@@ -2,6 +2,7 @@
 
 **$\color{#8085FF}\textsf{XulbuX}$** is a library which includes a lot of really helpful classes, types and functions.<br>
 For the libraries latest changes, see the [change log](https://github.com/XulbuX-dev/Python/blob/main/Libraries/XulbuX/CHANGELOG.md).
+For precise information about the library, see the library's [Wiki page](https://github.com/XulbuX-dev/Python/wiki).
 
 ## Installation
 
