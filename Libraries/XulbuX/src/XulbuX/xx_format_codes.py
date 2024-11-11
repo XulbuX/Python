@@ -43,8 +43,8 @@ If you want to ignore the `()` brackets you can put a `\\` or `/` between:<br>
     - `[dim]`
     - `[italic]` or `[i]`
     - `[underline]` or `[u]`
-    - `[inverse]` or `[in]`
-    - `[hidden]` or `[h]`
+    - `[inverse]`, `[invert]` or `[in]`
+    - `[hidden]`, `[hide]` or `[h]`
     - `[strikethrough]` or `[s]`
     - `[double-underline]` or `[du]`
 - specific reset:  `[_bold]` or `[_b]`, `[_dim]`, ... or `[_color]` or `[_c]`, `[_background]` or `[_bg]`
