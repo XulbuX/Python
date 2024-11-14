@@ -211,7 +211,12 @@ def get_missing_args(args: list) -> list:
         xx.FormatCodes.print("What conversion to do?[_]", "#3EE6DE")
         xx.FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", "#3EE6DE")
         args["blade-vue"]["exists"] = (
-            xx.FormatCodes.input("                 [_|dim] >  [_]", "#3EE6DE").strip()
+            xx.Cmd.restricted_input(
+                "                 [_|dim] >  [_]",
+                "#3EE6DE",
+                allowed_chars="1",
+                max_len=1,
+            ).strip()
             == "1"
         )
     return args
