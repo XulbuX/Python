@@ -315,7 +315,7 @@ class blade_to_vue:
                 if (
                     isinstance(js_func, list)
                     and js_func[1]
-                    and js_func[1] not in ["", [], None]
+                    and js_func[1] not in ("", [], None)
                     and len(js_func[1]) == 2
                     and js_func[1][0] not in JS_IMPORTS
                 ):
@@ -402,7 +402,7 @@ class blade_to_vue:
             attributes = f"{match.group(1).strip()} {match.group(3).strip()}".strip()
             tag_content = match.group(4)
             html_tag = (
-                heading if heading in ["h1", "h2", "h3", "h4", "h5", "h6"] else "h1"
+                heading if heading in ("h1", "h2", "h3", "h4", "h5", "h6") else "h1"
             )
             return f"<{html_tag} {attributes}>{tag_content}</{html_tag}>".strip()
 
@@ -426,11 +426,11 @@ class blade_to_vue:
                 items, item = parts
                 if "=>" in item:
                     key, value = item.split("=>")
-                    if key.strip() in ["$key", "$index"]:
+                    if key.strip() in ("$key", "$index"):
                         key = "$idx"
                     return f'<div v-for="({value.strip()}, {key.strip()}) in {items}" :key="{key.strip()}">'
                 else:
-                    if item.strip() in ["$key", "$index"]:
+                    if item.strip() in ("$key", "$index"):
                         item = "$idx"
                     return (
                         f'<div v-for="{item.strip()} in {items}" :key="{item.strip()}">'
@@ -456,7 +456,7 @@ class blade_to_vue:
                 parts = xx.Data.remove_empty_items(
                     rx.compile(split_concat_regex, rx.VERBOSE).findall(concat_str)
                 )
-                if any(char in item for item in parts for char in ['"', "'", "`"]):
+                if any(char in item for item in parts for char in ('"', "'", "`")):
                     is_str, transformed = 0, ""
                     for i, part in enumerate(parts):
                         part = part.strip()
@@ -518,12 +518,12 @@ class blade_to_vue:
                 else f"<{tag} {match.group(3).strip()} />"
             )
 
-        code = re.sub(
+        code = re.sub(  # CORRECT ALREADY PRESENT, BUT FORBIDDEN SELF-CLOSING TAGS
             r"<(/?)([\w.-]+)\s*(" + xx.Regex.all_except(r"<|>") + r")\s*/>",
             replace_self_closing_tag,
             code,
             flags=re.DOTALL,
-        )  # CORRECT ALREADY PRESENT, BUT FORBIDDEN SELF-CLOSING TAGS
+        )
         return re.sub(
             r"<(/?)([\w.-]+)\s*(" + xx.Regex.all_except(r"<|>") + r")>\s*</\2\s*>",
             replace_self_closing_tag,
@@ -573,22 +573,22 @@ class blade_to_vue:
         self.add_php_funcs(code, JSON["php_as_js_functions"])
         code = self.transform_script_lang_funcs(code)
 
-        code = rx.sub(
+        code = rx.sub(  # REPLACE `value->count()` WITH `value.length`
             r"(?i)([\w.-]*\s*[)\]}]?)\s*->\s*count\s*" + R_BR, r"\1.length", code
-        )  # REPLACE `value->count()` WITH `value.length`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `count(  )` AND `strlen(  )` WITH `.length`
             r"(?i)(?:count|strlen)\s*" + R_BR, r"\1.length", code
-        )  # REPLACE `count(  )` AND `strlen(  )` WITH `.length`
-        code = rx.sub(
+        )
+        code = rx.sub(  # TRANSFORM `<tagname {{ $var.merge(['key_name' => 'values']) }} ...>` INTO `<tagname key_name="values" ...>`
             r"<([\w.-]+)\s+\{\{\s*(\$[\w_]+)\s*->\s*merge\s*\(\s*"
             + S_BR
             + r"\s*\)\s*\}\}(.*?)/?>(\s*(?:\n|<[\w.-]+\s+|$))",
             lambda m: f'<{m.group(1)} {' '.join(f'{xx.String.multi_strip(a, ' \'"')}="{xx.String.multi_strip(v, ' \'"')}"' for a, v in re.findall(r',?\s*(.*)\s*=>\s*(.*)', m.group(3)))} {m.group(4).strip()}>{m.group(5)}',
             code,
-        )  # TRANSFORM `<tagname {{ $var.merge(['key_name' => 'values']) }} ...>` INTO `<tagname key_name="values" ...>`
-        code = re.sub(
+        )
+        code = re.sub(  # TRANSFORM ARROW CHAINS TO DOT CHAINS
             r"([\w.-]*\s*[)\]}]?)\s*->\s*(?=\w\s*(\(.*?\))?)", r"\1.", code
-        )  # TRANSFORM ARROW CHAINS TO DOT CHAINS
+        )
 
         # code = self.transform_slots(code)
         code = self.transform_tag_names(code, JSON["component_replacements"])
@@ -600,39 +600,39 @@ class blade_to_vue:
         code = re.sub(r"--}}", "-->", code)  # CORRECT COMMENT ENDS
         code = re.sub(r"{{--", "<!--", code)  # CORRECT COMMENT STARTS
         code = re.sub(r"<br\s*/>", "<br>", code)  # CORRECT LINE-BREAK TAGS
-        code = re.sub(
+        code = re.sub(  # CHANGE VARIABLES `$key`, `$index` TO `$idx`
             r"\$(key|index)(?!\s*\()", "$idx", code
-        )  # CHANGE VARIABLES `$key`, `$index` TO `$idx`
-        code = re.sub(
+        )
+        code = re.sub(  # CHANGE `loop.first` TO `idx == 0`
             r"\s*loop\.first\s*", "idx == 0", code
-        )  # CHANGE `loop.first` TO `idx == 0`
-        code = re.sub(
+        )
+        code = re.sub(  # CHANGE `loop.last` TO `idx == ….length - 1`
             r"\s*loop\.last\s*", "idx == ….length - 1", code
-        )  # CHANGE `loop.last` TO `idx == ….length - 1`
-        code = re.sub(
+        )
+        code = re.sub(  # CORRECT EQUALS
             r"(?<=[^!<>=\s])\s*([!=])=\s*(?=[^=\s])", r" \1== ", code
-        )  # CORRECT EQUALS
-        code = re.sub(
+        )
+        code = re.sub(  # REMOVE EMPTY ATTRIBUTES
             r'(?<![\w$])(\s*:?([\w-]+)\s*=\s*([\'"]))\3', "", code
-        )  # REMOVE EMPTY ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE `init-errors` VARIABLES
             r"\s*:\s*init-errors\s*=\s*" + QUOTES + r"(\s*(?:\n|$))", "", code
-        )  # REMOVE `init-errors` VARIABLES
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `{{ $slot }}` WITH `<slot />`
             r"(?:<div\s*>\s*)?{{\s*\$(slot)\s*}}(?:\s*</div\s*>)?", r"<\1 />", code
-        )  # REPLACE `{{ $slot }}` WITH `<slot />`
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `@php` SYNTAX WITH `<!--` COMMENT-START
             r"(?i)(@php)", r"<!-- \1", code
-        )  # REPLACE `@php` SYNTAX WITH `<!--` COMMENT-START
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `@endphp` SYNTAX WITH `-->` COMMENT-END
             r"(?i)\s*@endphp", r" -->", code
-        )  # REPLACE `@endphp` SYNTAX WITH `-->` COMMENT-END
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `import { route } from '...';` WITH `import { route } from '@/plugins/route';`
             r"import\s*{\s*route\s*}\s*from\s*" + QUOTES + r"\s*;",
             "import { route } from '@/plugins/route';",
             code,
-        )  # REPLACE `import { route } from '...';` WITH `import { route } from '@/plugins/route';`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `<div @if(true) attr>` SYNTAX WITH `<div :attr="true">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
             + xx.Regex.all_except(r"<|>|@if")
             + r")@if\s*"
@@ -647,8 +647,8 @@ class blade_to_vue:
             ),
             code,
             flags=re.DOTALL,
-        )  # REPLACE `<div @if(true) attr>` SYNTAX WITH `<div :attr="true">` ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `<div @empty(var) attr>` SYNTAX WITH `<div :attr="!var">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
             + xx.Regex.all_except(r"<|>|@empty")
             + r")@empty\s*"
@@ -663,8 +663,8 @@ class blade_to_vue:
             ),
             code,
             flags=re.DOTALL,
-        )  # REPLACE `<div @empty(var) attr>` SYNTAX WITH `<div :attr="!var">` ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `<div @isset(var) attr>` SYNTAX WITH `<div :attr="(var) !== undefined">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
             + xx.Regex.all_except(r"<|>|@isset")
             + r")@isset\s*"
@@ -679,8 +679,8 @@ class blade_to_vue:
             ),
             code,
             flags=re.DOTALL,
-        )  # REPLACE `<div @isset(var) attr>` SYNTAX WITH `<div :attr="(var) !== undefined">` ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `<div @is_null(var) attr>` SYNTAX WITH `<div :attr="(var) === null">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
             + xx.Regex.all_except(r"<|>|@is_null")
             + r")@is_null\s*"
@@ -695,8 +695,8 @@ class blade_to_vue:
             ),
             code,
             flags=re.DOTALL,
-        )  # REPLACE `<div @is_null(var) attr>` SYNTAX WITH `<div :attr="(var) === null">` ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE `@end...` SYNTAX INSIDE TAG-ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
             + xx.Regex.all_except(r"<|>|@end(?:[\w_]+)")
             + r")@end([\w_]+)("
@@ -705,51 +705,51 @@ class blade_to_vue:
             r"\1\3",
             code,
             flags=re.DOTALL,
-        )  # REMOVE `@end...` SYNTAX INSIDE TAG-ATTRIBUTES
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `@if(  )` SYNTAX WITH `<span v-if="  ">` TAGS
             r"(?i)@if\s*" + R_BR, r'<span v-if="\1">', code
-        )  # REPLACE `@if(  )` SYNTAX WITH `<span v-if="  ">` TAGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `@empty(  )` SYNTAX WITH `<span v-if="!(  )">` TAGS
             r"(?i)@empty\s*" + R_BR, r'<span v-if="!(\1)">', code
-        )  # REPLACE `@empty(  )` SYNTAX WITH `<span v-if="!(  )">` TAGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `@isset(  )` SYNTAX WITH `<span v-if="(  ) !== undefined">` TAGS
             r"(?i)@isset\s*" + R_BR, r'<span v-if="(\1) !== undefined">', code
-        )  # REPLACE `@isset(  )` SYNTAX WITH `<span v-if="(  ) !== undefined">` TAGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `@is_null(  )` SYNTAX WITH `<span v-if="(  ) === null">` TAGS
             r"(?i)@is_null\s*" + R_BR, r'<span v-if="(\1) === null">', code
-        )  # REPLACE `@is_null(  )` SYNTAX WITH `<span v-if="(  ) === null">` TAGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `@elseif(  )` SYNTAX WITH `</span><span v-else-if="  ">` TAGS
             r"(?i)@elseif\s*" + R_BR, r'</span><span v-else-if="\1">', code
-        )  # REPLACE `@elseif(  )` SYNTAX WITH `</span><span v-else-if="  ">` TAGS
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `@else` SYNTAX WITH `</span><span v-else>` TAGS
             r"(?i)@else(\s+)", r"</span><span v-else>\1", code
-        )  # REPLACE `@else` SYNTAX WITH `</span><span v-else>` TAGS
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `@end...` SYNTAX WITH `</div>` or `</span>` END-TAGS
             r"(?i)@end([\w_]+)",
             lambda m: (
                 "</span>"
-                if m.group(1) in ["if", "isset", "elseif", "else"]
+                if m.group(1) in ("if", "isset", "elseif", "else")
                 else "</div>"
             ),
             code,
-        )  # REPLACE `@end...` SYNTAX WITH `</div>` or `</span>` END-TAGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `<div v-if="$slot"><slot name="...">{{ $slot }}</slot></div>` WITH `<slot />` OR `<slot name="..." />`
             r'<([\w-]+)\s+v-if\s*=\s*"\s*\$?slot\s*"\s*>\s*<slot(?:\s+name\s*=\s*'
             + QUOTES
             + r")?\s*>\s*{{\s*\$?slot\s*}}\s*</slot\s*>\s*</\1\s*>",
             lambda m: f'<slot{f' name="{m.group(3).strip()}"' if m.group(3).strip() else ''} />',
             code,
-        )  # REPLACE `<div v-if="$slot"><slot name="...">{{ $slot }}</slot></div>` WITH `<slot />` OR `<slot name="..." />`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `__()` AND `$lang()` FUNCTIONS WITH `$t()` FUNCTION
             L_FN + r"\s*\((.*?\))", r"$t(\1", code
-        )  # REPLACE `__()` AND `$lang()` FUNCTIONS WITH `$t()` FUNCTION
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `{!!  !!}` SYNTAX WITH `<div v-html="  "/>` TAGS
             r"{!!\s*(.*?)\s*!!}", r'<div v-html="\1"/>', code
-        )  # REPLACE `{!!  !!}` SYNTAX WITH `<div v-html="  "/>` TAGS
-        code = re.sub(
+        )
+        code = re.sub(  # REPLACE `:input="$input"` WITH `:input`
             r':([\w-]+)\s*=\s*([\'"])\s*\$?\1\s*\2', r":\1", code
-        )  # REPLACE `:input="$input"` WITH `:input`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE LEFTOVER `attr="JS"` WITH `:attr="JS"` OR `:attr="string"` WITH `attr="string"`
             r":?([\w-]+)\s*=\s*" + QUOTES,
             lambda m: (
                 f':{m.group(1)}="{m.group(3).strip()}"'
@@ -757,44 +757,44 @@ class blade_to_vue:
                 else f'{m.group(1)}="{m.group(3).strip()}"'
             ),
             code,
-        )  # REPLACE LEFTOVER `attr="JS"` WITH `:attr="JS"` OR `:attr="string"` WITH `attr="string"`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE LEFTOVER `attr="{{  }}"` WITH `:attr="  "`
             r':?([\w-]+)\s*=\s*([\'"])\s*\{' + C_BR + r"\}\s*\2",
             lambda m: f':{m.group(1)}="{m.group(3).strip()}"',
             code,
-        )  # REPLACE LEFTOVER `attr="{{  }}"` WITH `:attr="  "`
-        code = rx.sub(
+        )
+        code = rx.sub(  # REPLACE `{{  }}`-CONCATENATED STRINGS WITH BACKTICK-STRINGS
             r':?([\w-]+)\s*=\s*([\'"])(((?:\\.|(?:(?!\2).)+)*)\{'
             + C_BR
             + r"\}((?:\\.|(?:(?!\2).)+)*))\2",
             lambda m: f':{m.group(1)}="`{m.group(3).replace('{{', '${').replace('}}', '}')}`"',
             code,
-        )  # REPLACE `{{  }}`-CONCATENATED STRINGS WITH BACKTICK-STRINGS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE `asset(  )` BRACKETS
             r"(?i)asset\s*" + R_BR, r"\1", code
-        )  # REMOVE `asset(  )` BRACKETS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE `isset(  )` BRACKETS
             r"(?i)isset\s*" + R_BR, r"(\1)", code
-        )  # REMOVE `isset(  )` BRACKETS
-        code = re.sub(
+        )
+        code = re.sub(  # COMMENT OUT LEFTOVER BLADE SYNTAX
             r"(\n\s*)(@[\w_]+.*?)(\s*\n)", r"\1<!-- \2 -->\3", code
-        )  # COMMENT OUT LEFTOVER BLADE SYNTAX
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE `:` FROM VUE-ATTRIBUTES
             r":v-([\w-]+)\s*=\s*" + QUOTES, r'v-\1="\3"', code
-        )  # REMOVE `:` FROM VUE-ATTRIBUTES
-        code = re.sub(
+        )
+        code = re.sub(  # REMOVE UNNECESSARY QUOTATION MARKS
             r':?([\w-]+)\s*=\s*([\'"])\s*((?:\\\2|(?:(?!\2)[\'"]))+)((?:\\.|(?:(?!\2).)+)*)\3\s*\2',
             lambda m: f'{m.group(1)}="{m.group(4).strip().replace("\\'", "'")}"',
             code,
-        )  # REMOVE UNNECESSARY QUOTATION MARKS
-        code = rx.sub(
+        )
+        code = rx.sub(  # REMOVE UNNECESSARY VARIABLE INPUTS
             r"\$attributes\s*\[\s*" + QUOTES + r"\s*\]", r"\2", code
-        )  # REMOVE UNNECESSARY VARIABLE INPUTS
-        code = re.sub(
+        )
+        code = re.sub(  # REMOVE LEFTOVER `$` PREFIXES FROM VARS AND FUNCTIONS
             r"\$(\w+)(?!\s*\()",
             lambda m: m.group(1) if not m.group(1) == "t" else m.group(0),
             code,
-        )  # REMOVE LEFTOVER `$` PREFIXES FROM VARS AND FUNCTIONS
+        )
 
         outside_template_script_pattern = (
             r"(<script(?:\s+[\s\S]*)?>"
@@ -807,9 +807,9 @@ class blade_to_vue:
                 " \n",
             )
         )
-        code = rx.sub(
+        code = rx.sub(  # REMOVE OUTSIDE TEMPLATE SCRIPT
             outside_template_script_pattern, "", code, flags=re.DOTALL
-        )  # REMOVE OUTSIDE TEMPLATE SCRIPT
+        )
         vue_content = f"<template>\n{xx.Code.add_indent(code.strip(), xx.Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
         if isinstance(args["indent"]["value"], int):
             vue_content = xx.String.remove_consecutive_empty_lines(
