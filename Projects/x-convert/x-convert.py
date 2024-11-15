@@ -145,10 +145,10 @@ A_BR = xx.Regex.brackets("<", ">", is_group=True)
 
 def show_help():
     xx.FormatCodes.print(
-        rf"""  [_|b|#7075FF]        [#FF9E6A]                                      __ 
+        rf"""  [_|b|#7075FF]        [#FF9E6A]                                      __
   [b|#7075FF]  _  __ [#FF9E6A]  _________  ____  _   _____  _______/ /_
   [b|#7075FF] | |/ / [#FF9E6A] / ___/ __ \/ __ \| | / / _ \/ ___/_  __/
-  [b|#7075FF] > , <  [#FF9E6A]/ /__/ /_/ / / / /| |/ / ___/ /    / /_  
+  [b|#7075FF] > , <  [#FF9E6A]/ /__/ /_/ / / / /| |/ / ___/ /    / /_
   [b|#7075FF]/_/|_|  [#FF9E6A]\___/\____/_/ /_/ |___/\___/_/     \__/  [*|BG:#7B7C8F|#000] v[b]{VERSION} [*]
 
   [i|#FF806A]         CONVERT ONE TYPE OF CODE INTO ANOTHER[*]
@@ -172,8 +172,7 @@ def show_help():
 
   [b|#7090FF]Supported conversion:[*]
     [b|#FF5252]Laravel Blade [dim]((.blade.php))[*] to [b|#41B883]Vue.js [dim]((.vue))[*]             [*|#AA90FF]-bv[dim](,) --blade-vue[dim](,) --blade-to-vue[*]
-  [_]""",
-        xx.DEFAULT.text_color,
+  [_]"""
     )
 
 
@@ -234,7 +233,6 @@ def add_to_env_vars() -> dict:
                 )
                 xx.FormatCodes.print(
                     f"        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
-                    xx.DEFAULT.text_color,
                 )
                 if xx.Cmd.confirm(
                     "      \tAdd the [+|b]program directory[*] to your environment variables?",
@@ -248,11 +246,8 @@ def add_to_env_vars() -> dict:
                     )
                     xx.FormatCodes.print(
                         f"        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn't work, you may need to restart the console.[_]",
-                        xx.DEFAULT.text_color,
                     )
-                    xx.FormatCodes.print(
-                        "        \t[dim]Continuing program...[_]", xx.DEFAULT.text_color
-                    )
+                    xx.FormatCodes.print("        \t[dim]Continuing program...[_]")
             xx.Json.update(JSON_FILE, f"is_in_env_vars::{base_dir}")
     except KeyError:
         xx.Cmd.fail(
