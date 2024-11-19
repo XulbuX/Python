@@ -92,4 +92,4 @@ def main(args: dict) -> None:
 
 
 if __name__ == "__main__":
-    main(xx.Cmd.get_args(FIND_ARGS))
+    main(xx.Console.get_args(FIND_ARGS))

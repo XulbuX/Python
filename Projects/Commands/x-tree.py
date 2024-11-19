@@ -293,7 +293,7 @@ def main():
         f'Output tree into file [dim]({"(Y/n)" if DEFAULTS["into_file"] else "(y/N)"} >  )'
     ).strip().lower() in ("y", "yes")
 
-    xx.Cmd.info("generating tree ...", end="\n")
+    xx.Console.info("generating tree ...", end="\n")
     tree = Tree()
     result = tree.generate(os.getcwd(), ignore_dirs, file_contents, tree_style, indent)
 
@@ -302,14 +302,16 @@ def main():
         try:
             file = xx.File.create(result, "tree.txt")
         except FileExistsError:
-            if xx.Cmd.confirm("[white]tree.txt[_] already exists. Overwrite?", end=""):
+            if xx.Console.confirm(
+                "[white]tree.txt[_] already exists. Overwrite?", end=""
+            ):
                 file = xx.File.create(result, "tree.txt", force=True)
             else:
-                xx.Cmd.exit()
+                xx.Console.exit()
         if file:
-            xx.Cmd.done(f"[white]{file}[_] successfully created.")
+            xx.Console.done(f"[white]{file}[_] successfully created.")
         else:
-            xx.Cmd.fail("File is empty or failed to create file.")
+            xx.Console.fail("File is empty or failed to create file.")
     else:
         xx.FormatCodes.print("[white]")
         print(result, end="", flush=True)
@@ -320,8 +322,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        xx.Cmd.exit()
+        xx.Console.exit()
     except PermissionError:
-        xx.Cmd.fail("Permission to create file was denied.")
+        xx.Console.fail("Permission to create file was denied.")
     except Exception as e:
-        xx.Cmd.fail(str(e))
+        xx.Console.fail(str(e))

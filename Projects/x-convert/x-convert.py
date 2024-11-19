@@ -164,10 +164,10 @@ def show_help():
 
   [b|#7090FF]Examples [_b]((Blade ➜ Vue)):[*]
     Full path with 2 spaces indentation:
-      [_]C:\Users\{xx.Cmd.user()}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
+      [_]C:\Users\{xx.Console.user()}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
 
     Relative path with 4 spaces indentation:
-      [_]C:\Users\{xx.Cmd.user()}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
+      [_]C:\Users\{xx.Console.user()}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
       [_]D:\full\path> [#FF9E6A]x-convert [#7B7C8F]--file-path [#4DF1C2].\to\file.blade.php [#7B7C8F]--indent-spaces [#77EFEF]4 [#7B7C8F]--blade-to-vue[*]
 
   [b|#7090FF]Supported conversion:[*]
@@ -183,20 +183,20 @@ def get_json(args: dict) -> dict:
             JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
         )
     except FileNotFoundError:
-        xx.Cmd.fail(f"File not found:  [white]{JSON_FILE}", exit=False, end="")
-        if xx.Cmd.confirm(
+        xx.Console.fail(f"File not found:  [white]{JSON_FILE}", exit=False, end="")
+        if xx.Console.confirm(
             f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?",
             end="",
         ):
             xx.Json.create(DEFAULT_JSON, indent=4, force=True)
-            xx.Cmd.info(f"[white]{JSON_FILE}[*] created successfully.", end="\n")
+            xx.Console.info(f"[white]{JSON_FILE}[*] created successfully.", end="\n")
             xx.FormatCodes.print(
                 "        \t[dim]Restarting program...[_]", xx.DEFAULT.text_color
             )
             main(args)
-            xx.Cmd.pause_exit(exit=True)
+            xx.Console.pause_exit(exit=True)
         else:
-            xx.Cmd.exit()
+            xx.Console.exit()
 
 
 def get_missing_args(args: list) -> list:
@@ -210,7 +210,7 @@ def get_missing_args(args: list) -> list:
         xx.FormatCodes.print("What conversion to do?[_]", "#3EE6DE")
         xx.FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", "#3EE6DE")
         args["blade-vue"]["exists"] = (
-            xx.Cmd.restricted_input(
+            xx.Console.restricted_input(
                 "                 [_|dim] >  [_]",
                 "#3EE6DE",
                 allowed_chars="1",
@@ -226,7 +226,7 @@ def add_to_env_vars() -> dict:
     try:
         if JSON["is_in_env_vars"] != base_dir:
             if not xx.EnvVars.has_path(base_dir=True):
-                xx.Cmd.warn(
+                xx.Console.warn(
                     "Path to program-directory doesn't exist in your environment variables.",
                     exit=False,
                     end="\n",
@@ -234,13 +234,13 @@ def add_to_env_vars() -> dict:
                 xx.FormatCodes.print(
                     f"        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
                 )
-                if xx.Cmd.confirm(
+                if xx.Console.confirm(
                     "      \tAdd the [+|b]program directory[*] to your environment variables?",
                     start="",
                     end="",
                 ):
                     xx.EnvVars.add_path(base_dir=True)
-                    xx.Cmd.info(
+                    xx.Console.info(
                         f"Successfully added [white]{base_dir}[_] to your environment variables.",
                         end="\n",
                     )
@@ -250,7 +250,7 @@ def add_to_env_vars() -> dict:
                     xx.FormatCodes.print("        \t[dim]Continuing program...[_]")
             xx.Json.update(JSON_FILE, f"is_in_env_vars::{base_dir}")
     except KeyError:
-        xx.Cmd.fail(
+        xx.Console.fail(
             f"Not all required keys were found in JSON file:  [white]{JSON_FILE}",
             pause=DEBUG,
         )
@@ -810,7 +810,7 @@ class blade_to_vue:
             vue_content = xx.String.remove_consecutive_empty_lines(
                 vue_content, max_consecutive=1
             )
-            xx.Cmd.debug(
+            xx.Console.debug(
                 "Removed consecutive empty lines to [b|+]max_consecutive=1[_].",
                 DEBUG,
                 end="\n",
@@ -819,7 +819,7 @@ class blade_to_vue:
                 vue_content = xx.Code.change_tab_size(
                     vue_content, indent, remove_empty_lines=True
                 )
-                xx.Cmd.debug(
+                xx.Console.debug(
                     f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.",
                     DEBUG,
                     end="\n",
@@ -832,16 +832,16 @@ def main(args: dict):
     if DEBUG and not xx.Data.is_equal(
         _JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"
     ):
-        xx.Cmd.debug("config.json does not match the default json.", end="\n")
+        xx.Console.debug("config.json does not match the default json.", end="\n")
     add_to_env_vars()
     args = get_missing_args(args)
     if args["filepath"]["value"] in (None, ""):
-        xx.Cmd.fail("No filepath was provided.", pause=DEBUG)
+        xx.Console.fail("No filepath was provided.", pause=DEBUG)
     args["filepath"]["value"] = xx.Path.extend(
         args["filepath"]["value"], raise_error=True, correct_path=True
     )
     if not os.path.isfile(args["filepath"]["value"]):
-        xx.Cmd.fail(
+        xx.Console.fail(
             f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG
         )
 
@@ -860,30 +860,30 @@ def main(args: dict):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
             if existing_content == converted_content:
-                xx.Cmd.info(
+                xx.Console.info(
                     "Already formatted this file. [dim](nothing changed)", pause=DEBUG
                 )
-                xx.Cmd.pause_exit(exit=True, reset_ansi=True)
-            xx.Cmd.warn(
+                xx.Console.pause_exit(exit=True, reset_ansi=True)
+            xx.Console.warn(
                 f"File already exists: [white]{new_file_path}", exit=False, end=""
             )
-            if xx.Cmd.confirm(
+            if xx.Console.confirm(
                 f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?",
                 end="",
             ):
                 pass
             else:
-                xx.Cmd.exit(reset_ansi=True)
+                xx.Console.exit(reset_ansi=True)
         with open(new_file_path, "w") as file:
             file.write(converted_content)
-        xx.Cmd.done(f"Formatted into file: [white]{new_file_path}", pause=DEBUG)
+        xx.Console.done(f"Formatted into file: [white]{new_file_path}", pause=DEBUG)
     else:
-        xx.Cmd.fail("Empty file or invalid conversion chosen.", pause=DEBUG)
-    xx.Cmd.pause_exit(exit=True, reset_ansi=True)
+        xx.Console.fail("Empty file or invalid conversion chosen.", pause=DEBUG)
+    xx.Console.pause_exit(exit=True, reset_ansi=True)
 
 
 if __name__ == "__main__":
-    args = xx.Cmd.get_args(FIND_ARGS)
+    args = xx.Console.get_args(FIND_ARGS)
     DEBUG = args["debug"]["exists"]
     if DEBUG:
         if args["help"]["exists"]:
@@ -897,10 +897,10 @@ if __name__ == "__main__":
             else:
                 main(args)
         except FileNotFoundError:
-            xx.Cmd.fail(
+            xx.Console.fail(
                 f"File not found: [white]{args['filepath']['value']}", pause=DEBUG
             )
         except KeyboardInterrupt:
-            xx.Cmd.exit(start="\n\n")
+            xx.Console.exit(start="\n\n")
         except Exception as e:
-            xx.Cmd.fail(e, pause=DEBUG)
+            xx.Console.fail(e, pause=DEBUG)
