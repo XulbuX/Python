@@ -183,7 +183,7 @@ def get_json(args: dict) -> dict:
             JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
         )
     except FileNotFoundError:
-        xx.Console.fail(f"File not found:  [white]{JSON_FILE}", exit=False, end="")
+        xx.Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, end="")
         if xx.Console.confirm(
             f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?",
             end="",
