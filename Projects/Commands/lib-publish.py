@@ -2,7 +2,7 @@
 # - pip install build
 # - pip install twine
 
-import XulbuX as xx
+import xulbux as xx
 import subprocess
 import shutil
 import sys

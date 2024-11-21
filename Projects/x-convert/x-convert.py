@@ -1,4 +1,4 @@
-import XulbuX as xx
+import xulbux as xx
 import regex as rx
 import pathlib
 import os
