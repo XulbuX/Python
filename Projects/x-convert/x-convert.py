@@ -548,7 +548,7 @@ class blade_to_vue:
 
         def add_new_script(match: re.Match) -> str:
             attrs = match.group(1) if not match.group(1) else match.group(1).strip()
-            old_js = xx.String.multi_rstrip(match.group(2), " \n")
+            old_js = match.group(2).rstrip(" \n")
             js_parts["old"] = old_js.splitlines()
             updated_js = (
                 [*js_parts["new"], *js_parts["old"]] if old_js else [js_parts["new"]]
@@ -578,7 +578,7 @@ class blade_to_vue:
             r"<([\w.-]+)\s+\{\{\s*(\$[\w_]+)\s*->\s*merge\s*\(\s*"
             + S_BR
             + r"\s*\)\s*\}\}(.*?)/?>(\s*(?:\n|<[\w.-]+\s+|$))",
-            lambda m: f'<{m.group(1)} {' '.join(f'{xx.String.multi_strip(a, ' \'"')}="{xx.String.multi_strip(v, ' \'"')}"' for a, v in re.findall(r',?\s*(.*)\s*=>\s*(.*)', m.group(3)))} {m.group(4).strip()}>{m.group(5)}',
+            lambda m: f'<{m.group(1)} {' '.join(f'{a.strip(' \'"')}="{v.strip(' \'"')}"' for a, v in re.findall(r',?\s*(.*)\s*=>\s*(.*)', m.group(3)))} {m.group(4).strip()}>{m.group(5)}',
             code,
         )
         code = re.sub(  # TRANSFORM ARROW CHAINS TO DOT CHAINS
@@ -797,9 +797,8 @@ class blade_to_vue:
             + r"<\/script\s*>\s*)(?=\s*$)"
         )
         outside_template_script = "\n".join(
-            xx.String.multi_rstrip(
-                rx.findall(outside_template_script_pattern, code, flags=re.DOTALL),
-                " \n",
+            rx.findall(outside_template_script_pattern, code, flags=re.DOTALL).rstrip(
+                " \n"
             )
         )
         code = rx.sub(  # REMOVE OUTSIDE TEMPLATE SCRIPT
