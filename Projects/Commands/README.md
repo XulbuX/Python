@@ -38,6 +38,7 @@ After completing these steps, you should be able to run the commands described b
 
 ## <span id="whateachcommanddoes">What each file (*command*) does</span>
 
+
 ### _.py
 Run with command:
 ```console
@@ -46,6 +47,7 @@ _
 This is a better version of the `cls` or `clear` command to clear your console. The command `_` is:<br>
 * Faster to type and
 * the command also resets all the console formats.
+
 
 ### dir-info.py
 Run with command:
@@ -67,6 +69,21 @@ dir-info --ignore size
 ```console
 dir-info --ignore scope size
 ```
+The files count will always be included, since it doesn't affect the performance.
+
+
+### hex-percent.py
+Run with command:
+```console
+hex-percent
+```
+This command will turn a two digit HEX value into a percentage, where `FF` equals 100% and `00` equals 0%.
+
+When the command is tun, it will ask you for the HEX value, but you can also give it directly as an argument:
+```console
+hex-percent FF
+```
+
 
 ### lib-publish.py
 Run with command:
@@ -74,6 +91,7 @@ Run with command:
 lib-publish
 ```
 This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPI](https://pypi.org/).
+
 
 ### matrix.py
 Run with command:
@@ -95,6 +113,7 @@ This command will display a sort of matrix in your console with a few options fo
    ```
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
+
 ### process-list.py
 Run with command:
 ```console
@@ -107,6 +126,7 @@ Per default, the list items are separated by a `space`, but this can be changed 
 ```console
 process-list --sep ","
 ```
+
 
 ### sine.py
 Run with command:
