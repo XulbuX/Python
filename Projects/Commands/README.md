@@ -92,6 +92,11 @@ lib-publish
 ```
 This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPI](https://pypi.org/).
 
+You can also directly specify the path to the library to package and upload and if the process should be verbose:
+```console
+lib-publish --lib /path/to/library --verbose
+```
+
 
 ### matrix.py
 Run with command:

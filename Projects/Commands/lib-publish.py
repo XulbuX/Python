@@ -9,7 +9,19 @@ import sys
 import os
 
 FIND_ARGS = {
-    "lib_base": ["-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"]
+    "lib_base": [
+        "-p",
+        "--path",
+        "-d",
+        "--dir",
+        "--directory",
+        "-b",
+        "--base-dir",
+        "-l",
+        "--lib",
+        "--library",
+    ],
+    "verbose": ["-v", "--verbose"],
 }
 
 
@@ -82,10 +94,11 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 
 def main(args: dict) -> None:
+    verbose = args["verbose"]["exists"]
     os.chdir(args["lib_base"]["value"])
-    run_command("py -m build")
+    run_command(f"py -m build{' --verbose ' if verbose else ''}")
     twine_path = find_twine_path()
-    run_command(f'"{twine_path}" upload dist/*')
+    run_command(f'"{twine_path}" upload{' --verbose ' if verbose else ' '}dist/*')
     if input("\nDirectly remove dist directory? (Y/n):  ").lower() in ("", "y", "yes"):
         xx.Path.remove(os.path.join(os.getcwd(), "dist"))
         print()
