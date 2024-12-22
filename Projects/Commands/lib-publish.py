@@ -99,7 +99,11 @@ def main(args: dict) -> None:
     run_command(f"py -m build{' --verbose ' if verbose else ''}")
     twine_path = find_twine_path()
     run_command(f'"{twine_path}" upload{' --verbose ' if verbose else ' '}dist/*')
-    if input("\nDirectly remove dist directory? (Y/n):  ").lower() in ("", "y", "yes"):
+    if input("\nDirectly remove 'dist' directory? (Y/n):  ").lower() in (
+        "",
+        "y",
+        "yes",
+    ):
         xx.Path.remove(os.path.join(os.getcwd(), "dist"))
         print()
 
