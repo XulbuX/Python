@@ -119,6 +119,19 @@ This command will display a sort of matrix in your console with a few options fo
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 
+### pi.py
+Run with command:
+```console
+pi
+```
+This command will calculate the value of the [Pi number](https://en.wikipedia.org/wiki/Pi) to a certain decimal place.<br>
+To specify up to how many decimal places should be calculated, run the command with an argument:
+```console
+pi 100
+```
+Can be cancelled by pressing `Ctrl(⌘) + C`.
+
+
 ### process-list.py
 Run with command:
 ```console
