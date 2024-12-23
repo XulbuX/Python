@@ -1,5 +1,5 @@
 from xulbux import FormatCodes
-from mpmath import mp
+from mpmath import mp, fac
 import threading
 import psutil
 import math
@@ -32,7 +32,7 @@ def estimate_runtime(precision: int) -> float:
     ref_points = sorted(REFERENCE_TIMES.keys())
     if precision <= 100:
         start_time = time.time()
-        _ = chudnovsky_pi(precision)
+        _ = pi(precision)
         return time.time() - start_time
     if precision >= max(ref_points):
         base_time = REFERENCE_TIMES[max(ref_points)]
@@ -46,9 +46,12 @@ def estimate_runtime(precision: int) -> float:
         upper_point = ref_points[upper_idx]
         lower_time = REFERENCE_TIMES[lower_point]
         upper_time = REFERENCE_TIMES[upper_point]
-        log_factor = math.log(precision / lower_point) / math.log(
-            upper_point / lower_point
-        )
+        if lower_point == upper_point:
+            log_factor = 1
+        else:
+            log_factor = math.log(precision / lower_point) / math.log(
+                upper_point / lower_point
+            )
         base_time = lower_time * (upper_time / lower_time) ** log_factor
         scaling = 1.0
     hw_score = get_hardware_score()
@@ -161,34 +164,58 @@ def animate() -> None:
         "[b]·  [_b]",
     ], 0
     max_frame_len = max(len(frame) for frame in frames)
-    while not calc_done:
+    while not CALC_DONE:
         frame = frames[i % len(frames)]
         FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
         time.sleep(0.2)
         i += 1
 
 
-def chudnovsky_pi(precision: int) -> str:
-    if precision < 1:
-        raise ValueError("Precision must be a positive integer.")
-    mp.dps = precision
-    C = mp.mpf("426880") * mp.sqrt("10005")
-    M = mp.mpf(1)
-    X = mp.mpf(1)
-    L = mp.mpf(13591409)
-    S = L
-    for k in range(1, precision):
-        M = M * (12 * k - 10) * (12 * k - 6) * (12 * k - 2) / (k**3 * 2**6)
-        L += 545140134
-        X *= -262537412640768000
-        S += M * L / X
-    return str(C / S)
+def pi(k_max: int) -> str:
+    mp.dps = k_max * 14  # DECIMAL PLACES
+    result = mp.mpf(0)
+    for k in range(k_max):
+        term = (
+            12
+            * (-1) ** k
+            * fac(6 * k)
+            * (545140134 * k + 13591409)
+            / (fac(3 * k) * (fac(k) ** 3) * (640320 ** ((3 * k) + mp.mpf("3/2"))))
+        )
+        result += term
+    return 1 / result
 
 
-if __name__ == "__main__":
-    calc_done = False
-    dec_places = int(args[1]) if len(args := sys.argv) > 1 else 10
-    estimated_secs = estimate_runtime(dec_places)
+# @cuda.jit
+# def chudnovsky_gpu(k_max: int, result: cuda.device_array, facs: cuda.device_array):
+#     idx = cuda.grid(1)
+#     if idx < k_max:
+#         k = idx
+#         fac_6k = facs[6 * k]
+#         fac_3k = facs[3 * k]
+#         fac_k = facs[k]
+#         numerator = fac_6k * (545140134 * k + 13591409)
+#         denominator = fac_3k * (fac_k**3) * (640320 ** (3 * k + 1.5))
+#         result[idx] = 12 * (-1) ** k * numerator / denominator
+
+
+# def compute_pi_gpu(k_max: int) -> float:
+#     facs = np.array([np.math.factorial(i) for i in range(6 * k_max)], dtype=np.float64)
+#     result_gpu = cuda.device_array(k_max, dtype=np.float64)
+#     facs_gpu = cuda.to_device(facs)
+#     threads_per_block = 256
+#     blocks_per_grid = (k_max + threads_per_block - 1) // threads_per_block
+#     chudnovsky_gpu[blocks_per_grid, threads_per_block](k_max, result_gpu, facs_gpu)
+#     result = result_gpu.copy_to_host()
+#     pi_inverse = np.sum(result)
+#     pi = 1 / pi_inverse
+#     return pi
+
+
+def main() -> None:
+    global CALC_DONE
+    input_k = int(args[1]) if len(args := sys.argv) > 1 else 1
+    estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(
             f"\n[b]Calculation would too long to finish:[_]\n{format_time(estimated_secs, pretty_printing=True)}\n"
@@ -196,13 +223,15 @@ if __name__ == "__main__":
     else:
         FormatCodes.print(
             f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)"
+            if estimated_secs > 1
+            else ""
         )
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
         try:
-            pi = chudnovsky_pi(dec_places)
+            result = pi(input_k)
         except MemoryError:
-            calc_done = True
+            CALC_DONE = True
             animation_thread.join()
             FormatCodes.print(
                 "Your computer doesn't have enough memory for this calculation.\n",
@@ -212,10 +241,15 @@ if __name__ == "__main__":
                 end="\n\n",
             )
         except KeyboardInterrupt:
-            calc_done = True
+            CALC_DONE = True
             animation_thread.join()
             FormatCodes.print("\r[b|br:red]⨯[_]  \n")
             sys.exit(0)
-        calc_done = True
+        CALC_DONE = True
         animation_thread.join()
-        sys.stdout.write(f"\r{pi}\n\n")
+        sys.stdout.write(f"\r{result}\n\n")
+
+
+if __name__ == "__main__":
+    CALC_DONE = False
+    main()
