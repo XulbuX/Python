@@ -8,8 +8,8 @@ import sys
 
 
 REFERENCE_TIMES = {
-    1000: 0.15,  # 1K DIGITS
-    5000: 2.5,  # 5K DIGITS
+    1000: 1.25,  # 1K DIGITS
+    5000: 5,  # 5K DIGITS
     10000: 8,  # 10K DIGITS
     25000: 24,  # 25K DIGITS
     50000: 46,  # 50K DIGITS
@@ -58,7 +58,7 @@ def estimate_runtime(precision: int) -> float:
     estimated_time = (base_time * scaling) / hw_score
     if estimated_time < 30:
         estimated_time = base_time
-    correction_factor = 0.3 + (precision - 20000) * (0.98 - 0.3) / (50000 - 20000)
+    correction_factor = 0.3 + (precision - 10000) * (0.98 - 0.3) / (50000 - 10000)
     estimated_time *= correction_factor
     return round(estimated_time, 2)
 
@@ -216,6 +216,7 @@ def main() -> None:
     global CALC_DONE
     input_k = int(args[1]) if len(args := sys.argv) > 1 else 1
     estimated_secs = estimate_runtime(input_k)
+    print(estimated_secs)
     if estimated_secs >= 604800:
         FormatCodes.print(
             f"\n[b]Calculation would too long to finish:[_]\n{format_time(estimated_secs, pretty_printing=True)}\n"
@@ -229,7 +230,9 @@ def main() -> None:
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
         try:
+            start_time = time.time()
             result = pi(input_k)
+            end_time = time.time()
         except MemoryError:
             CALC_DONE = True
             animation_thread.join()
@@ -248,6 +251,7 @@ def main() -> None:
         CALC_DONE = True
         animation_thread.join()
         sys.stdout.write(f"\r{result}\n\n")
+        print(f"{(end_time - start_time):.2f} seconds")
 
 
 if __name__ == "__main__":
