@@ -1,4 +1,4 @@
-from xulbux import Console, FormatCodes
+from xulbux import Console
 from pathlib import Path
 import sys
 import re
@@ -15,13 +15,18 @@ def is_text_file(filepath: Path):
 
 def capitalize_hex_colors(content: str) -> tuple[str, int]:
     pattern = r"(#|0x)([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b"
+    changed = 0
 
     def replace_match(match: re.Match) -> str:
+        nonlocal changed
         prefix, hex_value = match.groups()
-        return prefix + hex_value.upper()
+        upper_hex = hex_value.upper()
+        if hex_value != upper_hex:
+            changed += 1
+        return prefix + upper_hex
 
-    new_content, count = re.subn(pattern, replace_match, content)
-    return new_content, count
+    new_content, _ = re.subn(pattern, replace_match, content)
+    return new_content, changed
 
 
 def process_file(file_path: Path, root_dir: Path = Path.cwd()) -> None:
@@ -33,9 +38,11 @@ def process_file(file_path: Path, root_dir: Path = Path.cwd()) -> None:
         if modified:
             file_path.write_text(new_content, encoding="utf-8")
         log_path = str(file_path.relative_to(root_dir))
+        dim = "[dim]" if modified < 1 else ""
         Console.done(
             f"{'[b](Updated)' if modified > 0 else '[dim](Checked)'} [br:cyan]({log_path})"
-            + f" [dim]({((Console.w() - 50) - len(log_path)) * '.'}) [blue][[b|br:blue]({modified})[blue]]",
+            + f" [dim]({((Console.w() - 50) - len(log_path)) * '.'})"
+            + f" {dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
             start="",
             end="\n",
         )
