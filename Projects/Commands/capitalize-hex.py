@@ -4,15 +4,15 @@ import sys
 import re
 
 
-def capitalize_hex_colors(content: str) -> tuple[str, bool]:
+def capitalize_hex_colors(content: str) -> tuple[str, int]:
     pattern = r"(#|0x)([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b"
 
-    def replace_match(match):
+    def replace_match(match: re.Match) -> str:
         prefix, hex_value = match.groups()
         return prefix + hex_value.upper()
 
     new_content, count = re.subn(pattern, replace_match, content)
-    return new_content, count > 0
+    return new_content, count
 
 
 def process_file(file_path: Path) -> None:
@@ -21,11 +21,14 @@ def process_file(file_path: Path) -> None:
         new_content, modified = capitalize_hex_colors(content)
         if modified:
             file_path.write_text(new_content, encoding="utf-8")
-            Console.done(f"Updated: [br:cyan]({file_path})", start="", end="\n")
+            Console.done(
+                f"Updated: [br:cyan]({file_path}) {(40 - len(str(file_path))) * '.'} [blue][[b|br:blue]({modified})[blue]]",
+                start="",
+                end="\n",
+            )
     except Exception as e:
         Console.fail(
             f"Error processing [white]({file_path})\n         \t[br:red]({e})",
-            start="\n\n",
         )
 
 
@@ -43,8 +46,10 @@ def main(path: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        path = input("Enter the path to the file or directory: ").strip()
+        path = input("\nEnter the path to the file or directory: ").strip()
     else:
         path = sys.argv[1]
+    if path in ("", None):
+        Console.fail("No path was provided")
     print()
     main(path)
