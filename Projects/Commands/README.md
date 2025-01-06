@@ -49,6 +49,19 @@ This is a better version of the `cls` or `clear` command to clear your console. 
 * the command also resets all the console formats.
 
 
+### capitalize-hex.py
+Run with command:
+```console
+capitalize-hex
+```
+This command will capitalize all found HEX colors in the given file or directory.
+
+The path to the file or directory containing files can be directly given as an argument:
+```console
+capitalize-hex /path/to/file
+```
+
+
 ### dir-info.py
 Run with command:
 ```console
@@ -79,7 +92,7 @@ hex-percent
 ```
 This command will turn a two digit HEX value into a percentage, where `FF` equals 100% and `00` equals 0%.
 
-When the command is tun, it will ask you for the HEX value, but you can also give it directly as an argument:
+When the command is run, it will ask you for the HEX value, but you can also give it directly as an argument:
 ```console
 hex-percent FF
 ```
