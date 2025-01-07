@@ -29,7 +29,7 @@ def capitalize_hex_colors(content: str) -> tuple[str, int]:
     return new_content, changed
 
 
-def process_file(file_path: Path, root_dir: Path = Path.cwd()) -> None:
+def process_file(file_path: Path, root_dir: Path) -> None:
     if not is_text_file(file_path):
         return
     try:
@@ -58,7 +58,7 @@ def process_file(file_path: Path, root_dir: Path = Path.cwd()) -> None:
 def main(path: str) -> None:
     target = Path(path)
     if target.is_file():
-        process_file(target)
+        process_file(target, target.parent)
     elif target.is_dir():
         for file_path in target.rglob("*"):
             if file_path.is_file():
