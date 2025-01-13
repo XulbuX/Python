@@ -1,4 +1,4 @@
-from xulbux import Console, Data
+from xulbux import FormatCodes, Console, Data
 import subprocess
 import platform
 
@@ -28,4 +28,4 @@ def get_vscode_extensions() -> list[str]:
 if __name__ == "__main__":
     if not check_vscode_installed():
         Console.fail("Visual Studio Code is not installed or not in PATH.")
-    Data.print(get_vscode_extensions(), as_json=True)
+    FormatCodes.print(f"[white]{Data.to_str(get_vscode_extensions(), as_json=True)}[_]")
