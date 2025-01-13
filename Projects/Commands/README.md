@@ -62,6 +62,14 @@ capitalize-hex /path/to/file
 ```
 
 
+### code-extensions.py
+Run with command:
+```console
+code-extensions
+```
+This command will output a list of all installed Visual Studio Code extensions, formatted as a JSON array.
+
+
 ### dir-info.py
 Run with command:
 ```console
