@@ -60,6 +60,9 @@ The path to the file or directory containing files can be directly given as an a
 ```console
 capitalize-hex /path/to/file
 ```
+```console
+capitalize-hex /path/to/directory
+```
 
 
 ### code-extensions.py
@@ -115,7 +118,7 @@ This is just a single command, which runs the two required commands to package a
 
 You can also directly specify the path to the library to package and upload and if the process should be verbose:
 ```console
-lib-publish --lib /path/to/library --verbose
+lib-publish --lib /path/to/library/root-directory --verbose
 ```
 
 
