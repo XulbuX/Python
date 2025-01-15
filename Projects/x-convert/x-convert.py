@@ -854,7 +854,9 @@ def main(args: dict):
     )
 
     if converted_content:
-        new_file_path = xx.File.rename_extension(args["filepath"]["value"], ".vue")
+        new_file_path = xx.File.rename_extension(
+            args["filepath"]["value"], ".vue", camel_case_filename=True
+        )
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()

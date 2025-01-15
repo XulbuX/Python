@@ -300,12 +300,12 @@ def main():
     if into_file:
         file = None
         try:
-            file = xx.File.create(result, "tree.txt")
+            file = xx.File.create("tree.txt", result)
         except FileExistsError:
             if xx.Console.confirm(
                 "[white]tree.txt[_] already exists. Overwrite?", end=""
             ):
-                file = xx.File.create(result, "tree.txt", force=True)
+                file = xx.File.create("tree.txt", result, force=True)
             else:
                 xx.Console.exit()
         if file:
