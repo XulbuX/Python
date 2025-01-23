@@ -1,6 +1,6 @@
 # Custom Commands
 This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff.<br>
-[Figure out what each file (*command*) does.](#whateachcommanddoes)
+[Figure out what each file (*command*) does.](#what-each-cmd-does)
 
 
 ## Run the files as console commands
@@ -36,7 +36,7 @@ To be able to type one of the file's names in the console and, through this, run
 After completing these steps, you should be able to run the commands described below.
 
 
-## <span id="whateachcommanddoes">What each file (*command*) does</span>
+## <span id="what-each-cmd-does">What each file (*command*) does</span>
 
 
 ### _.py
@@ -70,7 +70,9 @@ Run with command:
 ```console
 code-extensions
 ```
-This command will output a list of all installed Visual Studio Code extensions, formatted as a JSON array.
+This command will output info about all installed Visual Studio Code extensions:
+1. the installed extensions count
+2. a list of all installed extensions formatted as a JSON array
 
 
 ### dir-info.py
