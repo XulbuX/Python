@@ -1,4 +1,4 @@
-import xulbux as xx
+from xulbux import FormatCodes, Console
 import random
 import time
 import sys
@@ -17,14 +17,14 @@ if ARGS and (ARGS.__contains__("-c") or ARGS.__contains__("--color")):
             "magenta",
             "cyan",
             "white",
-            "bright:black",
-            "bright:red",
-            "bright:green",
-            "bright:yellow",
-            "bright:blue",
-            "bright:magenta",
-            "bright:cyan",
-            "bright:white",
+            "BR:black",
+            "BR:red",
+            "BR:green",
+            "BR:yellow",
+            "BR:blue",
+            "BR:magenta",
+            "BR:cyan",
+            "BR:white",
             "BG:black",
             "BG:red",
             "BG:green",
@@ -33,27 +33,27 @@ if ARGS and (ARGS.__contains__("-c") or ARGS.__contains__("--color")):
             "BG:magenta",
             "BG:cyan",
             "BG:white",
-            "BG:bright:black",
-            "BG:bright:red",
-            "BG:bright:green",
-            "BG:bright:yellow",
-            "BG:bright:blue",
-            "BG:bright:magenta",
-            "BG:bright:cyan",
-            "BG:bright:white",
-            "random",
+            "BG:BR:black",
+            "BG:BR:red",
+            "BG:BR:green",
+            "BG:BR:yellow",
+            "BG:BR:blue",
+            "BG:BR:magenta",
+            "BG:BR:cyan",
+            "BG:BR:white",
+            "randomCL",
             "randomBG",
         ]
     )
 
 
-def random_rgb() -> str:
+def random_hexa() -> str:
     return f"#{random.randint(0, 255):02X}{random.randint(0, 255):02X}{random.randint(0, 255):02X}"
 
 
 def replace_special(text: str) -> str:
-    return text.replace("random", random_rgb()).replace(
-        "randomBG", f"BG:({random_rgb()})"
+    return text.replace("randomCL", random_hexa()).replace(
+        "randomBG", f"BG:{random_hexa()}"
     )
 
 
@@ -67,9 +67,9 @@ try:
             )
             + (random.choice(x) if random.randint(0, 1) == 1 else " ")
             + "[_]"
-            for _ in range(100)
+            for _ in range(Console.w())
         )
-        xx.FormatCodes.print(line)
+        FormatCodes.print(line)
         if not (
             ARGS.__contains__("-s")
             or ARGS.__contains__("--speed")

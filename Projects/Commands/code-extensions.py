@@ -35,12 +35,13 @@ if __name__ == "__main__":
     if not check_vscode_installed():
         Console.fail("Visual Studio Code is not installed or not in PATH.")
     extensions = get_vscode_extensions()
+    FormatCodes.print(f"\n[white]Installed extensions: [b]{len(extensions)}[_]")
     FormatCodes.print(
-        "[white]"
+        "\n[white]"
         + (
             Data.to_str(extensions, as_json=True)
             if args["as_json"]["exists"]
             else "\n".join(extensions)
         )
-        + "[_]"
+        + "[_]\n"
     )
