@@ -72,7 +72,12 @@ code-extensions
 ```
 This command will output info about all installed Visual Studio Code extensions:
 1. the installed extensions count
-2. a list of all installed extensions formatted as a JSON array
+2. a list of all installed extensions
+
+You can also output the list of installed extensions, formatted as a JSON array, with the `-j` or `--json` option:
+```console
+code-extensions --json
+```
 
 
 ### dir-info.py
