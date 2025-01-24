@@ -3,6 +3,11 @@ import subprocess
 import platform
 
 
+ARGS = {
+    "as_json": ["-j", "--json"],
+}
+
+
 def check_vscode_installed() -> bool:
     try:
         command = "where" if platform.system() == "Windows" else "which"
@@ -26,6 +31,16 @@ def get_vscode_extensions() -> list[str]:
 
 
 if __name__ == "__main__":
+    args = Console.get_args(ARGS)
     if not check_vscode_installed():
         Console.fail("Visual Studio Code is not installed or not in PATH.")
-    FormatCodes.print(f"[white]{Data.to_str(get_vscode_extensions(), as_json=True)}[_]")
+    extensions = get_vscode_extensions()
+    FormatCodes.print(
+        "[white]"
+        + (
+            Data.to_str(extensions, as_json=True)
+            if args["as_json"]["exists"]
+            else "\n".join(extensions)
+        )
+        + "[_]"
+    )
