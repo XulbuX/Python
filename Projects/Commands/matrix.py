@@ -41,7 +41,7 @@ if ARGS and (ARGS.__contains__("-c") or ARGS.__contains__("--color")):
             "BG:BR:magenta",
             "BG:BR:cyan",
             "BG:BR:white",
-            "random",
+            "randomCL",
             "randomBG",
         ]
     )
@@ -52,8 +52,8 @@ def random_hexa() -> str:
 
 
 def replace_special(text: str) -> str:
-    return text.replace("random", random_hexa()).replace(
-        "randomBG", f"BG:({random_hexa()})"
+    return text.replace("randomCL", random_hexa()).replace(
+        "randomBG", f"BG:{random_hexa()}"
     )
 
 
