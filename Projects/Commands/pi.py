@@ -220,7 +220,7 @@ def main() -> None:
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(
-            f"\n[b]Calculation would too long to finish:[_]\n{format_time(estimated_secs, pretty_printing=True)}\n"
+            f"\n[b|br:white](Calculation would too long to finish:)\n[br:cyan]{format_time(estimated_secs, pretty_printing=True)}[_]\n"
         )
     else:
         FormatCodes.print(
@@ -236,20 +236,20 @@ def main() -> None:
             CALC_DONE = True
             animation_thread.join()
             FormatCodes.print(
-                "Your computer doesn't have enough memory for this calculation.\n",
-                "Here's how long it would take to calculate if it had enough memory:\n",
-                f"[b]{format_time(estimated_secs)}[_]",
-                start="\r",
+                "\r[#000|bg:yellow] Your computer doesn't have enough memory for this calculation! [_]",
+                "[b|br:white](Here's how long it would take to calculate if it had enough memory:)",
+                f"[br:cyan]{format_time(estimated_secs, pretty_printing=True)}[_]",
                 end="\n\n",
+                sep="\n",
             )
         except KeyboardInterrupt:
             CALC_DONE = True
             animation_thread.join()
-            FormatCodes.print("\r[b|br:red]⨯[_]  \n")
+            FormatCodes.print("\r[b|br:red](⨯)  \n")
             sys.exit(0)
         CALC_DONE = True
         animation_thread.join()
-        sys.stdout.write(f"\r{result}\n\n")
+        FormatCodes.print(f"\r[br:cyan]({result})\n\n")
 
 
 if __name__ == "__main__":
