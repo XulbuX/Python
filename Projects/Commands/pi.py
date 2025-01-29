@@ -1,5 +1,4 @@
 from xulbux import FormatCodes
-from mpmath import mp, fac
 import threading
 import psutil
 import math
@@ -8,14 +7,14 @@ import sys
 
 
 REFERENCE_TIMES = {
-    1000: 1.25,  # 1K DIGITS
-    5000: 5,  # 5K DIGITS
-    10000: 8,  # 10K DIGITS
-    25000: 24,  # 25K DIGITS
-    50000: 46,  # 50K DIGITS
+    1000: 0.01,  # 1K DIGITS
+    5000: 0.175,  # 5K DIGITS
+    10000: 0.75,  # 10K DIGITS
+    25000: 5.10,  # 25K DIGITS
+    50000: 25,  # 50K DIGITS
     100000: 120,  # 100K DIGITS
-    500000: 900,  # 500K DIGITS
-    1000000: 2400,  # 1M DIGITS
+    500000: 3000,  # 500K DIGITS
+    1000000: 100000,  # 1M DIGITS
 }
 
 
@@ -36,9 +35,9 @@ def estimate_runtime(precision: int) -> float:
         return time.time() - start_time
     if precision >= max(ref_points):
         base_time = REFERENCE_TIMES[max(ref_points)]
-        scaling = (precision / max(ref_points)) ** 1.8
+        scaling = (precision / max(ref_points)) ** 2.0
         if precision > 1000000:
-            scaling *= 1.1
+            scaling *= 1.2
     else:
         upper_idx = next(i for i, x in enumerate(ref_points) if x >= precision)
         lower_idx = max(0, upper_idx - 1)
@@ -49,16 +48,27 @@ def estimate_runtime(precision: int) -> float:
         if lower_point == upper_point:
             log_factor = 1
         else:
-            log_factor = math.log(precision / lower_point) / math.log(
-                upper_point / lower_point
+            raw_factor = precision / lower_point
+            log_factor = (math.log(raw_factor) ** 2) / (
+                math.log(upper_point / lower_point)
             )
         base_time = lower_time * (upper_time / lower_time) ** log_factor
         scaling = 1.0
-    hw_score = get_hardware_score()
-    estimated_time = (base_time * scaling) / hw_score
-    if estimated_time < 30:
-        estimated_time = base_time
-    correction_factor = 0.3 + (precision - 10000) * (0.98 - 0.3) / (50000 - 10000)
+    estimated_time = (base_time * scaling) / get_hardware_score()
+    if estimated_time < 0.01:
+        estimated_time = 0.01
+    if precision <= 5000:
+        correction_factor = 1.0
+    elif precision <= 10000:
+        correction_factor = 1.5
+    elif precision <= 25000:
+        correction_factor = 1.8
+    elif precision <= 50000:
+        correction_factor = 1.0
+    elif precision <= 100000:
+        correction_factor = 0.9
+    else:
+        correction_factor = 1.0
     estimated_time *= correction_factor
     return round(estimated_time, 2)
 
@@ -171,52 +181,43 @@ def animate() -> None:
         i += 1
 
 
-def pi(k_max: int) -> str:
-    mp.dps = k_max * 14  # DECIMAL PLACES
-    result = mp.mpf(0)
-    for k in range(k_max):
-        term = (
-            12
-            * (-1) ** k
-            * fac(6 * k)
-            * (545140134 * k + 13591409)
-            / (fac(3 * k) * (fac(k) ** 3) * (640320 ** ((3 * k) + mp.mpf("3/2"))))
+# def pi(k_max: int) -> str:
+#     mp.dps = k_max * 14  # DECIMAL PLACES
+#     result = mp.mpf(0)
+#     for k in range(k_max):
+#         term = (
+#             12
+#             * (-1) ** k
+#             * fac(6 * k)
+#             * (545140134 * k + 13591409)
+#             / (fac(3 * k) * (fac(k) ** 3) * (640320 ** ((3 * k) + mp.mpf("3/2"))))
+#         )
+#         result += term
+#     return 1 / result
+
+
+def p() -> iter:
+    q, r, t, j = 1, 180, 60, 2
+    while True:
+        u, y = 3 * (3 * j + 1) * (3 * j + 2), (q * (27 * j - 12) + 5 * r) // (5 * t)
+        yield y
+        q, r, t, j = (
+            10 * q * j * (2 * j - 1),
+            10 * u * (q * (5 * j - 2) + r - y * t),
+            t * u,
+            j + 1,
         )
-        result += term
-    return 1 / result
 
 
-# @cuda.jit
-# def chudnovsky_gpu(k_max: int, result: cuda.device_array, facs: cuda.device_array):
-#     idx = cuda.grid(1)
-#     if idx < k_max:
-#         k = idx
-#         fac_6k = facs[6 * k]
-#         fac_3k = facs[3 * k]
-#         fac_k = facs[k]
-#         numerator = fac_6k * (545140134 * k + 13591409)
-#         denominator = fac_3k * (fac_k**3) * (640320 ** (3 * k + 1.5))
-#         result[idx] = 12 * (-1) ** k * numerator / denominator
-
-
-# def compute_pi_gpu(k_max: int) -> float:
-#     facs = np.array([np.math.factorial(i) for i in range(6 * k_max)], dtype=np.float64)
-#     result_gpu = cuda.device_array(k_max, dtype=np.float64)
-#     facs_gpu = cuda.to_device(facs)
-#     threads_per_block = 256
-#     blocks_per_grid = (k_max + threads_per_block - 1) // threads_per_block
-#     chudnovsky_gpu[blocks_per_grid, threads_per_block](k_max, result_gpu, facs_gpu)
-#     result = result_gpu.copy_to_host()
-#     pi_inverse = np.sum(result)
-#     pi = 1 / pi_inverse
-#     return pi
+def pi(decimals: int = 10) -> str:
+    _p = p()
+    return "3." + "".join(str(next(_p)) for _ in range(decimals + 1))[1:]
 
 
 def main() -> None:
     global CALC_DONE
     input_k = int(args[1]) if len(args := sys.argv) > 1 else 1
     estimated_secs = estimate_runtime(input_k)
-    print(estimated_secs)
     if estimated_secs >= 604800:
         FormatCodes.print(
             f"\n[b]Calculation would too long to finish:[_]\n{format_time(estimated_secs, pretty_printing=True)}\n"
@@ -230,9 +231,7 @@ def main() -> None:
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
         try:
-            start_time = time.time()
             result = pi(input_k)
-            end_time = time.time()
         except MemoryError:
             CALC_DONE = True
             animation_thread.join()
@@ -251,7 +250,6 @@ def main() -> None:
         CALC_DONE = True
         animation_thread.join()
         sys.stdout.write(f"\r{result}\n\n")
-        print(f"{(end_time - start_time):.2f} seconds")
 
 
 if __name__ == "__main__":
