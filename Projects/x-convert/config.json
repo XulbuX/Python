@@ -1,0 +1,103 @@
+{
+  "component_replacements": {
+    ">> OLD COMPONENT-NAME": [">> NEW COMPONENT-NAME (`:filename` WILL BE REPLACED WITH THE FILENAME FROM THE IMPORT-PATH)", ">> COMPONENTS IMPORT-PATH"],
+    "iconify-icon": "i",
+    "information-button": [":filename", "@@/Components/InformationButton.vue"],
+    "race-locations-map": ["RaceLocationsMap", "@@/Components/Race/LocationsMap.vue"],
+    "vue-back-button": [":filename", "@@/Components/SupButton.vue"],
+    "vue-checkbox": [":filename", "@@/Components/SupCheckbox.vue"],
+    "vue-form": "form",
+    "x-app.card": [":filename", "@@/Components/Card.vue"],
+    "x-base.back": [":filename", "@@/Components/Base/SupBack.vue"],
+    "x-base.button": [":filename", "@@/Components/SupButton.vue"],
+    "x-base.checkbox": [":filename", "@@/Components/SupCheckbox.vue"],
+    "x-base.input": [":filename", "@@/Components/SupInput.vue"],
+    "x-base.link": [":filename", "@@/Components/SupLink.vue"],
+    "x-base.select": [":filename", "@@/Components/SupSelect.vue"],
+    "x-download.app": ["RaceDownload", "@@/Components/Race/Download.vue"],
+    "x-downloads": [":filename", "@@/Components/SupDownloads.vue"],
+    "x-guest.app": [":filename", "@@/Layouts/GuestLayout.vue"],
+    "x-guest.footer": [":filename", "@@/Layouts/Partials/Footer.vue"],
+    "x-guest.submenu": [":filename", "@@/Layouts/Partials/GuestSubmenu.vue"],
+    "x-guest.tab": [":filename", "@@/Layouts/Partials/Tab.vue"],
+    "x-public-app.signup-card": [":filename", "@@/Components/SignupCard.vue"],
+    "x-race.current-attendees": ["RaceCurrentAttendees", "@@/Components/Race/CurrentAttendees.vue"],
+    "x-race.sidebar-information": ["RaceSidebarInformation", "@@/Components/Race/SidebarInformation.vue"],
+    "x-race.responsible-person": ["RaceResponsiblePerson", "@@/Components/Race/ResponsiblePerson.vue"]
+  },
+  "php_as_js_functions": {
+    ">> PHP-FUNCTION NAME": [
+      ">> JS-FUNCTION",
+      [
+        ">> IMPORT UNDER NAME (OPTIONAL IF LIBRARY IS NEEDED IN JS-FUNCTION)",
+        ">> LIBRARY IMPORT-PATH (SEPARATE WITH `\n` IF MULTIPLE NEEDED LIBRARIES - OPTIONAL IF LIBRARY IS NEEDED IN JS-FUNCTION)"
+      ]
+    ],
+    "date": [
+      "const date = (str:string) => dayjs(str, 'DD.MM.YYYY').format('DD.MM.YYYY')",
+      ["dayjs", "dayjs"]
+    ],
+    "dateFormat": [
+      "const dateFormat = (date:string, format:string = 'dd. DD.MM.YYYY') => dayjs(date).format(format);",
+      ["dayjs", "dayjs"]
+    ],
+    "strtotime": [
+      "const strtotime = (str: string) => dayjs(str).unix()",
+      ["dayjs", "dayjs"]
+    ],
+    "ucfirst": "const ucfirst = (str:string) => str.charAt(0).toUpperCase() + str.slice(1)",
+    "lcfirst": "const lcfirst = (str:string) => str.charAt(0).toLowerCase() + str.slice(1)",
+    "strtoupper": "const strtoupper = (str:string) => str.toUpperCase()",
+    "strtolower": "const strtolower = (str:string) => str.toLowerCase()",
+    "trim": "const trim = (str:string) => str.trim()",
+    "ltrim": "const ltrim = (str:string) => str.trimStart()",
+    "rtrim": "const rtrim = (str:string) => str.trimEnd()",
+    "str_replace": "const str_replace = (str:string, search: string, replace: string) => str.replace(search, replace)",
+    "nl2br": "const nl2br = (str:string) => str.replace(/\n/g, '<br>')",
+    "strip_tags": "const strip_tags = (str:string) => str.replace(/<[^>]*>/g, '')",
+    "addslashes": "const addslashes = (str:string) => str.replace(/[\\\"']/g, '\\$&')"
+  },
+  "function_replacements": {
+    ">> PHP-FUNCTION NAME": ">> JS-FUNCTION NAME",
+    "rawurlencode": "encodeURIComponent",
+    "urlencode": "encodeURIComponent",
+    "e": "encodeURIComponent",
+    "json_encode": "JSON.stringify",
+    "strtolower": "toLowerCase",
+    "strtoupper": "toUpperCase",
+    "str_replace": "replace",
+    "preg_replace": "replace",
+    "explode": "split",
+    "implode": "join",
+    "number_format": "toLocaleString",
+    "str_pad": "padStart",
+    "strpos": "indexOf",
+    "str_contains": "includes",
+    "substr": "substring",
+    "mb_substr": "substring",
+    "round": "Math.round",
+    "ceil": "Math.ceil",
+    "floor": "Math.floor",
+    "max": "Math.max",
+    "min": "Math.min",
+    "abs": "Math.abs",
+    "rand": "Math.random",
+    "intval": "parseInt",
+    "floatval": "parseFloat",
+    "strtotime": "Date.parse",
+    "in_array": "includes",
+    "array_push": "push",
+    "array_pop": "pop",
+    "array_shift": "shift",
+    "array_unshift": "unshift",
+    "array_slice": "slice",
+    "array_splice": "splice",
+    "array_filter": "filter",
+    "array_map": "map",
+    "array_reduce": "reduce",
+    "array_key_exists": "hasOwnProperty",
+    "array_keys": "Object.keys",
+    "array_values": "Object.values"
+  },
+  ">> IGNORE <<  is_in_env_vars": "d:\\CODE\\GitHub\\Python\\Projects\\x-convert"
+}
