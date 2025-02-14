@@ -1,13 +1,16 @@
+from functools import lru_cache
+from itertools import chain
+from typing import Optional, Pattern
 import xulbux as xx
 import sys
 import os
 import re
-from functools import lru_cache
-from itertools import chain
+
 
 ARGS = sys.argv[1:]
 DEFAULTS = {
     "ignore_dirs": [],
+    "auto_ignore": True,
     "file_contents": False,
     "tree_style": 1,
     "indent": 3,
@@ -17,8 +20,52 @@ DEFAULTS = {
 
 class Tree:
 
-    def __init__(self):
-        self._styles = {
+    HASH_PATTERNS: list[Pattern] = [
+        re.compile(pattern) for pattern in [
+            r"^[a-fA-F0-9]{32}$",  # MD5
+            r"^[a-fA-F0-9]{40}$",  # SHA-1
+            r"^[a-fA-F0-9]{64}$",  # SHA-256
+            r"^[a-fA-F0-9]{128}$",  # SHA-512
+            r"^[a-fA-F0-9]{8,}_\d+$",  # PATTERN LIKE 'da4880697ffe4e19_0'
+            r"^[0-9a-fA-F]{2}$",  # TWO-CHARACTER HEX
+            r"^[X0-9a-fA-F]{32,}$",  # PATTERN WITH X PREFIX
+            r"^\d+[a-fA-F0-9]{16,}$",  # NUMBER FOLLOWED BY HASH
+        ]
+    ]
+    HEX_DIR_PATTERN = re.compile(r"^[a-fA-F0-9]{2}$")
+    BINARY_EXTENSIONS = frozenset({
+        ".exe", ".dll", ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".cur",
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".tar", ".gz", ".7z", ".rar", ".mp3", ".mp4", ".avi", ".mov"
+    })
+    DEFAULT_IGNORE_DIRS = [
+        "$RECYCLE.BIN", ".git", "node_modules", "__pycache__", "env", "venv", ".env", ".venv", "build", "dist", "cache",
+        "Code Cache", "target", "bin", "obj", ".idea", ".vscode", ".vs", "coverage", "logs", "log", "tmp", "temp", ".next",
+        ".nuxt", "out", ".output", ".cache", "vendor", "packages", ".terraform", ".angular", ".svn", "CVS", ".hg",
+        ".pytest_cache", ".coverage", "htmlcov", ".tox", "site-packages", ".DS_Store", "bower_components", ".sass-cache",
+        ".parcel-cache", ".webpack", ".gradle", ".mvn", "Pods", "xcuserdata", "junit", "reports", ".github", ".gitlab",
+        "docker", ".docker", ".kube", "node", "jspm_packages", ".npm", "artifacts", ".yarn", "wheels", "docs/_build", "_site",
+        ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache", ".pytest_cache", "celerybeat-schedule", ".sonar", ".scannerwork",
+        "migrations", "__tests__", "test-results", "coverage-reports", ".nx", "dist-newstyle", "target", "Debug", "Release",
+        "x64", "x86"
+    ]
+
+    def __init__(
+        self,
+        base_dir: Optional[str] = None,
+        ignore_dirs: Optional[list[str]] = None,
+        auto_ignore: Optional[bool] = True,
+        include_file_contents: Optional[bool] = False,
+        style: Optional[int] = 1,
+        indent: Optional[int] = 3,
+    ):
+        self.base_dir = base_dir
+        self.ignore_dirs = ignore_dirs
+        self.auto_ignore = auto_ignore
+        self.include_file_contents = include_file_contents
+        self.style = style
+        self.indent = indent
+        self.ignore_set = None
+        self.style_presets = {
             1: {
                 "line_ver": "│",
                 "line_hor": "─",
@@ -56,182 +103,62 @@ class Tree:
                 "dirname_end": "/",
             },
         }
-        # CACHE CURRENT STYLE ATTRIBUTES FOR FASTER ACCESS
-        self._current_style = None
-        self._line_ver = None
-        self._line_hor = None
-        self._branch_new = None
-        self._corners = None
-        self._error = None
-        self._skipped = None
-        self._dirname_end = None
+        self._error_suffix = None
+        self._skipped_suffix = None
+        self._reset_style_attrs()
 
-    def _set_style(self, style: int) -> None:
-        """Set current style attributes for faster access"""
-        if self._current_style != style:
-            style_dict = self._styles.get(style, self._styles[1])
-            self._current_style = style
-            self._line_ver = style_dict["line_ver"]
-            self._line_hor = style_dict["line_hor"]
-            self._branch_new = style_dict["branch_new"]
-            self._corners = style_dict["corners"]
-            self._error = style_dict["error"]
-            self._skipped = style_dict["skipped"]
-            self._dirname_end = style_dict["dirname_end"]
+    def _reset_style_attrs(self) -> None:
+        """Reset style attributes based on current style selection."""
+        style_dict = self.style_presets.get(self.style, self.style_presets[1])
+        self.line_ver = style_dict["line_ver"]
+        self.line_hor = style_dict["line_hor"]
+        self.branch_new = style_dict["branch_new"]
+        self.corners = style_dict["corners"]
+        self.error = style_dict["error"]
+        self.skipped = style_dict["skipped"]
+        self.dirname_end = style_dict["dirname_end"]
+        self._error_suffix = f"{self.error} [Error: "
+        self._skipped_suffix = f"{self.line_hor}{self.skipped}\n"
 
     def show_styles(self) -> None:
-        for style, details in self._styles.items():
+        for style, details in self.style_presets.items():
             print(
                 f'{style}: {details["corners"][0]}{details["line_hor"]}{details["skipped"]}{details["dirname_end"]}',
                 flush=True,
             )
 
-    def generate(
-        self,
-        base_dir: str,
-        ignore_dirs: list[str] = None,
-        file_contents: bool = False,
-        style: int = 1,
-        indent: int = 3,
-        _prefix: str = "",
-        _level: int = 0,
-    ) -> str:
-        self._set_style(style)
-        result_parts = []
+    def _should_ignore_directory(self, dir_path: str) -> tuple[bool, int, int]:
+        """Enhanced directory content analysis.
+        Returns (should_ignore, total_count, hash_count) tuple."""
+        if not self.auto_ignore:
+            return False, 0, 0
+        dir_name = os.path.basename(dir_path)
+        likely_has_name = lambda name: any(pattern.match(name) for pattern in Tree.HASH_PATTERNS)
+        if self.HEX_DIR_PATTERN.match(dir_name):
+            try:
+                entries = list(os.scandir(dir_path))
+                if not entries:
+                    return False, 0, 0
+                hash_count = sum(1 for entry in entries if likely_has_name(entry.name))
+                total_count = len(entries)
+                return (hash_count / total_count > 0.7), total_count, hash_count
+            except PermissionError:
+                return False, 0, 0
         try:
-            ignore_set = set(ignore_dirs) if ignore_dirs else set()
-            tab = " " * indent
-            line_hor_mult = indent - 2 if indent > 2 else 1 if indent == 2 else 0
-            line_hor = self._line_hor * line_hor_mult
-            error_prefix = _prefix + self._corners[0] + (self._line_hor * (indent - 1))
-            if _level == 0:
-                base_dir_name = os.path.basename(base_dir.rstrip(os.sep))
-                if not base_dir_name:
-                    base_dir_name = os.path.splitdrive(base_dir)[0]
-                result_parts.append(f"{base_dir_name}{self._dirname_end}\n")
-            items = sorted(os.listdir(base_dir))
-            items_count = len(items)
-            for index, item in enumerate(items):
-                is_last = index == items_count - 1
-                item_path = os.path.join(base_dir, item)
-                is_dir = os.path.isdir(item_path)
-                branch = self._corners[0] if is_last else self._branch_new
-                current_line = _prefix + branch + line_hor
-                if item in ignore_set:
-                    result_parts.append(
-                        f'{current_line}{item}{self._dirname_end if is_dir else ""}\n'
-                    )
-                    if is_dir:
-                        next_prefix = _prefix + (
-                            tab if is_last else self._line_ver + tab[:-1]
-                        )
-                        result_parts.append(
-                            f"{next_prefix}{self._corners[0]}{line_hor}{self._skipped}\n"
-                        )
-                    continue
-                if is_dir:
-                    result_parts.append(f"{current_line}{item}{self._dirname_end}\n")
-                    new_prefix = _prefix + (
-                        tab if is_last else (self._line_ver + tab[:-1])
-                    )
-                    result_parts.append(
-                        self.generate(
-                            item_path,
-                            list(ignore_set),
-                            file_contents,
-                            style,
-                            indent,
-                            new_prefix,
-                            _level + 1,
-                        )
-                    )
-                else:
-                    result_parts.append(f"{current_line}{item}\n")
-                    if file_contents:
-                        content_prefix = _prefix + (
-                            tab if is_last else self._line_ver + tab[:-1]
-                        )
-                        if not self.is_text_file(item_path):
-                            continue
-                        try:
-                            with open(
-                                item_path, "r", encoding="utf-8", errors="replace"
-                            ) as f:
-                                lines = f.readlines()
-                                if lines:
-                                    lines = [
-                                        l.replace("\t", "    ")
-                                        .replace("\u2000", " ")
-                                        .replace("\u2001", " ")
-                                        .replace("\u2002", " ")
-                                        .replace("\u2003", " ")
-                                        .replace("\u2004", " ")
-                                        .replace("\u2005", " ")
-                                        .replace("\u2006", " ")
-                                        .replace("\u2007", " ")
-                                        .replace("\u2008", " ")
-                                        .replace("\u2009", " ")
-                                        .replace("\u200A", " ")
-                                        for l in lines
-                                    ]  # NORMALIZE SPACE CHARACTERS
-                                    content_width = max(
-                                        len(line.rstrip()) for line in lines
-                                    )
-                                    hor_border = self._line_hor * (content_width + 2)
-                                    result_parts.append(
-                                        f"{content_prefix}{self._branch_new}{hor_border}{self._corners[2]}\n"
-                                    )
-                                    for line in lines:
-                                        stripped = line.rstrip()
-                                        padding = " " * (content_width - len(stripped))
-                                        result_parts.append(
-                                            f"{content_prefix}{self._line_ver} {stripped}{padding} {self._line_ver}\n"
-                                        )
-                                    result_parts.append(
-                                        f"{content_prefix}{self._corners[0]}{hor_border}{self._corners[1]}\n"
-                                    )
-                        except:
-                            result_parts.append(
-                                f"{content_prefix}{error_prefix}{self._error} [Error reading file contents]\n"
-                            )
-        except Exception as e:
-            result_parts.append(f"{error_prefix}{self._error} [Error: {str(e)}]\n")
-        return "".join(result_parts)
+            entries = list(os.scandir(dir_path))
+            if not entries:
+                return False, 0, 0
+            hash_count = sum(1 for entry in entries
+                             if likely_has_name(entry.name) or (entry.is_dir() and self.HEX_DIR_PATTERN.match(entry.name)))
+            total_count = len(entries)
+            return (hash_count / total_count > 0.8), total_count, hash_count
+        except PermissionError:
+            return False, 0, 0
 
     @staticmethod
     @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
-        binary_extensions = {
-            ".exe",
-            ".dll",
-            ".so",
-            ".dylib",
-            ".bin",
-            ".dat",
-            ".db",
-            ".sqlite",
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".ico",
-            ".cur",
-            ".pdf",
-            ".doc",
-            ".docx",
-            ".xls",
-            ".xlsx",
-            ".zip",
-            ".tar",
-            ".gz",
-            ".7z",
-            ".rar",
-            ".mp3",
-            ".mp4",
-            ".avi",
-            ".mov",
-        }
-        if os.path.splitext(filepath)[1].lower() in binary_extensions:
+        if os.path.splitext(filepath)[1].lower() in Tree.BINARY_EXTENSIONS:
             return False
         try:
             with open(filepath, "rb") as f:
@@ -241,19 +168,126 @@ class Tree:
         except:
             return False
 
+    def generate(
+        self,
+        base_dir: Optional[str] = None,
+        ignore_dirs: Optional[list[str]] = None,
+        include_file_contents: Optional[bool] = None,
+        style: Optional[int] = 1,
+        indent: Optional[int] = 3,
+        auto_ignore: Optional[bool] = None,
+    ) -> str:
+        self.base_dir = base_dir or self.base_dir
+        self.ignore_dirs = ignore_dirs or self.ignore_dirs
+        self.include_file_contents = include_file_contents or self.include_file_contents
+        self.style = style or self.style
+        self.indent = indent or self.indent
+        self.auto_ignore = auto_ignore if auto_ignore is not None else self.auto_ignore
+        self.base_dir = os.path.abspath(str(self.base_dir))
+        if not os.path.isdir(self.base_dir):
+            raise ValueError(f"Invalid base directory: {self.base_dir}")
+        self.ignore_set = (frozenset() if self.ignore_dirs is None else frozenset(self.ignore_dirs))
+        self._reset_style_attrs()
+        return self._gen_tree(self.base_dir)
 
-@lru_cache(maxsize=1024)
-def is_valid_path(path: str) -> bool:
-    if not isinstance(path, str) or not path:
-        return False
-    try:
-        invalid_chars = r'[\\/:*?"<>|]' if os.name == "nt" else r"\0"
-        return not bool(re.search(invalid_chars, path))
-    except:
-        return False
+    def _gen_tree(
+        self,
+        _dir: str,
+        _prefix: str = "",
+        _level: int = 0,
+    ) -> str:
+        result = bytearray()
+        try:
+            tab = b" " * self.indent
+            line_hor_mult = (self.indent - 2 if self.indent > 2 else 1 if self.indent == 2 else 0)
+            line_hor = self.line_hor.encode() * line_hor_mult
+
+            if _level == 0:
+                base_dir_name = os.path.basename(_dir.rstrip(os.sep))
+                if not base_dir_name:
+                    base_dir_name = os.path.splitdrive(_dir)[0]
+                result.extend(f"{base_dir_name}{self.dirname_end}\n".encode())
+
+            entries = sorted(os.scandir(_dir), key=lambda e: e.name)
+            if not entries:
+                return result.decode()
+
+            # Check if directory should be ignored
+            should_ignore, _, _ = self._should_ignore_directory(_dir)
+            if should_ignore:
+                result.extend(_prefix.encode())
+                result.extend(self.corners[0].encode())
+                result.extend(self._skipped_suffix.encode())
+                return result.decode()
+
+            entries_count = len(entries)
+            prefix_ver = _prefix.encode() + self.line_ver.encode() + tab[:-1]
+            prefix_tab = _prefix.encode() + tab
+
+            for idx, entry in enumerate(entries):
+                is_last = idx == entries_count - 1
+                is_dir = entry.is_dir()
+                branch = self.corners[0] if is_last else self.branch_new
+                current_prefix = _prefix.encode() + branch.encode() + line_hor
+
+                if entry.name in self.ignore_set or (is_dir and self._should_ignore_directory(entry.path)[0]):
+                    result.extend(current_prefix)
+                    result.extend(entry.name.encode())
+                    if is_dir:
+                        result.extend(self.dirname_end.encode())
+                        next_prefix = prefix_tab if is_last else prefix_ver
+                        result.extend(b"\n")
+                        result.extend(next_prefix)
+                        result.extend(self.corners[0].encode())
+                        result.extend(self._skipped_suffix.encode())
+                    else:
+                        result.extend(b"\n")
+                    continue
+                if is_dir:
+                    result.extend(current_prefix)
+                    result.extend(entry.name.encode())
+                    result.extend(self.dirname_end.encode())
+                    result.extend(b"\n")
+                    new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
+                    result.extend(self._gen_tree(entry.path, new_prefix, _level + 1).encode())
+                else:
+                    result.extend(current_prefix)
+                    result.extend(entry.name.encode())
+                    result.extend(b"\n")
+                    if self.include_file_contents and self._is_text_file(entry.path):
+                        content_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
+                        try:
+                            with open(entry.path, "r", encoding="utf-8", errors="replace") as f:
+                                lines = f.readlines()
+                                if lines:
+                                    lines = [
+                                        l.replace("\t", "    ").translate({
+                                            0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ",
+                                            0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " "
+                                        }) for l in lines
+                                    ]
+                                    content_width = max(len(line.rstrip()) for line in lines)
+                                    hor_border = self.line_hor * (content_width + 2)
+                                    result.extend(f"{content_prefix}{self.branch_new}{hor_border}{self.corners[2]}\n".encode())
+                                    for line in lines:
+                                        stripped = line.rstrip()
+                                        padding = " " * (content_width - len(stripped))
+                                        result.extend(
+                                            f"{content_prefix}{self.line_ver} {stripped}{padding} {self.line_ver}\n".encode())
+                                    result.extend(f"{content_prefix}{self.corners[0]}{hor_border}{self.corners[1]}\n".encode())
+                        except:
+                            result.extend(
+                                f"{content_prefix}{self.corners[0]}{line_hor.decode()}{self._error_suffix}Error reading file contents]\n"
+                                .encode())
+        except Exception as e:
+            error_prefix = (_prefix + self.corners[0] + (self.line_hor * (self.indent - 1)))
+            result.extend(f"{error_prefix}{self._error_suffix}{str(e)}]\n".encode())
+        return result.decode()
 
 
 def main():
+    tree = Tree(os.getcwd())
+
     if len(ARGS) > 1:
         if ARGS[0] in ("-i", "--ignore"):
             ignore_dirs = ARGS[1:]
@@ -261,68 +295,63 @@ def main():
             ignore_dirs = ARGS[2:]
     else:
         ignore_input = xx.FormatCodes.input(
-            "Enter directories or files which's content should be ignore [dim]((`/` separated) >  )"
-        ).strip()
-        ignore_dirs = list(
-            chain.from_iterable(item.split("/") for item in ignore_input.split("/"))
-        )
+            "Enter directories or files which's content should be ignore [dim]((`/` separated) >  )").strip()
+        ignore_dirs = list(chain.from_iterable(item.split("/") for item in ignore_input.split("/")))
 
     file_contents = xx.FormatCodes.input(
-        f'Display the file contents in the tree [dim]({"(Y/n)" if DEFAULTS["file_contents"] else "(y/N)"} >  )'
-    ).strip().lower() in ("y", "yes")
+        f'Display the file contents in the tree [dim]({"(Y/n)" if DEFAULTS["file_contents"] else "(y/N)"} >  )').strip().lower(
+        ) in ("y", "yes")
 
     print("Enter the tree style (1-4): ")
-    Tree().show_styles()
-    tree_style = xx.FormatCodes.input(
-        f'[dim]([default is {DEFAULTS["tree_style"]}] >  )'
-    ).strip()
-    tree_style = (
-        int(tree_style)
-        if tree_style.isnumeric() and 1 <= int(tree_style) <= 4
-        else DEFAULTS["tree_style"]
-    )
+    tree.show_styles()
+    tree_style = xx.FormatCodes.input(f'[dim]([default is {DEFAULTS["tree_style"]}] >  )').strip()
+    tree_style = (int(tree_style) if tree_style.isnumeric() and 1 <= int(tree_style) <= 4 else DEFAULTS["tree_style"])
 
-    indent = xx.FormatCodes.input(
-        f'Enter the indent [dim]([default is {DEFAULTS["indent"]}] >  )'
-    ).strip()
-    indent = (
-        int(indent) if indent.isnumeric() and int(indent) >= 0 else DEFAULTS["indent"]
-    )
+    indent = xx.FormatCodes.input(f'Enter the indent [dim]([default is {DEFAULTS["indent"]}] >  )').strip()
+    indent = (int(indent) if indent.isnumeric() and int(indent) >= 0 else DEFAULTS["indent"])
+
+    auto_ignore = xx.FormatCodes.input(
+        f'Enable auto-ignore unimportant directories [dim]({"(Y/n)" if DEFAULTS["auto_ignore"] else "(y/N)"} >  )').strip(
+        ).lower() in ("y", "yes")
 
     into_file = xx.FormatCodes.input(
-        f'Output tree into file [dim]({"(Y/n)" if DEFAULTS["into_file"] else "(y/N)"} >  )'
-    ).strip().lower() in ("y", "yes")
+        f'Output tree into file [dim]({"(Y/n)" if DEFAULTS["into_file"] else "(y/N)"} >  )').strip().lower() in ("y", "yes")
 
-    xx.Console.info("generating tree ...", end="\n")
-    tree = Tree()
-    result = tree.generate(os.getcwd(), ignore_dirs, file_contents, tree_style, indent)
+    xx.Console.info("generating tree ...", start="\n")
+    result = tree.generate(
+        ignore_dirs=ignore_dirs,
+        auto_ignore=auto_ignore,
+        include_file_contents=file_contents,
+        style=tree_style,
+        indent=indent,
+    )
 
     if into_file:
-        file = None
+        file, cls_line = None, ""
         try:
             file = xx.File.create("tree.txt", result)
         except FileExistsError:
-            if xx.Console.confirm(
-                "[white]tree.txt[_] already exists. Overwrite?", end=""
-            ):
+            cls_line = "\033[F\033[K"
+            if xx.Console.confirm("[white]tree.txt[_] already exists. Overwrite?", end=""):
                 file = xx.File.create("tree.txt", result, force=True)
             else:
                 xx.Console.exit()
         if file:
-            xx.Console.done(f"[white]{file}[_] successfully created.")
+            xx.Console.done(f"[white]{file}[_] successfully created.", start=cls_line, end="\n\n")
         else:
-            xx.Console.fail("File is empty or failed to create file.")
+            xx.Console.fail("File is empty or failed to create file.", start=cls_line, end="\n\n")
     else:
         xx.FormatCodes.print("[white]")
-        print(result, end="", flush=True)
+        sys.stdout.write(result)
         xx.FormatCodes.print("[_]")
 
 
 if __name__ == "__main__":
     try:
+
         main()
     except KeyboardInterrupt:
-        xx.Console.exit()
+        xx.Console.exit(end="\n\n")
     except PermissionError:
         xx.Console.fail("Permission to create file was denied.")
     except Exception as e:
