@@ -151,7 +151,7 @@ class Tree:
                         content_prefix = _prefix + (
                             tab if is_last else self._line_ver + tab[:-1]
                         )
-                        if not is_text_file(item_path):
+                        if not self.is_text_file(item_path):
                             continue
                         try:
                             with open(
@@ -198,6 +198,49 @@ class Tree:
             result_parts.append(f"{error_prefix}{self._error} [Error: {str(e)}]\n")
         return "".join(result_parts)
 
+    @staticmethod
+    @lru_cache(maxsize=1024)
+    def _is_text_file(filepath: str) -> bool:
+        binary_extensions = {
+            ".exe",
+            ".dll",
+            ".so",
+            ".dylib",
+            ".bin",
+            ".dat",
+            ".db",
+            ".sqlite",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".ico",
+            ".cur",
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".7z",
+            ".rar",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+        }
+        if os.path.splitext(filepath)[1].lower() in binary_extensions:
+            return False
+        try:
+            with open(filepath, "rb") as f:
+                chunk = f.read(1024)
+                text_characters = bytes(range(32, 127)) + b"\n\r\t\f\b"
+                return bool(chunk) and all(byte in text_characters for byte in chunk)
+        except:
+            return False
+
 
 @lru_cache(maxsize=1024)
 def is_valid_path(path: str) -> bool:
@@ -206,49 +249,6 @@ def is_valid_path(path: str) -> bool:
     try:
         invalid_chars = r'[\\/:*?"<>|]' if os.name == "nt" else r"\0"
         return not bool(re.search(invalid_chars, path))
-    except:
-        return False
-
-
-@lru_cache(maxsize=1024)
-def is_text_file(filepath: str) -> bool:
-    binary_extensions = {
-        ".exe",
-        ".dll",
-        ".so",
-        ".dylib",
-        ".bin",
-        ".dat",
-        ".db",
-        ".sqlite",
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".ico",
-        ".cur",
-        ".pdf",
-        ".doc",
-        ".docx",
-        ".xls",
-        ".xlsx",
-        ".zip",
-        ".tar",
-        ".gz",
-        ".7z",
-        ".rar",
-        ".mp3",
-        ".mp4",
-        ".avi",
-        ".mov",
-    }
-    if os.path.splitext(filepath)[1].lower() in binary_extensions:
-        return False
-    try:
-        with open(filepath, "rb") as f:
-            chunk = f.read(1024)
-            text_characters = bytes(range(32, 127)) + b"\n\r\t\f\b"
-            return bool(chunk) and all(byte in text_characters for byte in chunk)
     except:
         return False
 
