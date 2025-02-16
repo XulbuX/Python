@@ -26,14 +26,15 @@ class Tree:
 
     HASH_PATTERNS: tuple[Pattern[str], ...] = tuple(
         re.compile(pattern) for pattern in (
-            r"(?i)^[A-F0-9]{32}$",  # MD5
-            r"(?i)^[A-F0-9]{40}$",  # SHA-1
-            r"(?i)^[A-F0-9]{64}$",  # SHA-256
-            r"(?i)^[A-F0-9]{128}$",  # SHA-512
-            r"(?i)^[A-F0-9]{8,}_\d+$",  # PATTERN LIKE 'da4880697ffe4e19_0'
-            r"(?i)^[0-9A-F]{2}$",  # TWO-CHARACTER HEX
-            r"(?i)^[X0-9A-F]{32,}$",  # PATTERN WITH X PREFIX
-            r"(?i)^\d+[A-F0-9]{16,}$",  # NUMBER FOLLOWED BY HASH
+        r"(?i)^[A-F0-9]{32}$",  # MD5
+        r"(?i)^[A-F0-9]{40}$",  # SHA-1
+        r"(?i)^[A-F0-9]{64}$",  # SHA-256
+        r"(?i)^[A-F0-9]{128}$",  # SHA-512
+        r"(?i)^[A-F0-9]{8,}_\d+$",  # PATTERN LIKE 'da4880697ffe4e19_0'
+        r"(?i)^[0-9A-F]{2}$",  # TWO-CHARACTER HEX
+        r"(?i)^[X0-9A-F]{32,}$",  # PATTERN WITH X PREFIX
+        r"(?i)^\d+[A-F0-9]{16,}$",  # NUMBER FOLLOWED BY HASH
+        r"(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",  # UUID/GUID
         )
     )
     HEX_DIR_PATTERN: Pattern[str] = re.compile(r"(?i)^[0-9A-F]{2}$")
@@ -41,17 +42,21 @@ class Tree:
         ".exe", ".dll", ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".cur",
         ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".tar", ".gz", ".7z", ".rar", ".mp3", ".mp4", ".avi", ".mov"
     })
-    IGNORE_DIRS: list[str] = [
-        "$RECYCLE.BIN", ".git", "node_modules", "__pycache__", "env", "venv", ".env", ".venv", "build", "dist", "cache",
-        "Code Cache", "target", "bin", "obj", ".idea", ".vscode", ".vs", "coverage", "logs", "log", "tmp", "temp", ".next",
-        ".nuxt", "out", ".output", ".cache", "vendor", "packages", ".terraform", ".angular", ".svn", "CVS", ".hg",
-        ".pytest_cache", ".coverage", "htmlcov", ".tox", "site-packages", ".DS_Store", "bower_components", ".sass-cache",
-        ".parcel-cache", ".webpack", ".gradle", ".mvn", "Pods", "xcuserdata", "junit", "reports", ".github", ".gitlab",
-        "docker", ".docker", ".kube", "node", "jspm_packages", ".npm", "artifacts", ".yarn", "wheels", "docs/_build", "_site",
-        ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache", ".pytest_cache", "celerybeat-schedule", ".sonar", ".scannerwork",
-        "migrations", "__tests__", "test-results", "coverage-reports", ".nx", "dist-newstyle", "target", "debugbar", "Debug",
-        "Release", "x64", "x86"
-    ]
+    IGNORE_DIRS: frozenset[str] = frozenset(
+        d.lower() for d in {
+        "$RECYCLE.BIN", ".git", "code_tracker", "node_modules", "storage/framework", "addons-l10n", "__pycache__", "env",
+        "venv", ".env", ".venv", "build", "dist", "cache", "cache_data", "HTMLCache", "Code Cache", "D3DSCache",
+        "DawnGraphiteCache", "GrShaderCache", "DawnWebGPUCache", "GPUCache", "node-compile-cache", "component_crx_cache",
+        "DEVSENSE/packages-cache", "target", "bin", "_locales", "AutofillStates", "obj", ".idea", ".vscode", ".vs", ".adobe",
+        "coverage", "logs", "log", "tmp", "temp", ".next", ".nuxt", "out", ".output", ".cache", "vendor", "packages",
+        ".terraform", ".angular", ".svn", "CVS", ".hg", ".pytest_cache", ".coverage", "htmlcov", ".tox", "site-packages",
+        ".DS_Store", "bower_components", ".sass-cache", ".parcel-cache", ".webpack", ".gradle", ".mvn", "Pods", "xcuserdata",
+        "hyphen-data", "junit", "reports", ".github", ".gitlab", "docker", ".docker", ".kube", "node", "jspm_packages", ".npm",
+        "artifacts", ".yarn", "wheels", "docs/_build", "_site", ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache",
+        ".pytest_cache", "celerybeat-schedule", ".sonar", ".scannerwork", "migrations", "__tests__", "test-results",
+        "coverage-reports", ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release", "x64", "x86"
+        }
+    )
 
     def __init__(
         self,
@@ -63,7 +68,7 @@ class Tree:
         indent: Optional[int] = 3,
     ):
         self.base_dir: str = base_dir
-        self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
+        self.ignore_dirs: list[str] = ignore_dirs
         self.auto_ignore: bool = auto_ignore
         self.include_file_contents: bool = include_file_contents
         self.style: int = style
@@ -71,40 +76,40 @@ class Tree:
         self.ignore_set: frozenset[str] = None
         self.style_presets: dict[int, dict[str, str]] = {
             1: {
-                "line_ver": "│",
-                "line_hor": "─",
-                "branch_new": "├",
-                "corners": ("└", "┘", "┐"),
-                "error": "⚠",
-                "skipped": "...",
-                "dirname_end": "/",
+            "line_ver": "│",
+            "line_hor": "─",
+            "branch_new": "├",
+            "corners": ("└", "┘", "┐"),
+            "error": "⚠",
+            "skipped": "...",
+            "dirname_end": "/",
             },
             2: {
-                "line_ver": "│",
-                "line_hor": "─",
-                "branch_new": "├",
-                "corners": ("╰", "╯", "╮"),
-                "error": "⚠",
-                "skipped": "...",
-                "dirname_end": "/",
+            "line_ver": "│",
+            "line_hor": "─",
+            "branch_new": "├",
+            "corners": ("╰", "╯", "╮"),
+            "error": "⚠",
+            "skipped": "...",
+            "dirname_end": "/",
             },
             3: {
-                "line_ver": "┃",
-                "line_hor": "━",
-                "branch_new": "┣",
-                "corners": ("┗", "┛", "┓"),
-                "error": "⚠",
-                "skipped": "...",
-                "dirname_end": "/",
+            "line_ver": "┃",
+            "line_hor": "━",
+            "branch_new": "┣",
+            "corners": ("┗", "┛", "┓"),
+            "error": "⚠",
+            "skipped": "...",
+            "dirname_end": "/",
             },
             4: {
-                "line_ver": "║",
-                "line_hor": "═",
-                "branch_new": "╠",
-                "corners": ("╚", "╝", "╗"),
-                "error": "⚠",
-                "skipped": "...",
-                "dirname_end": "/",
+            "line_ver": "║",
+            "line_hor": "═",
+            "branch_new": "╠",
+            "corners": ("╚", "╝", "╗"),
+            "error": "⚠",
+            "skipped": "...",
+            "dirname_end": "/",
             },
         }
         self._error_suffix = None
@@ -242,7 +247,9 @@ class Tree:
                 is_dir = entry.is_dir()
                 branch = self.corners[0] if is_last else self.branch_new
                 current_prefix = prefix_bytes + branch.encode() + line_hor
-                if entry.name in self.ignore_set or (is_dir and self._should_ignore_directory(entry.path)[0]):
+                in_predefined_ignores = entry.name.lower() in self.IGNORE_DIRS if self.auto_ignore else False
+                if entry.name in self.ignore_set or in_predefined_ignores or (is_dir
+                    and self._should_ignore_directory(entry.path)[0]):
                     result.extend(current_prefix)
                     result.extend(entry.name.encode())
                     if is_dir:
@@ -274,8 +281,8 @@ class Tree:
                                 if lines:
                                     lines = [
                                         l.replace("\t", "    ").translate({
-                                            0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ",
-                                            0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " "
+                                        0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ", 0x2006:
+                                            " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " "
                                         }) for l in lines
                                     ]
                                     content_width = max(len(line.rstrip()) for line in lines)
@@ -320,9 +327,8 @@ def main():
     print("Enter the tree style (1-4): ")
     tree.show_styles()
     tree_style = (
-        int(style) if
-        (style := xx.FormatCodes.input(f'[dim]([default is {DEFAULTS["tree_style"]}] >  )').strip()).isnumeric() and
-        1 <= int(style) <= 4 else DEFAULTS["tree_style"]
+        int(style) if (style := xx.FormatCodes.input(f'[dim]([default is {DEFAULTS["tree_style"]}] >  )').strip()).isnumeric()
+        and 1 <= int(style) <= 4 else DEFAULTS["tree_style"]
     )
 
     indent_spaces = (
