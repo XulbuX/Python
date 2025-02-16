@@ -44,17 +44,18 @@ class Tree:
     })
     IGNORE_DIRS: frozenset[str] = frozenset(
         d.lower() for d in {
-        "$RECYCLE.BIN", ".git", "code_tracker", "node_modules", "storage/framework", "addons-l10n", "__pycache__", "env",
-        "venv", ".env", ".venv", "build", "dist", "cache", "cache_data", "HTMLCache", "Code Cache", "D3DSCache",
-        "DawnGraphiteCache", "GrShaderCache", "DawnWebGPUCache", "GPUCache", "node-compile-cache", "component_crx_cache",
-        "DEVSENSE/packages-cache", "target", "bin", "_locales", "AutofillStates", "obj", ".idea", ".vscode", ".vs", ".adobe",
-        "coverage", "logs", "log", "tmp", "temp", ".next", ".nuxt", "out", ".output", ".cache", "vendor", "packages",
-        ".terraform", ".angular", ".svn", "CVS", ".hg", ".pytest_cache", ".coverage", "htmlcov", ".tox", "site-packages",
-        ".DS_Store", "bower_components", ".sass-cache", ".parcel-cache", ".webpack", ".gradle", ".mvn", "Pods", "xcuserdata",
-        "hyphen-data", "junit", "reports", ".github", ".gitlab", "docker", ".docker", ".kube", "node", "jspm_packages", ".npm",
-        "artifacts", ".yarn", "wheels", "docs/_build", "_site", ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache",
-        ".pytest_cache", "celerybeat-schedule", ".sonar", ".scannerwork", "migrations", "__tests__", "test-results",
-        "coverage-reports", ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release", "x64", "x86"
+        "$RECYCLE.BIN", ".git", "code_tracker", "node_modules", "storage/framework", "addons-l10n", "__pycache__", "npm",
+        ".npm", "nvm", ".nvm", "env", "venv", ".env", ".venv", "build", "dist", "cache", "cache_data", "HTMLCache",
+        "Code Cache", "D3DSCache", "DawnGraphiteCache", "GrShaderCache", "DawnWebGPUCache", "GPUCache", "node-compile-cache",
+        "component_crx_cache", "DEVSENSE/packages-cache", "target", "bin", "_locales", "AutofillStates", "obj", ".idea",
+        ".vscode", ".vs", ".codeium", ".adobe", "coverage", "logs", "log", "tmp", "temp", ".next", ".nuxt", "out", ".output",
+        ".cache", "vendor", "packages", ".terraform", ".angular", ".svn", "CVS", ".hg", ".pytest_cache", ".coverage",
+        "htmlcov", ".tox", "site-packages", ".DS_Store", "bower_components", ".sass-cache", ".parcel-cache", ".webpack",
+        ".gradle", ".mvn", "Pods", "xcuserdata", "hyphen-data", "junit", "reports", ".github", ".gitlab", "docker", ".docker",
+        ".kube", "node", "jspm_packages", ".npm", "artifacts", ".yarn", "wheels", "docs/_build", "_site", ".jekyll-cache",
+        ".ipynb_checkpoints", ".mypy_cache", ".pytest_cache", "celerybeat-schedule", ".sonar", ".scannerwork", "migrations",
+        "__tests__", "test-results", "coverage-reports", ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release",
+        "x64", "x86"
         }
     )
 
@@ -68,7 +69,7 @@ class Tree:
         indent: Optional[int] = 3,
     ):
         self.base_dir: str = base_dir
-        self.ignore_dirs: list[str] = ignore_dirs
+        self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
         self.auto_ignore: bool = auto_ignore
         self.include_file_contents: bool = include_file_contents
         self.style: int = style
@@ -144,7 +145,7 @@ class Tree:
         return any(pattern.match(name) for pattern in Tree.HASH_PATTERNS)
 
     def _should_ignore_directory(self, dir_path: str) -> tuple[bool, int, int]:
-        """Enhanced directory content analysis with lenient generated file detection."""
+        """Directory content analysis with lenient generated file detection."""
         if not self.auto_ignore:
             return False, 0, 0
         try:
@@ -178,6 +179,21 @@ class Tree:
         except PermissionError:
             return False, 0, 0
 
+    def _should_ignore_path(self, path: str) -> bool:
+        """Check if a path matches any ignore pattern."""
+        if not path:
+            return False
+        path_parts = path.lower().replace("\\", "/").split('/')
+        for pattern in self.ignore_set:
+            pattern_parts = pattern.split('/')
+            if len(pattern_parts) == 1 and pattern == path_parts[-1]:
+                return True
+            if len(pattern_parts) <= len(path_parts):
+                path_slice = path_parts[-len(pattern_parts):]
+                if path_slice == pattern_parts:
+                    return True
+        return False
+
     @staticmethod
     @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
@@ -209,16 +225,14 @@ class Tree:
         self.base_dir = os.path.abspath(str(self.base_dir))
         if not os.path.isdir(self.base_dir):
             raise ValueError(f"Invalid base directory: {self.base_dir}")
-        self.ignore_set = (frozenset() if self.ignore_dirs is None else frozenset(self.ignore_dirs))
+        self.ignore_set = (
+            frozenset() if len(norm_ignore_dirs := set(d.lower().replace("\\", "/")
+            for d in self.ignore_dirs)) == 0 else frozenset(norm_ignore_dirs)
+        )
         self._reset_style_attrs()
         return self._gen_tree(self.base_dir)
 
-    def _gen_tree(
-        self,
-        _dir: str,
-        _prefix: str = "",
-        _level: int = 0,
-    ) -> str:
+    def _gen_tree(self, _dir: str, _prefix: str = "", _level: int = 0, _parent_path: str = "") -> str:
         result = bytearray()
         try:
             tab = self._space * self.indent
@@ -247,8 +261,7 @@ class Tree:
                 is_dir = entry.is_dir()
                 branch = self.corners[0] if is_last else self.branch_new
                 current_prefix = prefix_bytes + branch.encode() + line_hor
-                in_predefined_ignores = entry.name.lower() in self.IGNORE_DIRS if self.auto_ignore else False
-                if entry.name in self.ignore_set or in_predefined_ignores or (is_dir
+                if self._should_ignore_path(os.path.join(_parent_path, entry.name)) or (is_dir
                     and self._should_ignore_directory(entry.path)[0]):
                     result.extend(current_prefix)
                     result.extend(entry.name.encode())
