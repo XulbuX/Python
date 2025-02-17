@@ -1,3 +1,4 @@
+from typing import Optional
 import xulbux as xx
 import regex as rx
 import pathlib
@@ -263,7 +264,7 @@ def add_to_env_vars() -> dict:
 
 class blade_to_vue:
     @staticmethod
-    def transform_slots(code: str) -> str | None:
+    def transform_slots(code: str) -> Optional[str]:
         pattern_one_line = (
             r"<x-slot\s*name\s*=\s*"
             + QUOTES
