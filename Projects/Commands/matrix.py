@@ -31,7 +31,7 @@ def replace_special(text: str) -> str:
 try:
     while True:
         line = "".join((f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "")
-                       + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.w()))
+                       + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.w))
         FormatCodes.print(line)
         if not ARGS["fast"]["exists"]:
             time.sleep(0.025)

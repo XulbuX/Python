@@ -22,6 +22,6 @@ def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] =
 if __name__ == "__main__":
     try:
         print()
-        show_wave(width=Console.w() - 1, speed=(5, 1))
+        show_wave(width=Console.w - 1, speed=(5, 1))
     except KeyboardInterrupt:
         print()

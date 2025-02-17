@@ -41,7 +41,7 @@ def process_file(file_path: Path, root_dir: Path) -> None:
         dim = "[dim]" if modified < 1 else ""
         Console.done(
             f"{'[b](Updated)' if modified > 0 else '[dim](Checked)'} [br:cyan]({log_path})"
-            + f" [dim]({((Console.w() - 50) - len(log_path)) * '.'})" + f" {dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
+            + f" [dim]({((Console.w - 50) - len(log_path)) * '.'})" + f" {dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
             start="",
             end="\n",
         )

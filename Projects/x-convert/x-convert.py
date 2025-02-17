@@ -153,10 +153,10 @@ def show_help():
 
   [b|#7090FF]Examples [_b]((Blade ➜ Vue)):[*]
     Full path with 2 spaces indentation:
-      [_]C:\Users\{xx.Console.user()}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
+      [_]C:\Users\{xx.Console.usr}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
 
     Relative path with 4 spaces indentation:
-      [_]C:\Users\{xx.Console.user()}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
+      [_]C:\Users\{xx.Console.usr}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
       [_]D:\full\path> [#FF9E6A]x-convert [#7B7C8F]--file-path [#4DF1C2].\to\file.blade.php [#7B7C8F]--indent-spaces [#77EFEF]4 [#7B7C8F]--blade-to-vue[*]
 
   [b|#7090FF]Supported conversion:[*]
