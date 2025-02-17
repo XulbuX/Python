@@ -1,14 +1,11 @@
-import os
+from concurrent.futures import ThreadPoolExecutor
 import math
 import sys
-from concurrent.futures import ThreadPoolExecutor
+import os
 
 
 ARGS = sys.argv[1:]
-IGNORE = {
-    item.lower()
-    for item in (ARGS[1:] if ARGS and ARGS[0] in ("-i", "--ignore") else [])
-}
+IGNORE = {item.lower() for item in (ARGS[1:] if ARGS and ARGS[0] in ("-i", "--ignore") else [])}
 
 
 def print_overwrite(text: str, end="\n"):
@@ -65,9 +62,7 @@ def main():
     if "size" not in IGNORE:
         info += f"  |  FILES SIZE: {files_size}"
 
-    print_overwrite(
-        f"{'#' * ((len(info) - 16) // 2)} CALCULATED INFO {'#' * ((len(info) - 16) // 2)}"
-    )
+    print_overwrite(f"{'#' * ((len(info) - 16) // 2)} CALCULATED INFO {'#' * ((len(info) - 16) // 2)}")
     print(info, flush=True)
 
 

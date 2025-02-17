@@ -35,7 +35,7 @@ def estimate_runtime(precision: int) -> float:
         return time.time() - start_time
     if precision >= max(ref_points):
         base_time = REFERENCE_TIMES[max(ref_points)]
-        scaling = (precision / max(ref_points)) ** 2.0
+        scaling = (precision / max(ref_points))**2.0
         if precision > 1000000:
             scaling *= 1.2
     else:
@@ -49,10 +49,8 @@ def estimate_runtime(precision: int) -> float:
             log_factor = 1
         else:
             raw_factor = precision / lower_point
-            log_factor = (math.log(raw_factor) ** 2) / (
-                math.log(upper_point / lower_point)
-            )
-        base_time = lower_time * (upper_time / lower_time) ** log_factor
+            log_factor = (math.log(raw_factor)**2) / (math.log(upper_point / lower_point))
+        base_time = lower_time * (upper_time / lower_time)**log_factor
         scaling = 1.0
     estimated_time = (base_time * scaling) / get_hardware_score()
     if estimated_time < 0.01:
@@ -73,9 +71,7 @@ def estimate_runtime(precision: int) -> float:
     return round(estimated_time, 2)
 
 
-def format_time(
-    seconds: float, short: bool = False, pretty_printing: bool = False
-) -> str:
+def format_time(seconds: float, short: bool = False, pretty_printing: bool = False) -> str:
     units = (
         (
             ("SMBH", 1e106 * 365.25 * 24 * 60 * 60),
@@ -140,9 +136,7 @@ def format_time(
         if (value := int(seconds // formula)) > 0:
             if not short:
                 value = f"{value:,}".replace(",", "'")
-            parts.append(
-                f"{b_val}{value}{val_name}{name if value == '1' or short else f'{name}s'}{a_name}"
-            )
+            parts.append(f"{b_val}{value}{val_name}{name if value == '1' or short else f'{name}s'}{a_name}")
             seconds %= formula
     if not parts:
         formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
@@ -152,26 +146,15 @@ def format_time(
     if short:
         return ("[dim](:)" if pretty_printing else ":").join(parts)
     if len(parts) > 1:
-        return (
-            ("[dim] + [_dim]" if pretty_printing else ", ").join(parts[:-1])
-            + ("[dim] + [_dim]" if pretty_printing else " and ")
-            + parts[-1]
-        )
+        return (("[dim] + [_dim]" if pretty_printing else ", ").join(parts[:-1]) +
+                ("[dim] + [_dim]" if pretty_printing else " and ") + parts[-1])
     return parts[0]
 
 
 def animate() -> None:
     frames, i = [
-        "[b]·  [_b]",
-        "[b]·· [_b]",
-        "[b]···[_b]",
-        "[b] ··[_b]",
-        "[b]  ·[_b]",
-        "[b]  ·[_b]",
-        "[b] ··[_b]",
-        "[b]···[_b]",
-        "[b]·· [_b]",
-        "[b]·  [_b]",
+        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]", "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]",
+        "[b]·· [_b]", "[b]·  [_b]"
     ], 0
     max_frame_len = max(len(frame) for frame in frames)
     while not CALC_DONE:
@@ -181,32 +164,12 @@ def animate() -> None:
         i += 1
 
 
-# def pi(k_max: int) -> str:
-#     mp.dps = k_max * 14  # DECIMAL PLACES
-#     result = mp.mpf(0)
-#     for k in range(k_max):
-#         term = (
-#             12
-#             * (-1) ** k
-#             * fac(6 * k)
-#             * (545140134 * k + 13591409)
-#             / (fac(3 * k) * (fac(k) ** 3) * (640320 ** ((3 * k) + mp.mpf("3/2"))))
-#         )
-#         result += term
-#     return 1 / result
-
-
 def p() -> iter:
     q, r, t, j = 1, 180, 60, 2
     while True:
         u, y = 3 * (3 * j + 1) * (3 * j + 2), (q * (27 * j - 12) + 5 * r) // (5 * t)
         yield y
-        q, r, t, j = (
-            10 * q * j * (2 * j - 1),
-            10 * u * (q * (5 * j - 2) + r - y * t),
-            t * u,
-            j + 1,
-        )
+        q, r, t, j = (10 * q * j * (2 * j - 1), 10 * u * (q * (5 * j - 2) + r - y * t), t * u, j + 1)
 
 
 def pi(decimals: int = 10) -> str:
@@ -216,7 +179,7 @@ def pi(decimals: int = 10) -> str:
 
 def main() -> None:
     global CALC_DONE
-    input_k = int(args[1]) if len(args := sys.argv) > 1 else 1
+    input_k = int(args[1]) if len(args := sys.argv) > 1 else 10
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(
@@ -224,9 +187,7 @@ def main() -> None:
         )
     else:
         FormatCodes.print(
-            f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)"
-            if estimated_secs > 1
-            else ""
+            f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)" if estimated_secs > 1 else ""
         )
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
@@ -249,7 +210,7 @@ def main() -> None:
             sys.exit(0)
         CALC_DONE = True
         animation_thread.join()
-        FormatCodes.print(f"\r[br:cyan]({result})\n\n")
+        FormatCodes.print(f"\r[br:cyan]({result})\n")
 
 
 if __name__ == "__main__":

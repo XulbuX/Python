@@ -1,4 +1,4 @@
-import xulbux as xx
+from xulbux import FormatCodes
 import sys
 
 
@@ -25,22 +25,21 @@ if __name__ == "__main__":
     lst = [x for x in input(">  ").split(sep) if x.strip() not in (None, "")]
 
     if len(lst) >= 1 and lst[0].strip() not in (None, ""):
-        xx.FormatCodes.print(f'\n[bright:cyan]{'\n'.join(lst)}[_]')
-        print()  # BLANK LINE
+        FormatCodes.print(f'\n[bright:cyan]{'\n'.join(lst)}[_]\n')
         if lst not in (None, "") and all(is_num(x) for x in lst):
             lst = [int(x) if x.isdigit() else float(x) for x in lst]
             average = lambda nums: sum(nums) / len(nums)
-            print(f"Min: {min(lst)}")
-            print(f"Max: {max(lst)}")
-            print(f"Sum: {sum(lst)}")
-            print(f"Average: {average(lst)}")
+            FormatCodes.print(f"[b](Min:) {min(lst)}")
+            FormatCodes.print(f"[b](Max:) {max(lst)}")
+            FormatCodes.print(f"[b](Sum:) {sum(lst)}")
+            FormatCodes.print(f"[b](Average:) {average(lst)}")
         else:
             lst = [str(x) for x in lst]
-            print(f"Items count: {len(lst)}")
-            print(f"Unique entries: {prt_sep.join(sorted(set(lst)))}")
+            FormatCodes.print(f"[b](Items count:) {len(lst)}")
+            FormatCodes.print(f"[b](Unique entries:) {prt_sep.join(sorted(set(lst)))}")
             if any(x.isalpha() for x in lst):
                 upper = sum(1 for x in lst if x.isupper())
                 lower = sum(1 for x in lst if x.islower())
-                print(f"Uppercase: {upper / len(lst) * 100:.1f}%")
-                print(f"Lowercase: {lower / len(lst) * 100:.1f}%")
-        print()  # BLANK LINE
+                FormatCodes.print(f"[b](Uppercase:) {upper / len(lst) * 100:.1f}%")
+                FormatCodes.print(f"[b](Lowercase:) {lower / len(lst) * 100:.1f}%")
+        print()

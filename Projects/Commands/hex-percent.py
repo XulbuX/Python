@@ -1,5 +1,4 @@
-from xulbux.xx_format_codes import FormatCodes
-from xulbux.xx_console import Console
+from xulbux import FormatCodes, Console
 import sys
 
 
@@ -13,11 +12,7 @@ def hex_to_percent(hex_val: str) -> float:
 if __name__ == "__main__":
     try:
         hex_val = (
-            ARGS[0]
-            if len(ARGS) > 0
-            else FormatCodes.input("Enter HEX value [dim]([2 digits] (e.g. 'FF')) > ")
-            .strip()
-            .upper()
+            ARGS[0] if len(ARGS) > 0 else FormatCodes.input("Enter HEX value [dim]([2 digits] (e.g. 'FF')) > ").strip().upper()
         )
         percent = hex_to_percent(hex_val)
         FormatCodes.print(f"\n  [#EEF|dim](=)  [white][b]({percent})%[_]\n")
