@@ -24,10 +24,7 @@ DEFAULT_JSON = {
         ],
         "iconify-icon": "i",
         "information-button": [":filename", "@@/Components/InformationButton.vue"],
-        "race-locations-map": [
-            "RaceLocationsMap",
-            "@@/Components/Race/LocationsMap.vue",
-        ],
+        "race-locations-map": ["RaceLocationsMap", "@@/Components/Race/LocationsMap.vue"],
         "vue-back-button": [":filename", "@@/Components/SupButton.vue"],
         "vue-checkbox": [":filename", "@@/Components/SupCheckbox.vue"],
         "vue-form": "form",
@@ -45,18 +42,9 @@ DEFAULT_JSON = {
         "x-guest.submenu": [":filename", "@@/Layouts/Partials/GuestSubmenu.vue"],
         "x-guest.tab": [":filename", "@@/Layouts/Partials/Tab.vue"],
         "x-public-app.signup-card": [":filename", "@@/Components/SignupCard.vue"],
-        "x-race.current-attendees": [
-            "RaceCurrentAttendees",
-            "@@/Components/Race/CurrentAttendees.vue",
-        ],
-        "x-race.sidebar-information": [
-            "RaceSidebarInformation",
-            "@@/Components/Race/SidebarInformation.vue",
-        ],
-        "x-race.responsible-person": [
-            "RaceResponsiblePerson",
-            "@@/Components/Race/ResponsiblePerson.vue",
-        ],
+        "x-race.current-attendees": ["RaceCurrentAttendees", "@@/Components/Race/CurrentAttendees.vue"],
+        "x-race.sidebar-information": ["RaceSidebarInformation", "@@/Components/Race/SidebarInformation.vue"],
+        "x-race.responsible-person": ["RaceResponsiblePerson", "@@/Components/Race/ResponsiblePerson.vue"],
     },
     "php_as_js_functions": {
         ">> PHP-FUNCTION NAME": [
@@ -184,17 +172,10 @@ def get_json(args: dict) -> dict:
             JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
         )
     except FileNotFoundError:
-        xx.Console.fail(
-            f"File not found: [white]{JSON_FILE}", exit=False, start="\n", end=""
-        )
-        if xx.Console.confirm(
-            f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?",
-            end="",
-        ):
+        xx.Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n", end="")
+        if xx.Console.confirm(f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?", end=""):
             xx.Json.create(DEFAULT_JSON, indent=4, force=True)
-            xx.Console.info(
-                f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n"
-            )
+            xx.Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
             xx.FormatCodes.print("        \t[dim]Restarting program...[_]")
             main(args)
             xx.Console.pause_exit(exit=True)
@@ -206,9 +187,7 @@ def get_missing_args(args: list) -> list:
     if not args["filepath"]["value"] or not args["blade-vue"]["exists"]:
         print()
     if not args["filepath"]["value"]:
-        args["filepath"]["value"] = xx.FormatCodes.input(
-            "Path to your file[_|dim] >  [_]", default_color="#3EE6DE"
-        ).strip()
+        args["filepath"]["value"] = xx.FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
     if not args["blade-vue"]["exists"]:
         xx.FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
         xx.FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
@@ -217,7 +196,7 @@ def get_missing_args(args: list) -> list:
                 "                 [_|dim] >  [_]",
                 default_color="#3EE6DE",
                 allowed_chars="1",
-                # max_len=1,
+                # max_len=1
             ).strip()
             == "1"
         )
@@ -797,114 +776,56 @@ class blade_to_vue:
             code,
         )
 
-        outside_template_script_pattern = (
-            r"(<script(?:\s+[\s\S]*)?>"
-            + xx.Regex.all_except(r"<\/script\s*>")
-            + r"<\/script\s*>\s*)(?=\s*$)"
-        )
-        outside_template_script = "\n".join(
-            rx.findall(outside_template_script_pattern, code, flags=re.DOTALL).rstrip(
-                " \n"
-            )
-        )
+        outside_template_script_pattern = (r"(<script(?:\s+[\s\S]*)?>" + xx.Regex.all_except(r"<\/script\s*>") + r"<\/script\s*>\s*)(?=\s*$)")
+        outside_template_script = "\n".join(rx.findall(outside_template_script_pattern, code, flags=re.DOTALL).rstrip(" \n"))
         code = rx.sub(  # REMOVE OUTSIDE TEMPLATE SCRIPT
             outside_template_script_pattern, "", code, flags=re.DOTALL
         )
         vue_content = f"<template>\n{xx.Code.add_indent(code.strip(), xx.Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
         if isinstance(args["indent"]["value"], int):
-            vue_content = xx.String.remove_consecutive_empty_lines(
-                vue_content, max_consecutive=1
-            )
-            xx.Console.debug(
-                "Removed consecutive empty lines to [b|+]max_consecutive=1[_].",
-                DEBUG,
-                start="\n",
-            )
+            vue_content = xx.String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
+            xx.Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
             if not args["indent"]["value"] < 1:
-                vue_content = xx.Code.change_tab_size(
-                    vue_content, indent, remove_empty_lines=True
-                )
-                xx.Console.debug(
-                    f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.",
-                    DEBUG,
-                    start="\n",
-                )
+                vue_content = xx.Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
+                xx.Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
         return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
 
 
 def main(args: dict):
     get_json(args)
-    if DEBUG and not xx.Data.is_equal(
-        _JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"
-    ):
-        xx.Console.debug(
-            "config.json does not match the default json.",
-        )
+    if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
+        xx.Console.debug("config.json does not match the default json.")
     add_to_env_vars()
     args = get_missing_args(args)
     if args["filepath"]["value"] in (None, ""):
         xx.Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args["filepath"]["value"] = xx.Path.extend(
-        args["filepath"]["value"], raise_error=True, correct_path=True
-    )
+    args["filepath"]["value"] = xx.Path.extend(args["filepath"]["value"], raise_error=True, correct_path=True)
     if not os.path.isfile(args["filepath"]["value"]):
-        xx.Console.fail(
-            f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG
-        )
+        xx.Console.fail(f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG)
 
     with open(args["filepath"]["value"], "r") as file:
         file_content = file.read()
     converter = blade_to_vue()
-    converted_content = (
-        converter.convert(file_content, args["indent"]["value"])
-        if args["blade-vue"]["exists"]
-        else None
-    )
+    converted_content = (converter.convert(file_content, args["indent"]["value"]) if args["blade-vue"]["exists"] else None)
 
     if converted_content:
-        new_file_path = xx.File.rename_extension(
-            args["filepath"]["value"], ".vue", camel_case_filename=True
-        )
+        new_file_path = xx.File.rename_extension(args["filepath"]["value"], ".vue", camel_case_filename=True)
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
             if existing_content == converted_content:
-                xx.Console.info(
-                    "Already formatted this file. [dim](nothing changed)",
-                    pause=DEBUG,
-                    start="\n",
-                    end="\n\n",
-                )
+                xx.Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")
                 xx.Console.pause_exit(exit=True, reset_ansi=True)
-            xx.Console.warn(
-                f"File already exists: [white]{new_file_path}",
-                exit=False,
-                start="\n",
-                end="",
-            )
-            if xx.Console.confirm(
-                f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?",
-                start="\n",
-                end="",
-            ):
+            xx.Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n", end="")
+            if xx.Console.confirm(f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?", start="\n", end=""):
                 pass
             else:
                 xx.Console.exit(reset_ansi=True, start="\n", end="\n\n")
         with open(new_file_path, "w") as file:
             file.write(converted_content)
-        xx.Console.done(
-            f"Formatted into file: [white]{new_file_path}",
-            pause=DEBUG,
-            start="\n",
-            end="\n\n",
-        )
+        xx.Console.done(f"Formatted into file: [white]{new_file_path}", pause=DEBUG, start="\n", end="\n\n")
     else:
-        xx.Console.fail(
-            "Empty file or invalid conversion chosen.",
-            pause=DEBUG,
-            start="\n",
-            end="\n\n",
-        )
+        xx.Console.fail("Empty file or invalid conversion chosen.", pause=DEBUG, start="\n", end="\n\n")
     xx.Console.pause_exit(exit=True, reset_ansi=True)
 
 
@@ -923,12 +844,7 @@ if __name__ == "__main__":
             else:
                 main(args)
         except FileNotFoundError:
-            xx.Console.fail(
-                f"File not found: [white]{args['filepath']['value']}",
-                pause=DEBUG,
-                start="\n",
-                end="\n\n",
-            )
+            xx.Console.fail(f"File not found: [white]{args['filepath']['value']}", pause=DEBUG, start="\n", end="\n\n")
         except KeyboardInterrupt:
             xx.Console.exit(start="\n\n", end="\n\n")
         except Exception as e:
