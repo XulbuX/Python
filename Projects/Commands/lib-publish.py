@@ -73,9 +73,9 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 def main(args: dict) -> None:
     os.chdir(args["lib_base"]["value"])
-    run_command(f"py -m build{' --verbose ' if args["verbose"]["exists"] else ''}")
+    run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}")
     twine_path = find_twine_path()
-    run_command(f'"{twine_path}" upload{' --verbose ' if args["verbose"]["exists"] else ' '}dist/*')
+    run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*')
     if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
         Path.remove(os.path.join(os.getcwd(), "dist"))
         print()

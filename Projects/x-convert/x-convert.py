@@ -12,7 +12,7 @@ JSON_FILE = "config.json"
 FIND_ARGS = {
     "filepath": ["-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"],
     "indent": ["-i", "--indent", "-is", "--indent-spaces"],
-    "blade-vue": ["-bv", "--blade-vue", "--blade-to-vue"],
+    "blade_vue": ["-bv", "--blade-vue", "--blade-to-vue"],
     "help": ["-h", "--help"],
     "debug": ["-d", "--debug"],
 }
@@ -184,14 +184,14 @@ def get_json(args: dict) -> dict:
 
 
 def get_missing_args(args: list) -> list:
-    if not args["filepath"]["value"] or not args["blade-vue"]["exists"]:
+    if not args.filepath.value or not args.blade_vue.exists:
         print()
-    if not args["filepath"]["value"]:
-        args["filepath"]["value"] = xx.FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
-    if not args["blade-vue"]["exists"]:
+    if not args.filepath.value:
+        args.filepath.value = xx.FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
+    if not args.blade_vue.exists:
         xx.FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
         xx.FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
-        args["blade-vue"]["exists"] = (
+        args.blade_vue.exists = (
             xx.Console.restricted_input(
                 "                 [_|dim] >  [_]",
                 default_color="#3EE6DE",
@@ -782,10 +782,10 @@ class blade_to_vue:
             outside_template_script_pattern, "", code, flags=re.DOTALL
         )
         vue_content = f"<template>\n{xx.Code.add_indent(code.strip(), xx.Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
-        if isinstance(args["indent"]["value"], int):
+        if isinstance(args.indent.value, int):
             vue_content = xx.String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
             xx.Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
-            if not args["indent"]["value"] < 1:
+            if not args.indent.value < 1:
                 vue_content = xx.Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
                 xx.Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
         return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
@@ -797,19 +797,19 @@ def main(args: dict):
         xx.Console.debug("config.json does not match the default json.")
     add_to_env_vars()
     args = get_missing_args(args)
-    if args["filepath"]["value"] in (None, ""):
+    if args.filepath.value in (None, ""):
         xx.Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args["filepath"]["value"] = xx.Path.extend(args["filepath"]["value"], raise_error=True, correct_path=True)
-    if not os.path.isfile(args["filepath"]["value"]):
-        xx.Console.fail(f'Path is not a file: [white]{args["filepath"]["value"]}', pause=DEBUG)
+    args.filepath.value = xx.Path.extend(args.filepath.value, raise_error=True, correct_path=True)
+    if not os.path.isfile(args.filepath.value):
+        xx.Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
 
-    with open(args["filepath"]["value"], "r") as file:
+    with open(args.filepath.value, "r") as file:
         file_content = file.read()
     converter = blade_to_vue()
-    converted_content = (converter.convert(file_content, args["indent"]["value"]) if args["blade-vue"]["exists"] else None)
+    converted_content = (converter.convert(file_content, args.indent.value) if args.blade_vue.exists else None)
 
     if converted_content:
-        new_file_path = xx.File.rename_extension(args["filepath"]["value"], ".vue", camel_case_filename=True)
+        new_file_path = xx.File.rename_extension(args.filepath.value, ".vue", camel_case_filename=True)
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
@@ -831,20 +831,20 @@ def main(args: dict):
 
 if __name__ == "__main__":
     args = xx.Console.get_args(FIND_ARGS)
-    DEBUG = args["debug"]["exists"]
+    DEBUG = args.debug.exists
     if DEBUG:
-        if args["help"]["exists"]:
+        if args.help.exists:
             show_help()
         else:
             main(args)
     else:
         try:
-            if args["help"]["exists"]:
+            if args.help.exists:
                 show_help()
             else:
                 main(args)
         except FileNotFoundError:
-            xx.Console.fail(f"File not found: [white]{args['filepath']['value']}", pause=DEBUG, start="\n", end="\n\n")
+            xx.Console.fail(f"File not found: [white]{args.filepath.value}", pause=DEBUG, start="\n", end="\n\n")
         except KeyboardInterrupt:
             xx.Console.exit(start="\n\n", end="\n\n")
         except Exception as e:

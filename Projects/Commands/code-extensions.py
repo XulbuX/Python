@@ -18,12 +18,7 @@ def check_vscode_installed() -> bool:
 
 def get_vscode_extensions() -> list[str]:
     try:
-        result = subprocess.run(
-            ["code", "--list-extensions"],
-            capture_output=True,
-            text=True,
-            shell=True,
-        )
+        result = subprocess.run(["code", "--list-extensions"], capture_output=True, text=True, shell=True)
         return result.stdout.strip().splitlines()
     except subprocess.CalledProcessError as e:
         Console.fail(f"Failed to get extensions: {e.stderr}")
@@ -37,5 +32,5 @@ if __name__ == "__main__":
     extensions = get_vscode_extensions()
     FormatCodes.print(f"\n[white]Installed extensions: [b]{len(extensions)}[_]")
     FormatCodes.print(
-        "\n[white]" + (Data.to_str(extensions, as_json=True) if args["as_json"]["exists"] else "\n".join(extensions)) + "[_]\n"
+        "\n[white]" + (Data.to_str(extensions, as_json=True) if args.as_json.exists else "\n".join(extensions)) + "[_]\n"
     )
