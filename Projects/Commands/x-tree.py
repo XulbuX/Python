@@ -34,14 +34,21 @@ class Tree:
     _NEWLINE = b"\n"
     _SPACE = b" "
 
-    PATTERNS = {
-        "base64": r"([\dA-Z+/]{20,}(={0,2})?)",
-        "hashes": r"([\dA-F]{8,32}|[\dA-F]{40}|[\dA-F]{64}|[\dA-F]{128})",
-        "hex": r"([\dA-F]{2}|[\dA-F]{3}|[\dA-F]{4}|[\dA-F]{6}|[\dA-F]{8})",
-        "uuid": r"(([\dA-F]{4}|[\dA-F]{8}|[\dA-F]{12})(-?([\dA-F]{4}|[\dA-F]{8}|[\dA-F]{12})){3,4})",
-    }
-    ALL_PATTERN = rf"(([\dx_]+)?({'|'.join(PATTERNS.values())})([_x\d]+)?)"
-    IGNORE_PATTERN: Pattern[str] = re.compile(rf"(?i)^{ALL_PATTERN}(\.?{ALL_PATTERN})*$")
+    IGNORE_PATTERN: Pattern[str] = re.compile(
+        r'^(?:' + '|'.join([
+            # UUID & GUID
+            r'(?:\{)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?:\})?',
+            # HASH-LIKE
+            r'[0-9a-f]{20,}',
+            r'[0-9a-f]{8,16}_[0-9]+',
+            # SHORT RANDOM
+            r'(?!(?:[a-z]{4}|[A-Z][a-z]{3}|[A-Z]{4}))'
+            r'(?:[A-Z][A-Za-z0-9]{3}|[a-z][A-Za-z0-9]{3}|[0-9][A-Za-z0-9]{3})',
+            # TIMESTAMP-LIKE
+            r'\d{6}-\d{6}-p\d{5}\s*\d*',
+            r'[0-9a-f]{1,3}-\d{4}',
+        ]) + r')(?:\.[A-Za-z0-9]+)*$'  # OPTIONAL FILE EXTENSIONS
+    )
     BINARY_EXTENSIONS: frozenset[str] = frozenset({
         ".exe", ".dll", ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".cur",
         ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".tar", ".gz", ".7z", ".rar", ".mp3", ".mp4", ".avi", ".mov"
@@ -73,7 +80,7 @@ class Tree:
         indent: Optional[int] = 2,
     ):
         self.base_dir: str = base_dir
-        self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
+        self.ignore_dirs: list[str] = ignore_dirs  # + (self.IGNORE_DIRS if auto_ignore else [])
         self.auto_ignore: bool = auto_ignore
         self.include_file_contents: bool = include_file_contents
         self.style: int = style
@@ -182,8 +189,7 @@ class Tree:
     @staticmethod
     @lru_cache(maxsize=4096)
     def _is_likely_hash_name(name: str) -> bool:
-        base_name = os.path.splitext(name)[0]
-        return bool(Tree.IGNORE_PATTERN.match(name) or Tree.IGNORE_PATTERN.match(base_name))
+        return False  # bool(Tree.IGNORE_PATTERN.match(name))
 
     @staticmethod
     def _find_filename_patterns(names: list[str], min_pattern_length: int = 4) -> tuple[bool, float]:
@@ -198,7 +204,6 @@ class Tree:
                 prefix = base[:i]
                 if len(prefix) >= min_pattern_length:
                     prefixes[prefix] = prefixes.get(prefix, 0) + 1
-
                 suffix = base[-i:]
                 if len(suffix) >= min_pattern_length:
                     suffixes[suffix] = suffixes.get(suffix, 0) + 1
