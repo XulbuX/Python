@@ -1,24 +1,32 @@
 from xulbux import FormatCodes
+from typing import Pattern
 import re
 
 
-class RX:
-    sep: str = r"[-_.~x@\s]+(?:[0-9]+|[0-9]+$)?"
+class IGNORE:
+
+    sep: str = r"[-_~x@\s]+"
+    pre: str = rf"^(?:\w+{sep})*"
+    ext: str = r"(?:\.+[-_a-zA-Z0-9]+)*$"
     patterns: dict[str, str] = {
         "number": r"-?[a-fA-F0-9]{4,}",
-        "short_rand": r"(?:[a-zA-Z][0-9]{2}|[0-9][a-zA-Z]|[a-z]{2}|[A-Z]{2})",
-        "rand{4,6}": r"(?!(?:[A-Z][a-z]{3,5}))(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-zA-Z]))[-_a-zA-Z0-9]{4,6}",
+        "delimited_number": r"_[0-9]{1,2}",
+        "HEX": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32})",
+        "min_HEX{32}": r"\.min_[a-fA-F0-9]{32}",
+        "ID{3}HEX{4}": rf"\w{{3}}[a-fA-F0-9]{{4}}(?:{sep}|{ext})",
+        "short_rand": rf"(?:[a-zA-Z][0-9]{{2}}|[0-9][a-zA-Z]|[a-z]{{2}}|[A-Z]{{2}}|[0-9]{{2}})(?:{sep}|{ext})",
+        "rand{4,6}": rf"(?!(?:[A-Z][a-z]{{3,5}}))(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-zA-Z]))[a-zA-Z0-9]{{4,6}}(?:{sep}|{ext})",
+        "rand{59}": rf"(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
         "date": r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])",
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
-        "version": r"[0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}",
+        "version": r"v?[0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
-        "base64": r"[_+/0-9A-Za-z]{8,}={0,2}",
+        "base64": r"[+/0-9A-Za-z]{8,}={0,2}",
         "uuid": r"\{?[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}\}?",
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
     }
+    pattern: Pattern = re.compile(rf"{pre}(?:(?:{sep})?(?:{'|'.join(patterns.values())}))+{ext}")
 
-
-IGNORE_PATTERN = re.compile(rf"^(?:(?:{RX.sep})?(?:{'|'.join(RX.patterns.values())})?)+(?:[-_.~x@]+[a-zA-Z0-9]*)*$")
 
 test_cases = {
     # SHOULD MATCH
@@ -80,6 +88,7 @@ test_cases = {
     '{01006E22-695B-4299-B525-61B986E8E8F0}mt00546271.png': True,
     '{CBE919F5-4A7C-48A2-BDC3-4211F88326B7}mt10002117.jpeg': True,
     'S-1-12-1-4155301451-1239930137-2575335607-2413053183': True,
+    'S-1-12-1.yml': True,
     '41jF': True,
     'y35u': True,
     'stFT.py': True,
@@ -104,8 +113,8 @@ test_cases = {
     '4.8.0.20220524': True,
     '092410-111214-p30515 10': True,
     '092410-080828-p25215 00': True,
-    '092380-090924-a15048 r00': True,
-    '092380-090917-a15066 l01': True,
+    '092380-090924-q15048 r00': True,
+    '092380-090917-q15066 l01': True,
     '12-05_07-40-18_460900.log': True,
     '01-12_18-22-36_077786.log': True,
     '2024-10-17_22-59-59_021088.log': True,
@@ -188,6 +197,7 @@ test_cases = {
 }
 
 if __name__ == '__main__':
-    print(f"\n{IGNORE_PATTERN.pattern}\n")
+    pattern = IGNORE.pattern
+    print(f"\n{pattern}\n")
     for filename, should_match in test_cases.items():
-        FormatCodes.print(f"[{'br:green' if bool(IGNORE_PATTERN.match(filename)) == should_match else 'br:red'}]{filename}[_]")
+        FormatCodes.print(f"[{'br:green' if bool(pattern.match(filename)) == should_match else 'br:red'}]{filename}[_]")
