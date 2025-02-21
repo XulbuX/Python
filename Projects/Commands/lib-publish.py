@@ -82,4 +82,9 @@ def main(args: dict) -> None:
 
 
 if __name__ == "__main__":
-    main(Console.get_args(FIND_ARGS))
+    try:
+        main(Console.get_args(FIND_ARGS))
+    except KeyboardInterrupt:
+        print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

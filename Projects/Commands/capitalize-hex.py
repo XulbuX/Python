@@ -49,7 +49,14 @@ def process_file(file_path: Path, root_dir: Path) -> None:
         Console.fail(f"Error processing [red]({file_path})\n         \t[b|br:red]{e}[_]", start="", end="\n", exit=False)
 
 
-def main(path: str) -> None:
+def main() -> None:
+    if len(sys.argv) != 2:
+        path = input("\nEnter the path to the file or directory: ").strip()
+    else:
+        path = sys.argv[1]
+    if path in ("", None):
+        Console.fail("No path was provided", start="\n", end="\n\n")
+    print()
     target = Path(path)
     if target.is_file():
         process_file(target, target.parent)
@@ -62,11 +69,9 @@ def main(path: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        path = input("\nEnter the path to the file or directory: ").strip()
-    else:
-        path = sys.argv[1]
-    if path in ("", None):
-        Console.fail("No path was provided")
-    print()
-    main(path)
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

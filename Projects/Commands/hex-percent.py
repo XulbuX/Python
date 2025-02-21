@@ -17,6 +17,6 @@ if __name__ == "__main__":
         percent = hex_to_percent(hex_val)
         FormatCodes.print(f"\n  [#EEF|dim](=)  [white][b]({percent})%[_]\n")
     except KeyboardInterrupt:
-        Console.exit()
+        print()
     except Exception as e:
-        print("ERROR:", e)
+        Console.fail(e, start="\n", end="\n\n")

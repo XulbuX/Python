@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from xulbux import Console
 import math
 import sys
 import os
@@ -71,3 +72,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

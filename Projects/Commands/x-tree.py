@@ -515,10 +515,9 @@ def main():
 
 if __name__ == "__main__":
     try:
-
         main()
     except KeyboardInterrupt:
-        xx.Console.exit(start="\n", end="\n\n")
+        print()
     except PermissionError:
         xx.Console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as e:

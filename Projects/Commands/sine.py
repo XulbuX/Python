@@ -25,3 +25,5 @@ if __name__ == "__main__":
         show_wave(width=Console.w - 1, speed=(5, 1))
     except KeyboardInterrupt:
         print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

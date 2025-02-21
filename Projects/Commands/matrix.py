@@ -28,12 +28,19 @@ def replace_special(text: str) -> str:
     return text.replace("randomCL", random_hexa()).replace("randomBG", f"BG:{random_hexa()}")
 
 
-try:
+def main() -> None:
     while True:
         line = "".join((f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "")
                        + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.w))
         FormatCodes.print(line)
         if not ARGS.fast.exists:
             time.sleep(0.025)
-except KeyboardInterrupt:
-    print()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

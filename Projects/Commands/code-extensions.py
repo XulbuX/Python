@@ -24,7 +24,7 @@ def get_vscode_extensions() -> list[str]:
         Console.fail(f"Failed to get extensions: {e.stderr}")
 
 
-if __name__ == "__main__":
+def main() -> None:
     args = Console.get_args(FIND_ARGS)
     if not check_vscode_installed():
         FormatCodes.print("[br:red](Visual Studio Code is not installed or not in PATH.)")
@@ -34,3 +34,12 @@ if __name__ == "__main__":
     FormatCodes.print(
         "\n[white]" + (Data.to_str(extensions, as_json=True) if args.as_json.exists else "\n".join(extensions)) + "[_]\n"
     )
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")

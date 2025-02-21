@@ -1,4 +1,4 @@
-from xulbux import FormatCodes
+from xulbux import FormatCodes, Console
 import sys
 
 
@@ -19,7 +19,7 @@ def is_num(value: str) -> bool:
         return False
 
 
-if __name__ == "__main__":
+def main()->None:
     sep = get_sep(ARGS)
     prt_sep = f"{sep} " if sep != " " else sep
     lst = [x for x in input(">  ").split(sep) if x.strip() not in (None, "")]
@@ -43,3 +43,12 @@ if __name__ == "__main__":
                 FormatCodes.print(f"[b](Uppercase:) {upper / len(lst) * 100:.1f}%")
                 FormatCodes.print(f"[b](Lowercase:) {lower / len(lst) * 100:.1f}%")
         print()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")
