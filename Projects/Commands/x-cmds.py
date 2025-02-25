@@ -1,4 +1,5 @@
-"""Lists all Python files executable as commands in the current directory."""
+"""Lists all Python files, executable as commands, in the current directory.
+A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
 from typing import Optional
 import importlib.util

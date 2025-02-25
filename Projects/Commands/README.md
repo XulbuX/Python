@@ -186,12 +186,12 @@ This command will just display a moving sine wave, inside your console.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 
-### x-list.py
+### x-cmds.py
 Run with command:
 ```console
-x-list
+x-cmds
 ```
-This command list all the Python files executable as commands in the current directory, with params and short descriptions.
+This command outputs a list of all custom Python commands in the current directory, with a short description and their params.
 
 
 ### x-tree.py
