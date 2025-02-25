@@ -1,8 +1,9 @@
+"""Process a list of items and display some statistics."""
 from xulbux import FormatCodes, Console
 import sys
 
 
-ARGS = sys.argv[1:]
+ARGS = sys.argv[1:]  # [list_separator: [-s, --sep]]
 
 
 def get_sep(args: list, default: str = " ") -> str:

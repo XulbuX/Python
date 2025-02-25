@@ -1,3 +1,4 @@
+"""Show a sine wave animation inside the console."""
 from typing import Generator
 from xulbux import Console
 import math

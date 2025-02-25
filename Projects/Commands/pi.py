@@ -1,3 +1,4 @@
+"""Calculate the value of pi to a specified number of decimal places."""
 from xulbux import FormatCodes
 import threading
 import psutil
@@ -179,7 +180,7 @@ def pi(decimals: int = 10) -> str:
 
 def main() -> None:
     global CALC_DONE
-    input_k = int(args[1]) if len(args := sys.argv) > 1 else 10
+    input_k = int(args[1]) if len(args := sys.argv) > 1 else 10  # [decimal_places]
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(

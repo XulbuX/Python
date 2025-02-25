@@ -1,3 +1,5 @@
+"""Gives details about the files in the current directory.
+Information can be ignored, since it can take quite long to calculate."""
 from concurrent.futures import ThreadPoolExecutor
 from xulbux import Console
 import math
@@ -6,7 +8,7 @@ import sys
 import os
 
 
-ARGS = sys.argv[1:]
+ARGS = sys.argv[1:]  # [ignore_info: [-i, --ignore]]
 IGNORE = {item.lower() for item in (ARGS[1:] if ARGS and ARGS[0] in ("-i", "--ignore") else [])}
 TEXT_EXTENSIONS = {'.txt', '.py', '.js', '.css', '.html', '.md', '.json', '.xml', '.csv', '.log', '.ini', '.cfg', '.conf'}
 

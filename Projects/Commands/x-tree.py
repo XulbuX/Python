@@ -1,3 +1,5 @@
+"""A really advanced directory tree generator
+with a lost of options and customization."""
 from typing import Optional, Pattern, NamedTuple
 from functools import lru_cache
 from itertools import chain
@@ -7,7 +9,7 @@ import os
 import re
 
 
-ARGS = sys.argv[1:]
+ARGS = sys.argv[1:]  # [ignore_directories: [-i, --ignore]]
 DEFAULT = {
     "ignore_dirs": [],
     "auto_ignore": True,

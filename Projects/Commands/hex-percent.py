@@ -1,8 +1,9 @@
+"""Quickly convert a 2-digit HEX value to a percentage."""
 from xulbux import FormatCodes, Console
 import sys
 
 
-ARGS = sys.argv[1:]
+ARGS = sys.argv[1:]  # [hex_value]
 
 
 def hex_to_percent(hex_val: str) -> float:

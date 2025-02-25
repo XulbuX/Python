@@ -1,3 +1,4 @@
+"""[b](IGNORE:) Just temporary for testing."""
 from xulbux import FormatCodes
 from typing import Pattern
 import re

@@ -1,3 +1,5 @@
+"""Show a sort of matrix animation inside the console.
+The matrix can be made faster and displayed in color."""
 from xulbux import FormatCodes, Console
 import random
 import time

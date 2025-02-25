@@ -1,3 +1,5 @@
+"""Tries to package and upload the library in the current or given directory.
+Uses 'twine' to try to upload the packaged library to PyPI."""
 # pip install build twine xulbux
 from xulbux import FormatCodes, Console, Path
 from typing import Optional

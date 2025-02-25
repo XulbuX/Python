@@ -1,3 +1,5 @@
+"""Searches and capitalizes all found hex colors
+in a single file or every file in a directory."""
 from xulbux import Console
 from pathlib import Path
 import sys
@@ -53,7 +55,7 @@ def main() -> None:
     if len(sys.argv) != 2:
         path = input("\nEnter the path to the file or directory: ").strip()
     else:
-        path = sys.argv[1]
+        path = sys.argv[1]  # [path]
     if path in ("", None):
         Console.fail("No path was provided", start="\n", end="\n\n")
     print()

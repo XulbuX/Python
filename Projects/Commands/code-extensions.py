@@ -1,3 +1,5 @@
+"""Lists all installed Visual Studio Code extensions with
+the option to directly format them as a JSON list."""
 from xulbux import FormatCodes, Console, Data
 import subprocess
 import platform
