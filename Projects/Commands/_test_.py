@@ -1,4 +1,5 @@
 """[b](IGNORE:) Just temporary for testing."""
+from turtle import st
 from xulbux import FormatCodes
 from typing import Pattern
 import re
@@ -7,32 +8,49 @@ import re
 class IGNORE:
 
     sep: str = r"[-_~x@\s]+"
-    pre: str = rf"^(?:\w+{sep}\w*)*"
-    ext: str = r"(?:\.[-_a-zA-Z0-9]+)*$"
-    patterns: dict[str, str] = {
+    ext: str = r"(?:\.[-_a-zA-Z0-9]+)*?$"
+    pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:\w+{sep}\w*)*?"
+    date = r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])"
+    reoccurring: dict[str, str] = {
         "number": r"-?[a-fA-F0-9]{4,}",
         "delimited_number": r"_[0-9]{1,2}",
-        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32})",
+        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",
         "min_hex32": r"\.min_[a-fA-F0-9]{32}",
         "id3hex4": rf"\w{{3}}[a-fA-F0-9]{{4}}(?:{sep}|{ext})",
-        # "short_rand": rf"(?:[a-zA-Z][0-9]{{2}}|[0-9][a-zA-Z]|[a-z]{{2}}|[A-Z]{{2}}|[0-9]{{2}})(?:{sep}|{ext})",
-        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-zA-Z]))[a-zA-Z0-9]{{4}}{ext}",
-        "rand59": rf"(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4}}{ext}",
+        "rand5": rf"(?![A-Z][a-z]{{4}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{5}}{ext}",
+        "rand11": rf"(?![A-Z][a-zA-Z]{{10}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{11}}(?:{sep}|{ext})",
+        "rand25": rf"(?![A-Z][a-zA-Z]{{24}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{25}}(?:{sep}|{ext})",
+        "rand32": rf"(?![A-Z][a-zA-Z]{{31}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
+        "rand59": rf"(?![A-Z][a-zA-Z]{{58}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "e_rand32": rf"e_[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
         "num5-rand12": r"[0-9]{5}-[a-zA-Z0-9]{12}",
         "let32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[A-F0-9]{64}",
-        "date": r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])",
+        "date": date,
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
-        # "version": r"v?[0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
+        "version.date": r"(?:[0-9]\.){3}" + date,
         "base64": r"[+/0-9A-Za-z]{8,}={1,2}",
         "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
     }
-    pattern: Pattern = re.compile(rf"{pre}(?:(?:{sep})?(?:{'|'.join(patterns.values())}))+{ext}")
+    standalones: dict[str, str] = {
+        "hex2": r"[a-fA-F0-9]{2}",
+        "rand_num": r"[A-Z0-9]{2,6}_[a-z][0-9]" + ext,
+        "id_num": r"(?:[a-zA-Z0-9]{6}-){2}[a-zA-Z0-9]{6}\s(?:[0-9]{2}|[a-z][0-9]{2})",
+        "domain_hex": rf"{reoccurring['domain']}_{reoccurring['hex']}",
+        "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2}){1,}-[A-F0-9]{64}",
+    }
+    pattern: Pattern = re.compile(
+        rf"(?:^(?:{'|'.join(standalones.values())})$|{pre}(?:(?:{sep})?(?:{'|'.join(reoccurring.values())}))+{ext})"
+    )
 
 
 test_cases = {
     # SHOULD MATCH
+    'e8': True,
+    '72': True,
+    'f4': True,
     '-39779064': True,
     '-3f97e4e': True,
     '6e63774a': True,
@@ -168,6 +186,8 @@ test_cases = {
     'powerpoint-narrative-builder-strings.min_762cb36eb2cf6c3daf56dfff735f7822.js': True,
     'edgeSettings_2.0-48b11410dc937a1723bf4c5ad33ecdb286d8ec69544241bc373f753e64b396c1': True,
     # SHOULD NOT MATCH
+    '25.py': False,
+    'e3.py': False,
     'main.py': False,
     'test.py': False,
     'util.js': False,

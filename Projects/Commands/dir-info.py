@@ -1,7 +1,7 @@
 """Gives details about the files in the current directory.
 Information can be ignored, since it can take quite long to calculate."""
 from concurrent.futures import ThreadPoolExecutor
-from xulbux import Console
+from xulbux import FormatCodes, Console
 import math
 import mmap
 import sys
@@ -14,7 +14,7 @@ TEXT_EXTENSIONS = {'.txt', '.py', '.js', '.css', '.html', '.md', '.json', '.xml'
 
 
 def print_overwrite(text: str, end="\n"):
-    print("\033[2K\r" + text, end=end, flush=True)
+    FormatCodes.print("\033[2K\r" + text, end=end)
 
 
 def get_dir_files(directory: str) -> list:
@@ -75,20 +75,18 @@ def format_bytes_size(bytes: int) -> str:
 
 
 def main():
-    print_overwrite("searching files...", end="")
+    print_overwrite("[dim](searching files...)", end="")
     files = get_dir_files(os.getcwd())
-    print_overwrite("calculating scope...", end="")
+    print_overwrite("[dim](calculating scope...)", end="")
     files_count, files_scope, files_size = calc_files_scope(files)
     files_size = format_bytes_size(files_size)
-    info_parts = ["TOTAL FILES: " + str(files_count)]
+    info_parts = ["[b](TOTAL FILES:) " + str(files_count)]
     if "scope" not in IGNORE:
-        info_parts.append("FILES SCOPE: " + str(files_scope) + " lines")
+        info_parts.append("[b](FILES SCOPE:) " + str(files_scope) + " lines")
     if "size" not in IGNORE:
-        info_parts.append("FILES SIZE: " + files_size)
-    info = "  |  ".join(info_parts)
-    border = "#" * ((len(info) - 16) // 2)
-    print_overwrite(f"{border} CALCULATED INFO {border}")
-    print(info, flush=True)
+        info_parts.append("[b](FILES SIZE:) " + files_size)
+    info = "  [dim](|)  ".join(info_parts)
+    print_overwrite(f"\n{info}\n")
 
 
 if __name__ == "__main__":

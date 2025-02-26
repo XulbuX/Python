@@ -25,6 +25,7 @@ class IgnoreDirectory(Exception):
 
 
 class DirScanResult(NamedTuple):
+
     should_ignore: bool
     total_count: int
     hash_count: int
@@ -32,25 +33,38 @@ class DirScanResult(NamedTuple):
     entries: tuple
 
 
+class IGNORE:
+
+    sep: str = r"[-_~x@\s]+"
+    pre: str = rf"^(?:\w+{sep}\w*)*"
+    ext: str = r"(?:\.[-_a-zA-Z0-9]+)*$"
+    patterns: dict[str, str] = {
+        "number": r"-?[a-fA-F0-9]{4,}",
+        "delimited_number": r"_[0-9]{1,2}",
+        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32})",
+        "min_hex32": r"\.min_[a-fA-F0-9]{32}",
+        "id3hex4": rf"\w{{3}}[a-fA-F0-9]{{4}}(?:{sep}|{ext})",
+        # "short_rand": rf"(?:[a-zA-Z][0-9]{{2}}|[0-9][a-zA-Z]|[a-z]{{2}}|[A-Z]{{2}}|[0-9]{{2}})(?:{sep}|{ext})",
+        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-zA-Z]))[a-zA-Z0-9]{{4}}{ext}",
+        "rand59": rf"(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "num5-rand12": r"[0-9]{5}-[a-zA-Z0-9]{12}",
+        "let32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[A-F0-9]{64}",
+        "date": r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])",
+        "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
+        # "version": r"v?[0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}",
+        "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
+        "base64": r"[+/0-9A-Za-z]{8,}={1,2}",
+        "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",
+        "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
+    }
+    pattern: Pattern = re.compile(rf"{pre}(?:(?:{sep})?(?:{'|'.join(patterns.values())}))+{ext}")
+
+
 class Tree:
+
     _NEWLINE = b"\n"
     _SPACE = b" "
 
-    IGNORE_PATTERN: Pattern[str] = re.compile(
-        r'^(?:' + '|'.join([
-            # UUID & GUID
-            r'(?:\{)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?:\})?',
-            # HASH-LIKE
-            r'[0-9a-f]{20,}',
-            r'[0-9a-f]{8,16}_[0-9]+',
-            # SHORT RANDOM
-            r'(?!(?:[a-z]{4}|[A-Z][a-z]{3}|[A-Z]{4}))'
-            r'(?:[A-Z][A-Za-z0-9]{3}|[a-z][A-Za-z0-9]{3}|[0-9][A-Za-z0-9]{3})',
-            # TIMESTAMP-LIKE
-            r'\d{6}-\d{6}-p\d{5}\s*\d*',
-            r'[0-9a-f]{1,3}-\d{4}',
-        ]) + r')(?:\.[A-Za-z0-9]+)*$'  # OPTIONAL FILE EXTENSIONS
-    )
     BINARY_EXTENSIONS: frozenset[str] = frozenset({
         ".exe", ".dll", ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".cur",
         ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".tar", ".gz", ".7z", ".rar", ".mp3", ".mp4", ".avi", ".mov"
@@ -191,7 +205,7 @@ class Tree:
     @staticmethod
     @lru_cache(maxsize=4096)
     def _is_likely_hash_name(name: str) -> bool:
-        return False  # bool(Tree.IGNORE_PATTERN.match(name))
+        return bool(IGNORE.pattern.match(name))
 
     @staticmethod
     def _find_filename_patterns(names: list[str], min_pattern_length: int = 4) -> tuple[bool, float]:
