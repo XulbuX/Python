@@ -204,7 +204,7 @@ def get_missing_args(args: list) -> list:
 
 
 def add_to_env_vars() -> dict:
-    base_dir = xx.Path.get(base_dir=True)
+    base_dir = xx.Path.script_dir
     try:
         if JSON["is_in_env_vars"] != base_dir:
             if not xx.EnvPath.has_path(base_dir=True):

@@ -53,11 +53,11 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
 
 
 def get_commands() -> str:
-    commands, files = "", os.listdir(Path.get(base_dir=True))
+    commands, files = "", os.listdir(Path.script_dir)
     for i, f in enumerate(sorted(files)):
         filename, file_ext = os.path.splitext(f)
         if file_ext in (".py", ".pyw"):
-            abs_path = os.path.join(Path.get(base_dir=True), f)
+            abs_path = os.path.join(Path.script_dir, f)
             commands += f"\n [i|dim|#6F9]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|#6F9]({filename})"
             try:
                 with open(abs_path, "r", encoding="utf-8") as file:
