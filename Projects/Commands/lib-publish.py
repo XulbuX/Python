@@ -74,7 +74,7 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 
 def main(args: dict) -> None:
-    os.chdir(args["lib_base"]["value"])
+    os.chdir(args.lib_base.value)
     run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}")
     twine_path = find_twine_path()
     run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*')
