@@ -187,7 +187,6 @@ class Tree:
 
     def _reset_style_attrs(self) -> None:
         styles = self.style_presets.get(self.style, self.style_presets[1])
-        # Store original strings for potential string operations
         self.line_ver = styles["line_ver"]
         self.line_hor = styles["line_hor"]
         self.branch_new = styles["branch_new"]
