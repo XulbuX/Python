@@ -36,28 +36,44 @@ class DirScanResult(NamedTuple):
 class IGNORE:
 
     sep: str = r"[-_~x@\s]+"
-    pre: str = rf"^(?:\w+{sep}\w*)*"
-    ext: str = r"(?:\.[-_a-zA-Z0-9]+)*$"
-    patterns: dict[str, str] = {
+    ext: str = r"(?:\.[-_a-zA-Z0-9]+)*?$"
+    pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:\w+{sep}\w*)*?"
+    date = r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])"
+    reoccurring: dict[str, str] = {
         "number": r"-?[a-fA-F0-9]{4,}",
         "delimited_number": r"_[0-9]{1,2}",
-        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32})",
+        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",
         "min_hex32": r"\.min_[a-fA-F0-9]{32}",
         "id3hex4": rf"\w{{3}}[a-fA-F0-9]{{4}}(?:{sep}|{ext})",
-        # "short_rand": rf"(?:[a-zA-Z][0-9]{{2}}|[0-9][a-zA-Z]|[a-z]{{2}}|[A-Z]{{2}}|[0-9]{{2}})(?:{sep}|{ext})",
-        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-zA-Z]))[a-zA-Z0-9]{{4}}{ext}",
-        "rand59": rf"(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4}}{ext}",
+        "rand5": rf"(?![A-Z][a-z]{{4}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{5}}{ext}",
+        "rand11": rf"(?![A-Z][a-zA-Z]{{10}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{11}}(?:{sep}|{ext})",
+        "rand25": rf"(?![A-Z][a-zA-Z]{{24}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{25}}(?:{sep}|{ext})",
+        "rand32": rf"(?![A-Z][a-zA-Z]{{31}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
+        "rand59": rf"(?![A-Z][a-zA-Z]{{58}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "e_rand32": rf"e_[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
         "num5-rand12": r"[0-9]{5}-[a-zA-Z0-9]{12}",
-        "let32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[A-F0-9]{64}",
-        "date": r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])",
+        "lower32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[a-fA-F0-9]{64}",
+        "date": date,
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
-        # "version": r"v?[0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
+        "version.date": r"(?:[0-9]\.){3}" + date,
         "base64": r"[+/0-9A-Za-z]{8,}={1,2}",
         "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
     }
-    pattern: Pattern = re.compile(rf"{pre}(?:(?:{sep})?(?:{'|'.join(patterns.values())}))+{ext}")
+    standalones: dict[str, str] = {
+        "hex2": r"[a-fA-F0-9]{2}",
+        "upper2": r"[A-Z]{2}" + ext,
+        "alt-lower2": r"alt-[a-z]{2}" + ext,
+        "rand_num": r"[A-Z0-9]{2,6}_[a-z][0-9]" + ext,
+        "id_num": r"(?:[a-zA-Z0-9]{6}-){2}[a-zA-Z0-9]{6}\s(?:[0-9]{2}|[a-z][0-9]{2})",
+        "domain_hex": rf"{reoccurring['domain']}_{reoccurring['hex']}",
+        "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2})+-[a-fA-F0-9]{64}",
+    }
+    pattern: Pattern = re.compile(
+        rf"(?:^(?:{'|'.join(standalones.values())})$|{pre}(?:(?:{sep})?(?:{'|'.join(reoccurring.values())}))+{ext})"
+    )
 
 
 class Tree:
@@ -96,7 +112,7 @@ class Tree:
         indent: Optional[int] = 2,
     ):
         self.base_dir: str = base_dir
-        self.ignore_dirs: list[str] = ignore_dirs  # + (self.IGNORE_DIRS if auto_ignore else [])
+        self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
         self.auto_ignore: bool = auto_ignore
         self.include_file_contents: bool = include_file_contents
         self.style: int = style

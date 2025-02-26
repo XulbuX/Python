@@ -19,13 +19,13 @@ class IGNORE:
         "id3hex4": rf"\w{{3}}[a-fA-F0-9]{{4}}(?:{sep}|{ext})",
         "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4}}{ext}",
         "rand5": rf"(?![A-Z][a-z]{{4}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{5}}{ext}",
-        "rand11": rf"(?![A-Z][a-zA-Z]{{10}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{11}}(?:{sep}|{ext})",
-        "rand25": rf"(?![A-Z][a-zA-Z]{{24}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{25}}(?:{sep}|{ext})",
-        "rand32": rf"(?![A-Z][a-zA-Z]{{31}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
-        "rand59": rf"(?![A-Z][a-zA-Z]{{58}})(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "rand11": rf"(?![A-Z][a-zA-Z]{{10}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{11}}(?:{sep}|{ext})",
+        "rand25": rf"(?![A-Z][a-zA-Z]{{24}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{25}}(?:{sep}|{ext})",
+        "rand32": rf"(?![A-Z][a-zA-Z]{{31}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
+        "rand59": rf"(?![A-Z][a-zA-Z]{{58}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
         "e_rand32": rf"e_[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
         "num5-rand12": r"[0-9]{5}-[a-zA-Z0-9]{12}",
-        "let32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[A-F0-9]{64}",
+        "lower32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[a-fA-F0-9]{64}",
         "date": date,
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
@@ -36,10 +36,12 @@ class IGNORE:
     }
     standalones: dict[str, str] = {
         "hex2": r"[a-fA-F0-9]{2}",
+        "upper2": r"[A-Z]{2}" + ext,
+        "alt-lower2": r"alt-[a-z]{2}" + ext,
         "rand_num": r"[A-Z0-9]{2,6}_[a-z][0-9]" + ext,
         "id_num": r"(?:[a-zA-Z0-9]{6}-){2}[a-zA-Z0-9]{6}\s(?:[0-9]{2}|[a-z][0-9]{2})",
         "domain_hex": rf"{reoccurring['domain']}_{reoccurring['hex']}",
-        "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2}){1,}-[A-F0-9]{64}",
+        "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2})+-[a-fA-F0-9]{64}",
     }
     pattern: Pattern = re.compile(
         rf"(?:^(?:{'|'.join(standalones.values())})$|{pre}(?:(?:{sep})?(?:{'|'.join(reoccurring.values())}))+{ext})"
@@ -51,6 +53,10 @@ test_cases = {
     'e8': True,
     '72': True,
     'f4': True,
+    'AM.js': True,
+    'AX.js': True,
+    'alt-af.js': True,
+    'alt-oc.js': True,
     '-39779064': True,
     '-3f97e4e': True,
     '6e63774a': True,
