@@ -1,15 +1,18 @@
 """A really advanced directory tree generator
 with a lost of options and customization."""
+from xulbux import FormatCodes, Console, File, COLOR
 from typing import Optional, Pattern, NamedTuple
 from functools import lru_cache
 from itertools import chain
-import xulbux as xx
 import sys
 import os
 import re
 
 
-ARGS = sys.argv[1:]  # [ignore_directories: [-i, --ignore]]
+FIND_ARGS = {
+    "ignore_dirs": ["-i", "--ignore"],
+    "not_display_stats": ["-n", "--no-stats"],
+}
 DEFAULT = {
     "ignore_dirs": [],
     "auto_ignore": True,
@@ -31,6 +34,14 @@ class DirScanResult(NamedTuple):
     hash_count: int
     show_partial: bool
     entries: tuple
+
+
+class GenerationStats:
+
+    processed_dirs: int = 0
+    processed_files: int = 0
+    current_depth: int = 0
+    max_depth: int = 0
 
 
 class IGNORE:
@@ -110,6 +121,7 @@ class Tree:
         include_file_contents: Optional[bool] = False,
         style: Optional[int] = 1,
         indent: Optional[int] = 2,
+        display_progress: Optional[bool] = True,
     ):
         self.base_dir: str = base_dir
         self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
@@ -117,6 +129,7 @@ class Tree:
         self.include_file_contents: bool = include_file_contents
         self.style: int = style
         self.indent: int = indent
+        self.display_progress: bool = display_progress
         self.ignore_set: frozenset[str] = None
         self.style_presets: dict[int, dict[str, str]] = {
             1: {
@@ -159,6 +172,9 @@ class Tree:
         self._error_suffix = None
         self._ignored_suffix = None
         self._reset_style_attrs()
+        self.gen_stats = None
+        self.last_update_time = 0
+        self.progress_update_interval = 0.1  # SECONDS
 
     def generate(
         self,
@@ -168,13 +184,18 @@ class Tree:
         include_file_contents: Optional[bool] = None,
         style: Optional[int] = None,
         indent: Optional[int] = None,
+        display_progress: Optional[bool] = None,
     ) -> str:
+        Console.info("Starting tree generation...", start="\n", end="\n")
+        self.gen_stats = GenerationStats()
+        self.last_update_time = 0
         self.base_dir = base_dir or self.base_dir
         self.ignore_dirs += ignore_dirs
-        self.auto_ignore = auto_ignore if auto_ignore is not None else self.auto_ignore
+        self.auto_ignore = self.auto_ignore if auto_ignore is None else auto_ignore
         self.include_file_contents = include_file_contents or self.include_file_contents
         self.style = style if style >= 1 else self.style
         self.indent = (indent if indent >= 0 else self.indent) + 1
+        self.display_progress = self.display_progress if display_progress is None else display_progress
         self.base_dir = os.path.abspath(str(self.base_dir))
         if not os.path.isdir(self.base_dir):
             raise ValueError(f"Invalid base directory: {self.base_dir}")
@@ -183,7 +204,12 @@ class Tree:
                                                        for d in self.ignore_dirs)) == 0 else frozenset(norm_ignore_dirs)
         )
         self._reset_style_attrs()
-        return self._gen_tree(self.base_dir)
+        result = self._gen_tree(self.base_dir)
+        Console.done(
+            f"Generated tree of {self.gen_stats.processed_dirs} directories and {self.gen_stats.processed_files} files with max depth of {self.gen_stats.max_depth}.",
+            start="\033[F\033[K"
+        )
+        return result
 
     def _reset_style_attrs(self) -> None:
         styles = self.style_presets.get(self.style, self.style_presets[1])
@@ -312,7 +338,27 @@ class Tree:
         except:
             return False
 
+    def _update_progress(self, current_dir: str, is_dir: bool = True) -> None:
+        """Update the generation progress display."""
+        if not self.display_progress:
+            return
+        if is_dir:
+            self.gen_stats.processed_dirs += 1
+        else:
+            self.gen_stats.processed_files += 1
+        self.gen_stats.current_depth = current_dir.count(os.sep) - self.base_dir.count(os.sep)
+        self.gen_stats.max_depth = max(self.gen_stats.max_depth, self.gen_stats.current_depth)
+        rel_path = current_dir[len(self.base_dir):].lstrip(os.sep) if current_dir.startswith(
+            self.base_dir
+        ) else os.path.basename(current_dir)
+        stats_str = f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {self.gen_stats.processed_dirs} dirs | {self.gen_stats.processed_files} files | "
+        max_rel_path_len = Console.w - (25 + len(stats_str))
+        if len(rel_path) > max_rel_path_len:
+            rel_path = ("..." + rel_path[-max_rel_path_len + 3:])
+        Console.log("GENERATING TREE", stats_str + rel_path, title_bg_color=COLOR.blue, start="\033[F\033[K", end="\n")
+
     def _gen_tree(self, _dir: str, _prefix: str = "", _level: int = 0, _parent_path: str = "") -> str:
+        self._update_progress(_dir)
         result = bytearray()
         try:
             if (_level == 0):
@@ -370,6 +416,7 @@ class Tree:
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
                         result.extend(self._gen_tree(entry.path, new_prefix, _level + 1).encode())
                     else:
+                        self._update_progress(entry.path, is_dir=False)
                         result.extend(current_prefix)
                         result.extend(entry.name.encode())
                         result.extend(self._NEWLINE)
@@ -435,6 +482,7 @@ class Tree:
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
                         result.extend(self._gen_tree(entry.path, new_prefix, _level + 1).encode())
                     else:
+                        self._update_progress(entry.path, is_dir=False)
                         result.extend(current_prefix)
                         result.extend(entry.name.encode())
                         result.extend(self._NEWLINE)
@@ -479,43 +527,38 @@ class Tree:
 
 
 def main():
-    tree = Tree(os.getcwd())
-
-    if len(ARGS) > 1:
-        if ARGS[0] in ("-i", "--ignore"):
-            ignore_dirs = ARGS[1:]
-        elif ARGS[1] in ("-i", "--ignore"):
-            ignore_dirs = ARGS[2:]
+    global ARGS
+    ARGS, tree = Console.get_args(FIND_ARGS), Tree(os.getcwd())
+    if len(ARGS) >= 1:
+        ignore_input = ARGS.ignore_dirs.value
     else:
-        ignore_input = xx.FormatCodes.input("Enter directories which's content should be ignore [dim]((`/` separated) >  )"
-                                            ).strip()
-        ignore_dirs = list(chain.from_iterable(item.split("/") for item in ignore_input.split("/")))
+        ignore_input = FormatCodes.input("Enter directories which's content should be ignore [dim]((`/` separated) >  )"
+                                         ).strip()
+    ignore_dirs = list(chain.from_iterable(item.split("/") for item in ignore_input.split("/")))
 
-    auto_ignore = True if xx.FormatCodes.input(
+    auto_ignore = True if FormatCodes.input(
         f'Enable auto-ignore unimportant directories [dim]({"(Y)" if DEFAULT["auto_ignore"] else "(N)"} >  )'
     ).strip().lower() in ("y", "yes") else DEFAULT["auto_ignore"]
 
-    include_file_contents = True if xx.FormatCodes.input(
+    include_file_contents = True if FormatCodes.input(
         f'Display the file contents in the tree [dim]({"(Y)" if DEFAULT["include_file_contents"] else "(N)"} >  )'
     ).strip().lower() in ("y", "yes") else DEFAULT["include_file_contents"]
 
     print("Enter the tree style (1-4): ")
     tree.show_styles()
     style = (
-        int(style) if (style := xx.FormatCodes.input(f'[dim](({DEFAULT["tree_style"]}) >  )').strip()).isnumeric()
+        int(style) if (style := FormatCodes.input(f'[dim](({DEFAULT["tree_style"]}) >  )').strip()).isnumeric()
         and 1 <= int(style) <= 4 else DEFAULT["tree_style"]
     )
 
     indent = (
-        int(indent) if
-        (indent := xx.FormatCodes.input(f'Enter the indent [dim](({DEFAULT["indent"]}) >  )').strip()).isnumeric()
+        int(indent) if (indent := FormatCodes.input(f'Enter the indent [dim](({DEFAULT["indent"]}) >  )').strip()).isnumeric()
         and int(indent) >= 0 else DEFAULT["indent"]
     )
 
-    into_file = True if xx.FormatCodes.input(f'Output tree into file [dim]({"(Y)" if DEFAULT["into_file"] else "(N)"} >  )'
-                                             ).strip().lower() in ("y", "yes") else DEFAULT["into_file"]
+    into_file = True if FormatCodes.input(f'Output tree into file [dim]({"(Y)" if DEFAULT["into_file"] else "(N)"} >  )'
+                                          ).strip().lower() in ("y", "yes") else DEFAULT["into_file"]
 
-    xx.Console.info("generating tree...", start="\n")
     result = tree.generate(
         ignore_dirs=ignore_dirs,
         auto_ignore=auto_ignore,
@@ -527,21 +570,21 @@ def main():
     if into_file:
         file, cls_line = None, ""
         try:
-            file = xx.File.create("tree.txt", result)
+            file = File.create("tree.txt", result)
         except FileExistsError:
             cls_line = "\033[F\033[K"
-            if xx.Console.confirm("[white]tree.txt[_] already exists. Overwrite?", end=""):
-                file = xx.File.create("tree.txt", result, force=True)
+            if Console.confirm("[white]tree.txt[_] already exists. Overwrite?", end=""):
+                file = File.create("tree.txt", result, force=True)
             else:
-                xx.Console.exit()
+                Console.exit()
         if file:
-            xx.Console.done(f"[white]{file}[_] successfully created.", start=cls_line, end="\n\n")
+            Console.done(f"[white]{file}[_] successfully created.", start=cls_line, end="\n\n")
         else:
-            xx.Console.fail("File is empty or failed to create file.", start=cls_line, end="\n\n")
+            Console.fail("File is empty or failed to create file.", start=cls_line, end="\n\n")
     else:
-        xx.FormatCodes.print("[white]")
+        FormatCodes.print("[white]")
         sys.stdout.write(result)
-        xx.FormatCodes.print("[_]")
+        FormatCodes.print("[_]")
 
 
 if __name__ == "__main__":
@@ -550,6 +593,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except PermissionError:
-        xx.Console.fail("Permission to create file was denied.", start="\n", end="\n\n")
+        Console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as e:
-        xx.Console.fail(e, start="\n", end="\n\n")
+        Console.fail(e, start="\n", end="\n\n")
