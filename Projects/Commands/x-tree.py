@@ -173,8 +173,6 @@ class Tree:
         self._ignored_suffix = None
         self._reset_style_attrs()
         self.gen_stats = None
-        self.last_update_time = 0
-        self.progress_update_interval = 0.1  # SECONDS
 
     def generate(
         self,
@@ -188,7 +186,6 @@ class Tree:
     ) -> str:
         Console.info("Starting tree generation...", start="\n", end="\n")
         self.gen_stats = GenerationStats()
-        self.last_update_time = 0
         self.base_dir = base_dir or self.base_dir
         self.ignore_dirs += ignore_dirs
         self.auto_ignore = self.auto_ignore if auto_ignore is None else auto_ignore
