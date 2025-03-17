@@ -4,6 +4,7 @@ from xulbux import FormatCodes, Console, File, COLOR
 from typing import Optional, Pattern, NamedTuple
 from functools import lru_cache
 from itertools import chain
+import time
 import sys
 import os
 import re
@@ -11,7 +12,7 @@ import re
 
 FIND_ARGS = {
     "ignore_dirs": ["-i", "--ignore"],
-    "not_display_stats": ["-n", "--no-stats"],
+    "no_displaying_stats": ["-n", "--no-stats"],
 }
 DEFAULT = {
     "ignore_dirs": [],
@@ -173,6 +174,8 @@ class Tree:
         self._ignored_suffix = None
         self._reset_style_attrs()
         self.gen_stats = None
+        self._progress_update_interval = 0.05  # SECONDS BETWEEN UPDATES
+        self._last_progress_update = 0
 
     def generate(
         self,
@@ -184,7 +187,11 @@ class Tree:
         indent: Optional[int] = None,
         display_progress: Optional[bool] = None,
     ) -> str:
-        Console.info("Starting tree generation...", start="\n", end="\n")
+        self.display_progress = self.display_progress if display_progress is None else display_progress
+        if self.display_progress:
+            Console.info("starting tree generation...", start="\n")
+        else:
+            Console.info("generating tree...", start="\n")
         self.gen_stats = GenerationStats()
         self.base_dir = base_dir or self.base_dir
         self.ignore_dirs += ignore_dirs
@@ -192,7 +199,6 @@ class Tree:
         self.include_file_contents = include_file_contents or self.include_file_contents
         self.style = style if style >= 1 else self.style
         self.indent = (indent if indent >= 0 else self.indent) + 1
-        self.display_progress = self.display_progress if display_progress is None else display_progress
         self.base_dir = os.path.abspath(str(self.base_dir))
         if not os.path.isdir(self.base_dir):
             raise ValueError(f"Invalid base directory: {self.base_dir}")
@@ -203,7 +209,7 @@ class Tree:
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
         Console.done(
-            f"Generated tree of {self.gen_stats.processed_dirs} directories and {self.gen_stats.processed_files} files with max depth of {self.gen_stats.max_depth}.",
+            f"[b](Done generating tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) [br:cyan]({self.gen_stats.processed_dirs}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files}) files",
             start="\033[F\033[K"
         )
         return result
@@ -337,22 +343,33 @@ class Tree:
 
     def _update_progress(self, current_dir: str, is_dir: bool = True) -> None:
         """Update the generation progress display."""
-        if not self.display_progress:
-            return
         if is_dir:
             self.gen_stats.processed_dirs += 1
         else:
             self.gen_stats.processed_files += 1
         self.gen_stats.current_depth = current_dir.count(os.sep) - self.base_dir.count(os.sep)
         self.gen_stats.max_depth = max(self.gen_stats.max_depth, self.gen_stats.current_depth)
+        if not self.display_progress:
+            return
+        elif (current_time := time.time()) - self._last_progress_update < self._progress_update_interval:
+            return
+        self._last_progress_update = current_time
         rel_path = current_dir[len(self.base_dir):].lstrip(os.sep) if current_dir.startswith(
             self.base_dir
         ) else os.path.basename(current_dir)
-        stats_str = f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {self.gen_stats.processed_dirs} dirs | {self.gen_stats.processed_files} files | "
-        max_rel_path_len = Console.w - (25 + len(stats_str))
+        max_rel_path_len = Console.w - (
+            30 + len(
+                f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {self.gen_stats.processed_dirs} dirs | {self.gen_stats.processed_files} files | "
+            )
+        )
         if len(rel_path) > max_rel_path_len:
-            rel_path = ("..." + rel_path[-max_rel_path_len + 3:])
-        Console.log("GENERATING TREE", stats_str + rel_path, title_bg_color=COLOR.blue, start="\033[F\033[K", end="\n")
+            rel_path = ("..." + rel_path[-max_rel_path_len:])
+        Console.log(
+            "GENERATING TREE",
+            f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) [dim](|) [br:cyan]({self.gen_stats.processed_dirs}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files}) files [dim](|) [white]{rel_path}[_]",
+            title_bg_color=COLOR.blue,
+            start="\033[F\033[K",
+        )
 
     def _gen_tree(self, _dir: str, _prefix: str = "", _level: int = 0, _parent_path: str = "") -> str:
         self._update_progress(_dir)
@@ -526,7 +543,7 @@ class Tree:
 def main():
     global ARGS
     ARGS, tree = Console.get_args(FIND_ARGS), Tree(os.getcwd())
-    if len(ARGS) >= 1:
+    if ARGS.ignore_dirs.exists:
         ignore_input = ARGS.ignore_dirs.value
     else:
         ignore_input = FormatCodes.input("Enter directories which's content should be ignore [dim]((`/` separated) >  )"
@@ -562,6 +579,7 @@ def main():
         include_file_contents=include_file_contents,
         style=style,
         indent=indent,
+        display_progress=(not ARGS.no_displaying_stats.exists),
     )
 
     if into_file:
