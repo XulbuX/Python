@@ -601,7 +601,7 @@ def main():
             file = File.create("tree.txt", result)
         except FileExistsError:
             cls_line = "\033[F\033[K"
-            if Console.confirm("[white]tree.txt[_] already exists. Overwrite?", end=""):
+            if Console.confirm("      \t[white]tree.txt[_] already exists. Overwrite?", end=""):
                 file = File.create("tree.txt", result, force=True)
             else:
                 Console.exit()
