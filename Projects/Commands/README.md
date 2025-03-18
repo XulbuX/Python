@@ -206,7 +206,12 @@ This command generates an advanced directory tree. You have the following option
 * set the tree's indentation size
 * output the tree into a file (*if it's too large to fit inside the console history*)
 
-The directories to ignore can also be given directly via the option `-i` or `--ignore`:
+The directories to ignore can also be given directly via the option `-i` or `--ignore` (*absolute paths, relative paths or directory names*):
 ```console
-x-tree --ignore rel/path/to/dir1 rel/path/to/dir2
+x-tree --ignore /abs/path/to/dir1 rel/path/to/dir3 dir3
+```
+
+With the option `-n`, `-np` or `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
+```console
+x-tree --no-progress
 ```
