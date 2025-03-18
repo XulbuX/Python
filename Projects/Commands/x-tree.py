@@ -608,7 +608,7 @@ def main():
         if file:
             Console.done(f"[white]{file}[_] successfully created.", start=cls_line, end="\n\n")
         else:
-            Console.fail("File is empty or failed to create file.", start=cls_line, end="\n\n")
+            Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
         FormatCodes.print("[white]")
         sys.stdout.write(result)
