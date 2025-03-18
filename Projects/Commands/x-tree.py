@@ -558,7 +558,7 @@ def main():
         ignore_dirs = ARGS.ignore_dirs.value.split()
     else:
         ignore_dirs = FormatCodes.input(
-            "Enter directory rel-paths/names which's content should be ignored [dim]((space separated) >  )"
+            "Enter directory names/rel-paths which's content should be ignored [dim]((space separated) >  )"
         ).strip().split()
 
     auto_ignore = True if FormatCodes.input(
