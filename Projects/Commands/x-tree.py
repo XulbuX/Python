@@ -110,7 +110,7 @@ class Tree:
             ".gitlab", "docker", ".docker", ".kube", "node", "jspm_packages", ".npm", "artifacts", ".yarn", "wheels",
             "docs/_build", "_site", ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache", ".pytest_cache",
             "celerybeat-schedule", ".sonar", ".scannerwork", "migrations", "__tests__", "test-results", "coverage-reports",
-            ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release", "x64", "x86"
+            ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release", "Patch64", "Program64", "Programm64", "x64", "x86"
         }
     ]
 
@@ -214,7 +214,8 @@ class Tree:
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
         Console.done(
-            f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) [br:cyan]({self.gen_stats.processed_dirs}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files}) files",
+            f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) "
+            f"[br:cyan]({self.gen_stats.processed_dirs:,}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files:,}) files",
             start="\033[F\033[K"
         )
         return result
@@ -366,16 +367,17 @@ class Tree:
         rel_path = current_dir[len(self.base_dir):].lstrip(os.sep) if current_dir.startswith(
             self.base_dir
         ) else os.path.basename(current_dir)
+        formatted_dirs, formatted_files = format(self.gen_stats.processed_dirs, ','), format(self.gen_stats.processed_files, ',')
         max_rel_path_len = Console.w - (
             30 + len(
-                f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {self.gen_stats.processed_dirs} dirs | {self.gen_stats.processed_files} files | "
+                f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {formatted_dirs} dirs | {formatted_files} files | "
             )
         )
         if len(rel_path) > max_rel_path_len:
             rel_path = ("..." + rel_path[-max_rel_path_len:])
         Console.log(
             "GENERATING TREE",
-            f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) [dim](|) [br:cyan]({self.gen_stats.processed_dirs}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files}) files [dim](|) [white]{rel_path}[_]",
+            f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) [dim](|) [br:cyan]({formatted_dirs}) dirs [dim](|) [br:cyan]({formatted_files}) files [dim](|) [white]{rel_path}[_]",
             title_bg_color=COLOR.blue,
             start="\033[F\033[K",
         )
