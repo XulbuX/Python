@@ -3,7 +3,6 @@ with a lost of options and customization."""
 from xulbux import FormatCodes, Console, File, COLOR
 from typing import Optional, Pattern, NamedTuple
 from functools import lru_cache
-from itertools import chain
 import time
 import sys
 import os
