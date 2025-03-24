@@ -172,9 +172,9 @@ def get_json(args: dict) -> dict:
             JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
         )
     except FileNotFoundError:
-        xx.Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n", end="")
+        xx.Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n")
         if xx.Console.confirm(f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?", end=""):
-            xx.Json.create(DEFAULT_JSON, indent=4, force=True)
+            xx.Json.create(JSON_FILE, DEFAULT_JSON, indent=4, force=True)
             xx.Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
             xx.FormatCodes.print("        \t[dim]Restarting program...[_]")
             main(args)
@@ -209,29 +209,22 @@ def add_to_env_vars() -> dict:
         if JSON["is_in_env_vars"] != base_dir:
             if not xx.EnvPath.has_path(base_dir=True):
                 xx.Console.warn(
-                    "Path to program-directory doesn't exist in your environment variables.",
+                    "Path to program-directory doesn't exist in your environment variables.\n"
+                    f"[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
                     exit=False,
-                    start="\n",
-                )
-                xx.FormatCodes.print(
-                    f"        \t[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
-                    end="",
+                    start="\n"
                 )
                 if xx.Console.confirm(
-                    "      \tAdd the [+|b]program directory[*] to your environment variables?",
-                    end="",
+                    "      \tAdd the [+|b]program directory[*] to your environment variables?"
                 ):
                     xx.EnvPath.add_path(base_dir=True)
                     xx.Console.info(
-                        f"Successfully added [white]{base_dir}[_] to your environment variables.",
-                        start="\n",
-                        end="\n\n",
-                    )
-                    xx.FormatCodes.print(
-                        f"        \t[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn't work, you may need to restart the console.[_]",
+                        f"Successfully added [white]{base_dir}[_] to your environment variables.\n"
+                        f"[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn't work, you might need to restart the console.[_]",
+                        start="\n", end="\n\n"
                     )
                     xx.FormatCodes.print("        \t[dim]Continuing program...[_]")
-            xx.Json.update(JSON_FILE, f"is_in_env_vars::{base_dir}")
+            xx.Json.update(JSON_FILE, { "is_in_env_vars": base_dir })
     except KeyError:
         xx.Console.fail(
             f"Not all required keys were found in JSON file:  [white]{JSON_FILE}",
@@ -794,7 +787,7 @@ class blade_to_vue:
 def main(args: dict):
     get_json(args)
     if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
-        xx.Console.debug("config.json does not match the default json.")
+        xx.Console.debug(f"{JSON_FILE} does not match the default json.")
     add_to_env_vars()
     args = get_missing_args(args)
     if args.filepath.value in (None, ""):
@@ -816,7 +809,7 @@ def main(args: dict):
             if existing_content == converted_content:
                 xx.Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")
                 xx.Console.pause_exit(exit=True, reset_ansi=True)
-            xx.Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n", end="")
+            xx.Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n")
             if xx.Console.confirm(f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?", start="\n", end=""):
                 pass
             else:
