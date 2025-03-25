@@ -792,7 +792,7 @@ def main(args: dict):
     args = get_missing_args(args)
     if args.filepath.value in (None, ""):
         xx.Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args.filepath.value = xx.Path.extend(args.filepath.value, raise_error=True, correct_path=True)
+    args.filepath.value = xx.Path.extend(args.filepath.value, raise_error=True, use_closest_match=True)
     if not os.path.isfile(args.filepath.value):
         xx.Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
 
