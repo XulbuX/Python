@@ -196,6 +196,19 @@ This command will just display a moving sine wave, inside your console.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 
+### squares.py
+Run with command:
+```console
+squares
+```
+This command gives you the option to get a nicely formatted table with the squares of all numbers up to a certain number.
+
+You can specify the number of table columns with the `-c` or `--columns` option:
+```console
+squares --columns 6
+```
+
+
 ### x-cmds.py
 Run with command:
 ```console
