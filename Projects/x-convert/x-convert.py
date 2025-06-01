@@ -1,5 +1,5 @@
-from typing import Optional
-import xulbux as xx
+from xulbux import FormatCodes, Console, EnvPath, String, Regex, Code, Data, File, Json, Path, Args
+from typing import Optional, cast
 import regex as rx
 import pathlib
 import os
@@ -125,15 +125,15 @@ DEFAULT_JSON = {
 L_FN = r"\$lang|__"
 ADD_JS = []
 JS_IMPORTS = {}
-QUOTES = xx.Regex.quotes()
-R_BR = xx.Regex.brackets("(", ")", is_group=True)
-S_BR = xx.Regex.brackets("[", "]", is_group=True)
-C_BR = xx.Regex.brackets("{", "}", is_group=True)
-A_BR = xx.Regex.brackets("<", ">", is_group=True)
+QUOTES = Regex.quotes()
+R_BR = Regex.brackets("(", ")", is_group=True)
+S_BR = Regex.brackets("[", "]", is_group=True)
+C_BR = Regex.brackets("{", "}", is_group=True)
+A_BR = Regex.brackets("<", ">", is_group=True)
 
 
 def show_help():
-    xx.FormatCodes.print(
+    FormatCodes.print(
         rf"""  [_|b|#7075FF]        [#FF9E6A]                                      __
   [b|#7075FF]  _  __ [#FF9E6A]  _________  ____  _   _____  _______/ /_
   [b|#7075FF] | |/ / [#FF9E6A] / ___/ __ \/ __ \| | / / _ \/ ___/_  __/
@@ -153,10 +153,10 @@ def show_help():
 
   [b|#7090FF]Examples [_b]((Blade ➜ Vue)):[*]
     Full path with 2 spaces indentation:
-      [_]C:\Users\{xx.Console.usr}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
+      [_]C:\Users\{Console.usr}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
 
     Relative path with 4 spaces indentation:
-      [_]C:\Users\{xx.Console.usr}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
+      [_]C:\Users\{Console.usr}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
       [_]D:\full\path> [#FF9E6A]x-convert [#7B7C8F]--file-path [#4DF1C2].\to\file.blade.php [#7B7C8F]--indent-spaces [#77EFEF]4 [#7B7C8F]--blade-to-vue[*]
 
   [b|#7090FF]Supported conversion:[*]
@@ -165,68 +165,67 @@ def show_help():
     )
 
 
-def get_json(args: dict) -> dict:
+def get_json(args: Args) -> None:
     try:
         global JSON, _JSON
-        JSON, _JSON = xx.Json.read(
+        JSON, _JSON = Json.read(
             JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
         )
     except FileNotFoundError:
-        xx.Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n")
-        if xx.Console.confirm(f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?", end=""):
-            xx.Json.create(JSON_FILE, DEFAULT_JSON, indent=4, force=True)
-            xx.Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
-            xx.FormatCodes.print("        \t[dim]Restarting program...[_]")
+        Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n")
+        if Console.confirm(f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?", end=""):
+            Json.create(JSON_FILE, DEFAULT_JSON, indent=4, force=True)
+            Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
+            FormatCodes.print("        \t[dim]Restarting program...[_]")
             main(args)
-            xx.Console.pause_exit(exit=True)
+            Console.pause_exit(exit=True)
         else:
-            xx.Console.exit(start="\n", end="\n\n")
+            Console.exit(start="\n", end="\n\n")
 
 
-def get_missing_args(args: list) -> list:
+def get_missing_args(args: Args) -> Args:
     if not args.filepath.value or not args.blade_vue.exists:
         print()
     if not args.filepath.value:
-        args.filepath.value = xx.FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
+        args.filepath.value = FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
     if not args.blade_vue.exists:
-        xx.FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
-        xx.FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
+        FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
+        FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
         args.blade_vue.exists = (
-            xx.Console.restricted_input(
+            (Console.restricted_input(
                 "                 [_|dim] >  [_]",
                 default_color="#3EE6DE",
                 allowed_chars="1",
                 # max_len=1
-            ).strip()
-            == "1"
+            ) or "").strip() == "1"
         )
     return args
 
 
-def add_to_env_vars() -> dict:
-    base_dir = xx.Path.script_dir
+def add_to_env_vars() -> None:
+    base_dir = Path.script_dir
     try:
         if JSON["is_in_env_vars"] != base_dir:
-            if not xx.EnvPath.has_path(base_dir=True):
-                xx.Console.warn(
+            if not EnvPath.has_path(base_dir=True):
+                Console.warn(
                     "Path to program-directory doesn't exist in your environment variables.\n"
                     f"[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
                     exit=False,
                     start="\n"
                 )
-                if xx.Console.confirm(
+                if Console.confirm(
                     "      \tAdd the [+|b]program directory[*] to your environment variables?"
                 ):
-                    xx.EnvPath.add_path(base_dir=True)
-                    xx.Console.info(
+                    EnvPath.add_path(base_dir=True)
+                    Console.info(
                         f"Successfully added [white]{base_dir}[_] to your environment variables.\n"
                         f"[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn't work, you might need to restart the console.[_]",
                         start="\n", end="\n\n"
                     )
-                    xx.FormatCodes.print("        \t[dim]Continuing program...[_]")
-            xx.Json.update(JSON_FILE, { "is_in_env_vars": base_dir })
+                    FormatCodes.print("        \t[dim]Continuing program...[_]")
+            Json.update(JSON_FILE, { "is_in_env_vars": base_dir })
     except KeyError:
-        xx.Console.fail(
+        Console.fail(
             f"Not all required keys were found in JSON file:  [white]{JSON_FILE}",
             pause=DEBUG,
             start="\n",
@@ -244,7 +243,7 @@ class blade_to_vue:
         )
         pattern_multiline = r"<x-slot\s*name\s*=\s*" + QUOTES + r"\s*>(.*?)</x-slot>"
 
-        def replace_slot(match: re.Match) -> str:
+        def replace_slot(match: re.Match) -> Optional[str]:
             name = match.group(2)
             content = match.group(3).strip()
             if not content:
@@ -257,14 +256,14 @@ class blade_to_vue:
             slots[name] = content
 
         slots = {}
-        code = rx.sub(pattern_one_line, replace_slot, code, flags=re.DOTALL)
+        code = rx.sub(pattern_one_line, replace_slot, code, flags=re.DOTALL)  # type: ignore[overloads]
 
         def add_slot_attributes(match: re.Match) -> str:
             tag = match.group(1)
             attributes = match.group(2).strip()
             for name, value in slots.items():
                 val = value.strip()
-                attributes += f'{f' {':' if xx.Code.is_js(val) else ''}{name}="{val}"' if val and not('\n' in val or '>' in val) else ''}'
+                attributes += f'{f' {':' if Code.is_js(val) else ''}{name}="{val}"' if val and not('\n' in val or '>' in val) else ''}'
             return f"<{tag} {attributes.strip()}>{match.group(3)}"
 
         code = rx.sub(
@@ -280,8 +279,8 @@ class blade_to_vue:
 
     @staticmethod
     def add_php_funcs(code: str, php_as_js_functions: dict) -> None:
-        for php_func in xx.Data.remove_duplicates(
-            [func[0] for func in xx.Code.get_func_calls(code)]
+        for php_func in Data.remove_duplicates(
+            [func[0] for func in Code.get_func_calls(code)]
         ):
             if php_func in php_as_js_functions.keys():
                 js_func = php_as_js_functions[php_func]
@@ -301,7 +300,7 @@ class blade_to_vue:
     def transform_script_lang_funcs(code: str) -> str:
         pattern = (
             r"(<script(?:\s+[\s\S]*)?>)"
-            + xx.Regex.all_except(r"<|>", is_group=True)
+            + Regex.all_except(r"<|>", is_group=True)
             + r"(<\/script\s*>)"
         )
 
@@ -362,7 +361,7 @@ class blade_to_vue:
                 return f"{function_replacements[func_parts[0]]}({func_parts[1]})"
             return match.group(0)
 
-        code = rx.sub(r"(?i)" + xx.Regex.func_call(), replace_func_name, code)
+        code = rx.sub(r"(?i)" + Regex.func_call(), replace_func_name, code)  # type: ignore[overloads]
         return code
 
     @staticmethod
@@ -410,7 +409,7 @@ class blade_to_vue:
                     )
             return match.group(0)
 
-        code = rx.sub(r"(?i)@for(?:each)?\s*" + R_BR, replace_loop, code)
+        code = rx.sub(r"(?i)@for(?:each)?\s*" + R_BR, replace_loop, code)  # type: ignore[overloads]
         return code
 
     @staticmethod
@@ -419,16 +418,16 @@ class blade_to_vue:
                           (?:\s*\.\s*(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*))+)"""
         split_concat_regex = r"""('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*)|\s*\.\s*"""
 
-        def is_quoted(s: str) -> re.Match:
+        def is_quoted(s: str) -> Optional[re.Match]:
             return re.match(r'^[\'"`].*[\'"`]$', s.strip())
 
         matches = list(rx.compile(concat_code_regex, rx.VERBOSE).finditer(code))
         if matches:
             for match in matches:
                 concat_str = match.group(1)
-                parts = xx.Data.remove_empty_items(
+                parts = cast(list, Data.remove_empty_items(
                     rx.compile(split_concat_regex, rx.VERBOSE).findall(concat_str)
-                )
+                ))
                 if any(char in item for item in parts for char in ('"', "'", "`")):
                     is_str, transformed = 0, ""
                     for i, part in enumerate(parts):
@@ -492,29 +491,30 @@ class blade_to_vue:
             )
 
         code = re.sub(  # CORRECT ALREADY PRESENT, BUT FORBIDDEN SELF-CLOSING TAGS
-            r"<(/?)([\w.-]+)\s*(" + xx.Regex.all_except(r"<|>") + r")\s*/>",
+            r"<(/?)([\w.-]+)\s*(" + Regex.all_except(r"<|>") + r")\s*/>",
             replace_self_closing_tag,
             code,
             flags=re.DOTALL,
         )
         return re.sub(
-            r"<(/?)([\w.-]+)\s*(" + xx.Regex.all_except(r"<|>") + r")>\s*</\2\s*>",
+            r"<(/?)([\w.-]+)\s*(" + Regex.all_except(r"<|>") + r")>\s*</\2\s*>",
             replace_self_closing_tag,
             code,
             flags=re.DOTALL,
         )
 
     @staticmethod
-    def update_js(code: str, imports: dict, add_js: list, indent: int = None) -> str:
+    def update_js(code: str, imports: dict, add_js: list, indent: Optional[int] = None) -> str:
         if not (imports or add_js):
             return code
         if not indent or indent < 0:
             indent = 0
         pattern = (
             r"<script(\s+[\s\S]*)?>"
-            + xx.Regex.all_except(r"<\/script\s*>", is_group=True)
+            + Regex.all_except(r"<\/script\s*>", is_group=True)
             + r"<\/script\s*>\s*(?=\s*$)"
         )
+        js_parts = {"new": [], "old": []}
         if imports:
             js_parts = {
                 "new": [
@@ -537,11 +537,10 @@ class blade_to_vue:
         if re.search(pattern, code, flags=re.DOTALL):
             code = re.sub(pattern, add_new_script, code, flags=re.DOTALL)
         else:
-            imports = "".join([f"{indent * ' '}{line}" for line in js_parts["new"]])
-            code += f'\n\n<script setup lang="ts">\n{imports}\n</script>'
+            code += f'\n\n<script setup lang="ts">\n{"".join([f"{indent * ' '}{line}" for line in js_parts["new"]])}\n</script>'
         return code
 
-    def convert(self, code: str, indent: int = None) -> str:
+    def convert(self, code: str, indent: int = 2) -> str:
         code = self.transform_concatenated(code)
         self.add_php_funcs(code, JSON["php_as_js_functions"])
         code = self.transform_script_lang_funcs(code)
@@ -607,11 +606,11 @@ class blade_to_vue:
         )
         code = rx.sub(  # REPLACE `<div @if(true) attr>` SYNTAX WITH `<div :attr="true">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
-            + xx.Regex.all_except(r"<|>|@if")
+            + Regex.all_except(r"<|>|@if")
             + r")@if\s*"
             + R_BR
             + r"((?:\s+[\w-]+)?)("
-            + xx.Regex.all_except(r"<|>")
+            + Regex.all_except(r"<|>")
             + r">)",
             lambda m: (
                 f'{m.group(1)}:{m.group(3).strip()}="{m.group(2).strip()}"{m.group(4)}'
@@ -623,11 +622,11 @@ class blade_to_vue:
         )
         code = rx.sub(  # REPLACE `<div @empty(var) attr>` SYNTAX WITH `<div :attr="!var">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
-            + xx.Regex.all_except(r"<|>|@empty")
+            + Regex.all_except(r"<|>|@empty")
             + r")@empty\s*"
             + R_BR
             + r"((?:\s+[\w-]+)?)("
-            + xx.Regex.all_except(r"<|>")
+            + Regex.all_except(r"<|>")
             + r">)",
             lambda m: (
                 f'{m.group(1)}:{m.group(3).strip()}="!({m.group(2).strip()})"{m.group(4)}'
@@ -639,11 +638,11 @@ class blade_to_vue:
         )
         code = rx.sub(  # REPLACE `<div @isset(var) attr>` SYNTAX WITH `<div :attr="(var) !== undefined">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
-            + xx.Regex.all_except(r"<|>|@isset")
+            + Regex.all_except(r"<|>|@isset")
             + r")@isset\s*"
             + R_BR
             + r"((?:\s+[\w-]+)?)("
-            + xx.Regex.all_except(r"<|>")
+            + Regex.all_except(r"<|>")
             + r">)",
             lambda m: (
                 f'{m.group(1)}:{m.group(3).strip()}="({m.group(2).strip()}) !== undefined"{m.group(4)}'
@@ -655,11 +654,11 @@ class blade_to_vue:
         )
         code = rx.sub(  # REPLACE `<div @is_null(var) attr>` SYNTAX WITH `<div :attr="(var) === null">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
-            + xx.Regex.all_except(r"<|>|@is_null")
+            + Regex.all_except(r"<|>|@is_null")
             + r")@is_null\s*"
             + R_BR
             + r"((?:\s+[\w-]+)?)("
-            + xx.Regex.all_except(r"<|>")
+            + Regex.all_except(r"<|>")
             + r">)",
             lambda m: (
                 f'{m.group(1)}:{m.group(3).strip()}="({m.group(2).strip()}) === null"{m.group(4)}'
@@ -671,9 +670,9 @@ class blade_to_vue:
         )
         code = rx.sub(  # REMOVE `@end...` SYNTAX INSIDE TAG-ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
-            + xx.Regex.all_except(r"<|>|@end(?:[\w_]+)")
+            + Regex.all_except(r"<|>|@end(?:[\w_]+)")
             + r")@end([\w_]+)("
-            + xx.Regex.all_except(r"<|>")
+            + Regex.all_except(r"<|>")
             + r">)",
             r"\1\3",
             code,
@@ -726,7 +725,7 @@ class blade_to_vue:
             r":?([\w-]+)\s*=\s*" + QUOTES,
             lambda m: (
                 f':{m.group(1)}="{m.group(3).strip()}"'
-                if xx.Code.is_js(m.group(3).strip())
+                if Code.is_js(m.group(3).strip())
                 else f'{m.group(1)}="{m.group(3).strip()}"'
             ),
             code,
@@ -769,32 +768,32 @@ class blade_to_vue:
             code,
         )
 
-        outside_template_script_pattern = (r"(<script(?:\s+[\s\S]*)?>" + xx.Regex.all_except(r"<\/script\s*>") + r"<\/script\s*>\s*)(?=\s*$)")
-        outside_template_script = "\n".join(rx.findall(outside_template_script_pattern, code, flags=re.DOTALL).rstrip(" \n"))
+        outside_template_script_pattern = (r"(<script(?:\s+[\s\S]*)?>" + Regex.all_except(r"<\/script\s*>") + r"<\/script\s*>\s*)(?=\s*$)")
+        outside_template_script = "\n".join(rx.findall(outside_template_script_pattern, code, flags=re.DOTALL))
         code = rx.sub(  # REMOVE OUTSIDE TEMPLATE SCRIPT
             outside_template_script_pattern, "", code, flags=re.DOTALL
         )
-        vue_content = f"<template>\n{xx.Code.add_indent(code.strip(), xx.Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
+        vue_content = f"<template>\n{Code.add_indent(code.strip(), Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
         if isinstance(args.indent.value, int):
-            vue_content = xx.String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
-            xx.Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
+            vue_content = String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
+            Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
             if not args.indent.value < 1:
-                vue_content = xx.Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
-                xx.Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
+                vue_content = Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
+                Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
         return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
 
 
-def main(args: dict):
+def main(args: Args):
     get_json(args)
-    if DEBUG and not xx.Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
-        xx.Console.debug(f"{JSON_FILE} does not match the default json.")
+    if DEBUG and not Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
+        Console.debug(f"{JSON_FILE} does not match the default json.")
     add_to_env_vars()
     args = get_missing_args(args)
     if args.filepath.value in (None, ""):
-        xx.Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args.filepath.value = xx.Path.extend(args.filepath.value, raise_error=True, use_closest_match=True)
+        Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
+    args.filepath.value = Path.extend(str(args.filepath.value), raise_error=True, use_closest_match=True)
     if not os.path.isfile(args.filepath.value):
-        xx.Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
+        Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
 
     with open(args.filepath.value, "r") as file:
         file_content = file.read()
@@ -802,28 +801,28 @@ def main(args: dict):
     converted_content = (converter.convert(file_content, args.indent.value) if args.blade_vue.exists else None)
 
     if converted_content:
-        new_file_path = xx.File.rename_extension(args.filepath.value, ".vue", camel_case_filename=True)
+        new_file_path = File.rename_extension(args.filepath.value, ".vue", camel_case_filename=True)
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
             if existing_content == converted_content:
-                xx.Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")
-                xx.Console.pause_exit(exit=True, reset_ansi=True)
-            xx.Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n")
-            if xx.Console.confirm(f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?", start="\n", end=""):
+                Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")
+                Console.pause_exit(exit=True, reset_ansi=True)
+            Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n")
+            if Console.confirm(f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?", start="\n", end=""):
                 pass
             else:
-                xx.Console.exit(reset_ansi=True, start="\n", end="\n\n")
+                Console.exit(reset_ansi=True, start="\n", end="\n\n")
         with open(new_file_path, "w") as file:
             file.write(converted_content)
-        xx.Console.done(f"Formatted into file: [white]{new_file_path}", pause=DEBUG, start="\n", end="\n\n")
+        Console.done(f"Formatted into file: [white]{new_file_path}", pause=DEBUG, start="\n", end="\n\n")
     else:
-        xx.Console.fail("Empty file or invalid conversion chosen.", pause=DEBUG, start="\n", end="\n\n")
-    xx.Console.pause_exit(exit=True, reset_ansi=True)
+        Console.fail("Empty file or invalid conversion chosen.", pause=DEBUG, start="\n", end="\n\n")
+    Console.pause_exit(exit=True, reset_ansi=True)
 
 
 if __name__ == "__main__":
-    args = xx.Console.get_args(FIND_ARGS)
+    args = Console.get_args(FIND_ARGS)
     DEBUG = args.debug.exists
     if DEBUG:
         if args.help.exists:
@@ -837,8 +836,8 @@ if __name__ == "__main__":
             else:
                 main(args)
         except FileNotFoundError:
-            xx.Console.fail(f"File not found: [white]{args.filepath.value}", pause=DEBUG, start="\n", end="\n\n")
+            Console.fail(f"File not found: [white]{args.filepath.value}", pause=DEBUG, start="\n", end="\n\n")
         except KeyboardInterrupt:
-            xx.Console.exit(start="\n\n", end="\n\n")
+            Console.exit(start="\n\n", end="\n\n")
         except Exception as e:
-            xx.Console.fail(e, pause=DEBUG, start="\n", end="\n\n")
+            Console.fail(e, pause=DEBUG, start="\n", end="\n\n")
