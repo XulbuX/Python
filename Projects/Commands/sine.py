@@ -1,11 +1,11 @@
 """Show a sine wave animation inside the console."""
-from typing import Generator
+from typing import Generator, Any
 from xulbux import Console
 import math
 import time
 
 
-def smooth_wave(amplitude: int, speed: tuple[float]) -> Generator[any, None, None]:
+def smooth_wave(amplitude: int, speed: tuple[float, int]) -> Generator[Any, None, None]:
     while True:
         for i in range(0, 361):
             angle = math.radians(i * speed[0])

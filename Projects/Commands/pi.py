@@ -1,5 +1,6 @@
 """Calculate the value of pi to a specified number of decimal places."""
 from xulbux import FormatCodes
+from typing import Iterator
 import threading
 import psutil
 import math
@@ -165,7 +166,7 @@ def animate() -> None:
         i += 1
 
 
-def p() -> iter:
+def p() -> Iterator[int]:
     q, r, t, j = 1, 180, 60, 2
     while True:
         u, y = 3 * (3 * j + 1) * (3 * j + 2), (q * (27 * j - 12) + 5 * r) // (5 * t)
@@ -192,6 +193,7 @@ def main() -> None:
         )
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
+        result = None
         try:
             result = pi(input_k)
         except MemoryError:
@@ -211,7 +213,10 @@ def main() -> None:
             sys.exit(0)
         CALC_DONE = True
         animation_thread.join()
-        FormatCodes.print(f"\r[br:cyan]({result})\n")
+        if result:
+            FormatCodes.print(f"\r[br:cyan]({result})\n")
+        else:
+            FormatCodes.print("\r[b|br:red](⨯)  \n")
 
 
 if __name__ == "__main__":

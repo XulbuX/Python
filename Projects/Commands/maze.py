@@ -3,7 +3,7 @@ Controls and options are shown on startup."""
 from xulbux import FormatCodes, Console, Path
 from heapq import heappush, heappop
 from collections import deque
-from typing import Optional
+from typing import Optional, cast
 import keyboard
 import random
 import array
@@ -29,7 +29,7 @@ class Maze:
         goal: str = "3",
         player: str = "4",
         solution: str = "5",
-        render_opts: dict[str, str | int] = None,
+        render_opts: Optional[dict[str, str | int | tuple[str, str]]] = None,
         render_ascii: bool = False,
     ):
         # PRE-COMPUTE TILES
@@ -40,7 +40,7 @@ class Maze:
         self.player_byte: int = ord(player)
         self.solution_byte: int = ord(solution)
         # RENDER
-        self.render_opts: dict[str, str | int] = ({
+        self.render_opts: dict[str, str | int | tuple[str, str]] = ({
             "bg": " ",
             "wall": "█",
             "start": " ",
@@ -63,12 +63,12 @@ class Maze:
         self.render_ascii: bool = render_ascii
         self.render_opts["stretch_w"] = max(1, self.render_opts["stretch_w"])
         self.rendered_tiles: dict[int, str] = {
-            self.bg_byte: self._render_char(self.render_opts["bg"]),
-            self.wall_byte: self._render_char(self.render_opts["wall"]),
-            self.start_byte: self._render_char(self.render_opts["start"]),
-            self.goal_byte: self._render_char(self.render_opts["goal"]),
-            self.player_byte: self._render_char(self.render_opts["player"]),
-            self.solution_byte: self._render_char(self.render_opts["solution"]),
+            self.bg_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["bg"])),
+            self.wall_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["wall"])),
+            self.start_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["start"])),
+            self.goal_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["goal"])),
+            self.player_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["player"])),
+            self.solution_byte: self._render_char(cast(str | tuple[str, str], self.render_opts["solution"])),
         }
         # GENERATE MAZE
         self.width: int = width - 2
@@ -170,11 +170,11 @@ class Maze:
         final_maze = self._trim_borders(maze_2d)
         return self._add_borders(final_maze)
 
-    def _render_char(self, value: str) -> str:
-        return (
-            value * self.render_opts["stretch_w"]
-            if isinstance(value, str) else f"{value[1]}({value[0] * self.render_opts['stretch_w']})"
-        )
+    def _render_char(self, value: str | tuple[str, str]) -> str:
+        if isinstance(value, str):
+            return value * cast(int, self.render_opts["stretch_w"])
+        else:
+            return f"{value[1]}({value[0] * cast(int, self.render_opts["stretch_w"])})"
 
     def _get_pos(self, tile: int) -> list[int]:
         for y in range(self.height):
@@ -278,14 +278,16 @@ class Maze:
     def render(self, output_to_console: bool = False, show_solution: bool = False) -> Optional[str]:
         if self.show_solution or show_solution:
             solution_path = self._find_path(self.player_byte, self.goal_byte)
+        else:
+            solution_path = set()
         maze_lines = ()
         for y, row in enumerate(self.maze):
             line = ""
             for x, c in enumerate(row):
                 if (self.show_solution or show_solution) and ((y, x) in solution_path and c == self.bg_byte):
-                    line += self.rendered_tiles.get(self.solution_byte)
+                    line += self.rendered_tiles.get(self.solution_byte, "")
                 else:
-                    line += self.rendered_tiles.get(c)
+                    line += self.rendered_tiles.get(c, self.rendered_tiles.get(self.bg_byte, ""))
             maze_lines += (line, )
         if output_to_console:
             if self.render_ascii:
@@ -339,7 +341,7 @@ def main():
     def smart_split(s: str, char: str = " ") -> list[str]:
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())
 
-    Console.log_box(
+    Console.log_box_filled(
         " [b](WASD ↑←↓→)  : move the player",
         "     [b](H)      : toggle solution",
         "     [b](F)      : finish maze",
@@ -361,7 +363,7 @@ def main():
                         Console.w // 2,
                         Console.h,
                         render_ascii=ascii_mode,
-                    ).play(),
+                    ).play()
             elif event.name == "space":
                 w, h = (
                     int(val.strip()) for val in smart_split(
@@ -385,13 +387,13 @@ def main():
                 )
                 FormatCodes.print("\r[dim](rendering maze...        )", end="")
                 maze.show_solution = False
-                content = info + maze.render()
+                content = info + (maze.render() or "")
                 FormatCodes.print("\r[dim](writing maze file...     )", end="")
                 with open(files[0], "w", encoding="utf-8") as f:
                     f.write(content)
                 FormatCodes.print("\r[dim](rendering solution...    )", end="")
                 maze.show_solution = True
-                content = info + maze.render()
+                content = info + (maze.render() or "")
                 FormatCodes.print("\r[dim](writing solution file... )", end="")
                 with open(files[1], "w", encoding="utf-8") as f:
                     f.write(content)
@@ -402,7 +404,7 @@ def main():
                         for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if os.path.getsize(f) < 1024**(i + 1)
                     ) + ")" for f in files
                 ]
-                Console.log_box(
+                Console.log_box_filled(
                     f"Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
                     f"Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
                     start="\r",

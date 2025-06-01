@@ -1,6 +1,7 @@
 """Lists all installed Visual Studio Code extensions with
 the option to directly format them as a JSON list."""
 from xulbux import FormatCodes, Console, Data
+from typing import Optional, cast
 import subprocess
 import platform
 import sys
@@ -18,7 +19,7 @@ def check_vscode_installed() -> bool:
         return False
 
 
-def get_vscode_extensions() -> list[str]:
+def get_vscode_extensions() -> Optional[list[str]]:
     try:
         result = subprocess.run(["code", "--list-extensions"], capture_output=True, text=True, shell=True)
         return result.stdout.strip().splitlines()
@@ -31,7 +32,7 @@ def main() -> None:
     if not check_vscode_installed():
         FormatCodes.print("[br:red](Visual Studio Code is not installed or not in PATH.)")
         sys.exit(1)
-    extensions = get_vscode_extensions()
+    extensions = cast(list[str], get_vscode_extensions())
     FormatCodes.print(f"\n[white]Installed extensions: [b]{len(extensions)}[_]")
     FormatCodes.print(
         "\n[white]" + (Data.to_str(extensions, as_json=True) if args.as_json.exists else "\n".join(extensions)) + "[_]\n"

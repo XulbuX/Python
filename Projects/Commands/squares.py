@@ -33,7 +33,7 @@ def main():
                 allowed_chars=CHARS.digits,
                 min_len=1,
                 max_len=7,
-            )
+            ) or ""
         )
 
         i = 1

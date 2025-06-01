@@ -2,6 +2,7 @@
 Uses 'twine' to try to upload the packaged library to PyPI."""
 # pip install build twine xulbux
 from xulbux import FormatCodes, Console, Path
+from xulbux.xx_console import Args
 from typing import Optional
 import subprocess
 import shutil
@@ -73,7 +74,7 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
                 Console.fail(f"Failed to delete [white]{file_path}[_c]. Reason: {e}")
 
 
-def main(args: dict) -> None:
+def main(args: Args) -> None:
     os.chdir(args.lib_base.value)
     run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}")
     twine_path = find_twine_path()

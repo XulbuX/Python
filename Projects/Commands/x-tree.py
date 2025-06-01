@@ -1,7 +1,7 @@
 """A really advanced directory tree generator
 with a lost of options and customization."""
 from xulbux import FormatCodes, Console, File, COLOR
-from typing import Optional, Pattern, NamedTuple
+from typing import Optional, Pattern, NamedTuple, cast
 from functools import lru_cache
 import time
 import sys
@@ -115,23 +115,23 @@ class Tree:
 
     def __init__(
         self,
-        base_dir: Optional[str] = None,
+        base_dir: str = "",
         ignore_dirs: Optional[list[str]] = [],
         auto_ignore: Optional[bool] = True,
         include_file_contents: Optional[bool] = False,
-        style: Optional[int] = 1,
-        indent: Optional[int] = 2,
+        style: int = 1,
+        indent: int = 2,
         display_progress: Optional[bool] = True,
     ):
         self.base_dir: str = base_dir
-        self.ignore_dirs: list[str] = ignore_dirs + (self.IGNORE_DIRS if auto_ignore else [])
-        self.auto_ignore: bool = auto_ignore
-        self.include_file_contents: bool = include_file_contents
+        self.ignore_dirs: list[str] = (ignore_dirs or []) + (self.IGNORE_DIRS if auto_ignore else [])
+        self.auto_ignore: Optional[bool] = auto_ignore
+        self.include_file_contents: Optional[bool] = include_file_contents
         self.style: int = style
         self.indent: int = indent
-        self.display_progress: bool = display_progress
-        self.ignore_set: frozenset[str] = None
-        self.style_presets: dict[int, dict[str, str]] = {
+        self.display_progress: Optional[bool] = display_progress
+        self.ignore_set: frozenset[str] = frozenset()
+        self.style_presets: dict[int, dict[str, str | tuple[str, str, str]]] = {
             1: {
                 "line_ver": "│",
                 "line_hor": "─",
@@ -172,7 +172,7 @@ class Tree:
         self._error_suffix = None
         self._ignored_suffix = None
         self._reset_style_attrs()
-        self.gen_stats = None
+        self.gen_stats = GenerationStats()
         self._progress_update_interval = 0.05  # SECONDS BETWEEN UPDATES
         self._last_progress_update = 0
 
@@ -194,10 +194,12 @@ class Tree:
         self.gen_stats = GenerationStats()
         self.base_dir = base_dir or self.base_dir
         self.ignore_dirs += ignore_dirs
+        if not auto_ignore:
+            self.ignore_dirs = []
         self.auto_ignore = self.auto_ignore if auto_ignore is None else auto_ignore
         self.include_file_contents = include_file_contents or self.include_file_contents
-        self.style = style if style >= 1 else self.style
-        self.indent = (indent if indent >= 0 else self.indent) + 1
+        self.style = style if style is not None and style >= 1 else self.style
+        self.indent = (indent if indent is not None and indent >= 0 else self.indent) + 1
         self.base_dir = os.path.abspath(str(self.base_dir))
         if not os.path.isdir(self.base_dir):
             raise ValueError(f"Invalid base directory: {self.base_dir}")
@@ -210,6 +212,7 @@ class Tree:
                 )
             ) == 0 else frozenset(norm_ignore_dirs)
         )
+        print(self.ignore_dirs)
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
         Console.done(
@@ -221,13 +224,13 @@ class Tree:
 
     def _reset_style_attrs(self) -> None:
         styles = self.style_presets.get(self.style, self.style_presets[1])
-        self.line_ver = styles["line_ver"]
-        self.line_hor = styles["line_hor"]
-        self.branch_new = styles["branch_new"]
-        self.corners = styles["corners"]
-        self.error = styles["error"]
-        self.ignored = styles["ignored"]
-        self.dirname_end = styles["dirname_end"]
+        self.line_ver = cast(str, styles["line_ver"])
+        self.line_hor = cast(str, styles["line_hor"])
+        self.branch_new = cast(str, styles["branch_new"])
+        self.corners = cast(tuple[str, str, str], styles["corners"])
+        self.error = cast(str, styles["error"])
+        self.ignored = cast(str, styles["ignored"])
+        self.dirname_end = cast(str, styles["dirname_end"])
         self._tab = self._SPACE * self.indent
         self._line_ver_b = self.line_ver.encode()
         self._line_hor_b = self.line_hor.encode() * max(0, self.indent - (2 if self.indent > 2 else 1))
@@ -556,19 +559,21 @@ def main():
     global ARGS
     ARGS, tree = Console.get_args(FIND_ARGS, True), Tree(os.getcwd())
     if ARGS.ignore_dirs.exists:
-        ignore_dirs = ARGS.ignore_dirs.value.split()
+        ignore_dirs = str(ARGS.ignore_dirs.value).split()
     else:
         ignore_dirs = FormatCodes.input(
             "Enter directory names/rel-paths which's content should be ignored [dim]((space separated) >  )"
         ).strip().split()
 
-    auto_ignore = True if FormatCodes.input(
-        f"Enable auto-ignore unimportant directories [dim]({"(Y)" if DEFAULT["auto_ignore"] else "(N)"} >  )"
-    ).strip().lower() in ("y", "yes") else DEFAULT["auto_ignore"]
-
-    include_file_contents = True if FormatCodes.input(
+    auto_ignore = bool(user_entry in ("y", "yes")) if (
+        user_entry := FormatCodes.input(
+            f"Enable auto-ignore unimportant directories [dim]({"(Y)" if DEFAULT["auto_ignore"] else "(N)"} >  )"
+        ).strip().lower()
+    ) else DEFAULT["auto_ignore"]
+    
+    include_file_contents = bool(user_entry in ("y", "yes")) if (user_entry := FormatCodes.input(
         f"Display the file contents in the tree [dim]({"(Y)" if DEFAULT["include_file_contents"] else "(N)"} >  )"
-    ).strip().lower() in ("y", "yes") else DEFAULT["include_file_contents"]
+    ).strip().lower()) else DEFAULT["include_file_contents"]
 
     print("Enter the tree style (1-4): ")
     tree.show_styles()
@@ -582,8 +587,11 @@ def main():
         and int(indent) >= 0 else DEFAULT["indent"]
     )
 
-    into_file = True if FormatCodes.input(f"Output tree into file [dim]({"(Y)" if DEFAULT["into_file"] else "(N)"} >  )"
-                                          ).strip().lower() in ("y", "yes") else DEFAULT["into_file"]
+    into_file = bool(user_entry in ("y", "yes")) if (
+        user_entry := FormatCodes.input(
+            f"Output tree into file [dim]({"(Y)" if DEFAULT["into_file"] else "(N)"} >  )"
+        ).strip().lower()
+    ) else DEFAULT["into_file"]
 
     result = tree.generate(
         ignore_dirs=ignore_dirs,

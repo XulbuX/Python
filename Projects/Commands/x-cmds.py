@@ -1,7 +1,7 @@
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
-from typing import Optional
+from typing import Optional, Any, cast
 import importlib.util
 import sys
 import os
@@ -18,7 +18,7 @@ TAB4 = " " * (TAB_SIZE * 4 + 1)
 
 
 def parse_args_comment(s: str) -> dict:
-    result, m = {}, re.match(r'\[(.*)\]', s)
+    result, m = {}, cast(re.Match[str], re.match(r'\[(.*)\]', s))
     pattern = re.finditer(r'(\w+)(?:\s*:\s*\[([^\]]*)\])?', m[1])
     for match in pattern:
         key, values = match[1], match[2].split(',') if match[2] else []
@@ -26,12 +26,12 @@ def parse_args_comment(s: str) -> dict:
     return result
 
 
-def get_var_val(file_path: str, var_name: str) -> str:
+def get_var_val(file_path: str, var_name: str) -> Optional[Any]:
     sys.stdout = open(os.devnull, "w")
     sys.stderr = open(os.devnull, "w")
     spec = importlib.util.spec_from_file_location(os.path.basename(file_path), file_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = importlib.util.module_from_spec(spec)  # type: ignore[call-arg]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
     var_val = getattr(module, var_name, None)
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
@@ -59,6 +59,7 @@ def get_commands() -> str:
         if file_ext in (".py", ".pyw"):
             abs_path = os.path.join(Path.script_dir, f)
             commands += f"\n [i|dim|#6F9]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|#6F9]({filename})"
+            sys_argv = None
             try:
                 with open(abs_path, "r", encoding="utf-8") as file:
                     content = file.read()

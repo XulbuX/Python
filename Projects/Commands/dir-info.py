@@ -2,6 +2,7 @@
 Information can be ignored, since it can take quite long to calculate."""
 from concurrent.futures import ThreadPoolExecutor
 from xulbux import FormatCodes, Console
+from typing import cast
 import math
 import mmap
 import sys
@@ -61,7 +62,7 @@ def process_file(file_path: str) -> tuple[int, int, int]:
 def calc_files_scope(files: list) -> tuple[int, int, int]:
     with ThreadPoolExecutor(max_workers=min(32, len(files))) as executor:
         results = list(executor.map(process_file, files, chunksize=10))
-    return map(sum, zip(*results))
+    return cast(tuple[int, int, int], tuple(map(sum, zip(*results))))
 
 
 def format_bytes_size(bytes: int) -> str:
@@ -80,11 +81,11 @@ def main():
     print_overwrite("[dim](calculating scope...)", end="")
     files_count, files_scope, files_size = calc_files_scope(files)
     files_size = format_bytes_size(files_size)
-    info_parts = ["[b](TOTAL FILES:) " + str(files_count)]
+    info_parts = [f"[b](TOTAL FILES:) {files_count:,}"]
     if "scope" not in IGNORE:
-        info_parts.append("[b](FILES SCOPE:) " + str(files_scope) + " lines")
+        info_parts.append(f"[b](FILES SCOPE:) {files_scope:,} lines")
     if "size" not in IGNORE:
-        info_parts.append("[b](FILES SIZE:) " + files_size)
+        info_parts.append(f"[b](FILES SIZE:) {files_size}")
     info = "  [dim](|)  ".join(info_parts)
     print_overwrite(f"\n{info}\n")
 
