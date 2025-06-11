@@ -53,7 +53,7 @@ def find_twine_path() -> Optional[str]:
 def run_command(command: str, verbose: bool = False) -> None:
     try:
         if verbose:
-            Console.info(f"Running command: [white]{command}[_c]")
+            Console.info(f"Running command: [white]{command}[_c]", start="\n", end="\n\n")
         subprocess.run(command, check=True, shell=True)
     except subprocess.CalledProcessError as e:
         Console.fail(f"Error executing command: {e}")
