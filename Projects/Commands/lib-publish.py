@@ -50,8 +50,10 @@ def find_twine_path() -> Optional[str]:
     Console.fail("[white](twine.exe) not found in expected locations. Please verify installation.")
 
 
-def run_command(command: str) -> None:
+def run_command(command: str, verbose: bool = False) -> None:
     try:
+        if verbose:
+            Console.info(f"Running command: [white]{command}[_c]")
         subprocess.run(command, check=True, shell=True)
     except subprocess.CalledProcessError as e:
         Console.fail(f"Error executing command: {e}")
@@ -76,9 +78,9 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 def main(args: Args) -> None:
     os.chdir(args.lib_base.value)
-    run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}")
+    run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}", verbose=args.verbose.exists)
     twine_path = find_twine_path()
-    run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*')
+    run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*', verbose=args.verbose.exists)
     if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
         Path.remove(os.path.join(os.getcwd(), "dist"))
         print()
