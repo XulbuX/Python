@@ -212,7 +212,6 @@ class Tree:
                 )
             ) == 0 else frozenset(norm_ignore_dirs)
         )
-        print(self.ignore_dirs)
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
         Console.done(
