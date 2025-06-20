@@ -39,7 +39,7 @@ The volume can not be lowered lower than the set `MIN_VOLUME` (*default is 50%*)
 The only way to stop the script is by restarting the PC or by killing it in the task manager under the background processes (*the process is called the same as the scripts/EXEs name*).
 ### [Download](https://github.com/XulbuX/Python/raw/refs/heads/main/Experiments/SendToFriend/executables/playAnnoyingSoundsOnKeyboardAndMouse.exe)
 > [!NOTE]
-> This script/EXE works only on Windows.
+> This script/EXE works **only on Windows**.
 
 
 ## shutdownPCWithVirusWarning | [view script](./scripts/shutdownPCWithVirusWarning.py)
