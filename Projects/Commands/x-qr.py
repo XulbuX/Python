@@ -38,6 +38,34 @@ def print_help():
     FormatCodes.print(help_text)
 
 
+def get_vcard_details(input_text: str) -> dict:
+    lines = input_text.strip().split('\n')
+    details = {"name": "", "phone": "", "email": ""}
+
+    if input_text.strip().startswith("BEGIN:VCARD") and input_text.strip().endswith("END:VCARD"):
+        for line in lines:
+            line = line.strip()
+            if line.startswith("FN:"):
+                details["name"] = line[3:]
+            elif line.startswith("TEL:"):
+                details["phone"] = line[4:]
+            elif line.startswith("EMAIL:"):
+                details["email"] = line[6:]
+    else:
+        details["name"] = input_text.strip()
+
+    if not details["name"]:
+        details["name"] = input("Name (required): ").strip()
+        if not details["name"]:
+            raise ValueError("Name is required for contact QR code.")
+    if not details["phone"]:
+        details["phone"] = input("Phone number: ").strip()
+    if not details["email"]:
+        details["email"] = input("Email: ").strip()
+
+    return details
+
+
 def format_contact_qr(name: str, phone: str = "", email: str = ""):
     """Format text for contact QR code (basic vCard)."""
     vcard = f"BEGIN:VCARD\nVERSION:3.0\nFN:{name}\n"
@@ -51,16 +79,13 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
         scale = int(args.scale.value) if args.scale.value else 1
-        error_level = {
-            'L': qrcode.constants.ERROR_CORRECT_L,
-            'M': qrcode.constants.ERROR_CORRECT_M,
-            'Q': qrcode.constants.ERROR_CORRECT_Q,
-            'H': qrcode.constants.ERROR_CORRECT_H,
-        }.get(
-            (args.error_correction.value or "M").upper(),
-            qrcode.constants.ERROR_CORRECT_M,
-        )
         invert = args.invert.exists
+        error_level = {
+            'L': qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
+            'M': qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+            'Q': qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
+            'H': qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
+        }.get((args.error_correction.value or "M").upper(), qrcode.constants.ERROR_CORRECT_M)  # type: ignore[name-defined]
 
         qr = qrcode.QRCode(version=1, error_correction=error_level, box_size=1, border=0)
         qr.add_data(text)
@@ -110,10 +135,8 @@ def main(args: Args) -> None:
     text = cast(str, " ".join(args.text.value))
 
     if args.contact.exists:
-        if not str(args.contact.value).startswith("BEGIN:VCARD"):
-            phone = input("Phone number (optional): ").strip()
-            email = input("Email (optional): ").strip()
-            text = format_contact_qr(text, phone, email)
+        details = get_vcard_details(text)
+        text = format_contact_qr(details["name"], details["phone"], details["email"])
 
     elif not text:
         print_help()
