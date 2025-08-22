@@ -92,13 +92,13 @@ This command will give you the following info about your current working directo
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
 ```bash
-dir-info --ignore "scope"
+dir-info --ignore 'scope'
 ```
 ```bash
-dir-info --ignore "size"
+dir-info --ignore 'size'
 ```
 ```bash
-dir-info --ignore "scope" "size"
+dir-info --ignore 'scope' 'size'
 ```
 The files count will always be included, since it doesn't affect the performance.
 
@@ -112,7 +112,7 @@ This command will turn a two digit HEX value into a percentage, where `FF` equal
 
 When the command is run, it will ask you for the HEX value, but you can also give it directly as an argument:
 ```bash
-hex-percent "FF"
+hex-percent 'FF'
 ```
 
 
@@ -183,7 +183,7 @@ In addition to that it will display some info about the items. When all the item
 
 Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` `--sep`:
 ```bash
-process-list "item1, item2, item3" --sep ","
+process-list "item1, item2, item3" --sep ','
 ```
 
 
@@ -256,7 +256,7 @@ This command generates an advanced directory tree. You have the following option
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
 ```bash
-x-tree --ignore "/abs/path/to/dir1" "rel/path/to/dir3" "dir3"
+x-tree --ignore "/abs/path/to/dir1" "rel/path/to/dir3" 'dir3'
 ```
 
 With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
