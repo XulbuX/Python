@@ -21,7 +21,7 @@ FIND_ARGS = {
 
 
 def print_help():
-    help_text = """
+    help_text = """\
 [b|in]( QR Code Generator - Quickly Generate QR codes directly within the terminal )
 
 [b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
