@@ -112,7 +112,7 @@ This command will turn a two digit HEX value into a percentage, where `FF` equal
 
 When the command is run, it will ask you for the HEX value, but you can also give it directly as an argument:
 ```bash
-hex-percent FF
+hex-percent "FF"
 ```
 
 
