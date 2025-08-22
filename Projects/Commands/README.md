@@ -41,7 +41,7 @@ After completing these steps, you should be able to run the commands described b
 
 ### _.py
 Run with command:
-```console
+```bash
 _
 ```
 This is a better version of the `cls` or `clear` command to clear your console. The command `_` is:<br>
@@ -51,23 +51,23 @@ This is a better version of the `cls` or `clear` command to clear your console. 
 
 ### capitalize-hex.py
 Run with command:
-```console
+```bash
 capitalize-hex
 ```
 This command will capitalize all found HEX colors in the given file or directory.
 
 The path to the file or directory containing files can be directly given as an argument:
-```console
+```bash
 capitalize-hex /path/to/file
 ```
-```console
+```bash
 capitalize-hex /path/to/directory
 ```
 
 
 ### code-extensions.py
 Run with command:
-```console
+```bash
 code-extensions
 ```
 This command will output info about all installed Visual Studio Code extensions:
@@ -75,14 +75,14 @@ This command will output info about all installed Visual Studio Code extensions:
 2. a list of all installed extensions
 
 You can also output the list of installed extensions, formatted as a JSON array, with the `-j` `--json` option:
-```console
+```bash
 code-extensions --json
 ```
 
 
 ### dir-info.py
 Run with command:
-```console
+```bash
 dir-info
 ```
 This command will give you the following info about your current working directory (`cwd`):
@@ -91,13 +91,13 @@ This command will give you the following info about your current working directo
 * the total size of the files
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
-```console
+```bash
 dir-info --ignore scope
 ```
-```console
+```bash
 dir-info --ignore size
 ```
-```console
+```bash
 dir-info --ignore scope size
 ```
 The files count will always be included, since it doesn't affect the performance.
@@ -105,46 +105,46 @@ The files count will always be included, since it doesn't affect the performance
 
 ### hex-percent.py
 Run with command:
-```console
+```bash
 hex-percent
 ```
 This command will turn a two digit HEX value into a percentage, where `FF` equals 100% and `00` equals 0%.
 
 When the command is run, it will ask you for the HEX value, but you can also give it directly as an argument:
-```console
+```bash
 hex-percent FF
 ```
 
 
 ### lib-publish.py
 Run with command:
-```console
+```bash
 lib-publish
 ```
 This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPI](https://pypi.org/).
 
 You can also directly specify the path to the library to package and upload and if the process should be verbose:
-```console
+```bash
 lib-publish --lib /path/to/library/root-directory --verbose
 ```
 
 
 ### matrix.py
 Run with command:
-```console
+```bash
 matrix
 ```
 This command will display a sort of matrix in your console with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
-   ```console
+   ```bash
    matrix --color
    ```
 3. Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
-   ```console
+   ```bash
    matrix --fast
    ```
 3. You can also make the matrix in color and move fast, by applying both options:
-   ```console
+   ```bash
    matrix -c -f
    ```
 Can be cancelled by pressing `Ctrl(⌘) + C`.
@@ -152,7 +152,7 @@ Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 ### maze.py
 Run with command:
-```console
+```bash
 maze
 ```
 This command starts a small maze game inside the console. The game controls and options are first shown at game start.
@@ -162,12 +162,12 @@ The maze will adjust itself to the dimensions of your console after each new maz
 
 ### pi.py
 Run with command:
-```console
+```bash
 pi
 ```
 This command will calculate the value of the [Pi number](https://en.wikipedia.org/wiki/Pi) to a certain decimal place.<br>
 To specify up to how many decimal places should be calculated, run the command with an argument:
-```console
+```bash
 pi 100
 ```
 Can be cancelled by pressing `Ctrl(⌘) + C`.
@@ -175,21 +175,21 @@ Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 ### process-list.py
 Run with command:
-```console
+```bash
 process-list
 ```
 This command simply lets you input a list of items. It will then output all the items, but each item on a new line.<br>
 In addition to that it will display some info about the items. When all the items are numbers, it will also output more info like the min, max, sum and average.
 
 Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` `--sep`:
-```console
-process-list --sep ","
+```bash
+process-list "item1, item2, item3" --sep ","
 ```
 
 
 ### sine.py
 Run with command:
-```console
+```bash
 sine
 ```
 This command will just display a moving sine wave, inside your console.<br>
@@ -198,20 +198,20 @@ Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 ### squares.py
 Run with command:
-```console
+```bash
 squares
 ```
 This command gives you the option to get a nicely formatted table with the squares of all numbers up to a certain number.
 
 You can specify the number of table columns with the `-c` `--columns` option:
-```console
+```bash
 squares --columns 6
 ```
 
 
 ### x-cmds.py
 Run with command:
-```console
+```bash
 x-cmds
 ```
 This command outputs a list of all custom Python commands in the current directory, with a short description and their params.
@@ -219,7 +219,7 @@ This command outputs a list of all custom Python commands in the current directo
 
 ### x-qr.py
 Run with command:
-```console
+```bash
 x-qr
 ```
 This command lets you quickly generate QR codes directly within the terminal. You also have options for generating different special QR codes:
@@ -227,15 +227,15 @@ This command lets you quickly generate QR codes directly within the terminal. Yo
 * Contact QR codes
 
 These special QR codes can be generated with the options `-w` `--wifi` and `-c` `--contact`:
-```console
+```bash
 x-qr --wifi
 ```
-```console
+```bash
 x-qr "James Brown" --contact
 ```
 
 Generating a normal QR code of some text, URL, etc. can be done by simply giving that text directly as an argument:
-```console
+```bash
 x-qr https://example.com/
 ```
 
@@ -244,7 +244,7 @@ Running the command without any arguments or options will show help for the comm
 
 ### x-tree.py
 Run with command:
-```console
+```bash
 x-tree
 ```
 This command generates an advanced directory tree. You have the following options when running the command:
@@ -255,11 +255,11 @@ This command generates an advanced directory tree. You have the following option
 * output the tree into a file (*if it's too large to fit inside the console history*)
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
-```console
+```bash
 x-tree --ignore /abs/path/to/dir1 rel/path/to/dir3 dir3
 ```
 
 With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
-```console
+```bash
 x-tree --no-progress
 ```
