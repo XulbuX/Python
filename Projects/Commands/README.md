@@ -74,7 +74,7 @@ This command will output info about all installed Visual Studio Code extensions:
 1. the installed extensions count
 2. a list of all installed extensions
 
-You can also output the list of installed extensions, formatted as a JSON array, with the `-j` or `--json` option:
+You can also output the list of installed extensions, formatted as a JSON array, with the `-j` `--json` option:
 ```console
 code-extensions --json
 ```
@@ -90,7 +90,7 @@ This command will give you the following info about your current working directo
 * the total files scope (*lines count from all the files with text in them*)
 * the total size of the files
 
-It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` or `--ignore` option:
+It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
 ```console
 dir-info --ignore scope
 ```
@@ -135,11 +135,11 @@ Run with command:
 matrix
 ```
 This command will display a sort of matrix in your console with a few options for customizing:
-1. By standard, the matrix symbols are not colored. With the option `-c` or `--color` you can make them in random colors:
+1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
    ```console
    matrix --color
    ```
-3. Normally, the matrix moves rather slowly, but with the option `-s`, `--speed`, `-f` or `--fast`, it will move very fast:
+3. Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
    ```console
    matrix --fast
    ```
@@ -181,7 +181,7 @@ process-list
 This command simply lets you input a list of items. It will then output all the items, but each item on a new line.<br>
 In addition to that it will display some info about the items. When all the items are numbers, it will also output more info like the min, max, sum and average.
 
-Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` or `--sep`:
+Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` `--sep`:
 ```console
 process-list --sep ","
 ```
@@ -203,7 +203,7 @@ squares
 ```
 This command gives you the option to get a nicely formatted table with the squares of all numbers up to a certain number.
 
-You can specify the number of table columns with the `-c` or `--columns` option:
+You can specify the number of table columns with the `-c` `--columns` option:
 ```console
 squares --columns 6
 ```
@@ -215,6 +215,24 @@ Run with command:
 x-cmds
 ```
 This command outputs a list of all custom Python commands in the current directory, with a short description and their params.
+
+
+### x-qr.py
+Run with command:
+```console
+x-qr
+```
+This command lets you quickly generate QR codes directly within the terminal. You also have options for generating different special QR codes:
+* Wi-Fi QR codes
+* Contact QR codes
+
+These special QR codes can be generated with the options `-w` `--wifi` and `-c` `--contact`:
+```console
+x-qr --wifi
+```
+```console
+x-qr "James" --contact
+```
 
 
 ### x-tree.py
@@ -229,12 +247,12 @@ This command generates an advanced directory tree. You have the following option
 * set the tree's indentation size
 * output the tree into a file (*if it's too large to fit inside the console history*)
 
-The directories to ignore can also be given directly via the option `-i` or `--ignore` (*absolute paths, relative paths or directory names*):
+The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
 ```console
 x-tree --ignore /abs/path/to/dir1 rel/path/to/dir3 dir3
 ```
 
-With the option `-n`, `-np` or `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
+With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
 ```console
 x-tree --no-progress
 ```
