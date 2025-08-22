@@ -11,10 +11,7 @@ import os
 
 
 FIND_ARGS = {
-    "lib_base": [
-        "-p", "--path", "-d", "--dir", "--directory",
-        "-b", "--base-dir", "-l", "--lib", "--library"
-    ],
+    "lib_base": "before",
     "verbose": ["-v", "--verbose"],
 }
 
@@ -77,7 +74,7 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 
 def main(args: Args) -> None:
-    os.chdir(args.lib_base.value)
+    os.chdir(str(args.lib_base.value[0]))
     run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}", verbose=args.verbose.exists)
     twine_path = find_twine_path()
     run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*', verbose=args.verbose.exists)

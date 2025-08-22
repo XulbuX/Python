@@ -58,10 +58,10 @@ This command will capitalize all found HEX colors in the given file or directory
 
 The path to the file or directory containing files can be directly given as an argument:
 ```bash
-capitalize-hex /path/to/file
+capitalize-hex "/path/to/file"
 ```
 ```bash
-capitalize-hex /path/to/directory
+capitalize-hex "/path/to/directory"
 ```
 
 
@@ -92,13 +92,13 @@ This command will give you the following info about your current working directo
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
 ```bash
-dir-info --ignore scope
+dir-info --ignore "scope"
 ```
 ```bash
-dir-info --ignore size
+dir-info --ignore "size"
 ```
 ```bash
-dir-info --ignore scope size
+dir-info --ignore "scope" "size"
 ```
 The files count will always be included, since it doesn't affect the performance.
 
@@ -125,7 +125,7 @@ This is just a single command, which runs the two required commands to package a
 
 You can also directly specify the path to the library to package and upload and if the process should be verbose:
 ```bash
-lib-publish --lib /path/to/library/root-directory --verbose
+lib-publish "/path/to/library/root-directory" --verbose
 ```
 
 
@@ -236,7 +236,7 @@ x-qr "James Brown" --contact
 
 Generating a normal QR code of some text, URL, etc. can be done by simply giving that text directly as an argument:
 ```bash
-x-qr https://example.com/
+x-qr "https://example.com/"
 ```
 
 Running the command without any arguments or options will show help for the command.
@@ -256,7 +256,7 @@ This command generates an advanced directory tree. You have the following option
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
 ```bash
-x-tree --ignore /abs/path/to/dir1 rel/path/to/dir3 dir3
+x-tree --ignore "/abs/path/to/dir1" "rel/path/to/dir3" "dir3"
 ```
 
 With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
