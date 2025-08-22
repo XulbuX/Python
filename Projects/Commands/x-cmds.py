@@ -44,12 +44,22 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
     arg_descs, keys = [], list(find_args.keys())
     for key, val in find_args.items():
         if len(val) < 1:
-            arg_descs.append(f"[#56B](arg with no prefix at position {keys.index(key) + 1})")
+            arg_descs.append(f"[#BBC](non-flagged argument at position {keys.index(key) + 1})")
+        elif isinstance(val, str):
+            if val.lower() == "before":
+                arg_descs.append(f"[#BBC](all non flagged arguments before first flag)")
+            elif val.lower() == "after":
+                arg_descs.append(f"[#BBC](all non flagged arguments after last flag's value)")
+            else:
+                arg_descs.append(f"[#BBC]({val})")
         else:
             arg_descs.append(val)
-    arg_descs = (f"[#99A]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs)
+    arg_descs = (f"[#BBC]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs)
     arg_descs = (f"[#9AF]([i]({keys[i]}):) {arg_desc}" for i, arg_desc in enumerate(arg_descs))
-    return f"\n{TAB3}[#78F]([u](TAKES ARGUMENTS) [dim]([{len(find_args)}]))\n{TAB4}" + f"\n{TAB4}".join(arg_descs)
+    return (
+        f"\n{TAB3}[u|#78F](TAKES {len(find_args)} ARGUMENT{'S' if len(find_args) != 1 else ''})\n{TAB4}"
+        + f"\n{TAB4}".join(arg_descs)
+    )
 
 
 def get_commands() -> str:

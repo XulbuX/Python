@@ -231,8 +231,15 @@ These special QR codes can be generated with the options `-w` `--wifi` and `-c
 x-qr --wifi
 ```
 ```console
-x-qr "James" --contact
+x-qr "James Brown" --contact
 ```
+
+Generating a normal QR code of some text, URL, etc. can be done by simply giving that text directly as an argument:
+```console
+x-qr https://example.com/
+```
+
+Running the command without any arguments or options will show help for the command.
 
 
 ### x-tree.py
