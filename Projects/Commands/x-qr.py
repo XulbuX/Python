@@ -1,7 +1,7 @@
 """Lets you quickly generate QR codes directly within the terminal."""
 # pip install qrcode xulbux
-from xulbux.xx_console import Args, COLOR
 from xulbux import FormatCodes, Console
+from xulbux.console import Args, COLOR
 import xml.etree.ElementTree as ET
 from typing import Optional, cast
 import subprocess
@@ -269,7 +269,7 @@ class WiFi:
                 default_color=COLOR.orange,
                 indent=2,
             )
-            password = Console.restricted_input(
+            password = Console.input(
                 f"Enter password for '{self.network_name}':",
                 mask_char="*",
                 start="\n",

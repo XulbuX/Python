@@ -2,8 +2,8 @@
 Controls and options are shown on startup."""
 from xulbux import FormatCodes, Console, Path
 from heapq import heappush, heappop
-from collections import deque
 from typing import Optional, cast
+from collections import deque
 import keyboard
 import random
 import array

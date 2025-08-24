@@ -2,7 +2,7 @@
 Uses 'twine' to try to upload the packaged library to PyPI."""
 # pip install build twine xulbux
 from xulbux import FormatCodes, Console, Path
-from xulbux.xx_console import Args
+from xulbux.console import Args
 from typing import Optional
 import subprocess
 import shutil
