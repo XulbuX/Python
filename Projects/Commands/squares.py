@@ -1,5 +1,5 @@
 """Get the squares of all numbers up to a given number."""
-from xulbux._consts_ import CHARS
+from xulbux.base.consts import CHARS
 from xulbux import Console
 import keyboard
 
@@ -28,7 +28,7 @@ def main():
         )
 
         loops = int(
-            Console.restricted_input(
+            Console.input(
                 "Until which number do you want all squares to be calculated: ",
                 allowed_chars=CHARS.digits,
                 min_len=1,
