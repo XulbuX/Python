@@ -1,7 +1,8 @@
 """A really advanced directory tree generator
 with a lost of options and customization."""
-from xulbux import FormatCodes, Console, File, COLOR
 from typing import Optional, Pattern, NamedTuple, cast
+from xulbux import FormatCodes, Console, File
+from xulbux.base.consts import COLOR
 from functools import lru_cache
 import time
 import sys
