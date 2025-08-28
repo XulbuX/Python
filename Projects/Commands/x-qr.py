@@ -270,9 +270,9 @@ class WiFi:
                 indent=2,
             )
             password = Console.input(
-                f"Enter password for '{self.network_name}':",
-                mask_char="*",
+                f"Enter password for '{self.network_name}': ",
                 start="\n",
+                mask_char="*",
             ).strip()
             if not password:
                 raise ValueError("Password is required for WiFi QR code.")
