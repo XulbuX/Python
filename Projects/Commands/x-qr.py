@@ -273,6 +273,8 @@ class WiFi:
                 f"Enter password for '{self.network_name}': ",
                 start="\n",
                 mask_char="*",
+                min_len=8,
+                max_len=64,
             ).strip()
             if not password:
                 raise ValueError("Password is required for WiFi QR code.")
