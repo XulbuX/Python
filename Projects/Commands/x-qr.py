@@ -7,6 +7,7 @@ from typing import Optional, cast
 import subprocess
 import tempfile
 import qrcode
+import re
 import os
 
 
@@ -46,6 +47,16 @@ def print_help():
     FormatCodes.print(help_text)
 
 
+def phone_validator(user_input: str) -> Optional[str]:
+    if user_input and not re.match(r"[\d\s+()-./x]+", user_input):
+        return "Enter a valid phone number (+99123456789)"
+
+
+def email_validator(user_input: str) -> Optional[str]:
+    if not re.match(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", user_input):
+        return "Enter a valid E-Mail address (example@domain.com)"
+
+
 class VCard:
 
     def __init__(self, vcard_str: str):
@@ -69,13 +80,13 @@ class VCard:
             details["name"] = self.vcard_str.strip()
 
         if not details["name"]:
-            details["name"] = Console.input("Name (required):").strip()
+            details["name"] = Console.input("Name (required): ").strip()
             if not details["name"]:
                 raise ValueError("Name is required for contact QR code.")
         if not details["phone"]:
-            details["phone"] = Console.input("Phone number:").strip()
+            details["phone"] = Console.input("Phone number: ", validator=phone_validator).strip()
         if not details["email"]:
-            details["email"] = Console.input("Email:").strip()
+            details["email"] = Console.input("Email: ", validator=email_validator).strip()
 
         return details
 
@@ -239,7 +250,11 @@ class WiFi:
 
             if not self.network_name:
                 if profiles:
-                    choice = Console.input(f"Enter network number (1-{len(profiles)}) or network name:").strip()
+                    choice = Console.input(
+                        f"Enter network number (1-{len(profiles)}) or network name: ",
+                        min_len=1,
+                        max_len=32,
+                    ).strip()
 
                     if choice.isdigit():
                         idx = int(choice) - 1
@@ -247,11 +262,19 @@ class WiFi:
                             self.network_name = profiles[idx]
                         else:
                             Console.warn(f"Invalid number. Please choose between 1 and {len(profiles)}.")
-                            self.network_name = Console.input("Enter WiFi network name (SSID):").strip()
+                            self.network_name = Console.input(
+                                "Enter WiFi network name (SSID): ",
+                                min_len=1,
+                                max_len=32,
+                            ).strip()
                     else:
                         self.network_name = choice
                 else:
-                    self.network_name = Console.input("Enter WiFi network name (SSID):").strip()
+                    self.network_name = Console.input(
+                        "Enter WiFi network name (SSID): ",
+                        min_len=1,
+                        max_len=32,
+                    ).strip()
 
         if not self.network_name:
             raise ValueError("Network name is required for WiFi QR code.")
