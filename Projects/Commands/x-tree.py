@@ -380,7 +380,7 @@ class Tree:
         Console.log(
             "GENERATING TREE",
             f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) [dim](|) [br:cyan]({formatted_dirs}) dirs [dim](|) [br:cyan]({formatted_files}) files [dim](|) [white]{rel_path}[_]",
-            title_bg_color=COLOR.blue,
+            title_bg_color=COLOR.BLUE,
             start="\033[F\033[K",
         )
 

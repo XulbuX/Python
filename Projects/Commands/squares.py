@@ -30,7 +30,7 @@ def main():
         loops = int(
             Console.input(
                 "Until which number do you want all squares to be calculated: ",
-                allowed_chars=CHARS.digits,
+                allowed_chars=CHARS.DIGITS,
                 min_len=1,
                 max_len=7,
             ) or ""

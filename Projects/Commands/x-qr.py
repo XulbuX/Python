@@ -265,8 +265,8 @@ class WiFi:
                 f"[b](Antivirus alert? Safe to ignore:)",
                 f"It's likely because we tried to",
                 f"read a saved WiFi password.",
-                border_style=f"dim|{COLOR.orange}",
-                default_color=COLOR.orange,
+                border_style=f"dim|{COLOR.ORANGE}",
+                default_color=COLOR.ORANGE,
                 indent=2,
             )
             password = Console.input(
