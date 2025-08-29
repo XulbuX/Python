@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Get the squares of all numbers up to a given number."""
 from xulbux.base.consts import CHARS
 from xulbux import Console

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Calculate the value of pi to a specified number of decimal places."""
 from xulbux import FormatCodes
 from typing import Iterator

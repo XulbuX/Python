@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Process a list of items and display some statistics."""
 from xulbux import FormatCodes, Console
 

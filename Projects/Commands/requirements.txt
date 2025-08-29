@@ -1,0 +1,6 @@
+build
+keyboard
+psutil
+qrcode
+twine
+xulbux

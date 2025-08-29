@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Gives details about the files in the current directory.
 Information can be ignored, since it can take quite long to calculate."""
 from concurrent.futures import ThreadPoolExecutor

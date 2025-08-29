@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Searches and capitalizes all found hex colors
 in a single file or every file in a directory."""
 from xulbux import Console

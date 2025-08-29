@@ -4,46 +4,69 @@ This repository contains quite a few Python files, which are supposed to be run 
 
 
 ## Run the files as console commands
-To be able to type one of the file's names in the console and, through this, run that corresponding file, you need to follow these steps:
 
-1. Download the Python files you want to use as commands.
 
-2. Place all downloaded files in a single directory of your choice.
-   We'll call this directory the *commands-directory* from now on.
+To run these Python scripts as native commands in your terminal, follow these steps.
+
+### Step 1: Download the Files
+
+Download the Python files you want to use, along with the `requirements.txt` file.
+Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]
-> Now, make sure you have [Python](https://www.python.org/downloads/) installed *for all users* on your system
-> and the absolute path to the Python installation directory (*the one containing* `python.exe`) is in your system's environment variables.<br>
+> The way you prepare the files depends on your operating system:
 >
-> If the Python installation directory is not in your system's environment variables, follow the same steps below for adding the *commands-directory*
-> and additional to the *commands-directory* also add the Python installation directory to your system's environment variables.
+> * **Windows:** You can leave the `.py` extension on the files.
+> As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*), you can run the commands without typing `.py`.
+>
+> * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
+> For example, rename `capitalize-hex.py` to `capitalize-hex`. This allows the operating system to execute them as native commands.
 
-3. Now we need to add the absolute path to the *commands-directory* to your system's environment variables. This process varies depending on your OS:
+### Step 2: Install Dependencies
 
-   ### Windows:
-   * Open the Start Menu and search for `Environment Variables`.
-   * Select "Edit the system environment variables".
-   * In the `System Properties` window, click on the `Environment Variables...` button.
-   * Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
-   * Click `New` and add the absolute path to your *commands-directory*.
-   * Click `OK` to close all dialog boxes.
+Before the scripts can run, you need to install their required Python packages. 📦
 
-   ### macOS and Linux:
-   * Open your terminal.
-   * Edit your shell configuration file (*e.g.*, `~/.bash_profile`, `~/.bashrc`, *or* `~/.zshrc`) using a text editor.
-   * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual *commands-directory* path:
+1. Open your terminal or command prompt.
+2. Navigate to your *commands-directory* using the `cd` command.
+   ```bash
+   cd /path/to/your/commands-directory
+   ```
+3. Install the dependencies using pip:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Step 3: Add Scripts to the System PATH
+
+This makes your commands available from any location in your terminal. ⚙️
+
+#### Windows:
+1. Open the Start Menu, search for `Environment Variables`, and select "Edit the system environment variables".
+2. In the `System Properties` window, click `Environment Variables...`.
+3. Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
+4. Click `New` and paste in the absolute path to your *commands-directory*.
+5. Click `OK` to close all dialogs.
+
+#### macOS and Linux:
+1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.
+   > [!NOTE]
+   > This is already done for you in all the repository's files.
+2. **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
      ```bash
-     export PATH="$PATH:/path/to/your/directory"
+     chmod +x "/path/to/your/commands-directory/*"
      ```
-   * Save the file and run `source ~/.bash_profile` (*or the appropriate file you edited*) to apply changes.
-   * Make the files executable:
+3. **Add the directory to your shell's PATH:**
+   * For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
+   * For most **Linux** distributions, edit `~/.bashrc`.
+   * Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
      ```bash
-     chmod +x "/path/to/your/directory/*.py"
+     export PATH="$PATH:/path/to/your/commands-directory"
      ```
+   * Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
 
-5. Restart your terminal or command prompt for the changes to take effect.
+### Step 4: Restart your Terminal
 
-After completing these steps, you should be able to run the commands described below.
+Close and reopen your terminal or command prompt. The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
 
 
 ## <span id="what-each-cmd-does">What each file (*command*) does</span>

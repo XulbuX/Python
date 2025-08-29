@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Show a sine wave animation inside the console."""
 from typing import Generator, Any
 from xulbux import Console

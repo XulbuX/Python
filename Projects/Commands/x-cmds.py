@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
@@ -10,7 +11,7 @@ import re
 
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*\)", re.DOTALL)
 SYS_ARGV = re.compile(r"sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?", re.MULTILINE)
-DESC = re.compile(r"^\s*(\"{3}|'{3})(.+?)\1", re.DOTALL)
+DESC = re.compile(r"(?i)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1", re.DOTALL)
 
 TAB_SIZE = 2
 TAB3 = " " * (TAB_SIZE * 3 + 1)

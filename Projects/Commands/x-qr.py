@@ -1,5 +1,5 @@
+#!/usr/bin/env python3
 """Lets you quickly generate QR codes directly within the terminal."""
-# pip install qrcode xulbux
 from xulbux import FormatCodes, Console
 from xulbux.console import Args, COLOR
 import xml.etree.ElementTree as ET

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Play a maze game in the console.
 Controls and options are shown on startup."""
 from xulbux import FormatCodes, Console, Path

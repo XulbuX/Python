@@ -1,6 +1,6 @@
+#!/usr/bin/env python3
 """Tries to package and upload the library in the current or given directory.
-Uses 'twine' to try to upload the packaged library to PyPI."""
-# pip install build twine xulbux
+Uses 'build'  to build and 'twine' to try to upload the packaged library to PyPI."""
 from xulbux import FormatCodes, Console, Path
 from xulbux.console import Args
 from typing import Optional

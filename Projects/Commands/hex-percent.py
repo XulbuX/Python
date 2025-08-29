@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Quickly convert a 2-digit HEX value to a percentage."""
 from xulbux import FormatCodes, Console
 import sys

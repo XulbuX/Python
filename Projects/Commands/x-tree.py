@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """A really advanced directory tree generator
 with a lost of options and customization."""
 from typing import Optional, Pattern, NamedTuple, cast
