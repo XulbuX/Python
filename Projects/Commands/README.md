@@ -129,27 +129,6 @@ lib-publish "/path/to/library/root-directory" --verbose
 ```
 
 
-### matrix.py
-Run with command:
-```bash
-matrix
-```
-This command will display a sort of matrix in your console with a few options for customizing:
-1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
-   ```bash
-   matrix --color
-   ```
-3. Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
-   ```bash
-   matrix --fast
-   ```
-3. You can also make the matrix in color and move fast, by applying both options:
-   ```bash
-   matrix -c -f
-   ```
-Can be cancelled by pressing `Ctrl(⌘) + C`.
-
-
 ### maze.py
 Run with command:
 ```bash
@@ -158,6 +137,27 @@ maze
 This command starts a small maze game inside the console. The game controls and options are first shown at game start.
 
 The maze will adjust itself to the dimensions of your console after each new maze generation.
+
+
+### mess.py
+Run with command:
+```bash
+mess
+```
+This command will display an animated, random text character mess in your console with a few options for customizing:
+1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
+   ```bash
+   mess --color
+   ```
+3. Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
+   ```bash
+   mess --fast
+   ```
+3. You can also make the matrix in color and move fast, by applying both options:
+   ```bash
+   mess -c -f
+   ```
+Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 
 ### pi.py
