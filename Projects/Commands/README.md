@@ -14,6 +14,7 @@ To be able to type one of the file's names in the console and, through this, run
 > [!IMPORTANT]
 > Now, make sure you have [Python](https://www.python.org/downloads/) installed *for all users* on your system
 > and the absolute path to the Python installation directory (*the one containing* `python.exe`) is in your system's environment variables.<br>
+>
 > If the Python installation directory is not in your system's environment variables, follow the same steps below for adding the *commands-directory*
 > and additional to the *commands-directory* also add the Python installation directory to your system's environment variables.
 
