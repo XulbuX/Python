@@ -279,12 +279,8 @@ Running the command without any arguments or options will show help for the comm
 
 <br>
 
-### `x-tree.py`
+### `x-tree`
 
-Run with command:
-```bash
-x-tree
-```
 This command generates an advanced directory tree. You have the following options when running the command:
  * directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
  * display the contents of the files (*utf-8*) directly included in the tree

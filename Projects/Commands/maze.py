@@ -326,6 +326,7 @@ class Maze:
                     wait = 0.05
                     break
                 elif key in ("esc", "q"):
+                    print("\x1bc\x1b[0m", end="", flush=True)
                     raise KeyboardInterrupt
                 elif key == "h":
                     self.show_solution = not self.show_solution
