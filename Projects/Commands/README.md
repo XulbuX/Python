@@ -1,12 +1,24 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff.<br>
+This repository contains quite a few Python files, which are supposed to be run as commands in the shell and do some useful stuff.<br>
 **[Figure out what each file (*command*) does.](#what-each-cmd-does)**
 
 
-## Run the files as console commands
+## Run the files as shell commands
 
 
-To run these Python scripts as native commands in your terminal, follow these steps:
+To run these Python scripts as native commands in your shell, follow these steps:
+
+### Prerequisites
+
+Before you begin, ensure you have **Python installed and added to your system's PATH**.<br>
+This is crucial for the commands to be recognized and executed.
+
+ * **Windows:**, make sure to check the box `Add Python to PATH`<br>
+   and if possible `Install for all users` during the installation of Python.<br>
+   Verify the installation by typing `python --version` or `py --version` in your shell.
+
+ * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
+   it's in your PATH by typing `python3 --version` in your shell.
 
 ### Step 1: Download the Files
 
@@ -16,18 +28,19 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 > [!IMPORTANT]
 > The way you prepare the files depends on your operating system:
 >
-> * **Windows:** You can leave the `.py` extension on the files.<br>
-> As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*),<br>
-> you can run the commands without typing `.py`.
+>  * **Windows:** You can leave the `.py` extension on the files.<br>
+>    As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*),<br>
+>    you can run the commands without typing `.py`.
 >
-> * **macOS and Linux:** You **must remove the `.py` extension** from the script files. For example, rename `x-tree.py` to `x-tree`.<br>
-> This allows the operating system to execute them as native commands.
+>  * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
+>    For example, rename `x-tree.py` to `x-tree`.<br>
+>    This allows the operating system to execute them as native commands.
 
 ### Step 2: Install Dependencies
 
 Before the scripts can run, you need to install their required Python packages. 📦
 
-1. Open your terminal or command prompt.
+1. Open your shell.
 2. Navigate to your *commands-directory* using the `cd` command.
    ```bash
    cd "/path/to/your/commands-directory"
@@ -39,7 +52,7 @@ Before the scripts can run, you need to install their required Python packages. 
 
 ### Step 3: Add Scripts to the System PATH
 
-This makes your commands available from any location in your terminal. ⚙️
+This makes your commands available from any location in your shell. ⚙️
 
 #### Windows:
 1. Open the Start Menu, search for `Environment Variables`, and select "Edit the system environment variables".
@@ -51,22 +64,22 @@ This makes your commands available from any location in your terminal. ⚙️
 #### macOS and Linux:
 1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
    (*Note: This is already done for you in all the repository's files.*)
-2. **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
-     ```bash
-     chmod +x "/path/to/your/commands-directory/*"
-     ```
+2. **Make the files executable:** Open your shell and run the following command, replacing the path with your own:
+   ```bash
+   chmod +x "/path/to/your/commands-directory/*"
+   ```
 3. **Add the directory to your shell's PATH:**
-   * For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
-   * For most **Linux** distributions, edit `~/.bashrc`.
-   * Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
-     ```bash
-     export PATH="$PATH:/path/to/your/commands-directory"
-     ```
-   * Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
+    * For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
+    * For most **Linux** distributions, edit `~/.bashrc`.
+    * Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
+      ```bash
+      export PATH="$PATH:/path/to/your/commands-directory"
+      ```
+    * Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
 
-### Step 4: Restart your Terminal
+### Step 4: Restart your Shell
 
-Close and reopen your terminal or command prompt.<br>
+Close and reopen your shell.<br>
 The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
 
 
@@ -78,9 +91,9 @@ Run with command:
 ```bash
 _
 ```
-This is a better version of the `cls` or `clear` command to clear your console. The command `_` is:<br>
-* Faster to type and
-* the command also resets all the console formats.
+This is a better version of the `cls` or `clear` command to clear your shell. The command `_` is:<br>
+ * Faster to type and
+ * the command also resets all the style and color formats.
 
 
 ### capitalize-hex.py
@@ -120,9 +133,9 @@ Run with command:
 dir-info
 ```
 This command will give you the following info about your current working directory (`cwd`):
-* the files count
-* the total files scope (*lines count from all the files with text in them*)
-* the total size of the files
+ * the files count
+ * the total files scope (*lines count from all the files with text in them*)
+ * the total size of the files
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
 ```bash
@@ -168,9 +181,9 @@ Run with command:
 ```bash
 maze
 ```
-This command starts a small maze game inside the console. The game controls and options are first shown at game start.
+This command starts a small maze game inside the shell. The game controls and options are first shown at game start.
 
-The maze will adjust itself to the dimensions of your console after each new maze generation.
+The maze will adjust itself to the dimensions of your shell after each new maze generation.
 
 
 ### mess.py
@@ -178,7 +191,7 @@ Run with command:
 ```bash
 mess
 ```
-This command will display an animated, random text character mess in your console with a few options for customizing:
+This command will display an animated, random text character mess in your shell with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
    ```bash
    mess --color
@@ -226,7 +239,7 @@ Run with command:
 ```bash
 sine
 ```
-This command will just display a moving sine wave, inside your console.<br>
+This command will just display a moving sine wave inside your shell.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 
@@ -256,9 +269,9 @@ Run with command:
 ```bash
 x-qr
 ```
-This command lets you quickly generate QR codes directly within the terminal. You also have options for generating different special QR codes:
-* Wi-Fi QR codes
-* Contact QR codes
+This command lets you quickly generate QR codes directly within the shell. You also have options for generating different special QR codes:
+ * Wi-Fi QR codes
+ * Contact QR codes
 
 These special QR codes can be generated with the options `-w` `--wifi` and `-c` `--contact`:
 ```bash
@@ -282,11 +295,11 @@ Run with command:
 x-tree
 ```
 This command generates an advanced directory tree. You have the following options when running the command:
-* directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
-* display the contents of the files (*utf-8*) directly included in the tree
-* choose between different tree styles
-* set the tree's indentation size
-* output the tree into a file (*if it's too large to fit inside the console history*)
+ * directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
+ * display the contents of the files (*utf-8*) directly included in the tree
+ * choose between different tree styles
+ * set the tree's indentation size
+ * output the tree into a file (*if it's too large to fit inside the shell history*)
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
 ```bash
