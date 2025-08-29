@@ -7,30 +7,39 @@ This repository contains quite a few Python files, which are supposed to be run 
 To be able to type one of the file's names in the console and, through this, run that corresponding file, you need to follow these steps:
 
 1. Download the Python files you want to use as commands.
+
 2. Place all downloaded files in a single directory of your choice.
-3. Add the absolute path to that directory to your system's PATH environment variable. This process varies depending on your operating system:
+   We'll call this directory the *commands-directory* from now on.
+
+3. > [!IMPORTANT]
+   > Now, make sure you have [Python](https://www.python.org/downloads/) installed *for all users* on your system
+   > and the absolute path to the Python installation directory (*the one containing* `python.exe`) is in your system's environment variables.<br>
+   > If the Python installation directory is not in your system's environment variables, follow the same steps below for adding the *commands-directory*
+   > and additional to the *commands-directory* also add the Python installation directory to your system's environment variables.
+
+4. Now we need to add the absolute path to the *commands-directory* to your system's environment variables. This process varies depending on your OS:
 
    ### Windows:
-   * Press Win + X and select "System".
-   * Click on "Advanced System Settings".
-   * Click on "Environment Variables".
-   * Under "System Variables", find and select "Path", then click "Edit".
-   * Click "New" and add the full path to your directory.
-   * Click "OK" to close all windows.
+   * Open the Start Menu and search for `Environment Variables`.
+   * Select "Edit the system environment variables".
+   * In the `System Properties` window, click on the `Environment Variables...` button.
+   * Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
+   * Click `New` and add the absolute path to your *commands-directory*.
+   * Click `OK` to close all dialog boxes.
 
    ### macOS and Linux:
    * Open your terminal.
    * Edit your shell configuration file (*e.g.*, `~/.bash_profile`, `~/.bashrc`, *or* `~/.zshrc`) using a text editor.
-   * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual path:
+   * Add the following line at the end of the file, replacing `/path/to/your/directory` with the actual *commands-directory* path:
      ```bash
      export PATH="$PATH:/path/to/your/directory"
      ```
    * Save the file and run `source ~/.bash_profile` (*or the appropriate file you edited*) to apply changes.
+   * Make the files executable:
+     ```bash
+     chmod +x "/path/to/your/directory/*.py"
+     ```
 
-4. For macOS and Linux, make the files executable:
-   ```s
-   chmod +x /path/to/your/directory/*.py
-   ```
 5. Restart your terminal or command prompt for the changes to take effect.
 
 After completing these steps, you should be able to run the commands described below.
