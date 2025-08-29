@@ -6,20 +6,20 @@ This repository contains quite a few Python files, which are supposed to be run 
 ## Run the files as console commands
 
 
-To run these Python scripts as native commands in your terminal, follow these steps.
+To run these Python scripts as native commands in your terminal, follow these steps:
 
 ### Step 1: Download the Files
 
-Download the Python files you want to use, along with the `requirements.txt` file.
+Download the Python files you want to use, along with the `requirements.txt` file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]
 > The way you prepare the files depends on your operating system:
 >
-> * **Windows:** You can leave the `.py` extension on the files.
+> * **Windows:** You can leave the `.py` extension on the files.<br>
 > As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*), you can run the commands without typing `.py`.
 >
-> * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
+> * **macOS and Linux:** You **must remove the `.py` extension** from the script files.<br>
 > For example, rename `x-tree.py` to `x-tree`. This allows the operating system to execute them as native commands.
 
 ### Step 2: Install Dependencies
@@ -29,11 +29,11 @@ Before the scripts can run, you need to install their required Python packages. 
 1. Open your terminal or command prompt.
 2. Navigate to your *commands-directory* using the `cd` command.
    ```bash
-   cd /path/to/your/commands-directory
+   cd "/path/to/your/commands-directory"
    ```
 3. Install the dependencies using pip:
    ```bash
-   pip install -r requirements.txt
+   pip install -r "requirements.txt"
    ```
 
 ### Step 3: Add Scripts to the System PATH
@@ -48,7 +48,7 @@ This makes your commands available from any location in your terminal. ⚙️
 5. Click `OK` to close all dialogs.
 
 #### macOS and Linux:
-1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.
+1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
    (*Note: This is already done for you in all the repository's files.*)
 2. **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
      ```bash
@@ -65,7 +65,8 @@ This makes your commands available from any location in your terminal. ⚙️
 
 ### Step 4: Restart your Terminal
 
-Close and reopen your terminal or command prompt. The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
+Close and reopen your terminal or command prompt.<br>
+The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
 
 
 ## <span id="what-each-cmd-does">What each file (*command*) does</span>
