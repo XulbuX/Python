@@ -17,7 +17,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 > The way you prepare the files depends on your operating system:
 >
 > * **Windows:** You can leave the `.py` extension on the files.<br>
-> As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*),
+> As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*),<br>
 > you can run the commands without typing `.py`.
 >
 > * **macOS and Linux:** You **must remove the `.py` extension** from the script files. For example, rename `x-tree.py` to `x-tree`.<br>
