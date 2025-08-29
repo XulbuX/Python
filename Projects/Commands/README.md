@@ -10,15 +10,16 @@ To run these Python scripts as native commands in your shell, follow these steps
 
 ### Prerequisites
 
-Before you begin, ensure you have **Python installed and added to your system's PATH**.<br>
-This is crucial for the commands to be recognized and executed.
-
- * **Windows:**, make sure to check the box `Add Python to PATH`<br>
-   and if possible `Install for all users` during the installation of Python.<br>
-   Verify Python is in your PATH by typing `python --version` or `py --version` in your shell.
-
- * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
-   it's in your PATH by typing `python3 --version` in your shell.
+> [!IMPORTANT]
+> Before you begin, ensure you have **Python installed and added to your system's PATH**.<br>
+> This is crucial for the commands to be recognized and executed.
+> 
+>  * **Windows:**, make sure to check the box `Add Python to PATH`<br>
+>    and if possible `Install for all users` during the installation of Python.<br>
+>    Verify Python is in your PATH by typing `python --version` or `py --version` in your shell.
+> 
+>  * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
+>    it's in your PATH by typing `python3 --version` in your shell.
 
 ### Step 1: Download the Files
 
