@@ -20,7 +20,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 > As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*), you can run the commands without typing `.py`.
 >
 > * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
-> For example, rename `capitalize-hex.py` to `capitalize-hex`. This allows the operating system to execute them as native commands.
+> For example, rename `x-tree.py` to `x-tree`. This allows the operating system to execute them as native commands.
 
 ### Step 2: Install Dependencies
 
