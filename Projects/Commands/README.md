@@ -11,7 +11,7 @@ To run these Python scripts as native commands in your shell, follow these steps
 ### Prerequisites
 
 > [!IMPORTANT]
-> Before you begin, ensure you have **Python installed and added to your system's PATH**.<br>
+> Before you begin, ensure you have Python installed and **added to your system's PATH**.<br>
 > This is crucial for the commands to be recognized and executed.
 > 
 >  * **Windows:**, make sure to check the box `Add Python to PATH`<br>
