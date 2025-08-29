@@ -25,5 +25,6 @@ Inside `x-convert` is a file, supposed to be run as a command, used for converti
 These are **harmless** prank scripts (*also as [executables](./Experiments/SendToFriend/executables)*), that do all sorts of annoying things.
 Every script or executable has an exact description of what it does in the [`README.md`](./Experiments/SendToFriend/README.md) of the corresponding repo.
 > [!CAUTION]
-> These scripts lead to actions on your PC that you may not want.
-> However, it is important to note that **none of these scripts will cause damage to your PC**.
+> These scripts lead to actions on your PC that you may not want.<br>
+> However, it is important to note that
+> **none of these scripts will cause damage to your PC**.
