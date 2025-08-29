@@ -49,8 +49,7 @@ This makes your commands available from any location in your terminal. ⚙️
 
 #### macOS and Linux:
 1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.
-> [!NOTE]
-> This is already done for you in all the repository's files.
+   (*Note: This is already done for you in all the repository's files.*)
 2. **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
      ```bash
      chmod +x "/path/to/your/commands-directory/*"
