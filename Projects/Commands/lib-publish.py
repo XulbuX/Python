@@ -12,8 +12,8 @@ import os
 
 FIND_ARGS = {
     "lib_base": "before",
+    "only_build": ["-ob", "--only-build"],
     "verbose": ["-v", "--verbose"],
-    "only_build": ["-ob", "--only-build", "--just-build"],
 }
 
 
