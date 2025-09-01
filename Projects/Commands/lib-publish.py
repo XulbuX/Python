@@ -13,6 +13,7 @@ import os
 FIND_ARGS = {
     "lib_base": "before",
     "verbose": ["-v", "--verbose"],
+    "only_build": ["-ob", "--only-build", "--just-build"],
 }
 
 
@@ -76,11 +77,16 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 def main(args: Args) -> None:
     os.chdir(str(args.lib_base.value[0]))
     run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}", verbose=args.verbose.exists)
-    twine_path = find_twine_path()
-    run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*', verbose=args.verbose.exists)
-    if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
-        Path.remove(os.path.join(os.getcwd(), "dist"))
-        print()
+    dist = os.path.join(os.getcwd(), "dist")
+    if args.only_build.exists:
+        Console.done(f"Built to [white]{dist}[_c]\n[dim](Not uploading as per argument.)", start="\n", end="\n\n")
+    else:
+        twine_path = find_twine_path()
+        run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*', verbose=args.verbose.exists)
+        Console.done(f"\nSuccessfully built and uploaded the library.", start="\n", end="\n\n")
+        if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
+            Path.remove(dist)
+            print()
 
 
 if __name__ == "__main__":

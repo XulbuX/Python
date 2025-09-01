@@ -180,6 +180,11 @@ You can also directly specify the path to the library to package and upload and 
 lib-publish "/path/to/library/root-directory" --verbose
 ```
 
+To build but not upload the library, use the option `-ob` `--only-build` `--just-build`:
+```bash
+lib-publish "/path/to/library/root-directory" --only-build
+```
+
 <br>
 
 ### `maze`
