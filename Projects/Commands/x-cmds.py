@@ -64,41 +64,46 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
 
 
 def get_commands() -> str:
-    commands, files = "", os.listdir(Path.script_dir)
-    for i, f in enumerate(sorted(files)):
-        filename, file_ext = os.path.splitext(f)
-        if file_ext in (".py", ".pyw"):
-            abs_path = os.path.join(Path.script_dir, f)
-            commands += f"\n [i|dim|#6F9]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|#6F9]({filename})"
-            sys_argv = None
+    commands, all_files = "", os.listdir(Path.script_dir)
+    python_files = (f for f in all_files if os.path.splitext(f)[1] in (".py", ".pyw"))
+
+    for i, f in enumerate(sorted(python_files), 1):
+        filename, _ = os.path.splitext(f)
+        abs_path = os.path.join(Path.script_dir, f)
+        commands += f"\n [i|dim|#6F9]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|#6F9]({filename})"
+        sys_argv = None
+
+        try:
+            with open(abs_path, "r", encoding="utf-8") as file:
+                content = file.read()
+                if desc := DESC.match(content):
+                    desc = desc.group(2).strip("\n")
+                    commands += f"[i|#7FD]\n{TAB3}" + f"\n{TAB3}".join(desc.split("\n")) + "[_]"
+                args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
+                sys_argv = SYS_ARGV.findall(content)
+        except Exception:
+            args_var = None
+
+        if args_var:
             try:
-                with open(abs_path, "r", encoding="utf-8") as file:
-                    content = file.read()
-                    if desc := DESC.match(content):
-                        desc = desc.group(2).strip("\n")
-                        commands += f"[i|#7FD]\n{TAB3}" + f"\n{TAB3}".join(desc.split("\n")) + "[_]"
-                    args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
-                    sys_argv = SYS_ARGV.findall(content)
+                if args_var.startswith("{"):
+                    find_args = String.to_type(args_var)
+                else:
+                    find_args = get_var_val(abs_path, args_var)
+                if find_args and isinstance(find_args, dict):
+                    commands += arguments_desc(find_args)
             except Exception:
-                args_var = None
-            if args_var:
-                try:
-                    if args_var.startswith("{"):
-                        find_args = String.to_type(args_var)
-                    else:
-                        find_args = get_var_val(abs_path, args_var)
-                    if find_args and isinstance(find_args, dict):
-                        commands += arguments_desc(find_args)
-                except Exception:
-                    pass
-            elif sys_argv:
-                find_args = {}
-                for arg in sys_argv:
-                    arg = arg.strip()
-                    if arg.startswith("["):
-                        find_args.update(parse_args_comment(arg))
-                commands += arguments_desc(find_args)
-            commands += "\n"
+                pass
+        elif sys_argv:
+            find_args = {}
+            for arg in sys_argv:
+                arg = arg.strip()
+                if arg.startswith("["):
+                    find_args.update(parse_args_comment(arg))
+            commands += arguments_desc(find_args)
+
+        commands += "\n"
+
     return commands
 
 

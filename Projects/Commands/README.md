@@ -1,13 +1,13 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be run as commands in the shell and do some useful stuff.<br>
+This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff.<br>
 **[Figure out what each file (*command*) does.](#what-each-cmd-does)**
 
 <br>
 <br>
 
-## Run the files as shell commands
+## Run the files as console commands
 
-To run these Python scripts as native commands in your shell, follow these steps.
+To run these Python scripts as native commands in your console, follow these steps.
 
 <br>
 
@@ -19,10 +19,10 @@ To run these Python scripts as native commands in your shell, follow these steps
 > 
 >  * **Windows:**, make sure to check the box `Add Python to PATH`<br>
 >    and if possible `Install for all users` during the installation of Python.<br>
->    Verify Python is in your PATH by typing `python --version` or `py --version` in your shell.
+>    Verify Python is in your PATH by typing `python --version` or `py --version` in your console.
 > 
 >  * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
->    it's in your PATH by typing `python3 --version` in your shell.
+>    it's in your PATH by typing `python3 --version` in your console.
 
 <br>
 
@@ -48,7 +48,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 
 Before the scripts can run, you need to install their required Python packages. 📦
 
-1. Open your shell.
+1. Open your console.
 2. Navigate to your *commands-directory* using the `cd` command.
    ```bash
    cd "/path/to/your/commands-directory"
@@ -62,7 +62,7 @@ Before the scripts can run, you need to install their required Python packages. 
 
 ### Step 3: Add Scripts to the System PATH
 
-This makes your commands available from any location in your shell. ⚙️
+This makes your commands available from any location in your console. ⚙️
 
 #### Windows:
 
@@ -76,11 +76,11 @@ This makes your commands available from any location in your shell. ⚙️
 
 1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
    (*Note: This is already done for you in all the repository's files.*)
-2. **Make the files executable:** Open your shell and run the following command, replacing the path with your own:
+2. **Make the files executable:** Open your console and run the following command, replacing the path with your own:
    ```bash
    chmod +x "/path/to/your/commands-directory/*"
    ```
-3. **Add the directory to your shell's PATH:**
+3. **Add the directory to your console's PATH:**
     * For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
     * For most **Linux** distributions, edit `~/.bashrc`.
     * Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
@@ -91,9 +91,9 @@ This makes your commands available from any location in your shell. ⚙️
 
 <br>
 
-### Step 4: Restart your Shell
+### Step 4: Restart your Console
 
-Close and reopen your shell.<br>
+Close and reopen your console.<br>
 The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
 
 <br>
@@ -105,9 +105,9 @@ The changes are now active, and you can run the files by typing their names (*e.
 
 ### `_`
 
-This is a better version of the `cls` or `clear` command to clear your shell for a few reasons:<br>
+This is a better version of the `cls` or `clear` command to clear your console for a few reasons:<br>
  * the command `_` is faster to type
- * the command actually **clears** the shell and doesn't just scroll the content up
+ * the command actually **clears** the console and doesn't just scroll the content up
  * the command also resets all the color and style formats
 
 <br>
@@ -189,15 +189,15 @@ lib-publish "/path/to/library/root-directory" --only-build
 
 ### `maze`
 
-This command starts a small maze game inside the shell. The game controls and options are first shown at game start.
+This command starts a small maze game inside the console. The game controls and options are first shown at game start.
 
-The maze will adjust itself to the dimensions of your shell after each new maze generation.
+The maze will adjust itself to the dimensions of your console after each new maze generation.
 
 <br>
 
 ### `mess`
 
-This command will display an animated, random text character mess in your shell with a few options for customizing:
+This command will display an animated, random text character mess in your console with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
    ```bash
    mess --color
@@ -239,7 +239,7 @@ process-list "item1, item2, item3" --sep ','
 
 ### `sine`
 
-This command will just display a moving sine wave inside your shell.<br>
+This command will just display a moving sine wave inside your console.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 <br>
@@ -263,7 +263,7 @@ This command outputs a list of all custom Python commands in the current directo
 
 ### `x-qr`
 
-This command lets you quickly generate QR codes directly within the shell. You also have options for generating different special QR codes:
+This command lets you quickly generate QR codes directly within the console. You also have options for generating different special QR codes:
  * Wi-Fi QR codes
  * Contact QR codes
 
@@ -291,7 +291,7 @@ This command generates an advanced directory tree. You have the following option
  * display the contents of the files (*utf-8*) directly included in the tree
  * choose between different tree styles
  * set the tree's indentation size
- * output the tree into a file (*if it's too large to fit inside the shell history*)
+ * output the tree into a file (*if it's too large to fit inside the console history*)
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
 ```bash
