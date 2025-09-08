@@ -187,6 +187,12 @@ lib-publish "/path/to/library/root-directory" --only-build
 
 <br>
 
+### `life`
+
+This command starts a simulation of [Conway's Game of Life](https://wikipedia.org/wiki/Conway%27s_Game_of_Life) inside the console.
+
+<br>
+
 ### `maze`
 
 This command starts a small maze game inside the console. The game controls and options are first shown at game start.
