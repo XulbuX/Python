@@ -122,7 +122,6 @@ def main():
             with ProgressBar().progress_context(len(files), "Calculating scope...") as update_progress:
                 update_progress(0)
                 files_count, files_scope, files_size = calc_files_scope(files, update_progress)
-                update_progress(len(files) + 1)  # 1 ABOVE MAX = HIDE BAR
         else:
             files_count, files_scope, files_size = calc_files_scope(files, lambda x: None)
 
