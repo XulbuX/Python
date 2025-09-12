@@ -1,4 +1,5 @@
-from xulbux import FormatCodes, Console, EnvPath, String, Regex, Code, Data, File, Json, Path, Args
+from xulbux import FormatCodes, EnvPath, String, Regex, Code, Data, File, Json, Path
+from xulbux.console import Console, Args
 from typing import Optional, cast
 import regex as rx
 import pathlib
@@ -123,6 +124,7 @@ DEFAULT_JSON = {
     ">> IGNORE <<  is_in_env_vars": "",
 }
 L_FN = r"\$lang|__"
+TAB = " " * 17
 ADD_JS = []
 JS_IMPORTS = {}
 QUOTES = Regex.quotes()
@@ -173,10 +175,10 @@ def get_json(args: Args) -> None:
         )
     except FileNotFoundError:
         Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n")
-        if Console.confirm(f"      \tCreate [+|b]{JSON_FILE}[*] with default values in program directory?", end=""):
+        if Console.confirm(f"{TAB}Create [+|b]{JSON_FILE}[*] with default values in program directory?", default_color="#3EE6DE", end=""):
             Json.create(JSON_FILE, DEFAULT_JSON, indent=4, force=True)
             Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
-            FormatCodes.print("        \t[dim]Restarting program...[_]")
+            FormatCodes.print(f"{TAB}[dim]Restarting program...[_]")
             main(args)
             Console.pause_exit(exit=True)
         else:
@@ -191,14 +193,15 @@ def get_missing_args(args: Args) -> Args:
     if not args.blade_vue.exists:
         FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
         FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
-        args.blade_vue.exists = (
-            (Console.restricted_input(
-                "                 [_|dim] >  [_]",
-                default_color="#3EE6DE",
-                allowed_chars="1",
-                # max_len=1
-            ) or "").strip() == "1"
+        result = Console.input(
+            "             [_] ([i](1)) >  ",
+            default_color="#3EE6DE",
+            max_len=1,
+            allowed_chars="1",
+            default_val=1,
+            output_type=int,
         )
+        args.blade_vue.exists = result == 1
     return args
 
 
@@ -214,7 +217,8 @@ def add_to_env_vars() -> None:
                     start="\n"
                 )
                 if Console.confirm(
-                    "      \tAdd the [+|b]program directory[*] to your environment variables?"
+                    f"{TAB}Add the [+|b]program directory[*] to your environment variables?",
+                    default_color="#3EE6DE",
                 ):
                     EnvPath.add_path(base_dir=True)
                     Console.info(
