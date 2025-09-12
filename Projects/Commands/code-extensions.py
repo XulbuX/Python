@@ -8,7 +8,7 @@ import platform
 import sys
 
 
-FIND_ARGS = {"as_json": ["-j", "--json"]}
+ARGS = Console.get_args({"as_json": ["-j", "--json"]})
 
 
 def check_vscode_installed() -> bool:
@@ -29,14 +29,20 @@ def get_vscode_extensions() -> Optional[list[str]]:
 
 
 def main() -> None:
-    args = Console.get_args(FIND_ARGS)
     if not check_vscode_installed():
         FormatCodes.print("[br:red](Visual Studio Code is not installed or not in PATH.)")
         sys.exit(1)
     extensions = cast(list[str], get_vscode_extensions())
     FormatCodes.print(f"\n[white]Installed extensions: [b]{len(extensions)}[_]")
     FormatCodes.print(
-        "\n[white]" + (Data.to_str(extensions, as_json=True) if args.as_json.exists else "\n".join(extensions)) + "[_]\n"
+        "\n[white]" + (
+            Data.to_str(
+                extensions,
+                indent=2,
+                as_json=True,
+                _syntax_highlighting=True,
+            ) if ARGS.as_json.exists else "\n".join(extensions)
+        ) + "[_]\n"
     )
 
 

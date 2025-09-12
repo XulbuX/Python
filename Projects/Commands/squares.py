@@ -5,7 +5,7 @@ from xulbux import Console
 import keyboard
 
 
-TABLE_COLS = Console.get_args({"table_cols": ["-c", "--columns"]}).table_cols.value or 4
+TABLE_COLS = Console.get_args({"table_cols": ["-c", "--cols", "--columns"]}).table_cols.value or 4
 
 
 def clear_last_lines(count):

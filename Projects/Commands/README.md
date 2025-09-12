@@ -139,7 +139,7 @@ code-extensions --json
 
 <br>
 
-### `dir-info`
+### `dinfo`
 
 This command will give you the following info about your current working directory (`cwd`):
  * the files count
@@ -148,13 +148,13 @@ This command will give you the following info about your current working directo
 
 It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
 ```bash
-dir-info --ignore 'scope'
+dinfo --ignore 'scope'
 ```
 ```bash
-dir-info --ignore 'size'
+dinfo --ignore 'size'
 ```
 ```bash
-dir-info --ignore 'scope' 'size'
+dinfo --ignore 'scope' 'size'
 ```
 The files count will always be included, since it doesn't affect the performance.
 
@@ -248,13 +248,18 @@ process-list "item1, item2, item3" --sep ','
 This command will just display a moving sine wave inside your console.<br>
 Can be cancelled by pressing `Ctrl(⌘) + C`.
 
+The rendering of the sine wave can also be inverted with the option `-i` `--invert` `--inverse`:
+```bash
+sine --invert
+```
+
 <br>
 
 ### `squares`
 
 This command gives you the option to get a nicely formatted table with the squares of all numbers up to a certain number.
 
-You can specify the number of table columns with the `-c` `--columns` option:
+You can specify the number of table columns with the `-c` `--cols` `--columns` option:
 ```bash
 squares --columns 6
 ```

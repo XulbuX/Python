@@ -11,10 +11,10 @@ import os
 import re
 
 
-FIND_ARGS = {
+ARGS = Console.get_args({
     "ignore_dirs": ["-i", "--ignore"],
     "no_progress": ["-n", "-np", "--no-progress"],
-}
+}, allow_spaces=True)
 DEFAULT = {
     "ignore_dirs": [],
     "auto_ignore": True,
@@ -557,8 +557,7 @@ class Tree:
 
 
 def main():
-    global ARGS
-    ARGS, tree = Console.get_args(FIND_ARGS, True), Tree(os.getcwd())
+    tree = Tree(os.getcwd())
     if ARGS.ignore_dirs.exists:
         ignore_dirs = str(ARGS.ignore_dirs.value).split()
     else:

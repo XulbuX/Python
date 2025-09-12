@@ -398,14 +398,14 @@ def main(args: Args) -> None:
         text = wifi.get_wifi_string()
 
         print(f"\n{ascii_qr(text, args)}\n")
-        Console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]")
+        Console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]", end="\n\n")
 
     elif args.contact.exists:
         vcard = VCard(text)
         text = vcard.get_vcard_str()
 
         print(f"\n{ascii_qr(text, args)}\n")
-        Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]")
+        Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
 
     elif not text:
         print_help()
@@ -413,7 +413,7 @@ def main(args: Args) -> None:
 
     else:
         print(f"\n{ascii_qr(text, args)}\n")
-        Console.info(f"[b](Encoded Text:)\n[white]{text}[_c]")
+        Console.info(f"[b](Encoded Text:)\n[white]{text}[_c]", end="\n\n")
 
 
 if __name__ == "__main__":

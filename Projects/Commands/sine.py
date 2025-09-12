@@ -6,6 +6,9 @@ import math
 import time
 
 
+ARGS = Console.get_args({"invert": ["-i", "--invert", "--inverse"]}, allow_spaces=True)
+
+
 def smooth_wave(amplitude: int, speed: tuple[float, int]) -> Generator[Any, None, None]:
     while True:
         for i in range(0, 361):
@@ -15,7 +18,7 @@ def smooth_wave(amplitude: int, speed: tuple[float, int]) -> Generator[Any, None
             time.sleep(1 / (speed[1] * 100))
 
 
-def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] = ["█", " "]) -> None:
+def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] = [" ", "█"]) -> None:
     for i in smooth_wave(amplitude=round(width / 2), speed=speed):
         idx = int(i + (width // 2))
         print(idx * chars[0] + chars[1] + (width - idx - 1) * chars[0])
@@ -24,7 +27,11 @@ def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] =
 if __name__ == "__main__":
     try:
         print()
-        show_wave(width=Console.w - 1, speed=(5, 1))
+        show_wave(
+            width=Console.w - 1,
+            speed=(5, 1),
+            chars=["█", " "] if ARGS.invert.exists else [" ", "█"],
+        )
     except KeyboardInterrupt:
         print()
     except Exception as e:

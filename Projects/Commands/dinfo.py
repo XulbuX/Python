@@ -6,16 +6,11 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from typing import Callable
 import math
-import sys
 import os
 
 
-ARGS = sys.argv[1:]  # [ignore_info: [-i, --ignore]]
-IGNORE = {item.lower() for item in (ARGS[1:] if ARGS and ARGS[0] in ("-i", "--ignore") else [])}
-
-
-def print_overwrite(text: str, end="\n"):
-    FormatCodes.print("\033[2K\r" + text, end=end)
+ARGS = Console.get_args({"ignore_info": ["-i", "--ignore"]}, allow_spaces=True)
+IGNORE = {item.lower() for item in str(ARGS.ignore_info.value).split()}
 
 
 def get_dir_files(directory: str) -> list:
@@ -82,20 +77,33 @@ def calc_files_scope(files: list, update_progress: Callable[[int], None]) -> tup
         max_workers = min(len(files), cpu_count)
     else:
         max_workers = min(cpu_count * 3, len(files), 128)
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_index = {executor.submit(process_file, file_path): i for i, file_path in enumerate(files)}
-        total_files = 0
-        total_lines = 0
-        total_size = 0
-        completed = 0
-        for future in as_completed(future_to_index):
-            file_count, lines, size = future.result()
-            total_files += file_count
-            total_lines += lines
-            total_size += size
-            completed += 1
-            if completed % 100 == 0 or completed == len(files):
-                update_progress(completed)
+
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_index = {executor.submit(process_file, file_path): i for i, file_path in enumerate(files)}
+            total_files = 0
+            total_lines = 0
+            total_size = 0
+            completed = 0
+
+            try:
+                for future in as_completed(future_to_index):
+                    file_count, lines, size = future.result()
+                    total_files += file_count
+                    total_lines += lines
+                    total_size += size
+                    completed += 1
+                    if completed % 100 == 0 or completed == len(files):
+                        update_progress(completed)
+
+            except KeyboardInterrupt:
+                for future in future_to_index:
+                    future.cancel()
+                raise
+
+    except KeyboardInterrupt:
+        raise
+
     return total_files, total_lines, total_size
 
 
@@ -110,7 +118,7 @@ def format_bytes_size(bytes: int) -> str:
 
 
 def main():
-    print_overwrite("[dim](searching files...)", end="")
+    FormatCodes.print("\033[2K\r[dim](searching files...)", end="")
     files = get_dir_files(os.getcwd())
 
     if "scope" in IGNORE and "size" in IGNORE:
@@ -133,13 +141,13 @@ def main():
         info_parts.append(f"[b](FILES SIZE:) {files_size}")
     info = "  [dim](|)  ".join(info_parts)
 
-    print_overwrite(f"\n{info}\n")
+    FormatCodes.print(f"\033[2K\r\n{info}\n")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print()
+        FormatCodes.print("\033[2K\r[b|br:red](⨯)\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")

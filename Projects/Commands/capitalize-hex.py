@@ -59,16 +59,18 @@ def main() -> None:
         path = sys.argv[1]  # [path]
     if path in ("", None):
         Console.fail("No path was provided", start="\n", end="\n\n")
+
     print()
-    target = Path(path)
-    if target.is_file():
+
+    if (target := Path(path)).is_file():
         process_file(target, str(target.parent))
     elif target.is_dir():
         for file_path in target.rglob("*"):
             if file_path.is_file():
                 process_file(file_path, path)
+        print()
     else:
-        Console.fail(f"Path not found [white]({path})")
+        Console.fail(f"Path not found [white]({path})", end="\n\n")
 
 
 if __name__ == "__main__":

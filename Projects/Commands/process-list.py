@@ -2,12 +2,10 @@
 """Process a list of items and display some statistics."""
 from xulbux import FormatCodes, Console
 
-
-FIND_ARGS = {
+ARGS = Console.get_args({
     "list_elements": "before",
     "separator": ["-s", "--sep"],
-}
-ARGS = Console.get_args(FIND_ARGS)
+})
 
 
 def main()->None:
