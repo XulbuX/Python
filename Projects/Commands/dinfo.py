@@ -210,7 +210,7 @@ def calc_files_scope(files: list, update_progress: Callable[[int], None]) -> tup
                     total_lines += lines
                     total_size += size
                     completed += 1
-                    if completed % 100 == 0 or completed == len(files):
+                    if completed % 99 == 0 or completed == len(files):
                         update_progress(completed)
 
             except KeyboardInterrupt:
