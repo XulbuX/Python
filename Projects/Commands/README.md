@@ -146,9 +146,10 @@ This command will give you the following info about your current working directo
  * the total files scope (*lines count from all the files with text in them*)
  * the total size of the files
 
-It can take quite a bit of time to get this information, thus you can ignore the info you don't need with the `-i` `--ignore` option:
+It can take quite a bit of time to get this information, thus you can exclude info you don't need with the `-e` `--exclude` option.<br>
+Possible exclude values are `scope` and `size`:
 ```bash
-dinfo --ignore 'scope'
+dinfo --exclude 'scope'
 ```
 ```bash
 dinfo --ignore 'size'
@@ -157,6 +158,23 @@ dinfo --ignore 'size'
 dinfo --ignore 'scope' 'size'
 ```
 The files count will always be included, since it doesn't affect the performance.
+
+You can also decide whether hidden files/directories and/or system files/directories should be skipped with the `-s` `--skip` option.<br>
+Possible skip values are `hidden` and `system`:
+```bash
+dinfo --skip 'hidden'
+```
+```bash
+dinfo --skip 'system'
+```
+```bash
+dinfo --skip 'hidden' 'system'
+```
+
+The last option lets you decide if `.gitignore` rules should be applied when getting the info, with the `-g` `--gitignore` option:
+```bash
+dinfo --gitignore
+```
 
 <br>
 

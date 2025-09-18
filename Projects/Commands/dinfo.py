@@ -1,25 +1,142 @@
 #!/usr/bin/env python3
 """Gives details about the files in the current directory.
-Information can be ignored, since it can take quite long to calculate."""
+Information can be excluded, since it can take quite long to calculate.
+Hidden and/or system files/directories can be skipped.
+There's also the option apply .gitignore rules."""
 from xulbux import FormatCodes, ProgressBar, Console
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from typing import Callable
+from pathlib import Path
+import fnmatch
 import math
+import stat
 import os
 
 
-ARGS = Console.get_args({"ignore_info": ["-i", "--ignore"]}, allow_spaces=True)
-IGNORE = {item.lower() for item in str(ARGS.ignore_info.value).split()}
+ARGS = Console.get_args(
+    {
+        "exclude_info": ["-e", "--exclude"],
+        "skip_type": ["-s", "--skip"],
+        "gitignore": ["-g", "--gitignore"],
+    },
+    allow_spaces=True,
+)
+EXCLUDE = {item.lower() for item in str(ARGS.exclude_info.value).split()}
+SKIP = {item.lower() for item in str(ARGS.skip_type.value).split()} if ARGS.skip_type.exists else set()
+
+
+def is_hidden(path: str) -> bool:
+    """Check if a file or directory is hidden."""
+    name = os.path.basename(path)
+    if name.startswith("."):
+        return True
+    if os.name == "nt":
+        try:
+            attrs = os.stat(path).st_file_attributes
+            return bool(attrs & stat.FILE_ATTRIBUTE_HIDDEN)
+        except (AttributeError, OSError):
+            pass
+    return False
+
+
+def is_system(path: str) -> bool:
+    """Check if a file or directory is a system file."""
+    if os.name == "nt":
+        try:
+            attrs = os.stat(path).st_file_attributes
+            return bool(attrs & stat.FILE_ATTRIBUTE_SYSTEM)
+        except (AttributeError, OSError):
+            pass
+    system_dirs = {"/proc", "/sys", "/dev", "/tmp"}
+    return path in system_dirs or any(path.startswith(d) for d in system_dirs)
+
+
+def should_skip_path(path: str) -> bool:
+    """Check if a path should be skipped based on skip options."""
+    if "hidden" in SKIP and is_hidden(path):
+        return True
+    if "system" in SKIP and is_system(path):
+        return True
+    return False
+
+
+def load_gitignore_patterns(directory: str) -> list:
+    """Load .gitignore patterns from the given directory and parent directories."""
+    patterns = []
+    current_dir = Path(directory).resolve()
+
+    for parent in [current_dir] + list(current_dir.parents):
+        gitignore_path = parent / ".gitignore"
+        if gitignore_path.exists():
+            try:
+                with open(gitignore_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            patterns.append((str(parent), line))
+            except (OSError, UnicodeDecodeError):
+                continue
+
+    return patterns
+
+
+def is_gitignored(file_path: str, patterns: list) -> bool:
+    """Check if a file should be ignored based on .gitignore patterns."""
+    if not patterns:
+        return False
+
+    file_path = os.path.abspath(file_path)
+
+    for gitignore_dir, pattern in patterns:
+        if pattern.startswith("/"):
+            full_pattern = os.path.join(gitignore_dir, pattern[1:])
+        else:
+            full_pattern = os.path.join(gitignore_dir, pattern)
+
+        full_pattern = os.path.normpath(full_pattern)
+
+        if pattern.endswith("/"):
+            if os.path.isdir(file_path) and (fnmatch.fnmatch(file_path, full_pattern)
+                                             or fnmatch.fnmatch(file_path + os.sep, full_pattern)):
+                return True
+        else:
+            if fnmatch.fnmatch(file_path, full_pattern):
+                return True
+            parent = file_path
+            while parent != os.path.dirname(parent):
+                parent = os.path.dirname(parent)
+                if fnmatch.fnmatch(parent, full_pattern):
+                    return True
+
+    return False
 
 
 def get_dir_files(directory: str) -> list:
     """Recursively get the paths of all files in a directory."""
     files = []
+    gitignore_patterns = load_gitignore_patterns(directory) if ARGS.gitignore.exists else []
+
     try:
-        for root, _, filenames in os.walk(directory):
+        for root, dirs, filenames in os.walk(directory):
+            if should_skip_path(root):
+                dirs.clear()
+                continue
+            if ARGS.gitignore.exists and is_gitignored(root, gitignore_patterns):
+                dirs.clear()
+                continue
+
+            dirs[:] = [d for d in dirs if not should_skip_path(os.path.join(root, d))]
+            if ARGS.gitignore.exists:
+                dirs[:] = [d for d in dirs if not is_gitignored(os.path.join(root, d), gitignore_patterns)]
+
             for filename in filenames:
-                files.append(os.path.join(root, filename))
+                file_path = os.path.join(root, filename)
+                if should_skip_path(file_path):
+                    continue
+                if ARGS.gitignore.exists and is_gitignored(file_path, gitignore_patterns):
+                    continue
+                files.append(file_path)
     except PermissionError:
         pass
     return files
@@ -60,13 +177,13 @@ def count_lines(file_path: str) -> int:
 
 def process_file(file_path: str) -> tuple[int, int, int]:
     try:
-        if "size" in IGNORE and "scope" in IGNORE:
+        if "size" in EXCLUDE and "scope" in EXCLUDE:
             return 1, 0, 0
         size = os.path.getsize(file_path)
-        if "scope" in IGNORE: lines = 0
+        if "scope" in EXCLUDE: lines = 0
         elif size == 0: lines = 0
         else: lines = count_lines(file_path)
-        return 1, lines, 0 if "size" in IGNORE else size
+        return 1, lines, 0 if "size" in EXCLUDE else size
     except:
         return 1, 0, 0
 
@@ -121,7 +238,7 @@ def main():
     FormatCodes.print("\033[2K\r[dim](searching files...)", end="")
     files = get_dir_files(os.getcwd())
 
-    if "scope" in IGNORE and "size" in IGNORE:
+    if "scope" in EXCLUDE and "size" in EXCLUDE:
         files_count = len(files)
         files_scope = 0
         files_size = 0
@@ -135,9 +252,9 @@ def main():
 
     files_size = format_bytes_size(files_size)
     info_parts = [f"[b](TOTAL FILES:) {files_count:,}"]
-    if "scope" not in IGNORE:
+    if "scope" not in EXCLUDE:
         info_parts.append(f"[b](FILES SCOPE:) {files_scope:,} lines")
-    if "size" not in IGNORE:
+    if "size" not in EXCLUDE:
         info_parts.append(f"[b](FILES SIZE:) {files_size}")
     info = "  [dim](|)  ".join(info_parts)
 
