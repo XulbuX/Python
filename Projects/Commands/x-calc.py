@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Do advanced calculations from the command line."""
+"""Do advanced calculations from the command line.
+Supports a wide range of mathematical operations, functions and constants."""
 from xulbux import FormatCodes, Console
 from typing import Optional, Literal
 import sympy
@@ -254,17 +255,18 @@ def format_readability(num_str: str, max_num_len: int) -> str:
 
 def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
     global LAST_ANS
-    if not DEBUG:
+    if DEBUG:
+        clear_lines()
+        print()
+        print_line(f"NEW CALCULATION")
+        print(f"raw calculation string: {calc_str}")
+    else:
         print_overwrite("[dim|white](calculating...)", end="")
     value_validation = False
     if precision <= max_num_len:
         max_num_len = precision
         precision += 10
         value_validation = True
-    if DEBUG:
-        clear_lines()
-        print_line(f"STARTING CALCULATION")
-        print(f"raw calculation string: {calc_str}")
     calc_str = str(calc_str.strip()).replace(" ", "")
     SAVE_CALC_STR = calc_str
     for _ in range(calc_str.count("(")):
