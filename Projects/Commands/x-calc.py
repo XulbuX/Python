@@ -19,31 +19,25 @@ DEBUG = ARGS.debug.exists
 LAST_ANS = ARGS.ans.value
 
 sanitize = lambda a: sympy.sympify(a)
-sys.set_int_max_str_digits(1000000000)
+sys.set_int_max_str_digits(1_000_000_000)
 
 OPERATORS = {
     # ARITHMETIC OPERATORS
     "+": lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
     "-": lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
-    "*": lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
-    "x": lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
+    ("*", "x"): lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
     "/": lambda a, b: sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1)),
     "//": lambda a, b: sympy.floor(sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1))),
     "%": lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
     "\\": lambda a, b: sympy.floor(sympy.Pow(sanitize(a), sympy.Pow(sanitize(b), -1))),
     "**": lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
     # LOGIC OPERATORS
-    "&&": lambda a, b: a and b,
-    "AND": lambda a, b: a and b,
-    "||": lambda a, b: a or b,
-    "OR": lambda a, b: a or b,
-    "!": lambda a, _: not a,
-    "NOT": lambda a, _: not a,
-    "^": lambda a, b: (a and not b) or (not a and b),
-    "XOR": lambda a, b: (a and not b) or (not a and b),
+    ("&&", "AND"): lambda a, b: a and b,
+    ("||", "OR"): lambda a, b: a or b,
+    ("!", "NOT"): lambda a, _: not a,
+    ("^", "XOR"): lambda a, b: (a and not b) or (not a and b),
     # COMPARISON OPERATORS
-    "=": lambda a, b: 1 if a == b else 0,
-    "==": lambda a, b: 1 if a == b else 0,
+    ("=", "=="): lambda a, b: 1 if a == b else 0,
     "!=": lambda a, b: 1 if a != b else 0,
     "<": lambda a, b: 1 if a < b else 0,
     "<=": lambda a, b: 1 if a <= b else 0,
@@ -53,8 +47,14 @@ OPERATORS = {
 
 PRECEDENCE = {
     # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
-    "**": 4, "*": 3, "x": 3, "//": 3, "/": 3, "%": 3, "+": 2, "-": 2, "&&": 1, "AND": 1, "||": 0, "OR": 0, "=": -1, "==": -1,
-    "!=": -1, "<": -1, "<=": -1, ">": -1, ">=": -1, "!": -2, "NOT": -2, "^": -3, "XOR": -3
+    "**": 4,
+    ("*", "x", "//", "/", "%", "\\"): 3,
+    ("+", "-"): 2,
+    ("&&", "AND"): 1,
+    ("||", "OR"): 0,
+    ("=", "==", "!=", "<", "<=", ">", ">="): -1,
+    ("!", "NOT"): -2,
+    ("^", "XOR"): -3,
 }
 
 CONSTANTS = {
@@ -62,6 +62,14 @@ CONSTANTS = {
     "pi": sympy.pi,
     "e": sympy.E,
 }
+
+OPERATORS_FLAT = {key: func for keys, func in OPERATORS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
+PRECEDENCE_FLAT = {
+    key: precedence
+    for keys, precedence in PRECEDENCE.items()
+    for key in (keys if isinstance(keys, tuple) else [keys])
+}
+ALL_OPERATOR_SYMBOLS = [key for keys in OPERATORS.keys() for key in (keys if isinstance(keys, tuple) else [keys])]
 
 FUNCTIONS = {
     # PROGRAMMING FUNCTIONS
@@ -121,16 +129,26 @@ def clear_lines(num_lines: int = 1) -> None:
 
 
 def generate_regex_pattern(dict: dict, direction: Literal["forward", "backward"] = "forward") -> str:
+    # Use pre-computed symbols for operators, or extract from dict for other cases
+    if dict is OPERATORS:
+        all_symbols = ALL_OPERATOR_SYMBOLS
+    else:
+        all_symbols = []
+        for keys in dict.keys():
+            if isinstance(keys, tuple):
+                all_symbols.extend(keys)
+            else:
+                all_symbols.append(keys)
+
     if direction == "forward":
-        return "|".join(map(re.escape, dict.keys()))
+        return "|".join(map(re.escape, all_symbols))
     elif direction == "backward":
-        reversed_keys = list(reversed(dict.keys()))
-        return "|".join(map(re.escape, reversed_keys))
+        reversed_symbols = list(reversed(all_symbols))
+        return "|".join(map(re.escape, reversed_symbols))
 
 
 def find_matches(text: str) -> list:
     operator_pattern = generate_regex_pattern(OPERATORS, "backward")
-    # Updated regex to handle negative numbers: -?\d*\.\d+ matches optional minus with decimals, -?\d+ matches optional minus with integers
     matches = re.findall(r"[a-z]+|-?\d*\.\d+|-?\d+|" + operator_pattern, text)
     if DEBUG:
         print_line("FINDING MATCHES")
@@ -293,7 +311,7 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
     def sympify(split_matches: list) -> list:
         split_sympy = []
         for token in split_matches:
-            if token in OPERATORS:
+            if token in OPERATORS_FLAT:
                 split_sympy.append(token)
             else:
                 split_sympy.append(sympy.sympify(token))
@@ -341,7 +359,7 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
             array = numpy.array(split)
             split_sympy = sympify(split)
     # ITERATE OVER OTHER SYMBOLS BASED ON PRECEDENCE
-    sorted_operators = sorted(set(OPERATORS.keys()), key=lambda x: PRECEDENCE.get(x, 5), reverse=True)
+    sorted_operators = sorted(set(ALL_OPERATOR_SYMBOLS), key=lambda x: PRECEDENCE_FLAT.get(x, 5), reverse=True)
     for operator in sorted_operators:
         count = split.count(operator)
         for _ in range(count):
@@ -349,7 +367,10 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
             for index in indices:
                 if DEBUG:
                     print_line(f"CALCULATING OPERATOR")
-                result = OPERATORS[operator](split_sympy[index - 1], split_sympy[index + 1])
+                operator_func = OPERATORS_FLAT.get(operator)
+                if operator_func is None:
+                    continue
+                result = operator_func(split_sympy[index - 1], split_sympy[index + 1])
                 if DEBUG:
                     print(f"argument: {split_sympy[index - 1]}")
                     print(f"operator: {operator}")
@@ -390,9 +411,25 @@ def main():
         else:
             print_overwrite(f"[dim|br:green][b](=) [_dim]{ans}[_]")
     else:
-        FormatCodes.print(f"[b](Possible funcs/vars:)\n[dim](•) {'\n[dim](•) '.join(FUNCTIONS.keys())}\n")
-        FormatCodes.print(f"[b](Possible constants:)\n[dim](•) {'\n[dim](•) '.join(CONSTANTS.keys())}\n")
-        FormatCodes.print(f"[b](Possible operators:)\n[dim](•) {'\n[dim](•) '.join(OPERATORS.keys())}\n")
+        FormatCodes.print(f"[b](Possible functions:)")
+        for key in FUNCTIONS.keys():
+            if isinstance(key, tuple):
+                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
+            else:
+                FormatCodes.print(f"[dim](•) {key}")
+        FormatCodes.print(f"\n[b](Possible constants:)")
+        for key in CONSTANTS.keys():
+            if isinstance(key, tuple):
+                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
+            else:
+                FormatCodes.print(f"[dim](•) {key}")
+        FormatCodes.print(f"\n[b](Possible operators:)")
+        for key in OPERATORS.keys():
+            if isinstance(key, tuple):
+                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
+            else:
+                FormatCodes.print(f"[dim](•) {key}")
+        print()
 
 
 if __name__ == "__main__":
