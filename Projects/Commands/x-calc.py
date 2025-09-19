@@ -11,6 +11,7 @@ import re
 ARGS = Console.get_args({
     "calculation": "before",
     "ans": ["-a", "--ans"],
+    "precision": ["-p", "--precision"],
     "debug": ["-d", "--debug"],
 })
 DEBUG = ARGS.debug.exists
@@ -374,7 +375,11 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
 
 def main():
     if len(calc_strs := list(ARGS.calculation.value)) > 0:
-        ans = calc(" ".join(str(v) for v in calc_strs), precision=110, max_num_len=100)
+        ans = calc(
+            " ".join(str(v) for v in calc_strs),
+            precision=(ARGS.precision.value or 100) + 10,
+            max_num_len=(ARGS.precision.value or 100),
+        )
         if DEBUG:
             print_line("FINAL RESULT")
             print(f"answer: {ans}")

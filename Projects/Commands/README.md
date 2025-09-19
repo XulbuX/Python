@@ -298,6 +298,11 @@ There's also an option to specify a previous answer with the `-a` `--ans` opti
 x-calc "ans * 2" --ans 6
 ```
 
+You can also specify the calculation precision (*result decimal places*) with the `-p` `--precision` option:
+```bash
+x-calc "1 / 3" --precision 5
+```
+
 Running the command without any arguments or options will show all available functions, variables and operators.
 
 <br>
