@@ -284,6 +284,24 @@ squares --columns 6
 
 <br>
 
+### `x-calc`
+
+This command lets you do advanced calculations directly in the console. It supports a wide range of mathematical operations, functions and constants.
+
+You can directly give the calculation as an argument:
+```bash
+x-calc "2 + 2 * 2"
+```
+
+There's also an option to specify a previous answer with the `-a` `--ans` option:
+```bash
+x-calc "ans * 2" --ans 6
+```
+
+Running the command without any arguments or options will show all available functions, variables and operators.
+
+<br>
+
 ### `x-cmds`
 
 This command outputs a list of all custom Python commands in the current directory, with a short description and their params.

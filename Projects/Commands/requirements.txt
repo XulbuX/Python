@@ -2,5 +2,6 @@ build
 keyboard
 psutil
 qrcode
+sympy
 twine
 xulbux
