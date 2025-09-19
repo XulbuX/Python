@@ -17,44 +17,8 @@ ARGS = Console.get_args({
 DEBUG = ARGS.debug.exists
 LAST_ANS = ARGS.ans.value
 
-sanitize = lambda a: sympy.Integer(a)
+sanitize = lambda a: sympy.sympify(a)
 sys.set_int_max_str_digits(1000000000)
-
-FUNCTIONS = {
-    # PROGRAMMING FUNCTIONS
-    "abs": lambda a: abs(sanitize(a)),
-    "floor": lambda a: sympy.floor(sanitize(a)),
-    "ceil": lambda a: sympy.ceiling(sanitize(a)),
-    "round": lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
-    # LOGARITHMIC FUNCTIONS
-    "log": lambda a: sympy.log(sanitize(a), 10),
-    "ln": lambda a: sympy.log(sanitize(a)),
-    "exp": lambda a: sympy.exp(sanitize(a)),
-    # TRIGONOMETRIC FUNCTIONS
-    "rad": lambda a: sympy.rad(sanitize(a)),
-    "deg": lambda a: sympy.deg(sanitize(a)),
-    "sin": lambda a: sympy.sin(sanitize(a)),
-    "asin": lambda a: sympy.asin(sanitize(a)),
-    "cos": lambda a: sympy.cos(sanitize(a)),
-    "acos": lambda a: sympy.acos(sanitize(a)),
-    "tan": lambda a: sympy.tan(sanitize(a)),
-    "atan": lambda a: sympy.atan(sanitize(a)),
-    # ADDITIONAL FUNCTIONS
-    "fac": lambda a: sympy.factorial(sanitize(a)),
-    "exp": lambda a: sympy.exp(sanitize(a)),
-    "log2": lambda a: sympy.log(sanitize(a), 2),
-    "sqrt": lambda a: sympy.sqrt(sanitize(a)),
-    "sinh": lambda a: sympy.sinh(sanitize(a)),
-    "cosh": lambda a: sympy.cosh(sanitize(a)),
-    "tanh": lambda a: sympy.tanh(sanitize(a)),
-    "asinh": lambda a: sympy.asinh(sanitize(a)),
-    "acosh": lambda a: sympy.acosh(sanitize(a)),
-    "atanh": lambda a: sympy.atanh(sanitize(a)),
-    # CONSTANTS
-    "ans": "ans",
-    "pi": lambda _: sympy.pi,
-    "e": lambda _: sympy.exp(1),
-}
 
 OPERATORS = {
     # ARITHMETIC OPERATORS
@@ -88,29 +52,46 @@ OPERATORS = {
 
 PRECEDENCE = {
     # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
-    "**": 4,
-    "*": 3,
-    "x": 3,
-    "//": 3,
-    "/": 3,
-    "%": 3,
-    "+": 2,
-    "-": 2,
-    "&&": 1,
-    "AND": 1,
-    "||": 0,
-    "OR": 0,
-    "=": -1,
-    "==": -1,
-    "!=": -1,
-    "<": -1,
-    "<=": -1,
-    ">": -1,
-    ">=": -1,
-    "!": -2,
-    "NOT": -2,
-    "^": -3,
-    "XOR": -3,
+    "**": 4, "*": 3, "x": 3, "//": 3, "/": 3, "%": 3, "+": 2, "-": 2, "&&": 1, "AND": 1, "||": 0, "OR": 0, "=": -1, "==": -1,
+    "!=": -1, "<": -1, "<=": -1, ">": -1, ">=": -1, "!": -2, "NOT": -2, "^": -3, "XOR": -3
+}
+
+CONSTANTS = {
+    "ans": ARGS.ans.value,
+    "pi": sympy.pi,
+    "e": sympy.E,
+}
+
+FUNCTIONS = {
+    # PROGRAMMING FUNCTIONS
+    "abs": lambda a: abs(sanitize(a)),
+    "floor": lambda a: sympy.floor(sanitize(a)),
+    "ceil": lambda a: sympy.ceiling(sanitize(a)),
+    "round": lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
+    # LOGARITHMIC FUNCTIONS
+    "log": lambda a: sympy.log(sanitize(a), 10),
+    "ln": lambda a: sympy.log(sanitize(a)),
+    "exp": lambda a: sympy.exp(sanitize(a)),
+    # TRIGONOMETRIC FUNCTIONS
+    "rad": lambda a: sympy.rad(sanitize(a)),
+    "deg": lambda a: sympy.deg(sanitize(a)),
+    "sin": lambda a: sympy.sin(sanitize(a)),
+    "asin": lambda a: sympy.asin(sanitize(a)),
+    "cos": lambda a: sympy.cos(sanitize(a)),
+    "acos": lambda a: sympy.acos(sanitize(a)),
+    "tan": lambda a: sympy.tan(sanitize(a)),
+    "atan": lambda a: sympy.atan(sanitize(a)),
+    # ADDITIONAL FUNCTIONS
+    "fac": lambda a: sympy.factorial(sanitize(a)),
+    "exp": lambda a: sympy.exp(sanitize(a)),
+    "log2": lambda a: sympy.log(sanitize(a), 2),
+    "sqrt": lambda a: sympy.sqrt(sanitize(a)),
+    "sinh": lambda a: sympy.sinh(sanitize(a)),
+    "cosh": lambda a: sympy.cosh(sanitize(a)),
+    "tanh": lambda a: sympy.tanh(sanitize(a)),
+    "asinh": lambda a: sympy.asinh(sanitize(a)),
+    "acosh": lambda a: sympy.acosh(sanitize(a)),
+    "atanh": lambda a: sympy.atanh(sanitize(a)),
 }
 
 
@@ -148,7 +129,8 @@ def generate_regex_pattern(dict: dict, direction: Literal["forward", "backward"]
 
 def find_matches(text: str) -> list:
     operator_pattern = generate_regex_pattern(OPERATORS, "backward")
-    matches = re.findall(r"[a-z]+|\d*\.\d+|\d+|" + operator_pattern, text)
+    # Updated regex to handle negative numbers: -?\d*\.\d+ matches optional minus with decimals, -?\d+ matches optional minus with integers
+    matches = re.findall(r"[a-z]+|-?\d*\.\d+|-?\d+|" + operator_pattern, text)
     if DEBUG:
         print_line("FINDING MATCHES")
         print(f"input text: {text}")
@@ -173,8 +155,9 @@ def format_result(result: float, precision: int = 10) -> str:
 
 def format_readability(num_str: str, max_num_len: int) -> str:
     if not DEBUG:
-        print_overwrite(" [dim|white](formatting...)", end="")
+        print_overwrite("[dim|white](formatting...)", end="")
     num_str = str(num_str)
+
     # TRUNCATE REPEATING DECIMAL
     if len(num_str) > max_num_len and "." in num_str:
         num_str = num_str[:-10]
@@ -237,6 +220,7 @@ def format_readability(num_str: str, max_num_len: int) -> str:
             num_str = f"{int_part}.{short_decimal_part}"
         if DEBUG:
             print(f"formatted string: {num_str}")
+
     # FORMAT LONG NUMBERS TO EXPONENTS
     elif len(num_str) > max_num_len:
         if DEBUG:
@@ -271,7 +255,7 @@ def format_readability(num_str: str, max_num_len: int) -> str:
 def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
     global LAST_ANS
     if not DEBUG:
-        FormatCodes.print("\n [dim|white](calculating...)", end="")
+        print_overwrite("[dim|white](calculating...)", end="")
     value_validation = False
     if precision <= max_num_len:
         max_num_len = precision
@@ -283,19 +267,15 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
         print(f"raw calculation string: {calc_str}")
     calc_str = str(calc_str.strip()).replace(" ", "")
     SAVE_CALC_STR = calc_str
-    if "ans" in calc_str:
-        if LAST_ANS:
-            calc_str = calc_str.replace("ans", str(LAST_ANS))
-            if DEBUG:
-                print(f"inserted 'ans': {calc_str}")
-        else:
-            raise Exception("'ans' was not specified")
     for _ in range(calc_str.count("(")):
         start = calc_str.rfind("(") + 1
-        formatted_result = calc_str[start:calc_str.find(")", start)]
+        end = calc_str.find(")", start)
+        formatted_result = calc_str[start:end]
+        before_paren_pos = start - 2
+        should_add_mult = (before_paren_pos >= 0 and calc_str[before_paren_pos].isdigit())
         calc_str = calc_str.replace(
             "(" + formatted_result + ")",
-            ("*" if calc_str[start - 2].isdigit() else "") + str(calc(formatted_result)),
+            ("*" if should_add_mult else "") + str(calc(formatted_result)),
         )
     if DEBUG:
         print(f"adjusted calculation string: {calc_str}")
@@ -303,9 +283,6 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
             print("FOLLOWING VALUES WERE RESIZED FOR VALIDATION:")
         (print(f" > precision: {precision}") if value_validation else print(f"precision: {precision}"))
         (print(f" > max number length: {max_num_len}") if value_validation else print(f"max number length: {max_num_len}"))
-    else:
-        print_overwrite(f" [i]{calc_str}[_i]")
-        FormatCodes.print(" [dim|white](calculating...)", end="")
     numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
     split = find_matches(calc_str)
     array = numpy.array(split)
@@ -321,6 +298,25 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
         return split_sympy
 
     split_sympy = sympify(split)
+    # ITERATE OVER CONSTANTS FIRST
+    for constant in CONSTANTS:
+        count = split.count(constant)
+        for _ in range(count):
+            indices = numpy.where(array == constant)[0]
+            for index in indices:
+                if DEBUG:
+                    print_line(f"CALCULATING CONSTANT")
+                    print(f"constant: {constant}")
+                constant_value = CONSTANTS[constant]
+                if constant == "ans" and constant_value is None:
+                    raise Exception("'ans' was not specified")
+                if DEBUG:
+                    print(f"value: {constant_value}")
+                formatted_result = format_result(constant_value, precision)
+                calc_str = calc_str.replace(constant, str(formatted_result))
+        split = find_matches(calc_str)
+        array = numpy.array(split)
+        split_sympy = sympify(split)
     # ITERATE OVER FUNCTIONS AVAILABLE
     for function in FUNCTIONS:
         count = split.count(function)
@@ -367,13 +363,17 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
             array = numpy.array(split)
             split_sympy = sympify(split)
     if calc_str == SAVE_CALC_STR:
-        raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
+        try:
+            sympy.sympify(calc_str)
+        except:
+            raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
     LAST_ANS = calc_str
     formatted_ans = format_readability(calc_str, max_num_len)
     return formatted_ans
 
 
 def main():
+    print()
     if len(calc_strs := list(ARGS.calculation.value)) > 0:
         ans = calc(
             " ".join(str(v) for v in calc_strs),
@@ -386,9 +386,10 @@ def main():
             print_line()
             print()
         else:
-            print_overwrite(f"[dim|br:green] [b](=) [_dim]{ans}[_]")
+            print_overwrite(f"[dim|br:green][b](=) [_dim]{ans}[_]")
     else:
-        FormatCodes.print(f"\n[b](Possible funcs/vars:)\n[dim](•) {'\n[dim](•) '.join(FUNCTIONS.keys())}\n")
+        FormatCodes.print(f"[b](Possible funcs/vars:)\n[dim](•) {'\n[dim](•) '.join(FUNCTIONS.keys())}\n")
+        FormatCodes.print(f"[b](Possible constants:)\n[dim](•) {'\n[dim](•) '.join(CONSTANTS.keys())}\n")
         FormatCodes.print(f"[b](Possible operators:)\n[dim](•) {'\n[dim](•) '.join(OPERATORS.keys())}\n")
 
 
@@ -396,6 +397,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print_overwrite(" [b|br:red](⨯)\n")
+        print_overwrite("[b|br:red](⨯)\n")
     except Exception as e:
         Console.fail(e, start="\n\n", end="\n\n")
