@@ -25,83 +25,96 @@ OPERATORS = {
     # ARITHMETIC OPERATORS
     "+": lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
     "-": lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
-    ("*", "x"): lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
-    "/": lambda a, b: sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1)),
+    ("*", "x", "×", "·"): lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
+    ("/", "÷", ":"): lambda a, b: sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1)),
     "//": lambda a, b: sympy.floor(sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1))),
-    "%": lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
+    ("%", "mod"): lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
     "\\": lambda a, b: sympy.floor(sympy.Pow(sanitize(a), sympy.Pow(sanitize(b), -1))),
-    "**": lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
+    ("**", "^"): lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
     # LOGIC OPERATORS
     ("&&", "AND"): lambda a, b: a and b,
     ("||", "OR"): lambda a, b: a or b,
     ("!", "NOT"): lambda a, _: not a,
-    ("^", "XOR"): lambda a, b: (a and not b) or (not a and b),
+    "XOR": lambda a, b: (a and not b) or (not a and b),
     # COMPARISON OPERATORS
     ("=", "=="): lambda a, b: 1 if a == b else 0,
-    "!=": lambda a, b: 1 if a != b else 0,
+    ("!=", "≠"): lambda a, b: 1 if a != b else 0,
     "<": lambda a, b: 1 if a < b else 0,
-    "<=": lambda a, b: 1 if a <= b else 0,
+    ("<=", "≤"): lambda a, b: 1 if a <= b else 0,
     ">": lambda a, b: 1 if a > b else 0,
-    ">=": lambda a, b: 1 if a >= b else 0,
+    (">=", "≥"): lambda a, b: 1 if a >= b else 0,
 }
 
 PRECEDENCE = {
     # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
-    "**": 4,
-    ("*", "x", "//", "/", "%", "\\"): 3,
+    "^": 4,
+    ("*", "//", "/", "%", "\\"): 3,
     ("+", "-"): 2,
-    ("&&", "AND"): 1,
-    ("||", "OR"): 0,
-    ("=", "==", "!=", "<", "<=", ">", ">="): -1,
-    ("!", "NOT"): -2,
-    ("^", "XOR"): -3,
+    "AND": 1,
+    "OR": 0,
+    ("==", "!=", "<", "<=", ">", ">="): -1,
+    "NOT": -2,
+    "XOR": -3,
 }
 
 CONSTANTS = {
     "ans": ARGS.ans.value,
-    "pi": sympy.pi,
+    ("pi", "π"): sympy.pi,
     "e": sympy.E,
 }
 
-OPERATORS_FLAT = {key: func for keys, func in OPERATORS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
-PRECEDENCE_FLAT = {
-    key: precedence
-    for keys, precedence in PRECEDENCE.items()
-    for key in (keys if isinstance(keys, tuple) else [keys])
-}
-ALL_OPERATOR_SYMBOLS = [key for keys in OPERATORS.keys() for key in (keys if isinstance(keys, tuple) else [keys])]
-
 FUNCTIONS = {
     # PROGRAMMING FUNCTIONS
-    "abs": lambda a: abs(sanitize(a)),
+    ("abs", "absolute"): lambda a: abs(sanitize(a)),
     "floor": lambda a: sympy.floor(sanitize(a)),
-    "ceil": lambda a: sympy.ceiling(sanitize(a)),
+    ("ceil", "ceiling"): lambda a: sympy.ceiling(sanitize(a)),
     "round": lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
     # LOGARITHMIC FUNCTIONS
-    "log": lambda a: sympy.log(sanitize(a), 10),
-    "ln": lambda a: sympy.log(sanitize(a)),
-    "exp": lambda a: sympy.exp(sanitize(a)),
+    ("log", "log10", "logarithm"): lambda a: sympy.log(sanitize(a), 10),
+    ("ln", "log_e", "natural_log"): lambda a: sympy.log(sanitize(a)),
+    ("log2", "log_2"): lambda a: sympy.log(sanitize(a), 2),
+    ("exp", "exponential"): lambda a: sympy.exp(sanitize(a)),
     # TRIGONOMETRIC FUNCTIONS
-    "rad": lambda a: sympy.rad(sanitize(a)),
-    "deg": lambda a: sympy.deg(sanitize(a)),
-    "sin": lambda a: sympy.sin(sanitize(a)),
-    "asin": lambda a: sympy.asin(sanitize(a)),
-    "cos": lambda a: sympy.cos(sanitize(a)),
-    "acos": lambda a: sympy.acos(sanitize(a)),
-    "tan": lambda a: sympy.tan(sanitize(a)),
-    "atan": lambda a: sympy.atan(sanitize(a)),
+    ("rad", "radians"): lambda a: sympy.rad(sanitize(a)),
+    ("deg", "degrees"): lambda a: sympy.deg(sanitize(a)),
+    ("sin", "sine"): lambda a: sympy.sin(sanitize(a)),
+    ("asin", "arcsin", "arcsine"): lambda a: sympy.asin(sanitize(a)),
+    ("cos", "cosine"): lambda a: sympy.cos(sanitize(a)),
+    ("acos", "arccos", "arccosine"): lambda a: sympy.acos(sanitize(a)),
+    ("tan", "tangent"): lambda a: sympy.tan(sanitize(a)),
+    ("atan", "arctan", "arctangent"): lambda a: sympy.atan(sanitize(a)),
+    # HYPERBOLIC FUNCTIONS
+    ("sinh", "hyperbolic_sine"): lambda a: sympy.sinh(sanitize(a)),
+    ("cosh", "hyperbolic_cosine"): lambda a: sympy.cosh(sanitize(a)),
+    ("tanh", "hyperbolic_tangent"): lambda a: sympy.tanh(sanitize(a)),
+    ("asinh", "arcsinh", "inverse_sinh"): lambda a: sympy.asinh(sanitize(a)),
+    ("acosh", "arccosh", "inverse_cosh"): lambda a: sympy.acosh(sanitize(a)),
+    ("atanh", "arctanh", "inverse_tanh"): lambda a: sympy.atanh(sanitize(a)),
     # ADDITIONAL FUNCTIONS
-    "fac": lambda a: sympy.factorial(sanitize(a)),
-    "exp": lambda a: sympy.exp(sanitize(a)),
-    "log2": lambda a: sympy.log(sanitize(a), 2),
-    "sqrt": lambda a: sympy.sqrt(sanitize(a)),
-    "sinh": lambda a: sympy.sinh(sanitize(a)),
-    "cosh": lambda a: sympy.cosh(sanitize(a)),
-    "tanh": lambda a: sympy.tanh(sanitize(a)),
-    "asinh": lambda a: sympy.asinh(sanitize(a)),
-    "acosh": lambda a: sympy.acosh(sanitize(a)),
-    "atanh": lambda a: sympy.atanh(sanitize(a)),
+    ("fac", "factorial"): lambda a: sympy.factorial(sanitize(a)),
+    ("sqrt", "square_root"): lambda a: sympy.sqrt(sanitize(a)),
 }
+
+
+def get_precedence(operator: str) -> int:
+    if operator in PRECEDENCE:
+        return PRECEDENCE[operator]
+    for op_group in OPERATORS.keys():
+        if isinstance(op_group, tuple) and operator in op_group:
+            for rep in op_group:
+                if rep in PRECEDENCE:
+                    return PRECEDENCE[rep]
+    for prec_key, prec_val in PRECEDENCE.items():
+        if isinstance(prec_key, tuple) and operator in prec_key:
+            return prec_val
+    return 0
+
+
+OPERATORS_FLAT = {key: func for keys, func in OPERATORS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
+PRECEDENCE_FLAT = {op: get_precedence(op) for op in OPERATORS_FLAT.keys()}
+ALL_OPERATOR_SYMBOLS = [key for keys in OPERATORS.keys() for key in (keys if isinstance(keys, tuple) else [keys])]
+FUNCTIONS_FLAT = {key: func for keys, func in FUNCTIONS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
+CONSTANTS_FLAT = {key: value for keys, value in CONSTANTS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
 
 
 def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
@@ -149,11 +162,30 @@ def generate_regex_pattern(dict: dict, direction: Literal["forward", "backward"]
 
 def find_matches(text: str) -> list:
     operator_pattern = generate_regex_pattern(OPERATORS, "backward")
-    matches = re.findall(r"[a-z]+|-?\d*\.\d+|-?\d+|" + operator_pattern, text)
+    preliminary_matches = re.findall(r"[a-z]+|-?\d*\.\d+|-?\d+|" + operator_pattern, text)
+
+    matches = []
+    for i, match in enumerate(preliminary_matches):
+        if (match.startswith('-') and len(match) > 1 and match[1:].replace('.', '').isdigit() and i > 0):
+            prev_match = preliminary_matches[i - 1]
+            is_prev_operand = (
+                prev_match.replace('.', '').replace('-', '').isdigit() or prev_match in CONSTANTS_FLAT or prev_match == ')'
+            )
+            is_at_end = (i == len(preliminary_matches) - 1)
+            next_is_operator = (not is_at_end and preliminary_matches[i + 1] in OPERATORS_FLAT)
+            if is_prev_operand and (is_at_end or next_is_operator):
+                matches.append('-')
+                matches.append(match[1:])
+            else:
+                matches.append(match)
+        else:
+            matches.append(match)
+
     if DEBUG:
         print_line("FINDING MATCHES")
         print(f"input text: {text}")
-        print(f"found matches: {matches}")
+        print(f"preliminary matches: {preliminary_matches}")
+        print(f"final matches: {matches}")
     return matches
 
 
@@ -319,7 +351,7 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
 
     split_sympy = sympify(split)
     # ITERATE OVER CONSTANTS FIRST
-    for constant in CONSTANTS:
+    for constant in CONSTANTS_FLAT:
         count = split.count(constant)
         for _ in range(count):
             indices = numpy.where(array == constant)[0]
@@ -327,7 +359,7 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
                 if DEBUG:
                     print_line(f"CALCULATING CONSTANT")
                     print(f"constant: {constant}")
-                constant_value = CONSTANTS[constant]
+                constant_value = CONSTANTS_FLAT[constant]
                 if constant == "ans" and constant_value is None:
                     raise Exception("'ans' was not specified")
                 if DEBUG:
@@ -338,14 +370,14 @@ def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
         array = numpy.array(split)
         split_sympy = sympify(split)
     # ITERATE OVER FUNCTIONS AVAILABLE
-    for function in FUNCTIONS:
+    for function in FUNCTIONS_FLAT:
         count = split.count(function)
         for _ in range(count):
             indices = numpy.where(array == function)[0]
             for index in indices:
                 if DEBUG:
                     print_line(f"CALCULATING FUNCTION")
-                result = FUNCTIONS[function](split_sympy[index + 1])
+                result = FUNCTIONS_FLAT[function](split_sympy[index + 1])
                 if DEBUG:
                     print(f"argument: {split_sympy[index - 1]}")
                     print(f"function: {function}")
