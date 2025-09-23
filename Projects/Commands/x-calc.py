@@ -2,7 +2,7 @@
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants."""
 from xulbux import FormatCodes, Console
-from typing import Optional, Literal
+from typing import Callable, Optional
 import sympy
 import numpy
 import sys
@@ -13,108 +13,255 @@ ARGS = Console.get_args({
     "calculation": "before",
     "ans": ["-a", "--ans"],
     "precision": ["-p", "--precision"],
+    "format": ["-f", "--format"],
     "debug": ["-d", "--debug"],
 })
 DEBUG = ARGS.debug.exists
-LAST_ANS = ARGS.ans.value
 
 sanitize = lambda a: sympy.sympify(a)
 sys.set_int_max_str_digits(1_000_000_000)
 
-OPERATORS = {
+
+class OPERATORS:
+
     # ARITHMETIC OPERATORS
-    "+": lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
-    "-": lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
-    ("*", "x", "×", "·"): lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
-    ("/", "÷", ":"): lambda a, b: sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1)),
-    "//": lambda a, b: sympy.floor(sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1))),
-    ("%", "mod"): lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
-    "\\": lambda a, b: sympy.floor(sympy.Pow(sanitize(a), sympy.Pow(sanitize(b), -1))),
-    ("**", "^"): lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
+    MINUS = ("o:minus", ["-", "−"])
+    PLUS = ("o:plus", ["+", "＋"])
+    MULTIPLY = ("o:multiply", ["*", "×", "∗", "·"])
+    DIVIDE = ("o:divide", ["/", "÷"])
+    FLOOR_DIVIDE = ("o:floor_divide", ["//", "⌊/⌋"])
+    MODULO = ("o:modulo", ["%", "mod"])
+    POWER = ("o:power", ["**", "^"])
     # LOGIC OPERATORS
-    ("&&", "AND"): lambda a, b: a and b,
-    ("||", "OR"): lambda a, b: a or b,
-    ("!", "NOT"): lambda a, _: not a,
-    "XOR": lambda a, b: (a and not b) or (not a and b),
+    AND = ("o:and", ["and", "&&", "∧"])
+    OR = ("o:or", ["or", "||", "∨"])
+    NOT = ("o:not", ["not", "!", "¬"])
+    XOR = ("o:xor", ["xor", "⊻"])
+    # POSTFIX OPERATORS
+    FACTORIAL = ("o:factorial", ["!"])
     # COMPARISON OPERATORS
-    ("=", "=="): lambda a, b: 1 if a == b else 0,
-    ("!=", "≠"): lambda a, b: 1 if a != b else 0,
-    "<": lambda a, b: 1 if a < b else 0,
-    ("<=", "≤"): lambda a, b: 1 if a <= b else 0,
-    ">": lambda a, b: 1 if a > b else 0,
-    (">=", "≥"): lambda a, b: 1 if a >= b else 0,
-}
+    EQUALS = ("o:equals", ["eq", "=", "==", "≡"])
+    NOT_EQUALS = ("o:not_equals", ["ne", "!=", "≠", "<>"])
+    LESS_THAN = ("o:less_than", ["lt", "<", "＜"])
+    LESS_THAN_EQUAL = ("o:less_equal_than", ["le", "<=", "≤", "⩽"])
+    GREATER_THAN = ("o:greater_than", ["gt", ">", "＞"])
+    GREATER_THAN_EQUAL = ("o:greater_equal_than", ["ge", ">=", "≥", "⩾"])
 
-PRECEDENCE = {
-    # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
-    "^": 4,
-    ("*", "//", "/", "%", "\\"): 3,
-    ("+", "-"): 2,
-    "AND": 1,
-    "OR": 0,
-    ("==", "!=", "<", "<=", ">", ">="): -1,
-    "NOT": -2,
-    "XOR": -3,
-}
+    ALL = (
+        MINUS, PLUS, MULTIPLY, DIVIDE, FLOOR_DIVIDE, MODULO, POWER, AND, OR, NOT, XOR, FACTORIAL, EQUALS, NOT_EQUALS,
+        LESS_THAN, LESS_THAN_EQUAL, GREATER_THAN, GREATER_THAN_EQUAL
+    )
+    ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-CONSTANTS = {
-    "ans": ARGS.ans.value,
-    ("pi", "π"): sympy.pi,
-    "e": sympy.E,
-}
+    PRECEDENCE: dict[str | tuple[str, ...], int] = {
+        # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
+        FACTORIAL[0]: 5,
+        POWER[0]: 4,
+        (MULTIPLY[0], DIVIDE[0], FLOOR_DIVIDE[0], MODULO[0]): 3,
+        (PLUS[0], MINUS[0]): 2,
+        AND[0]: 1,
+        OR[0]: 0,
+        (EQUALS[0], NOT_EQUALS[0], LESS_THAN[0], LESS_THAN_EQUAL[0], GREATER_THAN[0], GREATER_THAN_EQUAL[0]): -1,
+        NOT[0]: -2,
+        XOR[0]: -3,
+    }
 
-FUNCTIONS = {
+    IMPLEMENT: dict[str, Callable] = {
+        # ARITHMETIC OPERATORS
+        MINUS[0]: lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
+        PLUS[0]: lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
+        MULTIPLY[0]: lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
+        DIVIDE[0]: lambda a, b: sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1)),
+        FLOOR_DIVIDE[0]: lambda a, b: sympy.floor(sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1))),
+        MODULO[0]: lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
+        POWER[0]: lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
+        # LOGIC OPERATORS
+        AND[0]: lambda a, b: 1 if (bool(a) and bool(b)) else 0,
+        OR[0]: lambda a, b: 1 if (bool(a) or bool(b)) else 0,
+        NOT[0]: lambda a, _: 1 if not bool(a) else 0,
+        XOR[0]: lambda a, b: 1 if ((bool(a) and not bool(b)) or (not bool(a) and bool(b))) else 0,
+        # POSTFIX OPERATORS
+        FACTORIAL[0]: lambda a, _: sympy.factorial(sanitize(a)),
+        # COMPARISON OPERATORS
+        EQUALS[0]: lambda a, b: 1 if a == b else 0,
+        NOT_EQUALS[0]: lambda a, b: 1 if a != b else 0,
+        LESS_THAN[0]: lambda a, b: 1 if a < b else 0,
+        LESS_THAN_EQUAL[0]: lambda a, b: 1 if a <= b else 0,
+        GREATER_THAN[0]: lambda a, b: 1 if a > b else 0,
+        GREATER_THAN_EQUAL[0]: lambda a, b: 1 if a >= b else 0,
+    }
+
+    @classmethod
+    def get(cls, operator_id: str):
+        """Get the operator function by operator ID."""
+        return cls.IMPLEMENT.get(operator_id)
+
+    @classmethod
+    def get_id(cls, token: str) -> str | None:
+        """Get the operator ID for a token by searching through the token lists."""
+        for op_id, symbols in cls.ALL:
+            if token in symbols: return op_id
+        return None
+
+    @classmethod
+    def is_operator(cls, token: str) -> bool:
+        """Check if a token is an operator by searching through the token lists."""
+        return cls.get_id(token) is not None
+
+    @classmethod
+    def get_precedence(cls, operator_id: str) -> int:
+        """Get the operator precedence by operator ID."""
+        for keys, val in cls.PRECEDENCE.items():
+            if isinstance(keys, tuple):
+                if operator_id in keys: return val
+            else:
+                if operator_id == keys: return val
+        return 5  # DEFAULT
+
+
+class CONSTANTS:
+
+    # MATHEMATICAL CONSTANTS
+    ANS = ("c:ans", ["ans", "answer"])
+    E = ("c:e", ["e", "euler"])
+    INF = ("c:inf", ["inf", "infinity", "∞"])
+    PI = ("c:pi", ["pi", "π"])
+    TAU = ("c:tau", ["tau", "τ"])
+    PHI = ("c:phi", ["phi", "φ", "golden"])
+
+    ALL = (ANS, E, INF, PI, TAU, PHI)
+    ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
+
+    IMPLEMENT: dict[str, object] = {
+        ANS[0]: ARGS.ans.value,
+        E[0]: sympy.E,
+        INF[0]: sympy.oo,
+        PI[0]: sympy.pi,
+        TAU[0]: 2 * sympy.pi,
+        PHI[0]: sympy.GoldenRatio,
+    }
+
+    @classmethod
+    def get(cls, constant_id: str):
+        """Get the constant function by constant ID."""
+        return cls.IMPLEMENT.get(constant_id)
+
+    @classmethod
+    def get_id(cls, token: str) -> str | None:
+        """Get the constant ID for a token by searching through the token lists."""
+        for const_id, symbols in cls.ALL:
+            if token in symbols: return const_id
+        return None
+
+    @classmethod
+    def is_constant(cls, token: str) -> bool:
+        """Check if a token is a constant by searching through the token lists."""
+        return cls.get_id(token) is not None
+
+
+class FUNCTIONS:
+
     # PROGRAMMING FUNCTIONS
-    ("abs", "absolute"): lambda a: abs(sanitize(a)),
-    "floor": lambda a: sympy.floor(sanitize(a)),
-    ("ceil", "ceiling"): lambda a: sympy.ceiling(sanitize(a)),
-    "round": lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
+    ABS = ("f:abs", ["abs", "absolute", "magnitude"])
+    FLOOR = ("f:floor", ["floor"])
+    CEIL = ("f:ceil", ["ceil", "ceiling"])
+    ROUND = ("f:round", ["round"])
+    SIGN = ("f:sign", ["sign", "sgn"])
     # LOGARITHMIC FUNCTIONS
-    ("log", "log10", "logarithm"): lambda a: sympy.log(sanitize(a), 10),
-    ("ln", "log_e", "natural_log"): lambda a: sympy.log(sanitize(a)),
-    ("log2", "log_2"): lambda a: sympy.log(sanitize(a), 2),
-    ("exp", "exponential"): lambda a: sympy.exp(sanitize(a)),
+    LOG = ("f:log", ["log", "log10", "logarithm"])
+    LN = ("f:ln", ["ln", "log_e", "natural_log", "loge"])
+    LOG2 = ("f:log2", ["log2", "log_2"])
+    EXP = ("f:exp", ["exp", "exponential"])
     # TRIGONOMETRIC FUNCTIONS
-    ("rad", "radians"): lambda a: sympy.rad(sanitize(a)),
-    ("deg", "degrees"): lambda a: sympy.deg(sanitize(a)),
-    ("sin", "sine"): lambda a: sympy.sin(sanitize(a)),
-    ("asin", "arcsin", "arcsine"): lambda a: sympy.asin(sanitize(a)),
-    ("cos", "cosine"): lambda a: sympy.cos(sanitize(a)),
-    ("acos", "arccos", "arccosine"): lambda a: sympy.acos(sanitize(a)),
-    ("tan", "tangent"): lambda a: sympy.tan(sanitize(a)),
-    ("atan", "arctan", "arctangent"): lambda a: sympy.atan(sanitize(a)),
+    RAD = ("f:rad", ["rad", "radians", "to_radians"])
+    DEG = ("f:deg", ["deg", "degrees", "to_degrees"])
+    SIN = ("f:sin", ["sin", "sine"])
+    ASIN = ("f:asin", ["asin", "arcsin", "arcsine", "sin_inv"])
+    COS = ("f:cos", ["cos", "cosine"])
+    ACOS = ("f:acos", ["acos", "arccos", "arccosine", "cos_inv"])
+    TAN = ("f:tan", ["tan", "tangent"])
+    ATAN = ("f:atan", ["atan", "arctan", "arctangent", "tan_inv"])
     # HYPERBOLIC FUNCTIONS
-    ("sinh", "hyperbolic_sine"): lambda a: sympy.sinh(sanitize(a)),
-    ("cosh", "hyperbolic_cosine"): lambda a: sympy.cosh(sanitize(a)),
-    ("tanh", "hyperbolic_tangent"): lambda a: sympy.tanh(sanitize(a)),
-    ("asinh", "arcsinh", "inverse_sinh"): lambda a: sympy.asinh(sanitize(a)),
-    ("acosh", "arccosh", "inverse_cosh"): lambda a: sympy.acosh(sanitize(a)),
-    ("atanh", "arctanh", "inverse_tanh"): lambda a: sympy.atanh(sanitize(a)),
+    SINH = ("f:sinh", ["sinh", "hyperbolic_sine"])
+    COSH = ("f:cosh", ["cosh", "hyperbolic_cosine"])
+    TANH = ("f:tanh", ["tanh", "hyperbolic_tangent"])
+    ASINH = ("f:asinh", ["asinh", "arcsinh", "inverse_sinh"])
+    ACOSH = ("f:acosh", ["acosh", "arccosh", "inverse_cosh"])
+    ATANH = ("f:atanh", ["atanh", "arctanh", "inverse_tanh"])
     # ADDITIONAL FUNCTIONS
-    ("fac", "factorial"): lambda a: sympy.factorial(sanitize(a)),
-    ("sqrt", "square_root"): lambda a: sympy.sqrt(sanitize(a)),
-}
+    FAC = ("f:fac", ["fac", "factorial", "fact"])
+    SQRT = ("f:sqrt", ["sqrt", "square_root", "√"])
+    CBRT = ("f:cbrt", ["cbrt", "cube_root", "∛"])
+    # STATISTICAL FUNCTIONS
+    MIN = ("f:min", ["min", "minimum"])
+    MAX = ("f:max", ["max", "maximum"])
+
+    ALL = (
+        ABS, FLOOR, CEIL, ROUND, SIGN, LOG, LN, LOG2, EXP, RAD, DEG, SIN, ASIN, COS, ACOS, TAN, ATAN, SINH, COSH, TANH, ASINH,
+        ACOSH, ATANH, FAC, SQRT, CBRT, MIN, MAX
+    )
+    ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
+
+    IMPLEMENT: dict[str, Callable[[object], object]] = {
+        # PROGRAMMING FUNCTIONS
+        ABS[0]: lambda a: abs(sanitize(a)),
+        FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
+        CEIL[0]: lambda a: sympy.ceiling(sanitize(a)),
+        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
+        SIGN[0]: lambda a: sympy.sign(sanitize(a)),
+        # LOGARITHMIC FUNCTIONS
+        LOG[0]: lambda a: sympy.log(sanitize(a), 10),
+        LN[0]: lambda a: sympy.log(sanitize(a)),
+        LOG2[0]: lambda a: sympy.log(sanitize(a), 2),
+        EXP[0]: lambda a: sympy.exp(sanitize(a)),
+        # TRIGONOMETRIC FUNCTIONS
+        RAD[0]: lambda a: sympy.rad(sanitize(a)),
+        DEG[0]: lambda a: sympy.deg(sanitize(a)),
+        SIN[0]: lambda a: sympy.sin(sanitize(a)),
+        ASIN[0]: lambda a: sympy.asin(sanitize(a)),
+        COS[0]: lambda a: sympy.cos(sanitize(a)),
+        ACOS[0]: lambda a: sympy.acos(sanitize(a)),
+        TAN[0]: lambda a: sympy.tan(sanitize(a)),
+        ATAN[0]: lambda a: sympy.atan(sanitize(a)),
+        # HYPERBOLIC FUNCTIONS
+        SINH[0]: lambda a: sympy.sinh(sanitize(a)),
+        COSH[0]: lambda a: sympy.cosh(sanitize(a)),
+        TANH[0]: lambda a: sympy.tanh(sanitize(a)),
+        ASINH[0]: lambda a: sympy.asinh(sanitize(a)),
+        ACOSH[0]: lambda a: sympy.acosh(sanitize(a)),
+        ATANH[0]: lambda a: sympy.atanh(sanitize(a)),
+        # ADDITIONAL FUNCTIONS
+        FAC[0]: lambda a: sympy.factorial(sanitize(a)),
+        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),
+        CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
+        # STATISTICAL FUNCTIONS
+        MIN[0]: lambda a: sanitize(a),
+        MAX[0]: lambda a: sanitize(a),
+    }
+
+    @classmethod
+    def get(cls, function_id: str):
+        """Get the function lambda by function ID."""
+        return cls.IMPLEMENT.get(function_id)
+
+    @classmethod
+    def get_id(cls, token: str) -> str | None:
+        """Get the function ID for a token by searching through the token lists."""
+        for func_id, symbols in cls.ALL:
+            if token in symbols: return func_id
+        return None
+
+    @classmethod
+    def is_function(cls, token: str) -> bool:
+        """Check if a token is a function by searching through the token lists."""
+        return cls.get_id(token) is not None
 
 
-def get_precedence(operator: str) -> int:
-    if operator in PRECEDENCE:
-        return PRECEDENCE[operator]
-    for op_group in OPERATORS.keys():
-        if isinstance(op_group, tuple) and operator in op_group:
-            for rep in op_group:
-                if rep in PRECEDENCE:
-                    return PRECEDENCE[rep]
-    for prec_key, prec_val in PRECEDENCE.items():
-        if isinstance(prec_key, tuple) and operator in prec_key:
-            return prec_val
-    return 0
-
-
-OPERATORS_FLAT = {key: func for keys, func in OPERATORS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
-PRECEDENCE_FLAT = {op: get_precedence(op) for op in OPERATORS_FLAT.keys()}
-ALL_OPERATOR_SYMBOLS = [key for keys in OPERATORS.keys() for key in (keys if isinstance(keys, tuple) else [keys])]
-FUNCTIONS_FLAT = {key: func for keys, func in FUNCTIONS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
-CONSTANTS_FLAT = {key: value for keys, value in CONSTANTS.items() for key in (keys if isinstance(keys, tuple) else [keys])}
+PATTERN = re.compile(
+    r"[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d*\.\d+|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+|" + r"\d*\.\d+|\d+|" + r"\(|\)|" + "|"
+    .join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
+)
 
 
 def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
@@ -141,326 +288,522 @@ def clear_lines(num_lines: int = 1) -> None:
         print("\033[F\033[K", end="", flush=True)
 
 
-def generate_regex_pattern(dict: dict, direction: Literal["forward", "backward"] = "forward") -> str:
-    # Use pre-computed symbols for operators, or extract from dict for other cases
-    if dict is OPERATORS:
-        all_symbols = ALL_OPERATOR_SYMBOLS
-    else:
-        all_symbols = []
-        for keys in dict.keys():
-            if isinstance(keys, tuple):
-                all_symbols.extend(keys)
-            else:
-                all_symbols.append(keys)
+class Calc:
 
-    if direction == "forward":
-        return "|".join(map(re.escape, all_symbols))
-    elif direction == "backward":
-        reversed_symbols = list(reversed(all_symbols))
-        return "|".join(map(re.escape, reversed_symbols))
+    def __init__(self, calc_str: str, last_ans: Optional[str] = None, precision: int = 110, max_num_len: int = 100):
+        self.calc_str = calc_str
+        self.last_ans = last_ans
+        self.precision = precision
+        self.max_num_len = max_num_len
 
+    def __str__(self) -> str:
+        return self.calc_str
 
-def find_matches(text: str) -> list:
-    operator_pattern = generate_regex_pattern(OPERATORS, "backward")
-    preliminary_matches = re.findall(r"[a-z]+|-?\d*\.\d+|-?\d+|" + operator_pattern, text)
+    def __repr__(self) -> str:
+        return f"Calc(calc_str={self.calc_str!r}, precision={self.precision}, max_num_len={self.max_num_len})"
 
-    matches = []
-    for i, match in enumerate(preliminary_matches):
-        if (match.startswith('-') and len(match) > 1 and match[1:].replace('.', '').isdigit() and i > 0):
-            prev_match = preliminary_matches[i - 1]
-            is_prev_operand = (
-                prev_match.replace('.', '').replace('-', '').isdigit() or prev_match in CONSTANTS_FLAT or prev_match == ')'
-            )
-            is_at_end = (i == len(preliminary_matches) - 1)
-            next_is_operator = (not is_at_end and preliminary_matches[i + 1] in OPERATORS_FLAT)
-            if is_prev_operand and (is_at_end or next_is_operator):
-                matches.append('-')
-                matches.append(match[1:])
-            else:
-                matches.append(match)
-        else:
-            matches.append(match)
-
-    if DEBUG:
-        print_line("FINDING MATCHES")
-        print(f"input text: {text}")
-        print(f"preliminary matches: {preliminary_matches}")
-        print(f"final matches: {matches}")
-    return matches
-
-
-def format_result(result: float, precision: int = 10) -> str:
-    if DEBUG:
-        print_line("FORMAT RESULT")
-        print(f"result: {result}")
-        print(f"precision: {precision}")
-    try:
-        result_str = "{:.{}f}".format(result, precision)
-        result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
-    except OverflowError:
-        result_str = str(result)
-    if DEBUG:
-        print(f"formatted result: {result_str}")
-    return result_str
-
-
-def format_readability(num_str: str, max_num_len: int) -> str:
-    if not DEBUG:
-        print_overwrite("[dim|white](formatting...)", end="")
-    num_str = str(num_str)
-
-    # TRUNCATE REPEATING DECIMAL
-    if len(num_str) > max_num_len and "." in num_str:
-        num_str = num_str[:-10]
-        int_part, decimal_part = num_str.split(".")
-        short_decimal_part = decimal_part[:max_num_len]
+    def eval(self) -> str:
         if DEBUG:
-            print_line(f"TRUNCATING REPEATING DECIMAL")
-            print(f"input string: {num_str}")
-            print(f"decimal part: {short_decimal_part}")
+            clear_lines()
+            print()
+            print_line(f"NEW CALCULATION")
+            print(f"raw calculation string:\n>>> {self.calc_str}")
+        else:
+            print_overwrite("[dim|white](calculating...)", end="")
 
-        def is_recurring(string: str, max_check_loops: int = -1) -> list | bool:
+        if self.precision <= self.max_num_len:
+            self.max_num_len = self.precision
+            self.precision += 10
+        norm_calc_str = str(self.calc_str.strip()).replace(" ", "").lower()
 
-            def get_rept(s):
-                r = re.compile(r"(.+?)\1+")
-                for match in r.finditer(s):
-                    yield match.group(1)
+        if DEBUG:
+            print(f"normalized calculation string:\n>>> {norm_calc_str}")
+            print(f"precision: {self.precision}")
+            print(f"max number length: {self.max_num_len}")
 
-            repts = list(get_rept(string))
-            if not repts:
-                return False
-            repts.reverse()
-            loops = (len(repts) if max_check_loops < 0 or len(repts) < max_check_loops else max_check_loops)
-            for loop in range(loops):
-                rept = repts[loop]
-                if not string[-((len(rept)) * 2):] == rept * 2:
-                    found = i = 0
+        self.last_ans = self._perform_eval(norm_calc_str)
+        return self.format_readability(self.last_ans)
 
-                    for i in range(len(string), 1, -1):
-                        if string[i - len(rept):i] == rept:
-                            if found > 0:
-                                break
-                            else:
-                                found += 1
+    def format_result(self, result: object) -> str:
+        if DEBUG:
+            print_line("FORMAT RESULT")
+            print(f"result: {result}")
+            print(f"precision: {self.precision}")
+        try:
+            result_str = "{:.{}f}".format(result, self.precision)
+            result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
+        except OverflowError:
+            result_str = str(result)
+        if DEBUG:
+            print(f"formatted result: {result_str}")
+        return result_str
 
-                    if not found:
-                        return False
-                    else:
-                        rept_i = 0
-                        for char in string[i:]:
-                            if char == rept[rept_i]:
-                                i += 1
-                            else:
-                                i = 0
-                                break
-                            rept_i += 1
-                            if rept_i == len(rept):
-                                rept_i = 0
+    def format_readability(self, num_str: str) -> str:
+        if not DEBUG:
+            print_overwrite("[dim|white](formatting...)", end="")
+        num_str = str(num_str)
+        
+        # FORMAT WITH THOUSANDS SEPARATORS IF REQUESTED
+        if ARGS.format.exists:
+            if DEBUG:
+                print_line("FORMATTING WITH SEPARATORS")
+                print(f"should format: {ARGS.format.exists}")
+            if ARGS.format.value is None:
+                sep = ","
+            else:
+                sep = str(ARGS.format.value)
+            if DEBUG:
+                print(f"separator: '{sep}'")
+                print(f"input num_str: '{num_str}'")
+            if "." in num_str:
+                int_part, decimal_part = num_str.split(".", 1)
+                if int_part.lstrip("-").isdigit() and len(int_part.lstrip("-")) > 3:
+                    formatted_int = ""
+                    sign = "-" if int_part.startswith("-") else ""
+                    digits = int_part.lstrip("-")
+                    for i, digit in enumerate(reversed(digits)):
+                        if i > 0 and i % 3 == 0:
+                            formatted_int = sep + formatted_int
+                        formatted_int = digit + formatted_int
+                    num_str = sign + formatted_int + "." + decimal_part
+                    if DEBUG:
+                        print(f"formatted decimal number: '{num_str}'")
+            else:
+                if num_str.lstrip("-").isdigit() and len(num_str.lstrip("-")) > 3:
+                    formatted_num = ""
+                    sign = "-" if num_str.startswith("-") else ""
+                    digits = num_str.lstrip("-")
+                    for i, digit in enumerate(reversed(digits)):
+                        if i > 0 and i % 3 == 0:
+                            formatted_num = sep + formatted_num
+                        formatted_num = digit + formatted_num
+                    num_str = sign + formatted_num
+                    if DEBUG:
+                        print(f"formatted whole number: '{num_str}'")
 
-                        if i > 0:
-                            return True
-                        elif loop == loops - 1:
-                            return False
-                else:
-                    return True
+        # TRUNCATE REPEATING DECIMAL
+        if len(num_str) > self.max_num_len and "." in num_str:
+            num_str = num_str[:-10]
+            int_part, decimal_part = num_str.split(".")
+            short_decimal_part = decimal_part[:self.max_num_len]
+            if DEBUG:
+                print_line(f"TRUNCATING REPEATING DECIMAL")
+                print(f"input string: {num_str}")
+                print(f"decimal part: {short_decimal_part}")
+
+            if self._is_recurring(short_decimal_part):
+                num_str = f"{int_part}.{short_decimal_part}..."
+            else:
+                num_str = f"{int_part}.{short_decimal_part}"
+            if DEBUG:
+                print(f"formatted string: {num_str}")
+
+        # FORMAT LONG NUMBERS TO EXPONENTS
+        elif len(num_str) > self.max_num_len:
+            if DEBUG:
+                print_line(f"FORMATTING LONG NUMBERS TO EXPONENTS")
+                print(f"input string: {num_str}")
+            num_str = self._format_exponents(num_str)
+            if DEBUG:
+                print(f"formatted string: {num_str}")
+        return num_str
+
+    def _format_exponents(self, string: str) -> str:
+        pattern = re.compile(r"(\d*\.\d+|\d+)(?![\de])")
+
+        def replace_match(match):
+            number_sequence = match.group(1)
+            if len(str(number_sequence)) <= self.max_num_len:
+                return number_sequence
+            base = number_sequence[:self.max_num_len]
+            exponent_value = len(number_sequence) - self.max_num_len
+            if exponent_value >= 0:
+                sign = "+"
+            else:
+                sign = "-"
+            exponent_form = base + "e" + sign + str(abs(exponent_value))
+            return exponent_form
+
+        formatted_str = re.sub(pattern, replace_match, string)
+        return formatted_str
+
+    def _is_recurring(self, string: str, max_check_loops: int = -1) -> list | bool:
+        repts = list(self._get_rept(string))
+        if not repts:
             return False
-
-        if is_recurring(short_decimal_part):
-            num_str = f"{int_part}.{short_decimal_part}..."
-        else:
-            num_str = f"{int_part}.{short_decimal_part}"
-        if DEBUG:
-            print(f"formatted string: {num_str}")
-
-    # FORMAT LONG NUMBERS TO EXPONENTS
-    elif len(num_str) > max_num_len:
-        if DEBUG:
-            print_line(f"FORMATTING LONG NUMBERS TO EXPONENTS")
-            print(f"input string: {num_str}")
-
-        def format_exponents(string: str, max_num_len: int) -> str:
-            pattern = re.compile(r"(\d*\.\d+|\d+)(?![\de])")
-
-            def replace_match(match):
-                number_sequence = match.group(1)
-                if len(str(number_sequence)) <= max_num_len:
-                    return number_sequence
-                base = number_sequence[:max_num_len]
-                exponent_value = len(number_sequence) - max_num_len
-                if exponent_value >= 0:
-                    sign = "+"
+        repts.reverse()
+        loops = (len(repts) if max_check_loops < 0 or len(repts) < max_check_loops else max_check_loops)
+        for loop in range(loops):
+            rept = repts[loop]
+            if not string[-((len(rept)) * 2):] == rept * 2:
+                found = i = 0
+                for i in range(len(string), 1, -1):
+                    if string[i - len(rept):i] == rept:
+                        if found > 0:
+                            break
+                        else:
+                            found += 1
+                if not found:
+                    return False
                 else:
-                    sign = "-"
-                exponent_form = base + "e" + sign + str(abs(exponent_value))
-                return exponent_form
-
-            formatted_str = re.sub(pattern, replace_match, string)
-            return formatted_str
-
-        num_str = format_exponents(num_str, max_num_len)
-        if DEBUG:
-            print(f"formatted string: {num_str}")
-    return num_str
-
-
-def calc(calc_str: str, precision: int = 110, max_num_len: int = 100) -> str:
-    global LAST_ANS
-    if DEBUG:
-        clear_lines()
-        print()
-        print_line(f"NEW CALCULATION")
-        print(f"raw calculation string: {calc_str}")
-    else:
-        print_overwrite("[dim|white](calculating...)", end="")
-    value_validation = False
-    if precision <= max_num_len:
-        max_num_len = precision
-        precision += 10
-        value_validation = True
-    calc_str = str(calc_str.strip()).replace(" ", "")
-    SAVE_CALC_STR = calc_str
-    for _ in range(calc_str.count("(")):
-        start = calc_str.rfind("(") + 1
-        end = calc_str.find(")", start)
-        formatted_result = calc_str[start:end]
-        before_paren_pos = start - 2
-        should_add_mult = (before_paren_pos >= 0 and calc_str[before_paren_pos].isdigit())
-        calc_str = calc_str.replace(
-            "(" + formatted_result + ")",
-            ("*" if should_add_mult else "") + str(calc(formatted_result)),
-        )
-    if DEBUG:
-        print(f"adjusted calculation string: {calc_str}")
-        if value_validation:
-            print("FOLLOWING VALUES WERE RESIZED FOR VALIDATION:")
-        (print(f" > precision: {precision}") if value_validation else print(f"precision: {precision}"))
-        (print(f" > max number length: {max_num_len}") if value_validation else print(f"max number length: {max_num_len}"))
-    numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
-    split = find_matches(calc_str)
-    array = numpy.array(split)
-
-    # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
-    def sympify(split_matches: list) -> list:
-        split_sympy = []
-        for token in split_matches:
-            if token in OPERATORS_FLAT:
-                split_sympy.append(token)
+                    rept_i = 0
+                    for char in string[i:]:
+                        if char == rept[rept_i]:
+                            i += 1
+                        else:
+                            i = 0
+                            break
+                        rept_i += 1
+                        if rept_i == len(rept):
+                            rept_i = 0
+                    if i > 0:
+                        return True
+                    elif loop == loops - 1:
+                        return False
             else:
-                split_sympy.append(sympy.sympify(token))
-        return split_sympy
+                return True
+        return False
 
-    split_sympy = sympify(split)
-    # ITERATE OVER CONSTANTS FIRST
-    for constant in CONSTANTS_FLAT:
-        count = split.count(constant)
-        for _ in range(count):
-            indices = numpy.where(array == constant)[0]
-            for index in indices:
+    @staticmethod
+    def _get_rept(string: str):
+        r = re.compile(r"(.+?)\1+")
+        for match in r.finditer(string):
+            yield match.group(1)
+
+    def _convert_ids_to_symbols(self, tokens: list) -> str:
+        """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
+        result = []
+        for token in tokens:
+            if isinstance(token, str):
+                if token.startswith("o:"):
+                    for op_id, symbols in OPERATORS.ALL:
+                        if op_id == token:
+                            result.append(symbols[0])
+                            break
+                    else:
+                        result.append(token)
+                elif token.startswith("c:"):
+                    for const_id, symbols in CONSTANTS.ALL:
+                        if const_id == token:
+                            result.append(symbols[0])
+                            break
+                    else:
+                        result.append(token)
+                elif token.startswith("f:"):
+                    for func_id, symbols in FUNCTIONS.ALL:
+                        if func_id == token:
+                            result.append(symbols[0])
+                            break
+                    else:
+                        result.append(token)
+                else:
+                    result.append(token)
+            else:
+                result.append(str(token))
+        return "".join(result)
+
+    def _find_matches(self, text: str) -> list:
+        preliminary_matches = PATTERN.findall(text)
+        matches = []
+        i = 0
+        while i < len(preliminary_matches):
+            match = preliminary_matches[i]
+            # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
+            if (match in OPERATORS.MINUS[1] and i + 1 < len(preliminary_matches)
+                    and preliminary_matches[i + 1].replace(".", "").isdigit()):
+                # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
+                should_be_negative = False
+                if i == 0:  # AT THE BEGINNING
+                    should_be_negative = True
+                else:
+                    prev_match = preliminary_matches[i - 1]
+                    # IF PREVIOUS TOKEN IS AN OPERATOR OR OPEN PARENTHESIS, TREAT AS NEGATIVE NUMBER
+                    if (OPERATORS.is_operator(prev_match) or prev_match == "(" or FUNCTIONS.is_function(prev_match)):
+                        should_be_negative = True
+
+                if should_be_negative:
+                    # COMBINE MINUS WITH NEXT NUMBER
+                    matches.append(match + preliminary_matches[i + 1])
+                    i += 2  # SKIP THE NEXT TOKEN SINCE WE CONSUMED IT
+                else:
+                    # KEEP AS SEPARATE SUBTRACTION OPERATOR
+                    matches.append(match)
+                    i += 1
+            # DISTINGUISH BETWEEN 'FACTORIAL' AND 'NOT'
+            elif match == "!":
+                should_be_factorial = False
+                if i > 0:
+                    prev_match = preliminary_matches[i - 1]
+                    # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
+                    if (prev_match.replace(".", "").replace("-", "").isdigit() or prev_match == ")"
+                            or CONSTANTS.is_constant(prev_match)):
+                        should_be_factorial = True
+                if should_be_factorial:
+                    matches.append(OPERATORS.FACTORIAL[0])
+                else:
+                    matches.append(OPERATORS.NOT[0])
+                i += 1
+            else:
+                # CONVERT TOKENS TO IDS FOR OPERATORS, CONSTANTS AND FUNCTIONS
+                if OPERATORS.is_operator(match):
+                    matches.append(OPERATORS.get_id(match))
+                elif CONSTANTS.is_constant(match):
+                    matches.append(CONSTANTS.get_id(match))
+                elif FUNCTIONS.is_function(match):
+                    matches.append(FUNCTIONS.get_id(match))
+                else:
+                    matches.append(match)
+                i += 1
+
+        if DEBUG:
+            print_line("FINDING MATCHES")
+            print(f"input text: {text}")
+            print(f"preliminary matches: {preliminary_matches}")
+            print(f"final matches: {matches}")
+        return matches
+
+    def _perform_eval(self, calc_str: str) -> str:
+        """Internal recursive calculation function that doesn't do preprocessing."""
+        SAVE_CALC_STR = calc_str
+
+        # HANDLE PARENTHESES - SKIP FUNCTION CALLS
+        for _ in range(calc_str.count("(")):
+            start = calc_str.rfind("(") + 1
+            end = calc_str.find(")", start)
+            if start == 0 or end == -1:
+                break
+
+            before_paren = calc_str[:start - 1].strip()
+            is_function_call = any(before_paren.endswith(token) for _, symbols in FUNCTIONS.ALL for token in symbols)
+            if is_function_call:
+                break
+
+            formatted_result = calc_str[start:end]
+            before_paren_pos = start - 2
+            should_add_mult = (before_paren_pos >= 0 and calc_str[before_paren_pos].isdigit())
+            calc_str = calc_str.replace(
+                "(" + formatted_result + ")",
+                (OPERATORS.MULTIPLY[1][0] if should_add_mult else "") + str(self._perform_eval(formatted_result)),
+            )
+
+        numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
+        split = self._find_matches(calc_str)
+
+        # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
+        def sympify(split_matches: list) -> list:
+            split_sympy = []
+            for token in split_matches:
+                if isinstance(token, str) and (token.startswith(("o:", "c:", "f:"))):
+                    split_sympy.append(token)
+                else:
+                    try:
+                        split_sympy.append(sympy.sympify(token))
+                    except:
+                        split_sympy.append(token)
+            return split_sympy
+
+        split_sympy = sympify(split)
+
+        # ITERATE OVER CONSTANTS FIRST
+        for c_id, _ in CONSTANTS.ALL:
+            while c_id in split:
+                index = split.index(c_id)
                 if DEBUG:
                     print_line(f"CALCULATING CONSTANT")
-                    print(f"constant: {constant}")
-                constant_value = CONSTANTS_FLAT[constant]
-                if constant == "ans" and constant_value is None:
-                    raise Exception("'ans' was not specified")
+                    print(f"constant ID: {c_id}")
+                constant_value = CONSTANTS.get(c_id)
+                if c_id == CONSTANTS.ANS[0] and constant_value is None:
+                    raise Exception("Answer constant was not specified")
                 if DEBUG:
                     print(f"value: {constant_value}")
-                formatted_result = format_result(constant_value, precision)
-                calc_str = calc_str.replace(constant, str(formatted_result))
-        split = find_matches(calc_str)
-        array = numpy.array(split)
-        split_sympy = sympify(split)
-    # ITERATE OVER FUNCTIONS AVAILABLE
-    for function in FUNCTIONS_FLAT:
-        count = split.count(function)
-        for _ in range(count):
-            indices = numpy.where(array == function)[0]
-            for index in indices:
-                if DEBUG:
-                    print_line(f"CALCULATING FUNCTION")
-                result = FUNCTIONS_FLAT[function](split_sympy[index + 1])
+                formatted_result = str(self.format_result(constant_value))
+                new_split = split[:index] + [formatted_result] + split[index + 1:]
+                split = new_split
+                split_sympy = sympify(split)
+
+        # ITERATE OVER FUNCTIONS AVAILABLE
+        for f_id, _ in FUNCTIONS.ALL:
+            while f_id in split:
+                index = split.index(f_id)
+
+                if (index + 1 < len(split) and split[index + 1] == "("):
+                    paren_count = 0
+                    end_paren_index = -1
+                    for i in range(index + 1, len(split)):
+                        if split[i] == "(":
+                            paren_count += 1
+                        elif split[i] == ")":
+                            paren_count -= 1
+                            if paren_count == 0:
+                                end_paren_index = i
+                                break
+
+                    if end_paren_index == -1:
+                        break
+                    arg_tokens = split[index + 2:end_paren_index]
+
+                    if DEBUG:
+                        print_line(f"CALCULATING FUNCTION")
+                        print(f"function ID: {f_id}")
+                        print(f"arg_tokens: {arg_tokens}")
+
+                    if len(arg_tokens) == 1:
+                        arg_value = split_sympy[index + 2]
+                    else:
+                        arg_str = self._convert_ids_to_symbols(arg_tokens)
+                        if DEBUG:
+                            print(f"evaluating arg expression: {arg_str}")
+                        arg_value = sympy.sympify(arg_str)
+
+                    function_impl = FUNCTIONS.get(f_id)
+                    if function_impl is None:
+                        break
+                    result = function_impl(arg_value)
+                    if DEBUG:
+                        print(f"argument value: {arg_value}")
+                        print(f"result: {result}")
+                    formatted_result = str(self.format_result(result))
+                    new_split = split[:index] + [formatted_result] + split[end_paren_index + 1:]
+                    split = new_split
+                    split_sympy = sympify(split)
+
+                elif index + 1 < len(split):
+                    function_impl = FUNCTIONS.get(f_id)
+                    if function_impl is None:
+                        break
+                    result = function_impl(split_sympy[index + 1])
+                    if DEBUG:
+                        print_line(f"CALCULATING FUNCTION")
+                        print(f"function ID: {f_id}")
+                        print(f"argument: {split_sympy[index + 1]}")
+                        print(f"result: {result}")
+                    formatted_result = str(self.format_result(result))
+                    new_split = split[:index] + [formatted_result] + split[index + 2:]
+                    split = new_split
+                    split_sympy = sympify(split)
+                else:
+                    break
+
+        # ITERATE OVER OPERATORS BASED ON PRECEDENCE
+        while len(split) > 1:
+            operator_positions = []
+            for i, token in enumerate(split):
+                if isinstance(token, str) and token.startswith("o:"):
+                    precedence = OPERATORS.get_precedence(token)
+                    # GIVE PREFIX 'NOT' HIGHER PRECEDENCE THAN BINARY OPERATORS
+                    if (token == OPERATORS.NOT[0] and (i == 0 or isinstance(split[i - 1], str) and
+                                                       (split[i - 1].startswith("o:") or split[i - 1] in ["("]))):
+                        precedence = 3  # HIGHER THAN BINARY ARITHMETIC OPERATORS
+                    operator_positions.append((i, token, precedence))
+
+            if not operator_positions:
+                break
+
+            highest_precedence = max(op[2] for op in operator_positions)
+            highest_ops = [op for op in operator_positions if op[2] == highest_precedence]
+            index, operator_id, _ = highest_ops[-1]
+
+            if DEBUG:
+                print_line(f"CALCULATING OPERATOR")
+                print(f"operator ID: {operator_id}")
+
+            operator_func = OPERATORS.get(operator_id)
+            if operator_func is None:
+                break
+
+            if operator_id == OPERATORS.FACTORIAL[0]:
+                # POSTFIX FACTORIAL OPERATOR
+                if index == 0:
+                    break
+                result = operator_func(split_sympy[index - 1], None)
                 if DEBUG:
                     print(f"argument: {split_sympy[index - 1]}")
-                    print(f"function: {function}")
+                    print(f"operator: {operator_id} (postfix factorial)")
+                    print(f"result: {result}")
+                new_split = split[:index - 1] + [str(self.format_result(result))] + split[index + 1:]
+            elif operator_id == OPERATORS.MINUS[0] and (index == 0 or isinstance(split[index - 1], str)
+                                                        and split[index - 1].startswith("o:")):
+                # UNARY MINUS
+                if index + 1 >= len(split):
+                    break
+                result = operator_func(0, split_sympy[index + 1])
+                if DEBUG:
+                    print(f"argument: 0")
+                    print(f"operator: {operator_id} (unary minus)")
                     print(f"argument: {split_sympy[index + 1]}")
                     print(f"result: {result}")
-
-                formatted_result = format_result(result, precision)
-                calc_str = calc_str.replace(function + " " + split[index + 1],
-                                            str(formatted_result)).replace(function + split[index + 1], str(formatted_result))
-            split = find_matches(calc_str)
-            array = numpy.array(split)
-            split_sympy = sympify(split)
-    # ITERATE OVER OTHER SYMBOLS BASED ON PRECEDENCE
-    sorted_operators = sorted(set(ALL_OPERATOR_SYMBOLS), key=lambda x: PRECEDENCE_FLAT.get(x, 5), reverse=True)
-    for operator in sorted_operators:
-        count = split.count(operator)
-        for _ in range(count):
-            indices = numpy.where(array == operator)[0]
-            for index in indices:
+                new_split = split[:index] + [str(self.format_result(result))] + split[index + 2:]
+            elif operator_id == OPERATORS.NOT[0] and (index == 0 or isinstance(split[index - 1], str) and
+                                                      (split[index - 1].startswith("o:") or split[index - 1] in ["("])):
+                # PREFIX NOT OPERATOR
+                if index + 1 >= len(split):
+                    break
+                result = operator_func(split_sympy[index + 1], None)
                 if DEBUG:
-                    print_line(f"CALCULATING OPERATOR")
-                operator_func = OPERATORS_FLAT.get(operator)
-                if operator_func is None:
-                    continue
+                    print(f"operator: {operator_id} (prefix NOT)")
+                    print(f"argument: {split_sympy[index + 1]}")
+                    print(f"result: {result}")
+                new_split = split[:index] + [str(self.format_result(result))] + split[index + 2:]
+            else:
+                # BINARY OPERATOR
+                if index == 0 or index + 1 >= len(split):
+                    break
                 result = operator_func(split_sympy[index - 1], split_sympy[index + 1])
                 if DEBUG:
                     print(f"argument: {split_sympy[index - 1]}")
-                    print(f"operator: {operator}")
+                    print(f"operator: {operator_id}")
                     print(f"argument: {split_sympy[index + 1]}")
                     print(f"result: {result}")
+                new_split = split[:index - 1] + [str(self.format_result(result))] + split[index + 2:]
 
-                formatted_result = format_result(result, precision)
-                calc_str = calc_str.replace(
-                    split[index - 1] + " " + operator + " " + split[index + 1],
-                    formatted_result,
-                ).replace(split[index - 1] + operator + split[index + 1], formatted_result)
-            split = find_matches(calc_str)
-            array = numpy.array(split)
+            split = new_split
             split_sympy = sympify(split)
-    if calc_str == SAVE_CALC_STR:
-        try:
-            sympy.sympify(calc_str)
-        except:
-            raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
-    LAST_ANS = calc_str
-    formatted_ans = format_readability(calc_str, max_num_len)
-    return formatted_ans
+
+        if len(split) == 1:
+            calc_str = split[0]
+        else:
+            calc_str = " ".join(split)
+            try:
+                result = sympy.sympify(calc_str)
+                calc_str = str(self.format_result(result))
+            except:
+                raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
+
+        if calc_str == SAVE_CALC_STR:
+            try:
+                sympy.sympify(calc_str)
+            except:
+                raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
+        return calc_str
 
 
 def main():
     print()
-    if len(calc_strs := list(ARGS.calculation.value)) > 0:
-        ans = calc(
-            " ".join(str(v) for v in calc_strs),
+    if len(calc_str_parts := list(ARGS.calculation.value)) > 0:
+        calculation = Calc(
+            calc_str=" ".join(str(v) for v in calc_str_parts),
+            last_ans=ARGS.ans.value,
             precision=(ARGS.precision.value or 100) + 10,
             max_num_len=(ARGS.precision.value or 100),
         )
+        result = calculation.eval()
         if DEBUG:
             print_line("FINAL RESULT")
-            print(f"answer: {ans}")
+            print(f"answer: {result}")
             print_line()
             print()
         else:
-            print_overwrite(f"[dim|br:green][b](=) [_dim]{ans}[_]")
+            print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
     else:
-        FormatCodes.print(f"[b](Possible functions:)")
-        for key in FUNCTIONS.keys():
-            if isinstance(key, tuple):
-                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
-            else:
-                FormatCodes.print(f"[dim](•) {key}")
+        FormatCodes.print(f"[b](Possible operators:)")
+        for o_id, symbols in OPERATORS.ALL:
+            FormatCodes.print(f"[i|dim]({o_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
         FormatCodes.print(f"\n[b](Possible constants:)")
-        for key in CONSTANTS.keys():
-            if isinstance(key, tuple):
-                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
-            else:
-                FormatCodes.print(f"[dim](•) {key}")
-        FormatCodes.print(f"\n[b](Possible operators:)")
-        for key in OPERATORS.keys():
-            if isinstance(key, tuple):
-                FormatCodes.print(f"[dim](•) {'[dim](,) '.join(key)}")
-            else:
-                FormatCodes.print(f"[dim](•) {key}")
+        for c_id, symbols in CONSTANTS.ALL:
+            FormatCodes.print(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
+        FormatCodes.print(f"\n[b](Possible functions:)")
+        for f_id, symbols in FUNCTIONS.ALL:
+            FormatCodes.print(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
         print()
 
 
