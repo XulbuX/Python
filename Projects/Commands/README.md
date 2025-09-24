@@ -263,9 +263,26 @@ process-list "item1, item2, item3" --sep ','
 
 ### `rand`
 
-This command will generate a truly random integer number with a specified number of digits:
+This command will generate a truly random integer number with a specific number of digits or between a minimum and maximum value.
+
+To generate a random integer with a specific number of digits, run the command with that number as an argument:
 ```bash
 rand 10
+```
+
+To generate a random integer between a minimum and maximum value, run the command with both values as arguments:
+```bash
+rand 0 100
+```
+
+You can also batch generate multiple numbers at once with the option `-b` `--batch` `--batch-gen` (*only when generating range-based numbers*):
+```bash
+rand -1_000_000 1_000_000 --batch 20
+```
+
+To format the generated number/s with thousands-separators, use the option `-f` `--format`:
+```bash
+rand -1_000_000 1_000_000 --format
 ```
 
 <br>
