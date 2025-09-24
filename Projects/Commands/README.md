@@ -261,6 +261,15 @@ process-list "item1, item2, item3" --sep ','
 
 <br>
 
+### `rand`
+
+This command will generate a truly random integer number with a specified number of digits:
+```bash
+rand 10
+```
+
+<br>
+
 ### `sine`
 
 This command will just display a moving sine wave inside your console.<br>
