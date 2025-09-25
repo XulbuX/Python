@@ -275,9 +275,9 @@ To generate a random integer between a minimum and maximum value, run the comman
 rand 0 100
 ```
 
-You can also batch generate multiple numbers at once with the option `-b` `--batch` `--batch-gen` (*only when generating range-based numbers*):
+You can also batch generate multiple numbers at once with the option `-b` `--batch` `--batch-gen`:
 ```bash
-rand -1_000_000 1_000_000 --batch 20
+rand 10 --batch 5
 ```
 
 To format the generated number/s with thousands-separators, use the option `-f` `--format`:
