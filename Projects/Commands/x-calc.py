@@ -18,8 +18,8 @@ ARGS = Console.get_args({
 })
 DEBUG = ARGS.debug.exists
 
+sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 sanitize = lambda a: sympy.sympify(a)
-sys.set_int_max_str_digits(1_000_000_000)
 
 
 class OPERATORS:
@@ -812,5 +812,11 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print_overwrite("[b|br:red](⨯)\n")
+    except RecursionError:
+        Console.fail("[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))", start="\n\n", end="\n\n")
+    except MemoryError:
+        Console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
+    except OverflowError as e:
+        Console.fail(f"[b](OverflowError:) {e}", start="\n\n", end="\n\n")
     except Exception as e:
         Console.fail(e, start="\n\n", end="\n\n")

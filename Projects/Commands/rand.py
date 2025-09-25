@@ -7,7 +7,7 @@ import secrets
 import sys
 
 
-sys.set_int_max_str_digits(1_000_000_000)
+sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
 ARGS = Console.get_args({
     "digits_or_min_max": "before",
@@ -51,13 +51,6 @@ def main():
 
         case 1:
             digits = int(ARGS.digits_or_min_max.value[0])
-            if digits > 1_000_000_000:
-                Console.exit(
-                    "The number of decimal places must not exceed [white](1,000,000,000)",
-                    start="\n",
-                    end="\n\n",
-                    exit_code=1,
-                )
             FormatCodes.print("[dim](generating...)", end="")
             if batch > 1:
                 random_ints = []
@@ -67,11 +60,11 @@ def main():
                         random_int = gen_random_int(digits=digits)
                         random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
                         if i % update_progress_at == 0: update_progress(i + 1)
-                FormatCodes.print("\033[2K\r[dim](formatting...)", end="")
-                FormatCodes.print(f"\033[2K\r[br:blue]{'\n'.join(random_ints)}[_]")
+                FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
+                FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}[_]")
             else:
                 random_int = gen_random_int(digits=digits)
-                FormatCodes.print(f"\033[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
+                FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
         case 2:
             min_val = int(ARGS.digits_or_min_max.value[0])
@@ -93,15 +86,15 @@ def main():
                         if random_int < lowest_int: lowest_int = random_int
                         if random_int > highest_int: highest_int = random_int
                         if i % update_progress_at == 0: update_progress(i + 1)
-                FormatCodes.print("\033[2K\r[dim](formatting...)", end="")
-                FormatCodes.print(f"\033[2K\r[br:blue]{'\n'.join(random_ints)}")
+                FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
+                FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}")
                 FormatCodes.print(
                     f"[b|dim](lowest:)  {'' if lowest_int < 0 else ' '}[dim]({lowest_int:{',' if ARGS.format.exists else ''}})\n"
                     f"[b|dim](highest:) {'' if highest_int < 0 else ' '}[dim]{highest_int:{',' if ARGS.format.exists else ''}}[_]\n"
                 )
             else:
                 random_int = gen_random_int(min_val=min_val, max_val=max_val)
-                FormatCodes.print(f"\033[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
+                FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
         case _:
             Console.exit(
@@ -116,6 +109,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\033[2K\r[b|br:red](⨯)\n")
+        FormatCodes.print("\x1b[2K\r[b|br:red](⨯)\n")
+    except MemoryError:
+        Console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
+    except OverflowError as e:
+        Console.fail(f"[b](OverflowError:) {e}", start="\x1b[2K\r", end="\n\n")
     except Exception as e:
-        Console.fail(e, start="\033[2K\r", end="\n\n")
+        Console.fail(e, start="\x1b[2K\r", end="\n\n")
