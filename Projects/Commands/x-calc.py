@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Do advanced calculations from the command line.
-Supports a wide range of mathematical operations, functions and constants."""
+Supports a wide range of mathematical operations, functions and constants.
+There's no number size limit - the only limit is your system's memory."""
 from xulbux import FormatCodes, Console
 from typing import Callable, Optional
 import sympy
