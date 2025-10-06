@@ -324,7 +324,7 @@ class Calc:
         if not self.inf_precision and self.precision <= self.max_num_len:
             self.max_num_len = self.precision
             self.precision += 10
-        norm_calc_str = str(self.calc_str.strip()).replace(" ", "").lower()
+        norm_calc_str = self.calc_str.strip().replace(" ", "").lower()
 
         if DEBUG:
             print(f"normalized calculation string:\n>>> {norm_calc_str}")
@@ -379,7 +379,6 @@ class Calc:
     def format_readability(self, num_str: str) -> str:
         if not DEBUG:
             print_overwrite("[dim|white](formatting...)", end="")
-        num_str = str(num_str)
 
         # FORMAT WITH THOUSANDS SEPARATORS IF REQUESTED
         if ARGS.format.exists:
@@ -508,7 +507,7 @@ class Calc:
         for match in r.finditer(string):
             yield match.group(1)
 
-    def _convert_ids_to_symbols(self, tokens: list[str]) -> str:
+    def _convert_ids_to_symbols(self, tokens: list[str | object]) -> str:
         """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
         result = []
         for token in tokens:
@@ -709,7 +708,7 @@ class Calc:
                     if DEBUG:
                         print(f"argument value: {arg_value}")
                         print(f"result: {result}")
-                    formatted_result = str(self.format_result(result))
+                    formatted_result = self.format_result(result)
                     new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
                     split = new_split
                     split_sympy = sympify(split)
@@ -724,7 +723,7 @@ class Calc:
                         print(f"function ID: {f_id}")
                         print(f"argument: {split_sympy[idx + 1]}")
                         print(f"result: {result}")
-                    formatted_result = str(self.format_result(result))
+                    formatted_result = self.format_result(result)
                     new_split = split[:idx] + [formatted_result] + split[idx + 2:]
                     split = new_split
                     split_sympy = sympify(split)
@@ -770,7 +769,7 @@ class Calc:
                     print(f"argument: {split_sympy[idx - 1]}")
                     print(f"operator: {operator_id} (postfix factorial)")
                     print(f"result: {result}")
-                new_split = split[:idx - 1] + [str(self.format_result(result))] + split[idx + 1:]
+                new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 1:]
 
             # UNARY MINUS
             elif operator_id == OPERATORS.MINUS[0] and (
@@ -785,7 +784,7 @@ class Calc:
                     print(f"operator: {operator_id} (unary minus)")
                     print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:idx] + [str(self.format_result(result))] + split[idx + 2:]
+                new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
 
             # PREFIX NOT OPERATOR
             elif operator_id == OPERATORS.NOT[0] and (
@@ -800,7 +799,7 @@ class Calc:
                     print(f"operator: {operator_id} (prefix NOT)")
                     print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:idx] + [str(self.format_result(result))] + split[idx + 2:]
+                new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
 
             # BINARY OPERATOR
             else:
@@ -812,7 +811,7 @@ class Calc:
                     print(f"operator: {operator_id}")
                     print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:idx - 1] + [str(self.format_result(result))] + split[idx + 2:]
+                new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 2:]
 
             split = new_split
             split_sympy = sympify(split)
@@ -823,7 +822,7 @@ class Calc:
             calc_str = " ".join(str(s) for s in split)
             try:
                 result = sympy.sympify(calc_str)
-                calc_str = str(self.format_result(result))
+                calc_str = self.format_result(result)
             except:
                 raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
 

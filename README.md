@@ -4,7 +4,7 @@ This repository contains various Python projects, libraries, and experiments I'v
 
 ## Repositories
 * [Projects](#projects) | **[view](./Projects)**
-  * [Commands](#commands) | **[view](./Projects/Commands)**
+  * [Commands](#commands) | **[view](./Projects/Commands)** ✨ *most useful*
   * [x-convert](#x-convert) | **[view](./Projects/x-convert)**
 * [Experiments](#experiments) | **[view](./Experiments)**
   * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
