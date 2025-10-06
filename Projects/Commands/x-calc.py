@@ -176,9 +176,11 @@ class FUNCTIONS:
     ROUND = ("f:round", ["round"])
     SIGN = ("f:sign", ["sign", "sgn"])
     # LOGARITHMIC FUNCTIONS
-    LOG = ("f:log", ["log", "log10", "logarithm"])
     LN = ("f:ln", ["ln", "log_e", "natural_log", "loge"])
+    LOG = ("f:log", ["log", "logarithm"])
+    LOGB = ("f:logb", ["logb", "log_base"])
     LOG2 = ("f:log2", ["log2", "log_2"])
+    LOG10 = ("f:log10", ["log10"])
     EXP = ("f:exp", ["exp", "exponential"])
     # TRIGONOMETRIC FUNCTIONS
     RAD = ("f:rad", ["rad", "radians", "to_radians"])
@@ -196,21 +198,27 @@ class FUNCTIONS:
     ASINH = ("f:asinh", ["asinh", "arcsinh", "inverse_sinh"])
     ACOSH = ("f:acosh", ["acosh", "arccosh", "inverse_cosh"])
     ATANH = ("f:atanh", ["atanh", "arctanh", "inverse_tanh"])
+    # ADDITIONAL TRIGONOMETRIC FUNCTIONS
+    COT = ("f:cot", ["cot", "cotangent"])
+    SEC = ("f:sec", ["sec", "secant"])
+    CSC = ("f:csc", ["csc", "cosecant"])
     # ADDITIONAL FUNCTIONS
     FAC = ("f:fac", ["fac", "factorial", "fact"])
     SQRT = ("f:sqrt", ["sqrt", "square_root", "√"])
     CBRT = ("f:cbrt", ["cbrt", "cube_root", "∛"])
+    POW = ("f:pow", ["pow", "power"])
     # STATISTICAL FUNCTIONS
     MIN = ("f:min", ["min", "minimum"])
     MAX = ("f:max", ["max", "maximum"])
 
     ALL = (
-        ABS, FLOOR, CEIL, ROUND, SIGN, LOG, LN, LOG2, EXP, RAD, DEG, SIN, ASIN, COS, ACOS, TAN, ATAN, SINH, COSH, TANH, ASINH,
-        ACOSH, ATANH, FAC, SQRT, CBRT, MIN, MAX
+        ABS, FLOOR, CEIL, ROUND, SIGN, LN, LOG, LOGB, LOG2, LOG10, EXP, RAD, DEG,
+        SIN, ASIN, COS, ACOS, TAN, ATAN, SINH, COSH, TANH, ASINH, ACOSH, ATANH,
+        COT, SEC, CSC, FAC, SQRT, CBRT, POW, MIN, MAX
     )
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-    IMPLEMENT: dict[str, Callable[[object], object]] = {
+    IMPLEMENT: dict[str, Callable] = {
         # PROGRAMMING FUNCTIONS
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
@@ -218,9 +226,11 @@ class FUNCTIONS:
         ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
         SIGN[0]: lambda a: sympy.sign(sanitize(a)),
         # LOGARITHMIC FUNCTIONS
-        LOG[0]: lambda a: sympy.log(sanitize(a), 10),
         LN[0]: lambda a: sympy.log(sanitize(a)),
+        LOG[0]: lambda a, b=None: sympy.log(sanitize(a), sanitize(b)) if b is not None else sympy.log(sanitize(a), 10),
+        LOGB[0]: lambda a, b=None: sympy.log(sanitize(a), sanitize(b)) if b is not None else sympy.log(sanitize(a)),
         LOG2[0]: lambda a: sympy.log(sanitize(a), 2),
+        LOG10[0]: lambda a: sympy.log(sanitize(a), 10),
         EXP[0]: lambda a: sympy.exp(sanitize(a)),
         # TRIGONOMETRIC FUNCTIONS
         RAD[0]: lambda a: sympy.rad(sanitize(a)),
@@ -238,13 +248,18 @@ class FUNCTIONS:
         ASINH[0]: lambda a: sympy.asinh(sanitize(a)),
         ACOSH[0]: lambda a: sympy.acosh(sanitize(a)),
         ATANH[0]: lambda a: sympy.atanh(sanitize(a)),
+        # ADDITIONAL TRIGONOMETRIC FUNCTIONS
+        COT[0]: lambda a: sympy.cot(sanitize(a)),
+        SEC[0]: lambda a: sympy.sec(sanitize(a)),
+        CSC[0]: lambda a: sympy.csc(sanitize(a)),
         # ADDITIONAL FUNCTIONS
         FAC[0]: lambda a: sympy.factorial(sanitize(a)),
         SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),
         CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
+        POW[0]: lambda a, b=None: sympy.Pow(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
         # STATISTICAL FUNCTIONS
-        MIN[0]: lambda a: sanitize(a),
-        MAX[0]: lambda a: sanitize(a),
+        MIN[0]: lambda a, b=None: sympy.Min(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
+        MAX[0]: lambda a, b=None: sympy.Max(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
     }
 
     @classmethod
@@ -266,9 +281,9 @@ class FUNCTIONS:
 
 
 PATTERN = re.compile(
-    r"[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|" + "|"
-    .join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
+    "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
+    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|,"
 )
 
 
@@ -324,7 +339,7 @@ class Calc:
         if not self.inf_precision and self.precision <= self.max_num_len:
             self.max_num_len = self.precision
             self.precision += 10
-        norm_calc_str = self.calc_str.strip().replace(" ", "").lower()
+        norm_calc_str = re.sub(r"\s+", "", self.calc_str.strip()).lower()
 
         if DEBUG:
             FormatCodes.print(f"[dim](normalized calculation string:)\n[b|dim](>>>) {norm_calc_str}")
@@ -611,26 +626,39 @@ class Calc:
         """Internal recursive calculation function that doesn't do preprocessing."""
         SAVE_CALC_STR = calc_str
 
-        # HANDLE PARENTHESES - SKIP FUNCTION CALLS
-        for _ in range(calc_str.count("(")):
-            start = calc_str.rfind("(") + 1
-            end = calc_str.find(")", start)
-            if start == 0 or end == -1:
-                break
+        # HANDLE MATHEMATICAL GROUPING PARENTHESES (NOT FUNCTION CALLS)
+        while "(" in calc_str and ")" in calc_str:
+            paren_stack = []
+            start_idx = -1
+            end_idx = -1
 
-            before_paren = calc_str[:start - 1].strip()
-            is_function_call = any(before_paren.endswith(token) for _, symbols in FUNCTIONS.ALL for token in symbols)
-            if is_function_call:
-                break
+            # FIND THE INNERMOST PARENTHESES
+            for i, char in enumerate(calc_str):
+                if char == "(":
+                    paren_stack.append(i)
+                elif char == ")":
+                    if paren_stack:
+                        start_idx = paren_stack.pop()
+                        end_idx = i
 
-            formatted_result = calc_str[start:end]
-            before_paren_pos = start - 2
-            should_add_mult = (before_paren_pos >= 0 and calc_str[before_paren_pos].isdigit())
-            calc_str = calc_str.replace(
-                f"({formatted_result})",
-                (OPERATORS.MULTIPLY[1][0] if should_add_mult else "")
-                + self._perform_eval(formatted_result),
-            )
+                        # CHECK IF THIS IS A FUNCTION CALL BY LOOKING AT WHAT'S BEFORE THE OPENING PARENTHESIS
+                        if start_idx > 0:
+                            token_start = start_idx - 1
+                            while token_start > 0 and calc_str[token_start - 1].isalnum():
+                                token_start -= 1
+                            token_before = calc_str[token_start:start_idx]
+
+                            # IF IT'S A FUNCTION, DON'T PROCESS THESE PARENTHESES
+                            if FUNCTIONS.is_function(token_before):
+                                continue
+
+                        inner_expr = calc_str[start_idx + 1:end_idx]
+                        result = self._perform_eval(inner_expr)
+                        should_add_mult = (start_idx > 0 and calc_str[start_idx - 1].isdigit())
+                        calc_str = calc_str[:start_idx] + ("*" if should_add_mult else "") + result + calc_str[end_idx + 1:]
+                        break
+            else:
+                break
 
         numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
         split = self._find_matches(calc_str)
@@ -693,40 +721,63 @@ class Calc:
                         FormatCodes.print(f"[dim](function ID:) {f_id}")
                         FormatCodes.print(f"[dim](arg_tokens:) {arg_tokens}")
 
+                    # HANDLE MULTI-ARGUMENT FUNCTIONS
                     if len(arg_tokens) == 1:
                         arg_value = split_sympy[idx + 2]
+                        function_impl = FUNCTIONS.get(f_id)
+                        if function_impl is None:
+                            break
+                        result = function_impl(arg_value)
                     else:
-                        arg_str = self._convert_ids_to_symbols(arg_tokens)
-                        if DEBUG:
-                            FormatCodes.print(f"[dim](evaluating arg expression:) {arg_str}")
-                        arg_value = sympy.sympify(arg_str)
+                        if "," in arg_tokens:
+                            comma_idx = arg_tokens.index(",")
+                            arg1_tokens = arg_tokens[:comma_idx]
+                            arg2_tokens = arg_tokens[comma_idx + 1:]
 
-                    function_impl = FUNCTIONS.get(f_id)
-                    if function_impl is None:
-                        break
-                    result = function_impl(arg_value)
+                            if len(arg1_tokens) == 1:
+                                arg1_sympy_idx = idx + 2
+                                arg1_value = split_sympy[arg1_sympy_idx]
+                            else:
+                                arg1_str = self._convert_ids_to_symbols(arg1_tokens)
+                                arg1_value = sympy.sympify(arg1_str)
+
+                            if len(arg2_tokens) == 1:
+                                arg2_sympy_idx = idx + 2 + len(arg1_tokens) + 1
+                                arg2_value = split_sympy[arg2_sympy_idx]
+                            else:
+                                arg2_str = self._convert_ids_to_symbols(arg2_tokens)
+                                arg2_value = sympy.sympify(arg2_str)
+
+                            function_impl = FUNCTIONS.get(f_id)
+                            if function_impl is None:
+                                break
+
+                            if DEBUG:
+                                FormatCodes.print(f"[dim](two-argument function)")
+                                FormatCodes.print(f"[dim](arg1:) {arg1_value}")
+                                FormatCodes.print(f"[dim](arg2:) {arg2_value}")
+
+                            result = function_impl(arg1_value, arg2_value)
+                        
+                        # SINGLE COMPLEX ARGUMENT
+                        else:
+                            arg_str = self._convert_ids_to_symbols(arg_tokens)
+                            if DEBUG:
+                                FormatCodes.print(f"[dim](evaluating arg expression:) {arg_str}")
+                            arg_value = sympy.sympify(arg_str)
+                            function_impl = FUNCTIONS.get(f_id)
+                            if function_impl is None:
+                                break
+                            result = function_impl(arg_value)
+                    
                     if DEBUG:
-                        print(f"argument value: {arg_value}")
                         FormatCodes.print(f"[dim](result:) {result}")
                     formatted_result = self.format_result(result)
                     new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
                     split = new_split
                     split_sympy = sympify(split)
 
-                elif idx + 1 < len(split):
-                    function_impl = FUNCTIONS.get(f_id)
-                    if function_impl is None:
-                        break
-                    result = function_impl(split_sympy[idx + 1])
-                    if DEBUG:
-                        print_line(f"CALCULATING FUNCTION")
-                        FormatCodes.print(f"[dim](function ID:) {f_id}")
-                        FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
-                        FormatCodes.print(f"[dim](result:) {result}")
-                    formatted_result = self.format_result(result)
-                    new_split = split[:idx] + [formatted_result] + split[idx + 2:]
-                    split = new_split
-                    split_sympy = sympify(split)
+                # NO PARENTHESES FOUND - NOT A FUNCTION CALL
                 else:
                     break
 
@@ -865,14 +916,18 @@ def main():
         else:
             print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
     else:
-        FormatCodes.print(f"[b](Possible operators:)")
+        FormatCodes.print(
+            "[b](Usage:)\n[br:yellow]x-calc [cyan][dim](\")<calculation>[dim](\") [dim|white]([options])\n"
+            "[b](Example:)\n[br:yellow]x-calc [cyan][dim](\")sqrt(ln(10) + 1) / cos(π / 4)[dim](\") [br:black]--precision [white](1000)"
+            )
+        FormatCodes.print(f"\n[b](Possible operators:)")
         for o_id, symbols in OPERATORS.ALL:
             FormatCodes.print(f"[i|dim]({o_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
         FormatCodes.print(f"\n[b](Possible constants:)")
-        for c_id, symbols in CONSTANTS.ALL:
+        for c_id, symbols in sorted(CONSTANTS.ALL):
             FormatCodes.print(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
         FormatCodes.print(f"\n[b](Possible functions:)")
-        for f_id, symbols in FUNCTIONS.ALL:
+        for f_id, symbols in sorted(FUNCTIONS.ALL):
             FormatCodes.print(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
         print()
 
