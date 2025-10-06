@@ -316,7 +316,7 @@ class Calc:
             clear_lines()
             print()
             print_line(f"NEW CALCULATION")
-            print(f"raw calculation string:\n>>> {self.calc_str}")
+            FormatCodes.print(f"[dim](raw calculation string:)\n[b|dim](>>>) {self.calc_str}")
         else:
             print_overwrite("[dim|white](calculating...)", end="")
 
@@ -327,9 +327,9 @@ class Calc:
         norm_calc_str = self.calc_str.strip().replace(" ", "").lower()
 
         if DEBUG:
-            print(f"normalized calculation string:\n>>> {norm_calc_str}")
-            print(f"precision: {self.precision}")
-            print(f"max number length: {self.max_num_len}")
+            FormatCodes.print(f"[dim](normalized calculation string:)\n[b|dim](>>>) {norm_calc_str}")
+            FormatCodes.print(f"[dim](precision:) {self.precision}")
+            FormatCodes.print(f"[dim](max number length:) {self.max_num_len}")
 
         self.last_ans = self._perform_eval(norm_calc_str)
         return self.format_readability(self.last_ans)
@@ -337,14 +337,14 @@ class Calc:
     def format_result(self, result: object) -> str:
         if DEBUG:
             print_line("FORMAT RESULT")
-            print(f"result: {result}")
-            print(f"precision: {self.precision} (infinite: {self.inf_precision})")
+            FormatCodes.print(f"[dim](result:) {result}")
+            FormatCodes.print(f"[dim](precision:) {self.precision} [dim]/(infinite:[_dim] {self.inf_precision}[dim])[_dim]")
 
         # FOR INFINITE PRECISION, JUST CONVERT TO STRING WITHOUT FORMATTING
         if self.inf_precision:
             result_str = str(result)
             if DEBUG:
-                print(f"infinite precision result: {result_str}")
+                FormatCodes.print(f"[dim](infinite precision result:) {result_str}")
             return result_str
 
         # CHECK IF RESULT IS AN EXACT INTEGER TO AVOID FLOAT PRECISION ERRORS
@@ -364,7 +364,7 @@ class Calc:
         if is_exact_integer:
             result_str = str(result)
             if DEBUG:
-                print(f"exact integer result (preserving for formatting): {result_str}")
+                FormatCodes.print(f"[dim](exact integer result (preserving for formatting):) {result_str}")
         else:
             try:
                 result_str = "{:.{}f}".format(result, self.precision)
@@ -372,7 +372,7 @@ class Calc:
             except OverflowError:
                 result_str = str(result)
             if DEBUG:
-                print(f"formatted decimal result: {result_str}")
+                FormatCodes.print(f"[dim](formatted decimal result:) {result_str}")
 
         return result_str
 
@@ -384,14 +384,14 @@ class Calc:
         if ARGS.format.exists:
             if DEBUG:
                 print_line("FORMATTING WITH SEPARATORS")
-                print(f"should format: {ARGS.format.exists}")
+                FormatCodes.print(f"[dim](should format:) {ARGS.format.exists}")
             if ARGS.format.value is None:
                 sep = ","
             else:
                 sep = str(ARGS.format.value)
             if DEBUG:
-                print(f"separator: '{sep}'")
-                print(f"input num_str: '{num_str}'")
+                FormatCodes.print(f"[dim](separator:) {sep}")
+                FormatCodes.print(f"[dim](input num_str:) {num_str}")
             if "." in num_str:
                 int_part, decimal_part = num_str.split(".", 1)
                 if int_part.lstrip("-").isdigit() and len(int_part.lstrip("-")) > 3:
@@ -404,7 +404,7 @@ class Calc:
                         formatted_int = digit + formatted_int
                     num_str = sign + formatted_int + "." + decimal_part
                     if DEBUG:
-                        print(f"formatted decimal number: '{num_str}'")
+                        FormatCodes.print(f"[dim](formatted decimal number:) {num_str}")
             else:
                 if num_str.lstrip("-").isdigit() and len(num_str.lstrip("-")) > 3:
                     formatted_num = ""
@@ -416,7 +416,7 @@ class Calc:
                         formatted_num = digit + formatted_num
                     num_str = sign + formatted_num
                     if DEBUG:
-                        print(f"formatted whole number: '{num_str}'")
+                        FormatCodes.print(f"[dim](formatted whole number:) {num_str}")
 
         # TRUNCATE REPEATING DECIMAL (skip for infinite precision)
         if not self.inf_precision and len(num_str) > self.max_num_len and "." in num_str:
@@ -425,24 +425,24 @@ class Calc:
             short_decimal_part = decimal_part[:self.max_num_len]
             if DEBUG:
                 print_line(f"TRUNCATING REPEATING DECIMAL")
-                print(f"input string: {num_str}")
-                print(f"decimal part: {short_decimal_part}")
+                FormatCodes.print(f"[dim](input string:) {num_str}")
+                FormatCodes.print(f"[dim](decimal part:) {short_decimal_part}")
 
             if self._is_recurring(short_decimal_part):
                 num_str = f"{int_part}.{short_decimal_part}..."
             else:
                 num_str = f"{int_part}.{short_decimal_part}"
             if DEBUG:
-                print(f"formatted string: {num_str}")
+                FormatCodes.print(f"[dim](formatted string:) {num_str}")
 
         # FORMAT LONG NUMBERS TO EXPONENTS (skip for infinite precision)
         elif not self.inf_precision and len(num_str) > self.max_num_len:
             if DEBUG:
                 print_line(f"FORMATTING LONG NUMBERS TO EXPONENTS")
-                print(f"input string: {num_str}")
+                FormatCodes.print(f"[dim](input string:) {num_str}")
             num_str = self._format_exponents(num_str)
             if DEBUG:
-                print(f"formatted string: {num_str}")
+                FormatCodes.print(f"[dim](formatted string:) {num_str}")
         return num_str
 
     def _format_exponents(self, string: str) -> str:
@@ -602,9 +602,9 @@ class Calc:
 
         if DEBUG:
             print_line("FINDING MATCHES")
-            print(f"input text: {text}")
-            print(f"preliminary matches: {preliminary_matches}")
-            print(f"final matches: {matches}")
+            FormatCodes.print(f"[dim](input text:)\n[b|dim](>>>) {text}")
+            FormatCodes.print(f"[dim](preliminary matches:) {preliminary_matches}")
+            FormatCodes.print(f"[dim](final matches:) {matches}")
         return matches
 
     def _perform_eval(self, calc_str: str) -> str:
@@ -656,12 +656,12 @@ class Calc:
                 idx = split.index(c_id)
                 if DEBUG:
                     print_line(f"CALCULATING CONSTANT")
-                    print(f"constant ID: {c_id}")
+                    FormatCodes.print(f"[dim](constant ID:) {c_id}")
                 constant_value = CONSTANTS.get(c_id)
                 if c_id == CONSTANTS.ANS[0] and constant_value is None:
                     raise Exception("Answer constant was not specified")
                 if DEBUG:
-                    print(f"value: {constant_value}")
+                    FormatCodes.print(f"[dim](value:) {constant_value}")
                 formatted_result = str(self.format_result(constant_value))
                 new_split = split[:idx] + [formatted_result] + split[idx + 1:]
                 split = new_split
@@ -690,15 +690,15 @@ class Calc:
 
                     if DEBUG:
                         print_line(f"CALCULATING FUNCTION")
-                        print(f"function ID: {f_id}")
-                        print(f"arg_tokens: {arg_tokens}")
+                        FormatCodes.print(f"[dim](function ID:) {f_id}")
+                        FormatCodes.print(f"[dim](arg_tokens:) {arg_tokens}")
 
                     if len(arg_tokens) == 1:
                         arg_value = split_sympy[idx + 2]
                     else:
                         arg_str = self._convert_ids_to_symbols(arg_tokens)
                         if DEBUG:
-                            print(f"evaluating arg expression: {arg_str}")
+                            FormatCodes.print(f"[dim](evaluating arg expression:) {arg_str}")
                         arg_value = sympy.sympify(arg_str)
 
                     function_impl = FUNCTIONS.get(f_id)
@@ -707,7 +707,7 @@ class Calc:
                     result = function_impl(arg_value)
                     if DEBUG:
                         print(f"argument value: {arg_value}")
-                        print(f"result: {result}")
+                        FormatCodes.print(f"[dim](result:) {result}")
                     formatted_result = self.format_result(result)
                     new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
                     split = new_split
@@ -720,9 +720,9 @@ class Calc:
                     result = function_impl(split_sympy[idx + 1])
                     if DEBUG:
                         print_line(f"CALCULATING FUNCTION")
-                        print(f"function ID: {f_id}")
-                        print(f"argument: {split_sympy[idx + 1]}")
-                        print(f"result: {result}")
+                        FormatCodes.print(f"[dim](function ID:) {f_id}")
+                        FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
+                        FormatCodes.print(f"[dim](result:) {result}")
                     formatted_result = self.format_result(result)
                     new_split = split[:idx] + [formatted_result] + split[idx + 2:]
                     split = new_split
@@ -754,7 +754,7 @@ class Calc:
 
             if DEBUG:
                 print_line(f"CALCULATING OPERATOR")
-                print(f"operator ID: {operator_id}")
+                FormatCodes.print(f"[dim](operator ID:) {operator_id}")
 
             operator_func = OPERATORS.get(operator_id)
             if operator_func is None:
@@ -766,9 +766,9 @@ class Calc:
                     break
                 result = operator_func(split_sympy[idx - 1], None)
                 if DEBUG:
-                    print(f"argument: {split_sympy[idx - 1]}")
-                    print(f"operator: {operator_id} (postfix factorial)")
-                    print(f"result: {result}")
+                    FormatCodes.print(f"[dim](argument:) {split_sympy[idx - 1]}")
+                    FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((postfix factorial))")
+                    FormatCodes.print(f"[dim](result:) {result}")
                 new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 1:]
 
             # UNARY MINUS
@@ -780,10 +780,10 @@ class Calc:
                     break
                 result = operator_func(0, split_sympy[idx + 1])
                 if DEBUG:
-                    print(f"argument: 0")
-                    print(f"operator: {operator_id} (unary minus)")
-                    print(f"argument: {split_sympy[idx + 1]}")
-                    print(f"result: {result}")
+                    FormatCodes.print(f"[dim](argument:) 0")
+                    FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((unary minus))")
+                    FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
+                    FormatCodes.print(f"[dim](result:) {result}")
                 new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
 
             # PREFIX NOT OPERATOR
@@ -796,9 +796,9 @@ class Calc:
                     break
                 result = operator_func(split_sympy[idx + 1], None)
                 if DEBUG:
-                    print(f"operator: {operator_id} (prefix NOT)")
-                    print(f"argument: {split_sympy[idx + 1]}")
-                    print(f"result: {result}")
+                    FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((prefix NOT))")
+                    FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
+                    FormatCodes.print(f"[dim](result:) {result}")
                 new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
 
             # BINARY OPERATOR
@@ -807,10 +807,10 @@ class Calc:
                     break
                 result = operator_func(split_sympy[idx - 1], split_sympy[idx + 1])
                 if DEBUG:
-                    print(f"argument: {split_sympy[idx - 1]}")
-                    print(f"operator: {operator_id}")
-                    print(f"argument: {split_sympy[idx + 1]}")
-                    print(f"result: {result}")
+                    FormatCodes.print(f"[dim](argument:) {split_sympy[idx - 1]}")
+                    FormatCodes.print(f"[dim](operator:) {operator_id}")
+                    FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
+                    FormatCodes.print(f"[dim](result:) {result}")
                 new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 2:]
 
             split = new_split
@@ -859,7 +859,7 @@ def main():
         result = calculation.eval()
         if DEBUG:
             print_line("FINAL RESULT")
-            print(f"answer: {result}")
+            FormatCodes.print(f"[dim](answer:) {result}")
             print_line()
             print()
         else:
