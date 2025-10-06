@@ -23,6 +23,13 @@ sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 sanitize = lambda a: sympy.sympify(a)
 
 
+def clean_number(token: str) -> str:
+    """Remove underscores from numeric tokens for proper parsing."""
+    if token.replace(".", "").replace("-", "").replace("_", "").isdigit():
+        return token.replace("_", "")
+    return token
+
+
 class OPERATORS:
 
     # ARITHMETIC OPERATORS
@@ -259,8 +266,8 @@ class FUNCTIONS:
 
 
 PATTERN = re.compile(
-    r"[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d*\.\d+|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+|" + r"\d*\.\d+|\d+|" + r"\(|\)|" + "|"
+    r"[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|" + "|"
     .join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
 )
 
@@ -296,12 +303,13 @@ class Calc:
         self.last_ans = last_ans
         self.precision = precision
         self.max_num_len = max_num_len
+        self.inf_precision = (precision == -1)
 
     def __str__(self) -> str:
         return self.calc_str
 
     def __repr__(self) -> str:
-        return f"Calc(calc_str={self.calc_str!r}, precision={self.precision}, max_num_len={self.max_num_len})"
+        return f"Calc(calc_str={self.calc_str!r}, last_ans={self.last_ans!r}, precision={self.precision}, max_num_len={self.max_num_len})"
 
     def eval(self) -> str:
         if DEBUG:
@@ -312,7 +320,8 @@ class Calc:
         else:
             print_overwrite("[dim|white](calculating...)", end="")
 
-        if self.precision <= self.max_num_len:
+        # SKIP PRECISION ADJUSTMENTS FOR INFINITE PRECISION (-1)
+        if not self.inf_precision and self.precision <= self.max_num_len:
             self.max_num_len = self.precision
             self.precision += 10
         norm_calc_str = str(self.calc_str.strip()).replace(" ", "").lower()
@@ -329,7 +338,15 @@ class Calc:
         if DEBUG:
             print_line("FORMAT RESULT")
             print(f"result: {result}")
-            print(f"precision: {self.precision}")
+            print(f"precision: {self.precision} (infinite: {self.inf_precision})")
+
+        # FOR INFINITE PRECISION, JUST CONVERT TO STRING WITHOUT FORMATTING
+        if self.inf_precision:
+            result_str = str(result)
+            if DEBUG:
+                print(f"infinite precision result: {result_str}")
+            return result_str
+
         try:
             result_str = "{:.{}f}".format(result, self.precision)
             result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
@@ -382,8 +399,8 @@ class Calc:
                     if DEBUG:
                         print(f"formatted whole number: '{num_str}'")
 
-        # TRUNCATE REPEATING DECIMAL
-        if len(num_str) > self.max_num_len and "." in num_str:
+        # TRUNCATE REPEATING DECIMAL (skip for infinite precision)
+        if not self.inf_precision and len(num_str) > self.max_num_len and "." in num_str:
             num_str = num_str[:-10]
             int_part, decimal_part = num_str.split(".")
             short_decimal_part = decimal_part[:self.max_num_len]
@@ -399,8 +416,8 @@ class Calc:
             if DEBUG:
                 print(f"formatted string: {num_str}")
 
-        # FORMAT LONG NUMBERS TO EXPONENTS
-        elif len(num_str) > self.max_num_len:
+        # FORMAT LONG NUMBERS TO EXPONENTS (skip for infinite precision)
+        elif not self.inf_precision and len(num_str) > self.max_num_len:
             if DEBUG:
                 print_line(f"FORMATTING LONG NUMBERS TO EXPONENTS")
                 print(f"input string: {num_str}")
@@ -504,14 +521,14 @@ class Calc:
         return "".join(result)
 
     def _find_matches(self, text: str) -> list:
-        preliminary_matches = PATTERN.findall(text)
+        preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
         matches = []
         i = 0
         while i < len(preliminary_matches):
             match = preliminary_matches[i]
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
             if (match in OPERATORS.MINUS[1] and i + 1 < len(preliminary_matches)
-                    and preliminary_matches[i + 1].replace(".", "").isdigit()):
+                    and preliminary_matches[i + 1].replace(".", "").replace("_", "").isdigit()):
                 # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
                 should_be_negative = False
                 if i == 0:  # AT THE BEGINNING
@@ -523,8 +540,8 @@ class Calc:
                         should_be_negative = True
 
                 if should_be_negative:
-                    # COMBINE MINUS WITH NEXT NUMBER
-                    matches.append(match + preliminary_matches[i + 1])
+                    # COMBINE MINUS WITH NEXT NUMBER AND CLEAN UNDERSCORES
+                    matches.append(clean_number(match + preliminary_matches[i + 1]))
                     i += 2  # SKIP THE NEXT TOKEN SINCE WE CONSUMED IT
                 else:
                     # KEEP AS SEPARATE SUBTRACTION OPERATOR
@@ -536,7 +553,7 @@ class Calc:
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
-                    if (prev_match.replace(".", "").replace("-", "").isdigit() or prev_match == ")"
+                    if (prev_match.replace(".", "").replace("-", "").replace("_", "").isdigit() or prev_match == ")"
                             or CONSTANTS.is_constant(prev_match)):
                         should_be_factorial = True
                 if should_be_factorial:
@@ -553,7 +570,8 @@ class Calc:
                 elif FUNCTIONS.is_function(match):
                     matches.append(FUNCTIONS.get_id(match))
                 else:
-                    matches.append(match)
+                    # CLEAN UNDERSCORES FROM NUMERIC TOKENS
+                    matches.append(clean_number(match))
                 i += 1
 
         if DEBUG:
@@ -781,11 +799,24 @@ class Calc:
 def main():
     print()
     if len(calc_str_parts := list(ARGS.calculation.value)) > 0:
+        if (precision_value := ARGS.precision.value) is None:
+            precision_value = 100
+        if precision_value <= 0 and precision_value != -1:
+            Console.fail(f"[b](ValueError:) Precision must be positive or -1 for infinite precision, got {precision_value}", end="\n\n")
+            return
+
+        if precision_value == -1:
+            precision = -1
+            max_num_len = -1
+        else:
+            precision = precision_value + 10
+            max_num_len = precision_value
+        
         calculation = Calc(
             calc_str=" ".join(str(v) for v in calc_str_parts),
             last_ans=ARGS.ans.value,
-            precision=(ARGS.precision.value or 100) + 10,
-            max_num_len=(ARGS.precision.value or 100),
+            precision=precision,
+            max_num_len=max_num_len,
         )
         result = calculation.eval()
         if DEBUG:
