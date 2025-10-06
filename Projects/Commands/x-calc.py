@@ -380,7 +380,7 @@ class Calc:
         if not DEBUG:
             print_overwrite("[dim|white](formatting...)", end="")
         num_str = str(num_str)
-        
+
         # FORMAT WITH THOUSANDS SEPARATORS IF REQUESTED
         if ARGS.format.exists:
             if DEBUG:
@@ -508,7 +508,7 @@ class Calc:
         for match in r.finditer(string):
             yield match.group(1)
 
-    def _convert_ids_to_symbols(self, tokens: list) -> str:
+    def _convert_ids_to_symbols(self, tokens: list[str]) -> str:
         """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
         result = []
         for token in tokens:
@@ -540,15 +540,17 @@ class Calc:
                 result.append(str(token))
         return "".join(result)
 
-    def _find_matches(self, text: str) -> list:
+    def _find_matches(self, text: str) -> list[str | object]:
         preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
         matches = []
         i = 0
         while i < len(preliminary_matches):
             match = preliminary_matches[i]
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
-            if (match in OPERATORS.MINUS[1] and i + 1 < len(preliminary_matches)
-                    and preliminary_matches[i + 1].replace(".", "").replace("_", "").isdigit()):
+            if (match in OPERATORS.MINUS[1]
+                and i + 1 < len(preliminary_matches)
+                and preliminary_matches[i + 1].replace(".", "").replace("_", "").isdigit()
+            ):
                 # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
                 should_be_negative = False
                 if i == 0:  # AT THE BEGINNING
@@ -556,7 +558,10 @@ class Calc:
                 else:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS AN OPERATOR OR OPEN PARENTHESIS, TREAT AS NEGATIVE NUMBER
-                    if (OPERATORS.is_operator(prev_match) or prev_match == "(" or FUNCTIONS.is_function(prev_match)):
+                    if (OPERATORS.is_operator(prev_match)
+                        or prev_match == "("
+                        or FUNCTIONS.is_function(prev_match)
+                    ):
                         should_be_negative = True
 
                 if should_be_negative:
@@ -573,8 +578,10 @@ class Calc:
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
-                    if (prev_match.replace(".", "").replace("-", "").replace("_", "").isdigit() or prev_match == ")"
-                            or CONSTANTS.is_constant(prev_match)):
+                    if (prev_match.replace(".", "").replace("-", "").replace("_", "").isdigit()
+                        or prev_match == ")"
+                        or CONSTANTS.is_constant(prev_match)
+                    ):
                         should_be_factorial = True
                 if should_be_factorial:
                     matches.append(OPERATORS.FACTORIAL[0])
@@ -621,18 +628,19 @@ class Calc:
             before_paren_pos = start - 2
             should_add_mult = (before_paren_pos >= 0 and calc_str[before_paren_pos].isdigit())
             calc_str = calc_str.replace(
-                "(" + formatted_result + ")",
-                (OPERATORS.MULTIPLY[1][0] if should_add_mult else "") + str(self._perform_eval(formatted_result)),
+                f"({formatted_result})",
+                (OPERATORS.MULTIPLY[1][0] if should_add_mult else "")
+                + self._perform_eval(formatted_result),
             )
 
         numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
         split = self._find_matches(calc_str)
 
         # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
-        def sympify(split_matches: list) -> list:
-            split_sympy = []
+        def sympify(split_matches: list[str | object]) -> list[str | object]:
+            split_sympy: list[str | object] = []
             for token in split_matches:
-                if isinstance(token, str) and (token.startswith(("o:", "c:", "f:"))):
+                if isinstance(token, str) and token.startswith(("o:", "c:", "f:")):
                     split_sympy.append(token)
                 else:
                     try:
@@ -646,7 +654,7 @@ class Calc:
         # ITERATE OVER CONSTANTS FIRST
         for c_id, _ in CONSTANTS.ALL:
             while c_id in split:
-                index = split.index(c_id)
+                idx = split.index(c_id)
                 if DEBUG:
                     print_line(f"CALCULATING CONSTANT")
                     print(f"constant ID: {c_id}")
@@ -656,30 +664,30 @@ class Calc:
                 if DEBUG:
                     print(f"value: {constant_value}")
                 formatted_result = str(self.format_result(constant_value))
-                new_split = split[:index] + [formatted_result] + split[index + 1:]
+                new_split = split[:idx] + [formatted_result] + split[idx + 1:]
                 split = new_split
                 split_sympy = sympify(split)
 
         # ITERATE OVER FUNCTIONS AVAILABLE
         for f_id, _ in FUNCTIONS.ALL:
             while f_id in split:
-                index = split.index(f_id)
+                idx = split.index(f_id)
 
-                if (index + 1 < len(split) and split[index + 1] == "("):
+                if (idx + 1 < len(split) and split[idx + 1] == "("):
                     paren_count = 0
-                    end_paren_index = -1
-                    for i in range(index + 1, len(split)):
+                    end_paren_idx = -1
+                    for i in range(idx + 1, len(split)):
                         if split[i] == "(":
                             paren_count += 1
                         elif split[i] == ")":
                             paren_count -= 1
                             if paren_count == 0:
-                                end_paren_index = i
+                                end_paren_idx = i
                                 break
 
-                    if end_paren_index == -1:
+                    if end_paren_idx == -1:
                         break
-                    arg_tokens = split[index + 2:end_paren_index]
+                    arg_tokens = split[idx + 2:end_paren_idx]
 
                     if DEBUG:
                         print_line(f"CALCULATING FUNCTION")
@@ -687,7 +695,7 @@ class Calc:
                         print(f"arg_tokens: {arg_tokens}")
 
                     if len(arg_tokens) == 1:
-                        arg_value = split_sympy[index + 2]
+                        arg_value = split_sympy[idx + 2]
                     else:
                         arg_str = self._convert_ids_to_symbols(arg_tokens)
                         if DEBUG:
@@ -702,22 +710,22 @@ class Calc:
                         print(f"argument value: {arg_value}")
                         print(f"result: {result}")
                     formatted_result = str(self.format_result(result))
-                    new_split = split[:index] + [formatted_result] + split[end_paren_index + 1:]
+                    new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
                     split = new_split
                     split_sympy = sympify(split)
 
-                elif index + 1 < len(split):
+                elif idx + 1 < len(split):
                     function_impl = FUNCTIONS.get(f_id)
                     if function_impl is None:
                         break
-                    result = function_impl(split_sympy[index + 1])
+                    result = function_impl(split_sympy[idx + 1])
                     if DEBUG:
                         print_line(f"CALCULATING FUNCTION")
                         print(f"function ID: {f_id}")
-                        print(f"argument: {split_sympy[index + 1]}")
+                        print(f"argument: {split_sympy[idx + 1]}")
                         print(f"result: {result}")
                     formatted_result = str(self.format_result(result))
-                    new_split = split[:index] + [formatted_result] + split[index + 2:]
+                    new_split = split[:idx] + [formatted_result] + split[idx + 2:]
                     split = new_split
                     split_sympy = sympify(split)
                 else:
@@ -730,8 +738,11 @@ class Calc:
                 if isinstance(token, str) and token.startswith("o:"):
                     precedence = OPERATORS.get_precedence(token)
                     # GIVE PREFIX 'NOT' HIGHER PRECEDENCE THAN BINARY OPERATORS
-                    if (token == OPERATORS.NOT[0] and (i == 0 or isinstance(split[i - 1], str) and
-                                                       (split[i - 1].startswith("o:") or split[i - 1] in ["("]))):
+                    if (token == OPERATORS.NOT[0] and (
+                        i == 0
+                        or isinstance(s := split[i - 1], str) and s.startswith("o:")
+                        or s in ["("]
+                    )):
                         precedence = 3  # HIGHER THAN BINARY ARITHMETIC OPERATORS
                     operator_positions.append((i, token, precedence))
 
@@ -740,7 +751,7 @@ class Calc:
 
             highest_precedence = max(op[2] for op in operator_positions)
             highest_ops = [op for op in operator_positions if op[2] == highest_precedence]
-            index, operator_id, _ = highest_ops[-1]
+            idx, operator_id, _ = highest_ops[-1]
 
             if DEBUG:
                 print_line(f"CALCULATING OPERATOR")
@@ -750,58 +761,66 @@ class Calc:
             if operator_func is None:
                 break
 
+            # POSTFIX FACTORIAL OPERATOR
             if operator_id == OPERATORS.FACTORIAL[0]:
-                # POSTFIX FACTORIAL OPERATOR
-                if index == 0:
+                if idx == 0:
                     break
-                result = operator_func(split_sympy[index - 1], None)
+                result = operator_func(split_sympy[idx - 1], None)
                 if DEBUG:
-                    print(f"argument: {split_sympy[index - 1]}")
+                    print(f"argument: {split_sympy[idx - 1]}")
                     print(f"operator: {operator_id} (postfix factorial)")
                     print(f"result: {result}")
-                new_split = split[:index - 1] + [str(self.format_result(result))] + split[index + 1:]
-            elif operator_id == OPERATORS.MINUS[0] and (index == 0 or isinstance(split[index - 1], str)
-                                                        and split[index - 1].startswith("o:")):
-                # UNARY MINUS
-                if index + 1 >= len(split):
+                new_split = split[:idx - 1] + [str(self.format_result(result))] + split[idx + 1:]
+
+            # UNARY MINUS
+            elif operator_id == OPERATORS.MINUS[0] and (
+                idx == 0
+                or isinstance(s := split[idx - 1], str) and s.startswith("o:")
+            ):
+                if idx + 1 >= len(split):
                     break
-                result = operator_func(0, split_sympy[index + 1])
+                result = operator_func(0, split_sympy[idx + 1])
                 if DEBUG:
                     print(f"argument: 0")
                     print(f"operator: {operator_id} (unary minus)")
-                    print(f"argument: {split_sympy[index + 1]}")
+                    print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:index] + [str(self.format_result(result))] + split[index + 2:]
-            elif operator_id == OPERATORS.NOT[0] and (index == 0 or isinstance(split[index - 1], str) and
-                                                      (split[index - 1].startswith("o:") or split[index - 1] in ["("])):
-                # PREFIX NOT OPERATOR
-                if index + 1 >= len(split):
+                new_split = split[:idx] + [str(self.format_result(result))] + split[idx + 2:]
+
+            # PREFIX NOT OPERATOR
+            elif operator_id == OPERATORS.NOT[0] and (
+                idx == 0
+                or isinstance(s := split[idx - 1], str) and s.startswith("o:")
+                or s in ["("]
+            ):
+                if idx + 1 >= len(split):
                     break
-                result = operator_func(split_sympy[index + 1], None)
+                result = operator_func(split_sympy[idx + 1], None)
                 if DEBUG:
                     print(f"operator: {operator_id} (prefix NOT)")
-                    print(f"argument: {split_sympy[index + 1]}")
+                    print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:index] + [str(self.format_result(result))] + split[index + 2:]
+                new_split = split[:idx] + [str(self.format_result(result))] + split[idx + 2:]
+
+            # BINARY OPERATOR
             else:
-                # BINARY OPERATOR
-                if index == 0 or index + 1 >= len(split):
+                if idx == 0 or idx + 1 >= len(split):
                     break
-                result = operator_func(split_sympy[index - 1], split_sympy[index + 1])
+                result = operator_func(split_sympy[idx - 1], split_sympy[idx + 1])
                 if DEBUG:
-                    print(f"argument: {split_sympy[index - 1]}")
+                    print(f"argument: {split_sympy[idx - 1]}")
                     print(f"operator: {operator_id}")
-                    print(f"argument: {split_sympy[index + 1]}")
+                    print(f"argument: {split_sympy[idx + 1]}")
                     print(f"result: {result}")
-                new_split = split[:index - 1] + [str(self.format_result(result))] + split[index + 2:]
+                new_split = split[:idx - 1] + [str(self.format_result(result))] + split[idx + 2:]
 
             split = new_split
             split_sympy = sympify(split)
 
         if len(split) == 1:
-            calc_str = split[0]
+            calc_str = str(split[0])
         else:
-            calc_str = " ".join(split)
+            calc_str = " ".join(str(s) for s in split)
             try:
                 result = sympy.sympify(calc_str)
                 calc_str = str(self.format_result(result))
