@@ -347,13 +347,33 @@ class Calc:
                 print(f"infinite precision result: {result_str}")
             return result_str
 
+        # CHECK IF RESULT IS AN EXACT INTEGER TO AVOID FLOAT PRECISION ERRORS
+        is_exact_integer = False
         try:
-            result_str = "{:.{}f}".format(result, self.precision)
-            result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
-        except OverflowError:
+            if hasattr(result, 'is_integer') and getattr(result, 'is_integer', False):
+                is_exact_integer = True
+            elif isinstance(result, sympy.Integer):
+                is_exact_integer = True
+            elif hasattr(result, 'is_Integer') and getattr(result, 'is_Integer', False):
+                is_exact_integer = True
+            elif isinstance(result, int):
+                is_exact_integer = True
+        except:
+            pass
+
+        if is_exact_integer:
             result_str = str(result)
-        if DEBUG:
-            print(f"formatted result: {result_str}")
+            if DEBUG:
+                print(f"exact integer result (preserving for formatting): {result_str}")
+        else:
+            try:
+                result_str = "{:.{}f}".format(result, self.precision)
+                result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
+            except OverflowError:
+                result_str = str(result)
+            if DEBUG:
+                print(f"formatted decimal result: {result_str}")
+
         return result_str
 
     def format_readability(self, num_str: str) -> str:
