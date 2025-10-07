@@ -291,6 +291,41 @@ PATTERN = re.compile(
 )
 
 
+def print_help():
+    o_list = "\n".join(f"[i|dim]({o_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for o_id, symbols in OPERATORS.ALL)
+    c_list = "\n".join(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL))
+    f_list = "\n".join(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL))
+    help_text = f"""\
+[b|in]( Advanced Calculator - Perform complex calculations directly from the command line )
+
+[b](Usage:) [br:green](x-calc) [br:cyan](<calculation>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](calculation)          The calculation string to evaluate
+
+[b](Options:)
+  [br:blue](-a), [br:blue](--ans VALUE)      Value to use for 'ans' constant
+  [br:blue](-p), [br:blue](--precision N)    Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
+  [br:blue](-f), [br:blue](--format)         Format the output with thousands separators
+  [br:blue](-d), [br:blue](--debug)          Show debug information during calculation
+
+[b](Examples:)
+  [br:green](x-calc) [br:cyan]("2 + 2 * 2")                                           [dim](# [i](Simple arithmetic))
+  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans 6)                                     [dim](# [i](Using the 'ans' constant))
+  [br:green](x-calc) [br:cyan]("sqrt(ln(10) + 1) / cos(π / 4)") [br:blue](--precision 1000)    [dim](# [i](High precision with functions and constants))   
+
+[b](Possible operators:)
+{o_list}
+
+[b](Possible constants:)
+{c_list}
+
+[b](Possible functions:)
+{f_list}
+"""
+    FormatCodes.print(help_text)
+
+
 def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
     FormatCodes.print(f"\033[2K\r{sep.join(str(val) for val in values)}", end=end)
 
@@ -920,20 +955,7 @@ def main():
         else:
             print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
     else:
-        FormatCodes.print(
-            "[b](Usage:)\n[br:yellow]x-calc [cyan][dim](\")<calculation>[dim](\") [dim|white]([options])\n"
-            "[b](Example:)\n[br:yellow]x-calc [cyan][dim](\")sqrt(ln(10) + 1) / cos(π / 4)[dim](\") [br:black]--precision [white](1000)"
-            )
-        FormatCodes.print(f"\n[b](Possible operators:)")
-        for o_id, symbols in OPERATORS.ALL:
-            FormatCodes.print(f"[i|dim]({o_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
-        FormatCodes.print(f"\n[b](Possible constants:)")
-        for c_id, symbols in sorted(CONSTANTS.ALL):
-            FormatCodes.print(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
-        FormatCodes.print(f"\n[b](Possible functions:)")
-        for f_id, symbols in sorted(FUNCTIONS.ALL):
-            FormatCodes.print(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}")
-        print()
+        print_help()
 
 
 if __name__ == "__main__":

@@ -344,6 +344,32 @@ This command outputs a list of all custom Python commands in the current directo
 
 <br>
 
+### `x-ip`
+
+This command will give you info about your local and public IP addresses, with optional geolocation information about the public IP address.
+
+To include geolocation information, use the `-g` `--geo` option:
+```bash
+x-ip --geo
+```
+
+To specify a specific provider for the geolocation information, use the `-p` `--provider` option:
+```bash
+x-ip --geo --provider "ipinfo"
+```
+
+You can also output the info as a JSON object with the `-j` `--json-output` option:
+```bash
+x-ip --json-output
+```
+
+To show help for the command, use the `-h` `--help` option:
+```bash
+x-ip --help
+```
+
+<br>
+
 ### `x-qr`
 
 This command lets you quickly generate QR codes directly within the console. You also have options for generating different special QR codes:
