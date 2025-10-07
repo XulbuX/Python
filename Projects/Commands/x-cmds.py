@@ -4,6 +4,7 @@ A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
 from typing import Optional, Any, cast
 import importlib.util
+import json
 import sys
 import os
 import re
@@ -53,6 +54,8 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
                 arg_descs.append(f"[#BBC](all non flagged arguments after last flag's value)")
             else:
                 arg_descs.append(f"[#BBC]({val})")
+        elif isinstance(val, dict) and "flags" in val.keys():
+            arg_descs.append(cast(dict, val)["flags"])
         else:
             arg_descs.append(val)
     arg_descs = (f"[#BBC]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs)
