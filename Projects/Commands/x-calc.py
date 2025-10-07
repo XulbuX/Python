@@ -107,8 +107,9 @@ class OPERATORS:
     @classmethod
     def get_id(cls, token: str) -> str | None:
         """Get the operator ID for a token by searching through the token lists."""
+        token_lower = token.lower()
         for op_id, symbols in cls.ALL:
-            if token in symbols: return op_id
+            if token_lower in symbols: return op_id
         return None
 
     @classmethod
@@ -157,8 +158,9 @@ class CONSTANTS:
     @classmethod
     def get_id(cls, token: str) -> str | None:
         """Get the constant ID for a token by searching through the token lists."""
+        token_lower = token.lower()
         for const_id, symbols in cls.ALL:
-            if token in symbols: return const_id
+            if token_lower in symbols: return const_id
         return None
 
     @classmethod
@@ -270,8 +272,9 @@ class FUNCTIONS:
     @classmethod
     def get_id(cls, token: str) -> str | None:
         """Get the function ID for a token by searching through the token lists."""
+        token_lower = token.lower()
         for func_id, symbols in cls.ALL:
-            if token in symbols: return func_id
+            if token_lower in symbols: return func_id
         return None
 
     @classmethod
@@ -283,7 +286,8 @@ class FUNCTIONS:
 PATTERN = re.compile(
     "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
     + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|,"
+    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|,",
+    re.IGNORECASE
 )
 
 
@@ -339,7 +343,7 @@ class Calc:
         if not self.inf_precision and self.precision <= self.max_num_len:
             self.max_num_len = self.precision
             self.precision += 10
-        norm_calc_str = re.sub(r"\s+", "", self.calc_str.strip()).lower()
+        norm_calc_str = re.sub(r"\s+", "", self.calc_str.strip())
 
         if DEBUG:
             FormatCodes.print(f"[dim](normalized calculation string:)\n[b|dim](>>>) {norm_calc_str}")
