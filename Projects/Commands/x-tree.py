@@ -84,7 +84,7 @@ class IGNORE:
         "domain_hex": rf"{reoccurring['domain']}_{reoccurring['hex']}",
         "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2})+-[a-fA-F0-9]{64}",
     }
-    pattern: Pattern = re.compile(
+    pattern: Pattern[str] = re.compile(
         rf"(?:^(?:{'|'.join(standalones.values())})$|{pre}(?:(?:{sep})?(?:{'|'.join(reoccurring.values())}))+{ext})"
     )
 
