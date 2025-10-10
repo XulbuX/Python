@@ -338,7 +338,7 @@ Running the command without any arguments or options will show all available fun
 
 <br>
 
-### `x-cmds`
+### `x-cmds` `x-commands`
 
 This command outputs a list of all custom Python commands in the current directory, with a short description and their params.
 
