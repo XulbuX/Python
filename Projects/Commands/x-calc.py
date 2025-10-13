@@ -2,8 +2,8 @@
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
 There's no number size limit - the only limit is your system's memory."""
+from typing import Callable, Optional, Pattern
 from xulbux import FormatCodes, Console
-from typing import Callable, Optional
 import sympy
 import numpy
 import sys
@@ -22,11 +22,15 @@ DEBUG = ARGS.debug.exists
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 sanitize = lambda a: sympy.sympify(a)
 
+_COMPILED: dict[str, Pattern] = {
+    "thousands_seps": re.compile(r"(?<=\d)[,'_](?=\d)"),
+}
 
 def clean_number(token: str) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
-    if token.replace(".", "").replace("-", "").replace("_", "").isdigit():
-        return token.replace("_", "")
+    if (no_seps_num := _COMPILED["thousands_seps"].sub("", token)
+        ).replace(".", "").replace("-", "").isdigit():
+        return no_seps_num
     return token
 
 
@@ -285,8 +289,8 @@ class FUNCTIONS:
 
 PATTERN = re.compile(
     "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
-    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+(?:_\d+)*|" + r"\d+(?:_\d+)*\.\d+(?:_\d+)*|\d+(?:_\d+)*|" + r"\(|\)|,",
+    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:[,'_]\d+)*\.\d+(?:[,'_]\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:[,'_]\d+)*|" + r"\d+(?:[,'_]\d+)*\.\d+(?:[,'_]\d+)*|\d+(?:[,'_]\d+)*|" + r"\(|\)|,",
     re.IGNORECASE
 )
 
@@ -602,7 +606,7 @@ class Calc:
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
             if (match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
-                and preliminary_matches[i + 1].replace(".", "").replace("_", "").isdigit()
+                and _COMPILED["thousands_seps"].sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
             ):
                 # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
                 should_be_negative = False
@@ -631,7 +635,7 @@ class Calc:
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
-                    if (prev_match.replace(".", "").replace("-", "").replace("_", "").isdigit()
+                    if (_COMPILED["thousands_seps"].sub("", prev_match).replace(".", "").replace("-", "").isdigit()
                         or prev_match == ")"
                         or CONSTANTS.is_constant(prev_match)
                     ):
