@@ -10,6 +10,8 @@ import sys
 import re
 
 
+sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
+
 ARGS = Console.get_args({
     "calculation": "before",
     "ans": ["-a", "--ans"],
@@ -19,12 +21,11 @@ ARGS = Console.get_args({
 })
 DEBUG = ARGS.debug.exists
 
-sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
-sanitize = lambda a: sympy.sympify(a)
-
 _COMPILED: dict[str, Pattern] = {
     "thousands_seps": re.compile(r"(?<=\d)[,'_](?=\d)"),
 }
+
+sanitize = lambda a: sympy.sympify(a)
 
 def clean_number(token: str) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
