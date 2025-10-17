@@ -99,7 +99,10 @@ The changes are now active, and you can run the files by typing their names (*e.
 <br>
 <br>
 
-## <span id="what-each-cmd-does">What each file (*command*) does</span>
+## <span id="what-each-cmd-does">What each script (*command*) does</span>
+
+Here's a brief overview of what each script does and how to use it.<br>
+**⇾** Each process can be cancelled by pressing `Ctrl(⌘) + C`.
 
 <br>
 
@@ -234,7 +237,6 @@ This command will display an animated, random text character mess in your consol
    ```bash
    mess -c -f
    ```
-Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 <br>
 
@@ -245,7 +247,6 @@ To specify up to how many decimal places should be calculated, run the command w
 ```bash
 pi 100
 ```
-Can be cancelled by pressing `Ctrl(⌘) + C`.
 
 <br>
 
@@ -256,7 +257,7 @@ In addition to that it will display some info about the items. When all the item
 
 Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` `--sep`:
 ```bash
-process-list "item1, item2, item3" --sep ','
+process-list "item1;item2;item3" --sep ';'
 ```
 
 <br>
@@ -289,8 +290,7 @@ rand -1_000_000 1_000_000 --format
 
 ### `sine`
 
-This command will just display a moving sine wave inside your console.<br>
-Can be cancelled by pressing `Ctrl(⌘) + C`.
+This command will just display a moving sine wave inside your console.
 
 The rendering of the sine wave can also be inverted with the option `-i` `--invert` `--inverse`:
 ```bash
