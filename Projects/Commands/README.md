@@ -344,6 +344,22 @@ This command outputs a list of all custom Python commands in the current directo
 
 <br>
 
+### `x-hw`
+
+Get detailed hardware information about your PC.
+
+To get even more detailed information, use the `-d` `--detailed` option:
+```bash
+x-hw --detailed
+```
+
+You can also output the info as a JSON object with the `-j` `--json` option:
+```bash
+x-hw --json
+```
+
+<br>
+
 ### `x-ip`
 
 This command will give you info about your local and public IP addresses, with optional geolocation information about the public IP address.
