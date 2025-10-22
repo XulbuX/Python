@@ -358,6 +358,11 @@ You can also output the info as a JSON object with the `-j` `--json` option:
 x-hw --json
 ```
 
+To show help for the command, use the `-h` `--help` option:
+```bash
+x-hw --help
+```
+
 <br>
 
 ### `x-ip`
