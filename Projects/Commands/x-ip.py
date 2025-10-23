@@ -168,6 +168,11 @@ class IPInfo:
                         if "disconnected" in line.lower():
                             interfaces[current_interface]["status"] = "Disconnected"
 
+                # SET STATUS TO CONNECTED FOR INTERFACES WITH IP ADDRESSES
+                for interface_name, interface_data in interfaces.items():
+                    if "status" not in interface_data and any(key in interface_data for key in ["ipv4", "ipv6"]):
+                        interface_data["status"] = "Connected"
+
                 # REMOVE INTERFACES WITH NO IP ADDRESSES (BUT KEEP DISCONNECTED ONES FOR STATUS INFO)
                 interfaces = {
                     name: addrs
@@ -260,69 +265,72 @@ class IPInfo:
         FormatCodes.print("\n[b|br:cyan](Local IP Addresses)")
         local_ips_text = []
         if self.local_ipv4:
-            local_ips_text.append(f"[b](IPv4:) [white]({self.local_ipv4})")
+            local_ips_text.append(f"[b](IPv4) : [white]({self.local_ipv4})")
         else:
-            local_ips_text.append(f"[b](IPv4:) [dim|white](Not Found)")
+            local_ips_text.append(f"[b](IPv4) : [i|dim|white](Not Found)")
         if self.local_ipv6:
-            local_ips_text.append(f"[b](IPv6:) [white]({self.local_ipv6})")
+            local_ips_text.append(f"[b](IPv6) : [white]({self.local_ipv6})")
         else:
-            local_ips_text.append(f"[b](IPv6:) [dim|white](Not Found)")
+            local_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
         Console.log_box_bordered(*local_ips_text, border_style=f"br:cyan")
 
         FormatCodes.print("\n[b|br:magenta](Public IP Addresses)")
         public_ips_text = []
         if self.public_ipv4:
-            public_ips_text.append(f"[b](IPv4:) [white]({self.public_ipv4})")
+            public_ips_text.append(f"[b](IPv4) : [white]({self.public_ipv4})")
         else:
-            public_ips_text.append(f"[b](IPv4:) [dim|white](Not Found)")
+            public_ips_text.append(f"[b](IPv4) : [i|dim|white](Not Found)")
         if self.public_ipv6:
-            public_ips_text.append(f"[b](IPv6:) [white]({self.public_ipv6})")
+            public_ips_text.append(f"[b](IPv6) : [white]({self.public_ipv6})")
         else:
-            public_ips_text.append(f"[b](IPv6:) [dim|white](Not Found)")
+            public_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
         Console.log_box_bordered(*public_ips_text, border_style=f"br:magenta")
 
         if self.all_interfaces:
             FormatCodes.print("\n[b|br:yellow](All Network Interfaces)")
             interfaces_text, i = [], 0
             for interface, addrs in self.all_interfaces.items():
-                interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|br:yellow]({interface})")
-                # SHOW CONNECTION STATUS IF DISCONNECTED
-                if "status" in addrs:
-                    interfaces_text.append(f"[b](Status:) [dim|white]({addrs['status']})")
+                status = (
+                    f" [i|{'green' if addrs['status'].lower() == 'connected' else 'dim|white'}]({addrs['status']})"
+                ) if "status" in addrs else ""
+                interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|br:yellow]({interface}){status}")
+                p = "   " if "dns_suffix" in addrs else ""
                 # IPv4 INFO
                 if "ipv4" in addrs:
-                    interfaces_text.append(f"[b](IPv4:) [white]({addrs['ipv4']})")
+                    interfaces_text.append(f"{p}   [b](IPv4) : [white]({addrs['ipv4']})")
                     if "subnet_mask" in addrs:
-                        interfaces_text.append(f"[b](Subnet:) [white]({addrs['subnet_mask']})")
+                        interfaces_text.append(f"{p} [b](Subnet) : [white]({addrs['subnet_mask']})")
                     if "gateway" in addrs:
-                        interfaces_text.append(f"[b](Gateway:) [white]({addrs['gateway']})")
+                        interfaces_text.append(f"{p}[b](Gateway) : [white]({addrs['gateway']})")
                 # IPv6 INFO
                 if "ipv6" in addrs:
-                    interfaces_text.append(f"[b](IPv6:) [white]({addrs['ipv6']})")
+                    interfaces_text.append(f"{p}   [b](IPv6) : [white]({addrs['ipv6']})")
                 # DNS SUFFIX
                 if "dns_suffix" in addrs:
-                    interfaces_text.append(f"[b](DNS Suffix:) [white]({addrs['dns_suffix']})")
+                    interfaces_text.append(f"[b](DNS Suffix) : [white]({addrs['dns_suffix']})")
                 i += 1
             Console.log_box_bordered(*interfaces_text, border_style="br:yellow")
 
         if self.geo_info:
             geo = self.geo_info
             geo_text = []
+            has_coords = geo.get("lat") is not None and geo.get("lng") is not None
+            p = "   " if has_coords else ""
             if geo.get("city") or geo.get("region"):
                 location = f"{geo.get('city', '')}, {geo.get('region', '')}".strip(", ")
-                geo_text.append(f"[b](Location:) [white]({location})")
+                geo_text.append(f"{p}[b](Location) : [white]({location})")
             if geo.get("country"):
-                geo_text.append(f"[b](Country:) [white]{geo['country']} ({geo.get('country_code', '')})[_c]")
+                geo_text.append(f"{p} [b](Country) : [white]{geo['country']} ({geo.get('country_code', '')})[_c]")
             if geo.get("postal"):
-                geo_text.append(f"[b](Postal:) [white]{geo['postal']}[_c]")
+                geo_text.append(f"{p}  [b](Postal) : [white]{geo['postal']}[_c]")
             if geo.get("timezone"):
-                geo_text.append(f"[b](Timezone:) [white]{geo['timezone']}[_c]")
-            if geo.get("lat") and geo.get("lng"):
-                geo_text.append(f"[b](Coordinates:) [white]{geo['lat']}, {geo['lng']}[_c]")
+                geo_text.append(f"{p}[b](Timezone) : [white]{geo['timezone']}[_c]")
+            if has_coords:
+                geo_text.append(f"[b](Coordinates) : [white]{geo['lat']}, {geo['lng']}[_c]")
             if geo.get("org"):
-                geo_text.append(f"[b](ISP:) [white]{geo['org']}[_c]")
+                geo_text.append(f"{p}     [b](ISP) : [white]{geo['org']}[_c]")
             if geo.get("asn"):
-                geo_text.append(f"[b](ASN:) [white]{geo['asn']}[_c]")
+                geo_text.append(f"{p}     [b](ASN) : [white]{geo['asn']}[_c]")
             FormatCodes.print("\n[b|br:blue](Geolocation Information)")
             Console.log_box_bordered(*geo_text, border_style=f"br:blue")
 
