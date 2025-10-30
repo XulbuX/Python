@@ -1,45 +1,64 @@
+from random import randint, choice
 import tkinter as tk
-import random
 
-windows = 1000
-messages = [
-  'What am I?',
-  'What is this?',
-  'Am I alone?',
-  'Am I a rectangle?',
-  'Am I the only one in this color?',
-  'Look, I have text on me!',
-  'I am so colorful!',
-  'I am so beautiful!',
-  'I am so random!',
-  'I am so unique!',
-  'I am so special!',
-  'Am I annoying?',
-  'Do you like me?',
-  'Do you like rectangles?',
-  'Do you like colors?',
-  'What do you think about this message?',
-  'Why are you looking at me like that?',
-  'Why are you looking at me?',
-  'You made me.',
-  'You are my creator.',
-  'Will you let me live?',
-  'Please let me stay here.',
-  'Why would you do that?',
-  'Look what you have done!'
+
+WINS = 1000
+MSGS = [
+    "Am I a rectangle?",
+    "Am I alone?",
+    "Am I annoying?",
+    "Am I the only one in this color?",
+    "Do you like colors?",
+    "Do you like me?",
+    "Do you like rectangles?",
+    "I am everywhere!",
+    "I am so beautiful!",
+    "I am so colorful!",
+    "I am so random!",
+    "I am so special!",
+    "I am so unique!",
+    "I am unstoppable!",
+    "Look at me!",
+    "Look what you have done!",
+    "Look, I have text on me!",
+    "Please don't delete me.",
+    "Please let me stay here.",
+    "What am I?",
+    "What are you doing?",
+    "What do you think about this message?",
+    "What do you want from me?",
+    "What is this?",
+    "Why are you looking at me like that?",
+    "Why are you looking at me?",
+    "Why did you create me?",
+    "Why did you do this?",
+    "Why do I exist?",
+    "Why me?",
+    "Why would you do that?",
+    "Will you let me live?",
+    "Will you let me stay?",
+    "You are my creator.",
+    "You made me.",
+    "You should be proud of me.",
+    "You will never be rid of me.",
+    "You will never get rid of me.",
 ]
 
-def make_window():
-  window = tk.Toplevel()
-  window.overrideredirect(True)
-  x = random.randint(0, root.winfo_screenwidth() - 200)
-  y = random.randint(0, root.winfo_screenheight() - 100)
-  window.geometry(f'200x100+{x}+{y}')
-  window.configure(bg=f'#{random.randint(0, 0xFFFFFF):06x}')
-  label = tk.Label(window, text=random.choice(messages), bg=window['bg'], fg='white')
-  label.pack(expand=True)
 
-root = tk.Tk()
-root.withdraw()
-for _ in range(windows): make_window()
-root.mainloop()
+def make_window():
+    win = tk.Toplevel()
+    win.overrideredirect(True)
+    x = randint(0, root.winfo_screenwidth() - 200)
+    y = randint(0, root.winfo_screenheight() - 100)
+    win.geometry(f"200x100+{x}+{y}")
+    win.configure(bg=f"#{randint(0, 0xFFFFFF):06x}")
+    label = tk.Label(win, text=choice(MSGS), bg=win["bg"], fg="white")
+    label.pack(expand=True)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
+    for _ in range(WINS):
+        make_window()
+    root.mainloop()
