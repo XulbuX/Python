@@ -22,7 +22,7 @@ ARGS = Console.get_args({
 DEBUG = ARGS.debug.exists
 
 _COMPILED: dict[str, Pattern] = {
-    "thousands_seps": re.compile(r"(?<=\d)[,'_](?=\d)"),
+    "thousands_seps": re.compile(r"(?<=\d)[_'](?=\d)"),
 }
 
 sanitize = lambda a: sympy.sympify(a)
@@ -290,8 +290,8 @@ class FUNCTIONS:
 
 PATTERN = re.compile(
     "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
-    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:[,'_]\d+)*\.\d+(?:[,'_]\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+(?:[,'_]\d+)*|" + r"\d+(?:[,'_]\d+)*\.\d+(?:[,'_]\d+)*|\d+(?:[,'_]\d+)*|" + r"\(|\)|,",
+    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:[_']\d+)*|" + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|\d+(?:[_']\d+)*|" + r"\(|\)|,",
     re.IGNORECASE
 )
 
