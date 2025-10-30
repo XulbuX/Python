@@ -3,10 +3,10 @@ This repository contains various Python projects, libraries, and experiments I'v
 
 
 ## Repositories
-* [Projects](#projects) | **[view](./Projects)**
+* [Projects](#projects)
   * [Commands](#commands) | **[view](./Projects/Commands)** ✨ *most useful*
   * [x-convert](#x-convert) | **[view](./Projects/x-convert)**
-* [Experiments](#experiments) | **[view](./Experiments)**
+* [Experiments](#experiments)
   * [SendToFriend](#sendtofriend) | **[view](./Experiments/SendToFriend)**
 
 
