@@ -149,9 +149,6 @@ def main() -> None:
     if ARGS.steps.exists and int(ARGS.steps.value) <= 1:  # type: ignore[assignment]
         raise ValueError("Steps must be a positive integer, bigger than 1.")
 
-    print(ARGS.color_a_b.values[0])
-    print(ARGS.color_a_b.values[1])
-
     gradient = generate_gradient(
         hexa(str(ARGS.color_a_b.values[0])).to_rgba(),
         hexa(str(ARGS.color_a_b.values[1])).to_rgba(),
@@ -168,5 +165,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    # except Exception as e:
-    #     Console.fail(e, start="\n", end="\n\n")
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")
