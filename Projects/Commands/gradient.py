@@ -144,15 +144,18 @@ def main() -> None:
     if not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.linear.exists):
         print_help()
         return
-    if len(ARGS.color_a_b.value) != 2:
+    if len(ARGS.color_a_b.values) != 2:
         raise ValueError("Please provide a start and end color in hex format (e.g., F00 00F).")
-    if ARGS.steps.exists and int(ARGS.steps.value) <= 1:
+    if ARGS.steps.exists and int(ARGS.steps.value) <= 1:  # type: ignore[assignment]
         raise ValueError("Steps must be a positive integer, bigger than 1.")
 
+    print(ARGS.color_a_b.values[0])
+    print(ARGS.color_a_b.values[1])
+
     gradient = generate_gradient(
-        hexa(ARGS.color_a_b.value[0]).to_rgba(),
-        hexa(ARGS.color_a_b.value[1]).to_rgba(),
-        int(ARGS.steps.value) if ARGS.steps.exists else Console.w * 2,
+        hexa(str(ARGS.color_a_b.values[0])).to_rgba(),
+        hexa(str(ARGS.color_a_b.values[1])).to_rgba(),
+        int(ARGS.steps.value) if ARGS.steps.exists else Console.w * 2,  # type: ignore[assignment]
         use_oklch=(not ARGS.linear.exists),
     )
 
@@ -165,5 +168,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    # except Exception as e:
+    #     Console.fail(e, start="\n", end="\n\n")
