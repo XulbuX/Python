@@ -190,13 +190,13 @@ gradient '#FF0000' '#0000FF'
 
 You can specify the number of steps in the gradient with the `-s` `--steps` option:
 ```bash
-gradient '#FF0000' '#0000FF' --steps 5
+gradient '#F00' '#00F' --steps 5
 ```
 
 Per default the gradient is generated using the OKLCH color space for better perceptual uniformity.<br>
 To generate the gradient using linear interpolation in the RGB color space instead, use the `-l` `--linear` option:
 ```bash
-gradient '#FF0000' '#0000FF' --linear
+gradient '#F00' '#00F' --linear
 ```
 
 Running the command without any arguments or options will show help for the command.
