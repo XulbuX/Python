@@ -181,6 +181,28 @@ dinfo --gitignore
 
 <br>
 
+### `gradient`
+
+This command will generate and preview a color gradient between two specified HEX colors.
+```bash
+gradient '#FF0000' '#0000FF'
+```
+
+You can specify the number of steps in the gradient with the `-s` `--steps` option:
+```bash
+gradient '#FF0000' '#0000FF' --steps 5
+```
+
+Per default the gradient is generated using the OKLCH color space for better perceptual uniformity.<br>
+To generate the gradient using linear interpolation in the RGB color space instead, use the `-l` `--linear` option:
+```bash
+gradient '#FF0000' '#0000FF' --linear
+```
+
+Running the command without any arguments or options will show help for the command.
+
+<br>
+
 ### `hex-percent`
 
 This command will turn a two digit HEX value into a percentage, where `FF` equals 100% and `00` equals 0%.
@@ -387,6 +409,32 @@ x-ip --json-output
 To show help for the command, use the `-h` `--help` option:
 ```bash
 x-ip --help
+```
+
+<br>
+
+### `x-modules`
+
+This command will list all Python modules imported across Python files in the script directory, along with some additional info.
+
+You can exclude standard library modules with the `-e` `--external` option:
+```bash
+x-modules --external
+```
+
+To only get the list of modules without any additional info, use the `-nf` `--no-formatting` option:
+```bash
+x-modules --no-formatting
+```
+
+You can also output the info as a JSON object with the `-j` `--json` option:
+```bash
+x-modules --json
+```
+
+To show help for the command, use the `-h` `--help` option:
+```bash
+x-modules --help
 ```
 
 <br>

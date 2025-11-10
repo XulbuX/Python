@@ -2,7 +2,9 @@
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
 from xulbux import FormatCodes, Console, Color
-from xulbux.color import rgba, hsla, hexa
+from xulbux.color import rgba, hexa
+from colorspacious import cspace_convert
+import numpy as np
 
 
 ARGS = Console.get_args({
@@ -21,23 +23,33 @@ def print_help():
 
 [b](Options:)
   [br:blue](-s), [br:blue](--steps N)    Number of gradient steps
-  [br:blue](-l), [br:blue](--linear)     Don't use HSL rotation – use linear RGB interpolation
+  [br:blue](-l), [br:blue](--linear)     Use linear RGB interpolation instead of perceptually uniform OKLCH
   [br:blue](-n), [br:blue](--numerate)   Show step numbers alongside listed colors
 
 [b](Examples:)
-  [br:green](gradient) [br:cyan](F00 00F)             [dim](# [i](Generate a gradient from red to blue))
+  [br:green](gradient) [br:cyan](F00 00F)             [dim](# [i](Generate a perceptually uniform gradient))
   [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s 10)       [dim](# [i](Generate a gradient with 10 steps))
   [br:green](gradient) [br:cyan](F00 00F) [br:blue](--linear)    [dim](# [i](Generate a linear RGB gradient))
 """
     FormatCodes.print(help_text)
 
 
-def interpolate_hsl(color_a: hsla, color_b: hsla, t: float) -> rgba:
-    """Interpolate between two colors using HSL color space, return as RGBA."""
-    h1, s1, l1 = color_a[0], color_a[1], color_a[2]
-    h2, s2, l2 = color_b[0], color_b[1], color_b[2]
+def interpolate_oklch(color_a: rgba, color_b: rgba, t: float) -> rgba:
+    """Interpolate between two colors using OKLCH color space for perceptual uniformity."""
+    # CONVERT RGB (0-255) TO SRGB (0-1)
+    rgb_a = np.array([color_a[0] / 255.0, color_a[1] / 255.0, color_a[2] / 255.0])
+    rgb_b = np.array([color_b[0] / 255.0, color_b[1] / 255.0, color_b[2] / 255.0])
 
-    # INTERPOLATE HUE WITH SHORTEST PATH AROUND THE COLOR WHEEL (IN DEGREES)
+    # CONVERT SRGB TO OKLCH (using CAM02-UCS / JCh which is similar to OKLCH)
+    oklch_a = cspace_convert(rgb_a, "sRGB1", "JCh")
+    oklch_b = cspace_convert(rgb_b, "sRGB1", "JCh")
+
+    # INTERPOLATE IN OKLCH SPACE
+    L = oklch_a[0] + (oklch_b[0] - oklch_a[0]) * t
+    C = oklch_a[1] + (oklch_b[1] - oklch_a[1]) * t
+
+    # INTERPOLATE HUE WITH SHORTEST PATH
+    h1, h2 = oklch_a[2], oklch_b[2]
     diff = h2 - h1
     if diff > 180:
         diff -= 360
@@ -45,33 +57,34 @@ def interpolate_hsl(color_a: hsla, color_b: hsla, t: float) -> rgba:
         diff += 360
     h = (h1 + diff * t) % 360
 
-    # INTERPOLATE SATURATION AND LIGHTNESS LINEARLY (IN PERCENTAGES)
-    s = s1 + (s2 - s1) * t
-    l = l1 + (l2 - l1) * t
+    # CONVERT BACK TO SRGB
+    oklch_interpolated = np.array([L, C, h])
+    rgb_interpolated = cspace_convert(oklch_interpolated, "JCh", "sRGB1")
 
-    # Convert HSL to RGB using float values for maximum precision
-    import colorsys
-    r, g, b = colorsys.hls_to_rgb(h / 360, l / 100, s / 100)
+    # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
+    rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
+    r = int(round(rgb_interpolated[0] * 255))
+    g = int(round(rgb_interpolated[1] * 255))
+    b = int(round(rgb_interpolated[2] * 255))
 
-    return rgba(int(round(r * 255)), int(round(g * 255)), int(round(b * 255)))
+    return rgba(r, g, b)
 
 
-def generate_gradient(color_a: rgba, color_b: rgba, steps: int, use_hsl: bool = True) -> tuple[hexa]:
+def generate_gradient(color_a: rgba, color_b: rgba, steps: int, use_oklch: bool = False) -> tuple[hexa]:
     """Generate and display a color gradient.\n
     -----------------------------------------------------------------------
     - `color_a` -⠀starting hex color
     - `color_b` -⠀ending hex color
     - `steps` -⠀number of gradient steps
-    - `use_hsl` -⠀whether to use HSL interpolation for smooth hue rotation
+    - `use_oklch` -⠀whether to use OKLCH for perceptual uniformity or else linear RGB interpolation
     """
-    hsla_a, hsla_b = color_a.to_hsla(), color_b.to_hsla()
     gradient = []
 
-    if use_hsl:
-        # HSL INTERPOLATION FOR SMOOTH HUE ROTATION
+    if use_oklch:
+        # OKLCH INTERPOLATION FOR PERCEPTUAL UNIFORMITY
         for i in range(steps):
             t = i / (steps - 1) if steps > 1 else 0
-            rgb = interpolate_hsl(hsla_a, hsla_b, t)
+            rgb = interpolate_oklch(color_a, color_b, t)
             gradient.append(rgb.to_hexa())
     else:
         # LINEAR RGB INTERPOLATION
@@ -111,16 +124,18 @@ def display_gradient(gradient: tuple[hexa], width: int, numerate: bool = False) 
     if numerate:
         num_width = len(str(len(gradient)))
         color_list = "\n".join(
-            f" [dim]({i:>{num_width}})  [b|i|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )"
+            f" [i][dim]({i:>{num_width}})  [b|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )"
             for i, c in enumerate(gradient, 1)
         )
     else:
         color_list = "\n".join(f"[b|i|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )" for c in gradient)
 
+    txt_color_1 = Color.text_color_for_on_bg(gradient[0])
+    txt_color_2 = Color.text_color_for_on_bg(gradient[-1])
     FormatCodes.print(
         f"\n{gradient_str}\n"
-        f"[in] FROM [b|i|{gradient[0]}|bg:{Color.text_color_for_on_bg(gradient[0])}]( {gradient[0]} ) "
-        f"TO [b|i|{gradient[-1]}|bg:{Color.text_color_for_on_bg(gradient[-1])}]( {gradient[-1]} ) "
+        f"[in] FROM [b|i|{gradient[0]}|bg:{gradient[0]}](`[bg:{txt_color_1}]{gradient[0]}[bg:{gradient[0]}]`) "
+        f"TO [b|i|{gradient[-1]}|bg:{gradient[-1]}](`[bg:{txt_color_2}]{gradient[-1]}[bg:{gradient[-1]}]`) "
         f"IN [b]({len(gradient)}) STEPS [_]\n\n{color_list}"
     )
 
@@ -138,7 +153,7 @@ def main() -> None:
         hexa(ARGS.color_a_b.value[0]).to_rgba(),
         hexa(ARGS.color_a_b.value[1]).to_rgba(),
         int(ARGS.steps.value) if ARGS.steps.exists else Console.w * 2,
-        use_hsl=(not ARGS.linear.exists),
+        use_oklch=(not ARGS.linear.exists),
     )
 
     display_gradient(gradient, Console.w, ARGS.numerate.exists)

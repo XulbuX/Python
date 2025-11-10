@@ -4,7 +4,6 @@ A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
 from typing import Optional, Any, cast
 import importlib.util
-import json
 import sys
 import os
 import re
@@ -42,26 +41,28 @@ def get_var_val(file_path: str, var_name: str) -> Optional[Any]:
 
 def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
     if not find_args or len(find_args) < 1:
-        return f"\n{TAB3}[#78F](TAKES ARGUMENTS [dim]([[i](unknown)]))"
+        return f"\n{TAB3}[blue](TAKES ARGUMENTS [dim]([[i](unknown)]))"
     arg_descs, keys = [], list(find_args.keys())
     for key, val in find_args.items():
         if len(val) < 1:
-            arg_descs.append(f"[#BBC](non-flagged argument at position {keys.index(key) + 1})")
+            arg_descs.append(f"[white](non-flagged argument at position {keys.index(key) + 1})")
         elif isinstance(val, str):
             if val.lower() == "before":
-                arg_descs.append(f"[#BBC](all non flagged arguments before first flag)")
+                arg_descs.append(f"[white](all non flagged arguments before first flag)")
             elif val.lower() == "after":
-                arg_descs.append(f"[#BBC](all non flagged arguments after last flag's value)")
+                arg_descs.append(f"[white](all non flagged arguments after last flag's value)")
             else:
-                arg_descs.append(f"[#BBC]({val})")
+                arg_descs.append(f"[white]({val})")
         elif isinstance(val, dict) and "flags" in val.keys():
             arg_descs.append(cast(dict, val)["flags"])
         else:
             arg_descs.append(val)
-    arg_descs = (f"[#BBC]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs)
-    arg_descs = (f"[#9AF]([i]({keys[i]}):) {arg_desc}" for i, arg_desc in enumerate(arg_descs))
+    arg_descs = (
+        f"[white]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs
+    )
+    arg_descs = (f"[br:blue]([i]({keys[i]}):) {arg_desc}" for i, arg_desc in enumerate(arg_descs))
     return (
-        f"\n{TAB3}[u|#78F](TAKES {len(find_args)} ARGUMENT{'S' if len(find_args) != 1 else ''})\n{TAB4}"
+        f"\n{TAB3}[u|blue](TAKES {len(find_args)} ARGUMENT{'S' if len(find_args) != 1 else ''})\n{TAB4}"
         + f"\n{TAB4}".join(arg_descs)
     )
 
@@ -73,7 +74,7 @@ def get_commands() -> str:
     for i, f in enumerate(sorted(python_files), 1):
         filename, _ = os.path.splitext(f)
         abs_path = os.path.join(Path.script_dir, f)
-        commands += f"\n [i|dim|#6F9]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|#6F9]({filename})"
+        commands += f"\n [i|dim|br:green]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|br:green]({filename})"
         sys_argv = None
 
         try:
@@ -81,7 +82,7 @@ def get_commands() -> str:
                 content = file.read()
                 if desc := DESC.match(content):
                     desc = desc.group(2).strip("\n")
-                    commands += f"[i|#7FD]\n{TAB3}" + f"\n{TAB3}".join(desc.split("\n")) + "[_]"
+                    commands += f"[i|br:cyan]\n{TAB3}" + f"\n{TAB3}".join(desc.split("\n")) + "[_]"
                 args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
                 sys_argv = SYS_ARGV.findall(content)
         except Exception:
