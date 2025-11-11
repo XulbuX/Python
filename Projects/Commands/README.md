@@ -188,23 +188,23 @@ This command will generate and preview a color gradient between two or more spec
 gradient '#F00' '#00F'
 ```
 
-You can also create multi-color gradients by specifying more than two colors:
+You can also create multicolor gradients by specifying more than two colors:
 ```bash
 gradient F00 00F 0F0
 ```
 
-You can specify the number of steps in the gradient with the `-s` `--steps` option:
+You can specify the number of steps in the gradient with the `-s` `--steps` option:
 ```bash
 gradient F00 00F --steps 10
 ```
 
 Per default the gradient is generated using linear RGB interpolation.<br>
-To generate the gradient using HSV color space, use the `-h` `--hsv` option:
+To generate the gradient using HSV color space, use the `-h` `--hsv` option:
 ```bash
 gradient F00 00F --hsv
 ```
 
-To generate the gradient using perceptually uniform OKLCH color space, use the `-o` `--oklch` option:
+To generate the gradient using perceptually uniform OKLCH color space, use the `-o` `--oklch` option:
 ```bash
 gradient F00 00F --oklch
 ```
@@ -222,7 +222,7 @@ You can combine multiple colors with different directions:
 gradient F00 '>' 00F '<' 0F0 --hsv
 ```
 
-To show step numbers alongside the listed colors, use the `-n` `--numerate` option:
+To show step numbers alongside the listed colors, use the `-n` `--numerate` option:
 ```bash
 gradient F00 00F --numerate
 ```
