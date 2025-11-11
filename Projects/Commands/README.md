@@ -183,20 +183,48 @@ dinfo --gitignore
 
 ### `gradient`
 
-This command will generate and preview a color gradient between two specified HEX colors.
+This command will generate and preview a color gradient between two or more specified HEX colors.
 ```bash
-gradient '#FF0000' '#0000FF'
+gradient '#F00' '#00F'
 ```
 
-You can specify the number of steps in the gradient with the `-s` `--steps` option:
+You can also create multi-color gradients by specifying more than two colors:
 ```bash
-gradient '#F00' '#00F' --steps 5
+gradient F00 00F 0F0
 ```
 
-Per default the gradient is generated using the OKLCH color space for better perceptual uniformity.<br>
-To generate the gradient using linear interpolation in the RGB color space instead, use the `-l` `--linear` option:
+You can specify the number of steps in the gradient with the `-s` `--steps` option:
 ```bash
-gradient '#F00' '#00F' --linear
+gradient F00 00F --steps 10
+```
+
+Per default the gradient is generated using linear RGB interpolation.<br>
+To generate the gradient using HSV color space, use the `-h` `--hsv` option:
+```bash
+gradient F00 00F --hsv
+```
+
+To generate the gradient using perceptually uniform OKLCH color space, use the `-o` `--oklch` option:
+```bash
+gradient F00 00F --oklch
+```
+
+When using HSV or OKLCH modes, you can control the direction of hue rotation between colors using `>` (*clockwise*) or `<` (*counterclockwise*):
+```bash
+gradient F00 '<' 00F --hsv
+```
+```bash
+gradient F00 '>' 00F --oklch
+```
+
+You can combine multiple colors with different directions:
+```bash
+gradient F00 '>' 00F '<' 0F0 --hsv
+```
+
+To show step numbers alongside the listed colors, use the `-n` `--numerate` option:
+```bash
+gradient F00 00F --numerate
 ```
 
 Running the command without any arguments or options will show help for the command.
