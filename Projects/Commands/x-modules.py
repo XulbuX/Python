@@ -56,10 +56,10 @@ def print_help():
 [b](Examples:)
   [br:green](modules)                    [dim](# [i](List all imported modules))
   [br:green](modules) [br:blue](--external)         [dim](# [i](List only external/third-party modules))
-  [br:green](modules) [br:blue](--no-formatting)    [dim](# [i](Output only the module names without extra info))
-  [br:green](modules) [br:blue](--json)             [dim](# [i](Output as JSON format))
   [br:green](modules) [br:blue](-d "./src")         [dim](# [i](Scan specific directory))
   [br:green](modules) [br:blue](-d "./src" -r)      [dim](# [i](Scan directory recursively))
+  [br:green](modules) [br:blue](--no-formatting)    [dim](# [i](Output only the module names without extra info))
+  [br:green](modules) [br:blue](--json)             [dim](# [i](Output as JSON format))
 """
     FormatCodes.print(help_text)
 
