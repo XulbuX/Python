@@ -47,9 +47,9 @@ def print_help():
 [b](Usage:) [br:green](modules) [br:blue]([options])
 
 [b](Options:)
+  [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
   [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan (default: script directory)
   [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
-  [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
   [br:blue](-nf), [br:blue](--no-formatting)    Only output the libraries-list without extra info
   [br:blue](-j), [br:blue](--json)              Output as JSON format
 
