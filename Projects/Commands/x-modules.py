@@ -2,12 +2,15 @@
 """List all modules imported across Python files in the script directory.
 Can filter to show only non-standard library modules."""
 from xulbux import FormatCodes, Console, Data, Path
+from typing import Optional
 import re
 import os
 
 
 ARGS = Console.get_args({
     "external": ["-e", "--external"],
+    "directory": ["-d", "--dir", "--directory"],
+    "recursive": ["-r", "--recursive"],
     "no_formatting": ["-nf", "--no-formatting"],
     "as_json": ["-j", "--json"],
     "help": ["-h", "--help"],
@@ -44,6 +47,8 @@ def print_help():
 [b](Usage:) [br:green](modules) [br:blue]([options])
 
 [b](Options:)
+  [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan (default: script directory)
+  [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
   [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
   [br:blue](-nf), [br:blue](--no-formatting)    Only output the libraries-list without extra info
   [br:blue](-j), [br:blue](--json)              Output as JSON format
@@ -53,6 +58,8 @@ def print_help():
   [br:green](modules) [br:blue](--external)         [dim](# [i](List only external/third-party modules))
   [br:green](modules) [br:blue](--no-formatting)    [dim](# [i](Output only the module names without extra info))
   [br:green](modules) [br:blue](--json)             [dim](# [i](Output as JSON format))
+  [br:green](modules) [br:blue](-d "./src")         [dim](# [i](Scan specific directory))
+  [br:green](modules) [br:blue](-d "./src" -r)      [dim](# [i](Scan directory recursively))
 """
     FormatCodes.print(help_text)
 
@@ -60,33 +67,60 @@ def print_help():
 def extract_imports(file_path: str) -> set[str]:
     """Extract all imported module names from a Python file."""
     imports = set()
-    import_pattern = re.compile(r'^\s*(?:from\s+(\S+)|import\s+(\S+))', re.MULTILINE)
+    import_pattern = re.compile(r"^\s*(?:from\s+(\S+)|import\s+(\S+))", re.MULTILINE)
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
+
+            # REMOVE DOCSTRINGS AND COMMENTS BEFORE PROCESSING
+            # TRIPLE-QUOTED STRINGS (DOCSTRINGS)
+            content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', '', content)
+            # SINGLE/DOUBLE QUOTED STRINGS
+            content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', '', content)
+            # COMMENTS (LINES STARTING WITH #)
+            content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
+
             for match in import_pattern.finditer(content):
                 module = match.group(1) or match.group(2)
+                # SKIP RELATIVE IMPORTS (starting with .)
+                if module.startswith("."):
+                    continue
                 # ADD TOP-LEVEL MODULE NAME
-                imports.add(module.split('.')[0])
+                imports.add(module.split(".")[0])
     except Exception:
         pass
 
     return imports
 
 
-def get_all_modules(external_only: bool = False) -> dict[str, list[str]]:
+def get_all_modules(directory: str, recursive: bool = False, external_only: bool = False) -> dict[str, list[str]]:
     """Get all modules used across Python files, grouped by module name."""
     module_usage: dict[str, list[str]] = {}
 
-    for file in (f for f in os.listdir(Path.script_dir) if os.path.splitext(f)[1] in ('.py', '.pyw')):
-        for module in extract_imports(os.path.join(Path.script_dir, file)):
-            if external_only and module in STDLIB_MODULES:
-                continue
-            if module not in module_usage:
-                module_usage[module] = []
-            module_usage[module].append(os.path.splitext(file)[0])
+    if not os.path.isdir(directory):
+        raise ValueError(f"Directory not found: {directory}")
 
+    def scan_directory(dir_path: str, base_path: Optional[str] = None):
+        """Scan a directory for Python files and extract imports."""
+        if base_path is None:
+            base_path = dir_path
+        try:
+            for entry in os.listdir(dir_path):
+                full_path = os.path.join(dir_path, entry)
+                if os.path.isfile(full_path) and os.path.splitext(entry)[1] in (".py", ".pyw"):
+                    for module in extract_imports(full_path):
+                        if external_only and module in STDLIB_MODULES:
+                            continue
+                        if module not in module_usage:
+                            module_usage[module] = []
+                        module_usage[module].append(os.path.splitext(os.path.relpath(full_path, base_path))[0])
+                elif recursive and os.path.isdir(full_path):
+                    scan_directory(full_path, base_path)
+        except PermissionError:
+            pass  # SKIP DIRECTORIES WE CAN'T ACCESS
+
+    scan_directory(directory)
     return module_usage
 
 
@@ -95,13 +129,19 @@ def main() -> None:
         print_help()
         return
 
-    modules = get_all_modules(ARGS.external.exists)
+    directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
+
+    modules = get_all_modules(
+        directory=directory,
+        recursive=ARGS.recursive.exists,
+        external_only=ARGS.external.exists,
+    )
 
     if not modules:
         if ARGS.external.exists:
-            FormatCodes.print("\n[dim](No external modules found)\n")
+            FormatCodes.print("\n[i|dim](No external modules found)\n")
         else:
-            FormatCodes.print("\n[dim](No modules found)\n")
+            FormatCodes.print("\n[i|dim](No modules found)\n")
         return
 
     if ARGS.as_json.exists:
