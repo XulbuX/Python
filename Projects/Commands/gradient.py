@@ -400,7 +400,7 @@ def main() -> None:
     if ARGS.steps.value and int(ARGS.steps.value) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(ARGS.steps.value) if ARGS.steps.value else Console.w * 2
+    total_steps = int(ARGS.steps.value) if ARGS.steps.value and ARGS.steps.value.isdigit() else Console.w * 2
 
     gradient = generate_multi_gradient(
         colors=colors,

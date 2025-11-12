@@ -37,7 +37,7 @@ def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, 
 
 def main():
     print()
-    batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and (ARGS.batch_gen.value or "").isdigit() else 1
+    batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.isdigit() else 1
     update_progress_at = 1 if batch <= 100 else 99 if batch <= 10_000 else 999
     match len(ARGS.digits_or_min_max.values):
 
