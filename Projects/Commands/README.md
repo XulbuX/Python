@@ -104,6 +104,9 @@ The changes are now active, and you can run the files by typing their names (*e.
 Here's a brief overview of what each script does and how to use it.<br>
 **⇾** Each process can be cancelled by pressing `Ctrl(⌘) + C`.
 
+> [!NOTE]
+> If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.
+
 <br>
 
 ### `_`
@@ -268,7 +271,7 @@ lib-publish "/path/to/library/root-directory" --only-build
 
 ### `life`
 
-This command starts a simulation of [Conway's Game of Life](https://wikipedia.org/wiki/Conway%27s_Game_of_Life) inside the console.
+This command starts a simulation of [Conway's Game of Life](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the console.
 
 <br>
 
