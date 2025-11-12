@@ -320,7 +320,7 @@ def main() -> None:
 
     # DETERMINE INTERPOLATION MODE
     if ARGS.oklch.exists and ARGS.hsv.exists:
-        raise ValueError("Cannot use both --oklch and --hsv. Please choose one.")
+        raise ValueError("Cannot use both --hsv and --oklch options together")
 
     mode = "oklch" if ARGS.oklch.exists else "hsv" if ARGS.hsv.exists else "linear"
 
@@ -341,7 +341,7 @@ def main() -> None:
         # CHECK IF IT'S A DIRECTION ARROW
         if arg in (">", "<"):
             if mode == "linear":
-                raise ValueError("Direction arrows ('<' or '>') are only supported with --oklch or --hsv modes.")
+                raise ValueError("Direction arrows ('<' or '>') are only supported with --hsv or --oklch modes")
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
@@ -373,7 +373,7 @@ def main() -> None:
         directions.append("shortest")
 
     if ARGS.steps.exists and int(ARGS.steps.value) <= 1:  # type: ignore[assignment]
-        raise ValueError("Steps must be a positive integer, bigger than 1.")
+        raise ValueError("Steps must be a positive integer, bigger than 1")
 
     total_steps = int(ARGS.steps.value) if ARGS.steps.exists else Console.w * 2  # type: ignore[assignment]
 
@@ -398,5 +398,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    # except Exception as e:
-    #     Console.fail(e, start="\n", end="\n\n")
+    except Exception as e:
+        Console.fail(e, start="\n", end="\n\n")
