@@ -4,7 +4,7 @@ specified color channel with a specified number of steps."""
 from xulbux import FormatCodes, Console, Color
 from xulbux.color import rgba, hexa
 from colorspacious import cspace_convert
-from typing import Optional, Literal
+from typing import Literal
 import numpy as np
 import colorsys
 
@@ -313,26 +313,15 @@ def display_gradient(
     FormatCodes.print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
 
 
-def main() -> None:
-    if not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.oklch.exists or ARGS.hsv.exists):
-        print_help()
-        return
-
-    # DETERMINE INTERPOLATION MODE
-    if ARGS.oklch.exists and ARGS.hsv.exists:
-        raise ValueError("Cannot use both --hsv and --oklch options together")
-
-    mode = "oklch" if ARGS.oklch.exists else "hsv" if ARGS.hsv.exists else "linear"
-
-    # PARSE COLOR ARGUMENTS AND OPTIONAL DIRECTION ARROWS
-    color_args = ARGS.color_a_b.values
-
-    if len(color_args) < 2:
-        raise ValueError("Please provide at least 2 colors in hex format (e.g., F00 00F)")
-
-    # PARSE COLORS AND DIRECTIONS
-    colors = []
-    directions = []
+def parse_color_args(
+    color_args: list[str],
+    mode: Literal["linear", "hsv", "oklch"] = "linear",
+) -> tuple[
+    list[rgba],
+    list[Literal["shortest", "clockwise", "counterclockwise"]],
+]:
+    directions: list[Literal["shortest", "clockwise", "counterclockwise"]] = []
+    colors: list[rgba] = []
 
     i = 0
     while i < len(color_args):
@@ -341,28 +330,54 @@ def main() -> None:
         # CHECK IF IT'S A DIRECTION ARROW
         if arg in (">", "<"):
             if mode == "linear":
-                raise ValueError("Direction arrows ('<' or '>') are only supported with --hsv or --oklch modes")
+                raise ValueError("Direction arrows ([br:cyan](< >)) are only supported with [br:blue](--hsv) or [br:blue](--oklch) modes")
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
             # ADD DIRECTION FOR PREVIOUS SEGMENT
             if arg == ">":
                 directions.append("clockwise")
-            else:  # "<"
+            elif arg == "<":
                 directions.append("counterclockwise")
+            else:
+                directions.append("shortest")
             i += 1
         else:
             # IT'S A COLOR
             try:
-                colors.append(hexa(arg).to_rgba())
+                if (hex_color := hexa(arg)).has_alpha():
+                    raise ValueError(f"Color [br:cyan]({arg}) includes alpha channel, which is not supported")
+                colors.append(hex_color.to_rgba())
             except Exception:
-                raise ValueError(f"Invalid color format: '{arg}'. Expected hex color (e.g., F00, FF0000)")
+                raise ValueError(f"Invalid color format [br:cyan]({arg}):\nExpected opaque hex color (e.g. [br:cyan](F00) or [br:cyan](FF0000))")
 
             # IF THIS ISN'T THE FIRST COLOR AND WE DON'T HAVE A DIRECTION YET FOR THIS SEGMENT
             if len(colors) > 1 and len(directions) < len(colors) - 1:
                 directions.append("shortest")
 
             i += 1
+    
+    return colors, directions
+
+
+def main() -> None:
+    if not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
+        print_help()
+        return
+
+    # DETERMINE INTERPOLATION MODE
+    if ARGS.hsv.exists and ARGS.oklch.exists:
+        raise ValueError("Cannot use both [br:blue](--hsv) and [br:blue](--oklch) options together")
+
+    mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
+    color_args = ARGS.color_a_b.values
+
+
+    if len(color_args) < 2:
+        raise ValueError("Please provide at least 2 colors in hex format (e.g. [br:cyan](F00 00F))")
+
+    # PARSE COLORS AND DIRECTIONS
+    colors, directions = parse_color_args(color_args, mode)
 
     # VALIDATE WE HAVE AT LEAST 2 COLORS
     if len(colors) < 2:
