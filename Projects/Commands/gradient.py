@@ -397,10 +397,10 @@ def main() -> None:
     while len(directions) < len(colors) - 1:
         directions.append("shortest")
 
-    if ARGS.steps.exists and int(ARGS.steps.value) <= 1:  # type: ignore[assignment]
+    if ARGS.steps.value and int(ARGS.steps.value) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(ARGS.steps.value) if ARGS.steps.exists else Console.w * 2  # type: ignore[assignment]
+    total_steps = int(ARGS.steps.value) if ARGS.steps.value else Console.w * 2
 
     gradient = generate_multi_gradient(
         colors=colors,

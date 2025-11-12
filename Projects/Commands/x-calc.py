@@ -933,10 +933,7 @@ class Calc:
 def main():
     print()
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
-        if not ARGS.precision.exists:
-            precision_value = 100
-        else:
-            precision_value = int(ARGS.precision.value)  # type: ignore[assignment]
+        precision_value = int(ARGS.precision.value) if ARGS.precision.value and (ARGS.precision.value or "").lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
             Console.fail(f"[b](ValueError:) Precision must be positive or [br:cyan](-1) for infinite precision, got [br:cyan]({precision_value})", end="\n\n")
             return

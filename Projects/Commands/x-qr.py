@@ -396,7 +396,7 @@ def main(args: Args) -> None:
         return
 
     print()
-    text = cast(str, " ".join(args.text.values))  # type: ignore[assignment]
+    text = cast(str, " ".join(args.text.values))
 
     if args.wifi.exists:
         wifi = WiFi(text)
