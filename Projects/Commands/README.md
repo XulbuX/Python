@@ -464,6 +464,14 @@ You can exclude standard library modules with the `-e` `--external` option:
 x-modules --external
 ```
 
+To specify a specific directory to scan, use the `-d` `--directory` option and add the `-r` `--recursive` option to scan subdirectories recursively:
+```bash
+x-modules --directory "./src"
+```
+```bash
+x-modules --directory "./src" -r
+```
+
 To only get the list of modules without any additional info, use the `-nf` `--no-formatting` option:
 ```bash
 x-modules --no-formatting
