@@ -37,9 +37,12 @@ def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, 
 
 def main():
     print()
-    batch = int(ARGS.batch_gen.value) if str(ARGS.batch_gen.value).isdigit() else 1
+    batch = (
+        int(ARGS.batch_gen.value)  # type: ignore[assignment]
+        if ARGS.batch_gen.exists and (ARGS.batch_gen.value or "").isdigit() else 1
+    )
     update_progress_at = 1 if batch <= 100 else 99 if batch <= 10_000 else 999
-    match len(ARGS.digits_or_min_max.value):
+    match len(ARGS.digits_or_min_max.values):
 
         case 0:
             Console.exit(
@@ -50,7 +53,7 @@ def main():
             )
 
         case 1:
-            digits = int(ARGS.digits_or_min_max.value[0])
+            digits = int(ARGS.digits_or_min_max.values[0])
             FormatCodes.print("[dim](generating...)", end="")
             if batch > 1:
                 random_ints = []
@@ -67,8 +70,8 @@ def main():
                 FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
         case 2:
-            min_val = int(ARGS.digits_or_min_max.value[0])
-            max_val = int(ARGS.digits_or_min_max.value[1])
+            min_val = int(ARGS.digits_or_min_max.values[0])
+            max_val = int(ARGS.digits_or_min_max.values[1])
             if min_val >= max_val:
                 Console.exit(
                     "[b](Invalid range:) The minimum value must be less than the maximum value",

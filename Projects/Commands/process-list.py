@@ -15,10 +15,10 @@ def main()->None:
         if not ARGS.list_elements.exists:
             input_str = input(">  ")
         else:
-            input_str = " ".join(ARGS.list_elements.value)
+            input_str = " ".join(ARGS.list_elements.values)
         lst = [x for x in input_str.split(sep) if x.strip() not in (None, "")]
     else:
-        lst = [str(val) for val in ARGS.list_elements.value]
+        lst = [str(val) for val in ARGS.list_elements.values]
 
     if len(lst) >= 1 and lst[0].strip() not in (None, ""):
         FormatCodes.print(f'\n[bright:cyan]{'\n'.join(lst)}[_]\n')

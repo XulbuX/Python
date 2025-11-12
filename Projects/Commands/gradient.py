@@ -12,10 +12,11 @@ import colorsys
 ARGS = Console.get_args({
     "color_a_b": "before",
     "steps": ["-s", "--steps"],
-    "hsv": ["-h", "--hsv"],
-    "oklch": ["-o", "--oklch"],
+    "hsv": ["-H", "--hsv"],
+    "oklch": ["-O", "--oklch"],
     "list": ["-l", "--list"],
     "numerate": ["-n", "--numerate"],
+    "help": ["-h", "--help"],
 })
 
 
@@ -25,6 +26,9 @@ def print_help():
 
 [b](Usage:) [br:green](gradient) [br:cyan](<color1> [direction] <color2> [direction] <color3> ...) [br:blue]([options])
 
+[b](Arguments:)
+  [br:cyan](color)       Hex colors to create gradient between (at least 2 required) 
+
 [b](Direction:) [dim](only with --hsv or --oklch modes)
   [br:cyan](>)           Rotate hue clockwise (longer path)
   [br:cyan](<)           Rotate hue counterclockwise (longer path)
@@ -32,8 +36,8 @@ def print_help():
 
 [b](Options:)
   [br:blue](-s), [br:blue](--steps N)     Number of gradient steps (total across all color segments)
-  [br:blue](-h), [br:blue](--hsv)         Use HSV interpolation with hue rotation
-  [br:blue](-o), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
+  [br:blue](-H), [br:blue](--hsv)         Use HSV interpolation with hue rotation
+  [br:blue](-O), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
   [br:blue](-l), [br:blue](--list)        Show list of all gradient colors
   [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors (implies -l)
 
@@ -41,8 +45,8 @@ def print_help():
   [br:green](gradient) [br:cyan](F00 00F)                [dim](# [i](Linear RGB interpolation))
   [br:green](gradient) [br:cyan](F00 00F 0F0)            [dim](# [i](Multicolor linear gradient))
   [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s 5)           [dim](# [i](5 steps total across segments))
-  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-o)         [dim](# [i](OKLCH with shortest hue path))
-  [br:green](gradient) [br:cyan](F00 > 00F < 0F0) [br:blue](-h)     [dim](# [i](HSV, multiple colors with directions))
+  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)         [dim](# [i](OKLCH with shortest hue path))
+  [br:green](gradient) [br:cyan](F00 > 00F < 0F0) [br:blue](-H)     [dim](# [i](HSV, multiple colors with directions))
 """
     FormatCodes.print(help_text)
 
@@ -367,7 +371,7 @@ def parse_color_args(
 
 
 def main() -> None:
-    if not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
+    if ARGS.help.exists or not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
         print_help()
         return
 

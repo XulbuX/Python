@@ -18,11 +18,12 @@ FIND_ARGS = {
     "error_correction": ["-e", "--error"],
     "contact": ["-c", "--contact"],
     "wifi": ["-w", "--wifi"],
+    "help": ["-h", "--help"],
 }
 
 
 def print_help():
-    help_text = """\
+    help_text = """
 [b|in]( QR Code Generator - Quickly Generate QR codes directly within the terminal )
 
 [b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
@@ -390,8 +391,12 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
 
 
 def main(args: Args) -> None:
+    if args.help.exists or not (args.text.exists or args.wifi.exists or args.contact.exists):
+        print_help()
+        return
+
     print()
-    text = cast(str, " ".join(args.text.value))
+    text = cast(str, " ".join(args.text.values))  # type: ignore[assignment]
 
     if args.wifi.exists:
         wifi = WiFi(text)
@@ -406,10 +411,6 @@ def main(args: Args) -> None:
 
         print(f"\n{ascii_qr(text, args)}\n")
         Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
-
-    elif not text:
-        print_help()
-        return
 
     else:
         print(f"\n{ascii_qr(text, args)}\n")

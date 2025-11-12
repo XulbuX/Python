@@ -75,7 +75,7 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
 
 
 def main(args: Args) -> None:
-    os.chdir(str(args.lib_base.value[0]))
+    os.chdir(str(args.lib_base.values[0]))
     run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}", verbose=args.verbose.exists)
     dist = os.path.join(os.getcwd(), "dist")
     if args.only_build.exists:

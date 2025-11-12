@@ -18,6 +18,7 @@ ARGS = Console.get_args({
     "precision": ["-p", "--precision"],
     "format": ["-f", "--format"],
     "debug": ["-d", "--debug"],
+    "help": ["-h", "--help"],
 })
 DEBUG = ARGS.debug.exists
 
@@ -919,23 +920,25 @@ class Calc:
                 result = sympy.sympify(calc_str)
                 calc_str = self.format_result(result)
             except:
-                raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
+                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
 
         if calc_str == SAVE_CALC_STR:
             try:
                 sympy.sympify(calc_str)
             except:
-                raise Exception(f"Could not perform calculation on: '{SAVE_CALC_STR}'")
+                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
         return calc_str
 
 
 def main():
     print()
-    if len(calc_str_parts := list(ARGS.calculation.value)) > 0:
-        if (precision_value := ARGS.precision.value) is None:
+    if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
+        if not ARGS.precision.exists:
             precision_value = 100
+        else:
+            precision_value = int(ARGS.precision.value)  # type: ignore[assignment]
         if precision_value <= 0 and precision_value != -1:
-            Console.fail(f"[b](ValueError:) Precision must be positive or -1 for infinite precision, got {precision_value}", end="\n\n")
+            Console.fail(f"[b](ValueError:) Precision must be positive or [br:cyan](-1) for infinite precision, got [br:cyan]({precision_value})", end="\n\n")
             return
 
         if precision_value == -1:
