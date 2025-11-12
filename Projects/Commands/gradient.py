@@ -14,6 +14,7 @@ ARGS = Console.get_args({
     "steps": ["-s", "--steps"],
     "hsv": ["-h", "--hsv"],
     "oklch": ["-o", "--oklch"],
+    "list": ["-l", "--list"],
     "numerate": ["-n", "--numerate"],
 })
 
@@ -33,15 +34,15 @@ def print_help():
   [br:blue](-s), [br:blue](--steps N)     Number of gradient steps (total across all color segments)
   [br:blue](-h), [br:blue](--hsv)         Use HSV interpolation with hue rotation
   [br:blue](-o), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
-  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors
+  [br:blue](-l), [br:blue](--list)        Show list of all gradient colors
+  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors (implies -l)
 
 [b](Examples:)
   [br:green](gradient) [br:cyan](F00 00F)                [dim](# [i](Linear RGB interpolation))
-  [br:green](gradient) [br:cyan](F00 00F 0F0)            [dim](# [i](Multi-color linear gradient))
-  [br:green](gradient) [br:cyan](F00 00F) [br:blue](-o)             [dim](# [i](OKLCH with shortest hue path))
-  [br:green](gradient) [br:cyan](F00 > 00F) [br:blue](-o)           [dim](# [i](OKLCH, rotate hue clockwise))
+  [br:green](gradient) [br:cyan](F00 00F 0F0)            [dim](# [i](Multicolor linear gradient))
+  [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s 5)           [dim](# [i](5 steps total across segments))
+  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-o)         [dim](# [i](OKLCH with shortest hue path))
   [br:green](gradient) [br:cyan](F00 > 00F < 0F0) [br:blue](-h)     [dim](# [i](HSV, multiple colors with directions))
-  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-s 30)      [dim](# [i](30 steps total across segments))
 """
     FormatCodes.print(help_text)
 
@@ -262,12 +263,14 @@ def display_gradient(
     gradient: tuple[hexa],
     source_colors: list[hexa],
     width: int,
+    list_colors: bool = False,
     numerate: bool = False,
 ) -> None:
     """Display gradient using half-block char to fit 2 colors per character position.\n
     ---------------------------------------------------------------------------------------
     - `gradient` -⠀tuple of gradient colors to display
     - `width` -⠀terminal width for display
+    - `list_colors` -⠀whether to show the color list
     - `numerate` -⠀whether to show step numbers
     - `source_colors` -⠀original input colors (for multi-color gradient summary)
     """
@@ -292,6 +295,18 @@ def display_gradient(
 
     gradient_str = f"{''.join(gradient_parts)}[_]\n" * 4
 
+    color_segments = [
+        f"[b|i|{c}|bg:{c}](`[bg:{Color.text_color_for_on_bg(c)}]{c}[bg:{c}]`)" for c in source_colors
+    ]
+    summary = (
+        f"[in] FROM {" TO ".join(color_segments)} "
+        f"IN [b]({total_colors}) STEPS [_]"
+    )
+
+    if not list_colors:
+        FormatCodes.print(f"\n{gradient_str}\n{summary}")
+        return
+
     if numerate:
         num_width = len(str(len(gradient)))
         color_list = "\n".join(
@@ -300,15 +315,6 @@ def display_gradient(
         )
     else:
         color_list = "\n".join(f"[b|i|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )" for c in gradient)
-
-
-    color_segments = [
-        f"[b|i|{c}|bg:{c}](`[bg:{Color.text_color_for_on_bg(c)}]{c}[bg:{c}]`)" for c in source_colors
-    ]
-    summary = (
-        f"[in] FROM {" TO ".join(color_segments)} "
-        f"IN [b]({total_colors}) STEPS [_]"
-    )
 
     FormatCodes.print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
 
@@ -402,6 +408,7 @@ def main() -> None:
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],
         width=Console.w,
+        list_colors=ARGS.list.exists or ARGS.numerate.exists,
         numerate=ARGS.numerate.exists,
     )
 
