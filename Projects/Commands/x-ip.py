@@ -229,9 +229,10 @@ class IPInfo:
         except Exception:
             return None
 
-    def gather_info(self, provider: str = "ipify", get_geo: bool = False) -> None:
+    def gather_info(self, provider: Optional[str], get_geo: bool = False) -> None:
         """Gather all IP information."""
         Console.info("Gathering IP information...", start="\n")
+        provider = provider or "ipify"
         self.local_ipv4 = self._get_local_ip()
         self.local_ipv6 = self._get_local_ipv6()
         self.public_ipv4 = self._get_public_ip(provider, ipv6=False)

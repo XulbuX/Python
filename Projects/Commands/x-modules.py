@@ -3,6 +3,8 @@
 Can filter to show only non-standard library modules."""
 from xulbux import FormatCodes, Console, Data, Path
 from typing import Optional
+import threading
+import time
 import re
 import os
 
@@ -40,8 +42,22 @@ STDLIB_MODULES = {
 }
 
 
+def animate() -> None:
+    """Display loading animation while scanning for modules."""
+    frames, i = [
+        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]",
+        "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]", "[b]·· [_b]", "[b]·  [_b]"
+    ], 0
+    max_frame_len = max(len(frame) for frame in frames)
+    while not SCAN_DONE:
+        frame = frames[i % len(frames)]
+        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
+        time.sleep(0.2)
+        i += 1
+
+
 def print_help():
-    help_text = """
+    help_text = """\
 [b|in]( Modules - List all imported modules across scripts )
 
 [b](Usage:) [br:green](modules) [br:blue]([options])
@@ -125,17 +141,29 @@ def get_all_modules(directory: str, recursive: bool = False, external_only: bool
 
 
 def main() -> None:
+    global SCAN_DONE
+    print()
+
     if ARGS.help.exists:
         print_help()
         return
 
     directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
 
-    modules = get_all_modules(
-        directory=directory,
-        recursive=ARGS.recursive.exists,
-        external_only=ARGS.external.exists,
-    )
+    # START LOADING ANIMATION
+    animation_thread = threading.Thread(target=animate)
+    animation_thread.start()
+
+    try:
+        modules = get_all_modules(
+            directory=directory,
+            recursive=ARGS.recursive.exists,
+            external_only=ARGS.external.exists,
+        )
+    finally:
+        SCAN_DONE = True
+        animation_thread.join()
+        print("\r   \r", end="")
 
     if not modules:
         if ARGS.external.exists:
@@ -157,31 +185,49 @@ def main() -> None:
         )}\n")
 
     else:
-        title = "EXTERNAL MODULES" if ARGS.external.exists else "ALL MODULES"
-        output = f"\n[b|in]( {title} )\n"
+        output = (
+            f"[b|in]( FOUND )[b|bg:black]( {len(modules)} )[b|in]( EXTERNAL MODULES )\n" if ARGS.external.exists
+            else f"[b|in]( FOUND )[b|bg:black]( {len(modules)} )[b|in]( MODULES )\n"
+        )
 
         if ARGS.no_formatting.exists:
             output += f"\n[b|br:green]{'\n'.join(sorted(modules.keys()))}[_]"
         else:
+            console_w = Console.w
             num_width = len(str(len(modules)))
             for i, (module, files) in enumerate(sorted(modules.items()), 1):
                 usage_count = len(files)
-                output += f"\n [i|dim|br:green]({i:>{num_width}})  [b|br:green]({module})"
-                output += f" [dim](used in {usage_count} file{'s' if usage_count != 1 else ''})"
+                line = f"\n [i|dim|br:green]({i:>{num_width}})  [b|br:green]({module})"
+                line += f" [dim](used in {usage_count} file{'s' if usage_count != 1 else ''})"
+                rendered_line_len = len(FormatCodes.remove_formatting(line))
 
                 if usage_count <= 5:
-                    output += f" [br:cyan]({', '.join(sorted(files))})"
+                    if (rendered_line_len + len(file_paths := ", ".join(sorted(files)))) > console_w:
+                        line += f" [br:cyan]({file_paths[:console_w - (rendered_line_len + 2)]}…)"
+                    else:
+                        line += f" [br:cyan]({file_paths})"
                 else:
-                    output += f" [br:cyan]({', '.join(sorted(files)[:3])}, [dim](+{usage_count - 3} more))"
+                    file_paths = ", ".join(sorted(files)[:3])
+                    overflow_part = f", [dim](+{usage_count - 3} more)"
+                    rendered_overflow_len = len(FormatCodes.remove_formatting(overflow_part))
+                    if (rendered_line_len + len(file_paths) + rendered_overflow_len) > console_w:
+                        line += f" [br:cyan]({file_paths[:console_w - (rendered_line_len + rendered_overflow_len + 2)]}…{overflow_part})"
+                    else:
+                        line += f" [br:cyan]({file_paths}{overflow_part})"
+
+                output += line
 
         output += "\n"
         FormatCodes.print(output)
 
 
 if __name__ == "__main__":
+    SCAN_DONE = False
     try:
         main()
     except KeyboardInterrupt:
-        print()
+        SCAN_DONE = True
+        print("\r   \r")
     except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+        SCAN_DONE = True
+        Console.fail(e, start="\r   \r\n", end="\n\n")
