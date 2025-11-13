@@ -267,6 +267,11 @@ To build but not upload the library, use the option `-ob` `--only-build`:
 lib-publish "/path/to/library/root-directory" --only-build
 ```
 
+To show help for the command, use the `-h` `--help` option:
+```bash
+lib-publish --help
+```
+
 <br>
 
 ### `life`
