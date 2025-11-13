@@ -108,7 +108,7 @@ Here's a brief overview of what each script does and how to use it.<br>
 
 > [!NOTE]
 > If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.<br>
-> To do that download the `requirements.txt` file again and then follow the [**dependencies installing steps**](#install-dependencies) again.
+> To do that download the [`requirements.txt`](./requirements.txt) file again and then follow the [**dependencies installing steps**](#install-dependencies) again.
 
 <br>
 
