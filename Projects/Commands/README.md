@@ -96,12 +96,14 @@ This makes your commands available from any location in your console. ⚙️
 ### Step 4: Restart your Console
 
 Close and reopen your console.<br>
-The changes are now active, and you can run the files by typing their names (*e.g.* `x-cmds`). ✅
+The changes are now active, and you can run the files by typing their names (*e.g.* [`x-cmds`](#x-cmds)). ✅
 
 <br>
 <br>
 
-## <span id="what-each-cmd-does">What each script (*command*) does</span>
+<span id="what-each-cmd-does" />
+
+## What each script (*command*) does
 
 Here's a brief overview of what each script does and how to use it.<br>
 **⇾** Each process can be cancelled by pressing `Ctrl(⌘) + C`.
@@ -414,6 +416,8 @@ x-calc --help
 ```
 
 <br>
+
+<span id="x-cmds" /><span id="x-commands" />
 
 ### `x-cmds` `x-commands`
 
