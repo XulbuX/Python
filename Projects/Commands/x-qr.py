@@ -257,7 +257,7 @@ class WiFi:
                         max_len=32,
                     ).strip()
 
-                    if choice.isdigit():
+                    if choice.replace("_", "").isdigit():
                         idx = int(choice) - 1
                         if 0 <= idx < len(profiles):
                             self.network_name = profiles[idx]
@@ -337,7 +337,7 @@ class WiFi:
 def ascii_qr(text: str, args: Args) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
-        scale = int(args.scale.value) if args.scale.value and args.scale.value.isdigit() else 1
+        scale = int(args.scale.value) if args.scale.value and args.scale.value.replace("_", "").isdigit() else 1
         invert = args.invert.exists
         error_level = {
             'L': qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]

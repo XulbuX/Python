@@ -25,7 +25,7 @@ def main() -> None:
         FormatCodes.print(f"\n[b|in]( PROCESSED )[b|bg:black]( {len(lst)} )[b|in]( LIST ENTRIES )\n")
         FormatCodes.print(f"[bright:cyan]{'\n'.join(lst)}[_]\n")
         if lst not in (None, "") and all(e.isnumeric() for e in lst):
-            lst = [int(e) if e.isdigit() else float(e) for e in lst]
+            lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]
             average = lambda nums: sum(nums) / len(nums)
             Console.log_box_bordered(
                 f"[b](Min)     : [br:cyan]({min(lst)})",
@@ -36,7 +36,7 @@ def main() -> None:
         else:
             lst = [str(x) for x in lst]
             box_content = f"[b](Unique entries) : {' '.join(f'[br:cyan|bg:black]({e})' for e in sorted(set(lst)))}"
-            if any(not e.isdigit() for e in lst):
+            if any(not e.replace("_", "").isdigit() for e in lst):
                 upper = sum(1 for e in lst if e.isupper())
                 lower = sum(1 for e in lst if e.islower())
                 box_content += f"\n[b](Uppercase)      : {upper / len(lst) * 100:.1f}%"

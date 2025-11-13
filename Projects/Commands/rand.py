@@ -66,8 +66,8 @@ def main():
 
     print()
 
-    batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.isdigit() else 1
-    update_progress_at = 1 if batch <= 100 else 99 if batch <= 10_000 else 999
+    batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.replace("_", "").isdigit() else 1
+    update_progress_at = 1 if batch <= 100 else 101 if batch <= 10_000 else 1_001
 
     match len(ARGS.digits_or_min_max.values):
 
