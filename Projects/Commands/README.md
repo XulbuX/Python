@@ -28,7 +28,7 @@ To run these Python scripts as native commands in your console, follow these ste
 
 ### Step 1: Download the Files
 
-Download the Python files you want to use, along with the `requirements.txt` file.<br>
+Download the Python files you want to use, along with the [`requirements.txt`](./requirements.txt) file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]
