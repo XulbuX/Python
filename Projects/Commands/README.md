@@ -44,6 +44,8 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 
 <br>
 
+<span id="install-dependencies" />
+
 ### Step 2: Install Dependencies
 
 Before the scripts can run, you need to install their required Python packages. 📦
@@ -55,7 +57,7 @@ Before the scripts can run, you need to install their required Python packages. 
    ```
 3. Install the dependencies using pip:
    ```bash
-   pip install -r "requirements.txt"
+   pip install --upgrade -r "requirements.txt"
    ```
    
 <br>
@@ -105,7 +107,8 @@ Here's a brief overview of what each script does and how to use it.<br>
 **⇾** Each process can be cancelled by pressing `Ctrl(⌘) + C`.
 
 > [!NOTE]
-> If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.
+> If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.<br>
+> To do that download the `requirements.txt` file again and then follow the [**dependencies installing steps**](#install-dependencies) again.
 
 <br>
 
