@@ -210,7 +210,7 @@ def calc_files_scope(files: list, update_progress: Callable[[int], None]) -> tup
                     total_lines += lines
                     total_size += size
                     completed += 1
-                    if completed % 99 == 0 or completed == len(files):
+                    if completed % 101 == 0 or completed == len(files):
                         update_progress(completed)
 
             except KeyboardInterrupt:
@@ -251,12 +251,12 @@ def main():
             files_count, files_scope, files_size = calc_files_scope(files, lambda x: None)
 
     files_size = format_bytes_size(files_size)
-    info_parts = [f"[b](TOTAL FILES:) {files_count:,}"]
+    info_parts = [f"[b|in]( TOTAL FILES: )[b|bg:black]( {files_count:,} )"]
     if "scope" not in EXCLUDE:
-        info_parts.append(f"[b](FILES SCOPE:) {files_scope:,} lines")
+        info_parts.append(f"[b|in]( FILES SCOPE: )[b|bg:black]( {files_scope:,} lines )")
     if "size" not in EXCLUDE:
-        info_parts.append(f"[b](FILES SIZE:) {files_size}")
-    info = "  [dim](|)  ".join(info_parts)
+        info_parts.append(f"[b|in]( FILES SIZE: )[b|bg:black]( {files_size} )")
+    info = "".join(info_parts)
 
     FormatCodes.print(f"\033[2K\r\n{info}\n")
 

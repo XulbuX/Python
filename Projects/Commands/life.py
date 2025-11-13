@@ -113,8 +113,16 @@ class GameOfLife:
 def main():
     game = GameOfLife()
 
-    FormatCodes.print("[b](Choose Initialization)", "[b](1) Random pattern", "[b](2) Some classic patterns", sep="\n")
-    choice = Console.input("⮡ ", allowed_chars="12", default_val=1, output_type=int)
+    FormatCodes.print("[b](Choose Initialization)\n"
+                      "[b](1) Random pattern\n"
+                      "[b](2) Some classic patterns")
+    choice = Console.input(
+        "⮡ ",
+        max_len=1,
+        allowed_chars="12",
+        default_val=1,
+        output_type=int,
+    )
 
     match choice:
         case 2:

@@ -347,6 +347,11 @@ To format the generated number/s with thousands-separators, use the option `-f`�
 rand -1_000_000 1_000_000 --format
 ```
 
+To show help for the command, use the `-h` `--help` option:
+```bash
+rand --help
+```
+
 <br>
 
 ### `sine`
@@ -524,12 +529,17 @@ This command generates an advanced directory tree. You have the following option
  * set the tree's indentation size
  * output the tree into a file (*if it's too large to fit inside the console history*)
 
-The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names*):
+The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names, separated by* `|`):
 ```bash
-x-tree --ignore "/abs/path/to/dir1" "rel/path/to/dir3" 'dir3'
+x-tree --ignore "/abs/to/dir1 | rel/to/dir2 | dir3"
 ```
 
 With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
 ```bash
 x-tree --no-progress
+```
+
+To show help for the command, use the `-h` `--help` option:
+```bash
+x-tree --help
 ```

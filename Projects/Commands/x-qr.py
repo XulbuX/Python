@@ -11,7 +11,7 @@ import re
 import os
 
 
-FIND_ARGS = {
+ARGS = Console.get_args({
     "text": "before",
     "invert": ["-i", "--invert"],
     "scale": ["-s", "--scale"],
@@ -19,12 +19,12 @@ FIND_ARGS = {
     "contact": ["-c", "--contact"],
     "wifi": ["-w", "--wifi"],
     "help": ["-h", "--help"],
-}
+})
 
 
 def print_help():
     help_text = """
-[b|in]( QR Code Generator - Quickly Generate QR codes directly within the terminal )
+[b|in]( QR Code Generator - Quickly generate QR codes directly within the terminal )
 
 [b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
 
@@ -337,7 +337,7 @@ class WiFi:
 def ascii_qr(text: str, args: Args) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
-        scale = int(args.scale.value) if args.scale.value else 1
+        scale = int(args.scale.value) if args.scale.value and args.scale.value.isdigit() else 1
         invert = args.invert.exists
         error_level = {
             'L': qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
@@ -390,36 +390,36 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
         Console.fail(f"Invalid argument: {e}")
 
 
-def main(args: Args) -> None:
-    if args.help.exists or not (args.text.exists or args.wifi.exists or args.contact.exists):
+def main() -> None:
+    if ARGS.help.exists or not (ARGS.text.exists or ARGS.wifi.exists or ARGS.contact.exists):
         print_help()
         return
 
     print()
-    text = cast(str, " ".join(args.text.values))
+    text = " ".join(ARGS.text.values)
 
-    if args.wifi.exists:
+    if ARGS.wifi.exists:
         wifi = WiFi(text)
         text = wifi.get_wifi_string()
 
-        print(f"\n{ascii_qr(text, args)}\n")
+        print(f"\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]", end="\n\n")
 
-    elif args.contact.exists:
+    elif ARGS.contact.exists:
         vcard = VCard(text)
         text = vcard.get_vcard_str()
 
-        print(f"\n{ascii_qr(text, args)}\n")
+        print(f"\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
 
     else:
-        print(f"\n{ascii_qr(text, args)}\n")
+        print(f"\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](Encoded Text:)\n[white]{text}[_c]", end="\n\n")
 
 
 if __name__ == "__main__":
     try:
-        main(Console.get_args(FIND_ARGS))
+        main()
     except KeyboardInterrupt:
         print()
     except Exception as e:

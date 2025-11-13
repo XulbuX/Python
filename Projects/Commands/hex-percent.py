@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
 """Quickly convert a 2-digit HEX value to a percentage."""
 from xulbux import FormatCodes, Console
-import sys
 
 
-ARGS = sys.argv[1:]  # [hex_value]
+ARGS = Console.get_args({"hex_value": "before"}, allow_spaces=True)
 
 
 def hex_to_percent(hex_val: str) -> float:
     return round((int(hex_val, 16) / 255) * 100, 2)
 
 
+def main():
+    hex_val = (
+        ARGS.hex_value.values[0] if len(ARGS.hex_value.values) > 0 else Console.input(
+            "\n[b](Enter 2 digit HEX value) (e.g. [br:cyan](FF)) [b](>) ",
+            min_len=2,
+            max_len=2,
+            allowed_chars="0123456789abcdefABCDEF",
+        ).strip().upper()
+    )
+    percent = hex_to_percent(hex_val)
+    FormatCodes.print(f"\n  [dim|br:white](=)  [white][b]({percent})%[_]\n")
+
+
 if __name__ == "__main__":
     try:
-        hex_val = (
-            ARGS[0] if len(ARGS) > 0 else FormatCodes.input("Enter HEX value [dim]([2 digits] (e.g. 'FF')) > ").strip().upper()
-        )
-        percent = hex_to_percent(hex_val)
-        FormatCodes.print(f"\n  [#EEF|dim](=)  [white][b]({percent})%[_]\n")
+        main()
     except KeyboardInterrupt:
         print()
     except Exception as e:

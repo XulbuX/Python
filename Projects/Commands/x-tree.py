@@ -12,8 +12,9 @@ import re
 
 
 ARGS = Console.get_args({
-    "ignore_dirs": ["-i", "--ignore"],
+    "ignore_dirs": ["-i", "--ignore", "--ignore-dirs"],
     "no_progress": ["-n", "-np", "--no-progress"],
+    "help": ["-h", "--help"],
 }, allow_spaces=True)
 DEFAULT = {
     "ignore_dirs": [],
@@ -23,6 +24,23 @@ DEFAULT = {
     "indent": 2,
     "into_file": False,
 }
+
+
+def print_help():
+    help_text = """
+[b|in]( Tree Generator - Quickly generate advanced and good looking directory trees )
+
+[b](Usage:) [br:green](x-tree) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-i), [br:blue](--ignore-dirs)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by |))
+  [br:blue](-n), [br:blue](--no-progress)    Disable progress display during tree generation
+
+[b](Examples:)
+  [br:green](x-tree) [br:blue](-i "/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
+  [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
+"""
+    FormatCodes.print(help_text)
 
 
 class IgnoreDirectory(Exception):
@@ -245,8 +263,8 @@ class Tree:
 
     def show_styles(self) -> None:
         for style, details in self.style_presets.items():
-            print(
-                f"{style}: {details["corners"][0]}{details["line_hor"]}{details["ignored"]}{details["dirname_end"]}",
+            FormatCodes.print(
+                f" [b|i]({style})  {details["corners"][0]}{details["line_hor"]}{details["ignored"]}{details["dirname_end"]}",
                 flush=True,
             )
 
@@ -557,41 +575,58 @@ class Tree:
 
 
 def main():
+    if ARGS.help.exists:
+        print_help()
+        return
+
     tree = Tree(os.getcwd())
+
     if ARGS.ignore_dirs.exists:
-        ignore_dirs = str(ARGS.ignore_dirs.value).split()
+        ignore_dirs = ARGS.ignore_dirs.value.split("|") if ARGS.ignore_dirs.value else []
     else:
-        ignore_dirs = FormatCodes.input(
-            "Enter directory names/rel-paths which's content should be ignored [dim]((space separated) >  )"
-        ).strip().split()
+        ignore_dirs = Console.input(
+            "[b](Enter directory names/paths which's content should be ignored) ([br:cyan](|) separated) [b](>) "
+        ).split("|")
+    ignore_dirs = [d.strip() for d in ignore_dirs]
 
-    auto_ignore = bool(user_entry in ("y", "yes")) if (
-        user_entry := FormatCodes.input(
-            f"Enable auto-ignore unimportant directories [dim]({"(Y)" if DEFAULT["auto_ignore"] else "(N)"} >  )"
-        ).strip().lower()
-    ) else DEFAULT["auto_ignore"]
-    
-    include_file_contents = bool(user_entry in ("y", "yes")) if (user_entry := FormatCodes.input(
-        f"Display the file contents in the tree [dim]({"(Y)" if DEFAULT["include_file_contents"] else "(N)"} >  )"
-    ).strip().lower()) else DEFAULT["include_file_contents"]
+    auto_ignore = Console.input(
+        f"[b](Enable auto-ignore unimportant directories) {"(Y)" if DEFAULT["auto_ignore"] else "(N)"} [b](>) ",
+        max_len=1,
+        allowed_chars="yYnN",
+        default_val="Y" if DEFAULT["auto_ignore"] else "N",
+    ).upper() == "Y"
 
-    print("Enter the tree style (1-4): ")
+    include_file_contents = Console.input(
+        f"[b](Display the file contents in the tree) {"(Y)" if DEFAULT["include_file_contents"] else "(N)"} [b](>) ",
+        max_len=1,
+        allowed_chars="yYnN",
+        default_val="Y" if DEFAULT["include_file_contents"] else "N",
+    ).upper() == "Y"
+
+    FormatCodes.print("[b](Enter the tree style) (1-4)")
     tree.show_styles()
-    style = (
-        int(style) if (style := FormatCodes.input(f"[dim](({DEFAULT["tree_style"]}) >  )").strip()).isnumeric()
-        and 1 <= int(style) <= 4 else DEFAULT["tree_style"]
+    style = Console.input(
+        f"({DEFAULT["tree_style"]}) [b](>) ",
+        max_len=1,
+        allowed_chars="1234",
+        default_val=DEFAULT["tree_style"],
+        output_type=int,
     )
 
-    indent = (
-        int(indent) if (indent := FormatCodes.input(f"Enter the indent [dim](({DEFAULT["indent"]}) >  )").strip()).isnumeric()
-        and int(indent) >= 0 else DEFAULT["indent"]
+    indent = Console.input(
+        f"[b](Enter the indent) ({DEFAULT["indent"]}) [b](>) ",
+        max_len=2,
+        allowed_chars="0123456789",
+        default_val=DEFAULT["indent"],
+        output_type=int,
     )
 
-    into_file = bool(user_entry in ("y", "yes")) if (
-        user_entry := FormatCodes.input(
-            f"Output tree into file [dim]({"(Y)" if DEFAULT["into_file"] else "(N)"} >  )"
-        ).strip().lower()
-    ) else DEFAULT["into_file"]
+    into_file = Console.input(
+        f"[b](Output tree into file) {"(Y)" if DEFAULT["into_file"] else "(N)"} [b](>) ",
+        max_len=1,
+        allowed_chars="yYnN",
+        default_val="Y" if DEFAULT["into_file"] else "N",
+    ).upper() == "Y"
 
     result = tree.generate(
         ignore_dirs=ignore_dirs,

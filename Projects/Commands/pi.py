@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Calculate the value of pi to a specified number of decimal places."""
-from xulbux import FormatCodes
+from xulbux import FormatCodes, Console
 from typing import Iterator
 import threading
 import psutil
@@ -9,6 +9,7 @@ import time
 import sys
 
 
+ARGS = Console.get_args({"decimal_places": "before"})
 REFERENCE_TIMES = {
     1000: 0.01,  # 1K DIGITS
     5000: 0.175,  # 5K DIGITS
@@ -182,7 +183,10 @@ def pi(decimals: int = 10) -> str:
 
 def main() -> None:
     global CALC_DONE
-    input_k = int(args[1]) if len(args := sys.argv) > 1 else 10  # [decimal_places]
+    input_k = (
+        int(ARGS.decimal_places.values[0])
+        if len(ARGS.decimal_places.values) > 0 and ARGS.decimal_places.values[0].replace("_", "").isdigit() else 10
+    )
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(

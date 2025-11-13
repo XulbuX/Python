@@ -33,7 +33,7 @@ def main() -> None:
         FormatCodes.print("[br:red](Visual Studio Code is not installed or not in PATH.)")
         sys.exit(1)
     extensions = cast(list[str], get_vscode_extensions())
-    FormatCodes.print(f"\n[white]Installed extensions: [b]{len(extensions)}[_]")
+    FormatCodes.print(f"\n[b|in]( Found )[b|bg:black]( {len(extensions)} )[b|in]( installed VSCode extensions )")
     FormatCodes.print(
         "\n[white]" + (
             Data.to_str(

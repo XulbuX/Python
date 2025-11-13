@@ -7,14 +7,14 @@ import time
 
 
 FIND_ARGS = {
-    "fast": ["-f", "--fast", "-s", "--speed"],
-    "color": ["-c", "--color"],
+    "fast_mode": ["-f", "--fast"],
+    "color_mode": ["-c", "--color"],
 }
 ARGS = Console.get_args(FIND_ARGS)
 
 x = ["0", "1"]
 f = ["dim", "bold", "inverse", "underline", "strikethrough", "double-underline"]
-if ARGS.color.exists:
+if ARGS.color_mode.exists:
     f.extend([
         "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "BR:black", "BR:red", "BR:green", "BR:yellow",
         "BR:blue", "BR:magenta", "BR:cyan", "BR:white", "BG:black", "BG:red", "BG:green", "BG:yellow", "BG:blue", "BG:magenta",
@@ -36,7 +36,7 @@ def main() -> None:
         line = "".join((f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "")
                        + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.w))
         FormatCodes.print(line)
-        if not ARGS.fast.exists:
+        if not ARGS.fast_mode.exists:
             time.sleep(0.025)
 
 

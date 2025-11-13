@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Searches and capitalizes all found hex colors
 in a single file or every file in a directory."""
+from typing import Optional
 from xulbux import Console
 from pathlib import Path
-import sys
 import re
+
+
+ARGS = Console.get_args({"path": "before"})
 
 
 def is_text_file(filepath: Path):
@@ -52,13 +55,22 @@ def process_file(file_path: Path, root_dir: str) -> None:
         Console.fail(f"Error processing [red]({file_path})\n         \t[b|br:red]{e}[_]", start="", end="\n", exit=False)
 
 
+def path_validator(path: str) -> Optional[str]:
+    if not Path(path).exists():
+        max_w = Console.w - 23
+        str_p = path if (l := len(path)) <= max_w else f"...{path[l - (max_w - 3):]}"
+        return f"Path [i]({str_p}) doesn't exist."
+
+
 def main() -> None:
-    if len(sys.argv) != 2:
-        path = input("\nEnter the path to the file or directory: ").strip()
+    if len(ARGS.path.values) != 1:
+        path = Console.input(
+            "\n[b](Path to file/directory:) ",
+            validator=path_validator,
+            default_val=".",
+        ).strip()
     else:
-        path = sys.argv[1]  # [path]
-    if path in ("", None):
-        Console.fail("No path was provided", start="\n", end="\n\n")
+        path = ARGS.path.values[0]
 
     print()
 

@@ -10,11 +10,32 @@ import sys
 import os
 
 
-FIND_ARGS = {
+ARGS = Console.get_args({
     "lib_base": "before",
     "only_build": ["-ob", "--only-build"],
     "verbose": ["-v", "--verbose"],
-}
+    "help": ["-h", "--help"],
+}, allow_spaces=True)
+
+
+def print_help():
+    help_text = """
+[b|in]( Library Publisher - Build and publish Python libraries to PyPI )
+
+[b](Usage:) [br:green](lib-publish) [br:cyan](<lib_base>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](lib_base)             Base directory of the library [dim]((default: CWD))
+
+[b](Options:)
+  [br:blue](-ob), [br:blue](--only-build)    Only build the library, do not upload to PyPI
+  [br:blue](-v), [br:blue](--verbose)        Show verbose output during build and upload
+
+[b](Examples:)
+  [br:green](lib-publish) [br:cyan]("/path/to/lib_base_dir") [br:blue](--verbose)       [dim](# [i](Build and upload with verbose output))
+  [br:green](lib-publish) [br:cyan]("/path/to/lib_base_dir") [br:blue](--only-build)    [dim](# [i](Only build the library, do not upload))
+"""
+    FormatCodes.print(help_text)
 
 
 def get_latest_python_version() -> Optional[str]:
@@ -31,7 +52,7 @@ def get_latest_python_version() -> Optional[str]:
 
 def find_twine_path() -> Optional[str]:
     if py_version := get_latest_python_version():
-        python_paths = [
+        twine_exe_paths = [
             os.path.join(sys.base_prefix, "Scripts", "twine.exe"),
             os.path.join(
                 os.path.expanduser("~"), "AppData", "Local", "Programs",
@@ -42,7 +63,7 @@ def find_twine_path() -> Optional[str]:
                 "Python", py_version, "Scripts", "twine.exe"
             ),
         ]
-        for path in python_paths:
+        for path in twine_exe_paths:
             if os.path.isfile(path):
                 return path
     Console.fail("[white](twine.exe) not found in expected locations. Please verify installation.")
@@ -74,16 +95,23 @@ def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
                 Console.fail(f"Failed to delete [white]{file_path}[_c]. Reason: {e}")
 
 
-def main(args: Args) -> None:
-    os.chdir(str(args.lib_base.values[0]))
-    run_command(f"py -m build{' --verbose ' if args.verbose.exists else ''}", verbose=args.verbose.exists)
+def main() -> None:
+    if ARGS.help.exists or not (ARGS.lib_base.exists or ARGS.only_build.exists or ARGS.verbose.exists):
+        print_help()
+        return
+
+    if ARGS.lib_base.exists:
+        os.chdir(str(ARGS.lib_base.values[0]))  # CHANGE CWD TO LIB BASE
+    run_command(f"py -m build{' --verbose ' if ARGS.verbose.exists else ''}", verbose=ARGS.verbose.exists)
     dist = os.path.join(os.getcwd(), "dist")
-    if args.only_build.exists:
+
+    if ARGS.only_build.exists:
         Console.done(f"Built to [white]{dist}[_c]\n[dim](Not uploading as per argument.)", start="\n", end="\n\n")
     else:
         twine_path = find_twine_path()
-        run_command(f'"{twine_path}" upload{' --verbose ' if args.verbose.exists else ' '}dist/*', verbose=args.verbose.exists)
+        run_command(f'"{twine_path}" upload{' --verbose ' if ARGS.verbose.exists else ' '}dist/*', verbose=ARGS.verbose.exists)
         Console.done(f"\nSuccessfully built and uploaded the library.", start="\n", end="\n\n")
+
         if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
             Path.remove(dist)
             print()
@@ -91,7 +119,7 @@ def main(args: Args) -> None:
 
 if __name__ == "__main__":
     try:
-        main(Console.get_args(FIND_ARGS))
+        main()
     except KeyboardInterrupt:
         print()
     except Exception as e:

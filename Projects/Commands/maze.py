@@ -344,7 +344,7 @@ def main():
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())
 
     Console.log_box_filled(
-        " [b](WASD ↑←↓→)  : move the player",
+        " [b](WASD ⏶⏴⏷⏵)  : move the player",
         "     [b](H)      : toggle solution",
         "     [b](F)      : finish maze",
         "   [b](ESC Q)    : exit game",

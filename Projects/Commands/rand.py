@@ -13,7 +13,31 @@ ARGS = Console.get_args({
     "digits_or_min_max": "before",
     "batch_gen": ["-b", "--batch", "--batch-gen"],
     "format": ["-f", "--format"],
+    "help": ["-h", "--help"],
 })
+
+
+def print_help():
+    help_text = """
+[b|in]( Random - Generate truly random numbers )
+
+[b](Usage:) [br:green](rand) [br:cyan](<num> <num_2>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](num)                  Number of digits or start of range
+  [br:cyan](num_2)                End of range [dim]((optional))
+
+[b](Options:)
+  [br:blue](-b), [br:blue](--batch-gen N)    Generate multiple random numbers
+  [br:blue](-f), [br:blue](--format)         Format numbers with commas as thousand separators
+
+[b](Examples:)
+  [br:green](rand) [br:cyan](10)                 [dim](# [i](Generate a random number with 10 digits))
+  [br:green](rand) [br:cyan](-100 100)           [dim](# [i](Generate a random number between -100 and 100))
+  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen 3)    [dim](# [i](Generate 3 random numbers with 5 digits))
+  [br:green](rand) [br:cyan](10) [br:blue](--format)        [dim](# [i](Generate a comma-formatted random number with 10 digits))
+"""
+    FormatCodes.print(help_text)
 
 
 def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, max_val: Optional[int] = None) -> int:
@@ -36,18 +60,16 @@ def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, 
 
 
 def main():
+    if ARGS.help.exists or len(ARGS.digits_or_min_max.values) == 0:
+        print_help()
+        return
+
     print()
+
     batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.isdigit() else 1
     update_progress_at = 1 if batch <= 100 else 99 if batch <= 10_000 else 999
-    match len(ARGS.digits_or_min_max.values):
 
-        case 0:
-            Console.exit(
-                "[b](Too few arguments:) Provide either the number of decimal places or a min and max range",
-                start="\n",
-                end="\n\n",
-                exit_code=1,
-            )
+    match len(ARGS.digits_or_min_max.values):
 
         case 1:
             digits = int(ARGS.digits_or_min_max.values[0])
@@ -98,7 +120,7 @@ def main():
 
         case _:
             Console.exit(
-                "[b](Too many arguments:) Provide either the number of decimal places or a min and max range",
+                "[b](Too many arguments:) Provide either the number of digits or a min and max range",
                 start="\n",
                 end="\n\n",
                 exit_code=1,
