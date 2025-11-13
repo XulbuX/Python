@@ -39,7 +39,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 >    you can run the commands without typing `.py`.
 >
 >  * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
->    For example, rename `x-tree.py` to `x-tree`.<br>
+>    For example, rename `x-cmds.py` to `x-cmds`.<br>
 >    This allows the operating system to execute them as native commands.
 
 <br>
