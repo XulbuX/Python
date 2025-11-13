@@ -17,7 +17,7 @@ To run these Python scripts as native commands in your console, follow these ste
 > Before you begin, ensure you have Python installed and **added to your system's PATH**.<br>
 > This is crucial for the commands to be recognized and executed.
 > 
->  * **Windows:**, make sure to check the box `Add Python to PATH`<br>
+>  * **Windows:** make sure to check the box `Add Python to PATH`<br>
 >    and if possible `Install for all users` during the installation of Python.<br>
 >    Verify Python is in your PATH by typing `python --version` or `py --version` in your console.
 > 
