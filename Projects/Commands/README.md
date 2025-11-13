@@ -421,7 +421,7 @@ x-calc --help
 
 ### `x-cmds` `x-commands`
 
-This command outputs a list of all custom Python commands in the current directory, with a short description and their params.
+This command outputs a list of all custom Python commands in the current directory, with a short description (*if provided*) and their params (*if found*).
 
 <br>
 
