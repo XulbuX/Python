@@ -22,7 +22,7 @@ def main() -> None:
         lst = [str(val) for val in ARGS.list_items.values]
 
     if len(lst) >= 1 and lst[0].strip() not in (None, ""):
-        FormatCodes.print(f"\n[b|in]( PROCESSED )[b|bg:black]( {len(lst)} )[b|in]( LIST ENTRIES )\n")
+        FormatCodes.print(f"\n[b|bg:black]([in]( PROCESSED ) {len(lst)} [in]( LIST ENTRIES ))\n")
         FormatCodes.print(f"[bright:cyan]{'\n'.join(lst)}[_]\n")
         if lst not in (None, "") and all(e.isnumeric() for e in lst):
             lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]

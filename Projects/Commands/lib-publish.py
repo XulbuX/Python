@@ -20,7 +20,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in]( Library Publisher - Build and publish Python libraries to PyPI )
+[b|in|bg:black]( Library Publisher - Build and publish Python libraries to PyPI )
 
 [b](Usage:) [br:green](lib-publish) [br:cyan](<lib_base>) [br:blue]([options])
 

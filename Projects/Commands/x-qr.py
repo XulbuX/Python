@@ -24,7 +24,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in]( QR Code Generator - Quickly generate QR codes directly within the terminal )
+[b|in|bg:black]( QR Code Generator - Quickly generate QR codes directly within the terminal )
 
 [b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
 

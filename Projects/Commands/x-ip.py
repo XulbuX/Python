@@ -18,7 +18,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in]( IP Info - Get local and public IP addresses with geolocation )
+[b|in|bg:black]( IP Info - Get local and public IP addresses with geolocation )
 
 [b](Usage:) [br:green](x-ip) [br:blue]([options])
 

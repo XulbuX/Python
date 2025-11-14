@@ -16,7 +16,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in]( Hardware Info - Get detailed hardware information about your PC )
+[b|in|bg:black]( Hardware Info - Get detailed hardware information about your PC )
 
 [b](Usage:) [br:green](x-hw) [br:blue]([options])
 

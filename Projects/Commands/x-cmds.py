@@ -67,8 +67,8 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
     )
 
 
-def get_commands() -> str:
-    commands, all_files = "", os.listdir(Path.script_dir)
+def get_commands() -> tuple[str, int]:
+    i, commands, all_files = 0, "", os.listdir(Path.script_dir)
     python_files = (f for f in all_files if os.path.splitext(f)[1] in (".py", ".pyw"))
 
     for i, f in enumerate(sorted(python_files), 1):
@@ -108,12 +108,20 @@ def get_commands() -> str:
 
         commands += "\n"
 
-    return commands
+    return commands, i
+
+
+def main() -> None:
+    cmds_str, num_cmds = get_commands()
+    FormatCodes.print(
+        f"\n[b|bg:black]([in]( FOUND ) {num_cmds} [in]( COMMAND{'' if num_cmds == 1 else 'S'} ))"
+        f"\n{cmds_str}\n"
+    )
 
 
 if __name__ == "__main__":
     try:
-        FormatCodes.print(get_commands())
+        main()
     except KeyboardInterrupt:
         print()
     except Exception as e:

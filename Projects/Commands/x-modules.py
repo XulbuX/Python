@@ -58,7 +58,7 @@ def animate() -> None:
 
 def print_help():
     help_text = """\
-[b|in]( Modules - List all imported modules across scripts )
+[b|in|bg:black]( Modules - List all imported modules across scripts )
 
 [b](Usage:) [br:green](modules) [br:blue]([options])
 
@@ -186,8 +186,8 @@ def main() -> None:
 
     else:
         output = (
-            f"[b|in]( FOUND )[b|bg:black]( {len(modules)} )[b|in]( EXTERNAL MODULES )\n" if ARGS.external.exists
-            else f"[b|in]( FOUND )[b|bg:black]( {len(modules)} )[b|in]( MODULES )\n"
+            f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if ARGS.external.exists
+            else f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( MODULES ))\n"
         )
 
         if ARGS.no_formatting.exists:

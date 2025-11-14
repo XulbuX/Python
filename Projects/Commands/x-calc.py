@@ -302,7 +302,7 @@ def print_help():
     c_list = "\n".join(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL))
     f_list = "\n".join(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL))
     help_text = f"""\
-[b|in]( Advanced Calculator - Perform complex calculations directly from the command line )
+[b|in|bg:black]( Advanced Calculator - Perform complex calculations directly from the command line )
 
 [b](Usage:) [br:green](x-calc) [br:cyan](<calculation>) [br:blue]([options])
 

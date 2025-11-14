@@ -251,11 +251,11 @@ def main():
             files_count, files_scope, files_size = calc_files_scope(files, lambda x: None)
 
     files_size = format_bytes_size(files_size)
-    info_parts = [f"[b|in]( TOTAL FILES: )[b|bg:black]( {files_count:,} )"]
+    info_parts = [f"[b|bg:black]([in]( TOTAL FILES: ) {files_count:,} )"]
     if "scope" not in EXCLUDE:
-        info_parts.append(f"[b|in]( FILES SCOPE: )[b|bg:black]( {files_scope:,} lines )")
+        info_parts.append(f"[b|bg:black]([in]( FILES SCOPE: ) {files_scope:,} lines )")
     if "size" not in EXCLUDE:
-        info_parts.append(f"[b|in]( FILES SIZE: )[b|bg:black]( {files_size} )")
+        info_parts.append(f"[b|bg:black]([in]( FILES SIZE: ) {files_size} )")
     info = "".join(info_parts)
 
     FormatCodes.print(f"\033[2K\r\n{info}\n")

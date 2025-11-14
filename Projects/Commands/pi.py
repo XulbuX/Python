@@ -190,7 +190,7 @@ def main() -> None:
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(
-            f"\n[b|bg:black]( π )[b|in]( CALCULATION WOULD TAKE TOO LONG )\n\n[br:cyan]{format_time(estimated_secs, pretty_print=True)}[_]\n"
+            f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
         )
     else:
         FormatCodes.print(
@@ -206,8 +206,8 @@ def main() -> None:
             animation_thread.join()
             FormatCodes.print(
                 "\r[b|br:yellow](Your computer doesn't have enough memory for this calculation!)",
-                "[b|bg:black]( π )[b|in]( CALCULATION WOULD TAKE THIS LONG IF YOU HAD ENOUGH MEMORY )\n",
-                f"[br:cyan]{format_time(estimated_secs, pretty_print=True)}[_]",
+                "[b|bg:black]( π [in]( CALCULATION WOULD TAKE THIS LONG IF YOU HAD ENOUGH MEMORY ))\n",
+                f"{format_time(estimated_secs, pretty_print=True)}[_]",
                 end="\n\n",
                 sep="\n",
             )

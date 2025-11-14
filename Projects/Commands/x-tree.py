@@ -28,7 +28,7 @@ DEFAULT = {
 
 def print_help():
     help_text = """
-[b|in]( Tree Generator - Quickly generate advanced and good looking directory trees )
+[b|in|bg:black]( Tree Generator - Quickly generate advanced and good looking directory trees )
 
 [b](Usage:) [br:green](x-tree) [br:blue]([options])
 

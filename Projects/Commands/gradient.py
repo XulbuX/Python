@@ -22,7 +22,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in]( Gradient - Generate and preview advanced color gradients )
+[b|in|bg:black]( Gradient - Generate and preview advanced color gradients )
 
 [b](Usage:) [br:green](gradient) [br:cyan](<color1> [direction] <color2> [direction] <color3> ...) [br:blue]([options])
 
