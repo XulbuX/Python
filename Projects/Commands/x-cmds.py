@@ -101,7 +101,7 @@ def get_commands_str() -> str:
             with open(abs_path, "r", encoding="utf-8") as file:
                 content = file.read()
                 if desc := DESC.match(content):
-                    commands += f"\n\n[i|white]{desc.group(2).strip("\n")}[_]"
+                    commands += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
                 args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
                 sys_argv = SYS_ARGV.findall(content)
         except Exception:
