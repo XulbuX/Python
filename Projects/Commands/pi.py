@@ -75,7 +75,7 @@ def estimate_runtime(precision: int) -> float:
     return round(estimated_time, 2)
 
 
-def format_time(seconds: float, short: bool = False, pretty_printing: bool = False) -> str:
+def format_time(seconds: float, short: bool = False, pretty_print: bool = False) -> str:
     units = (
         (
             ("SMBH", 1e106 * 365.25 * 24 * 60 * 60),
@@ -132,15 +132,15 @@ def format_time(seconds: float, short: bool = False, pretty_printing: bool = Fal
     )
     parts = []
     b_val, val_name, a_name = (
-        "[b]" if pretty_printing else "",
-        f"{'' if short else ' '}{'[_b|i]' if pretty_printing else ''}",
-        "[_i]" if pretty_printing else "",
+        "[b|br:cyan]" if pretty_print else "",
+        f"{'' if short else ' '}{'[_b|i|cyan]' if pretty_print else ''}",
+        "[_i|br:cyan]" if pretty_print else "",
     )
     for name, formula in units[0 if short else 1]:
-        if (value := int(seconds // formula)) > 0:
+        if (val := int(seconds // formula)) > 0:
             if not short:
-                value = f"{value:,}".replace(",", "'")
-            parts.append(f"{b_val}{value}{val_name}{name if value == '1' or short else f'{name}s'}{a_name}")
+                val = f"{val:,}"
+            parts.append(f"{b_val}{val}{val_name}{name if val == '1' or short else f'{name}s'}{a_name}")
             seconds %= formula
     if not parts:
         formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
@@ -148,10 +148,10 @@ def format_time(seconds: float, short: bool = False, pretty_printing: bool = Fal
             f"{b_val}{formatted_seconds}{val_name}{units[0 if short else 1][-1][0] if seconds == '1' or short else f'{units[0 if short else 1][-1][0]}s'}{a_name}"
         )
     if short:
-        return ("[dim](:)" if pretty_printing else ":").join(parts)
+        return ("[dim](:)" if pretty_print else ":").join(parts)
     if len(parts) > 1:
-        return (("[dim] + [_dim]" if pretty_printing else ", ").join(parts[:-1]) +
-                ("[dim] + [_dim]" if pretty_printing else " and ") + parts[-1])
+        return (("[dim] + [_dim]" if pretty_print else ", ").join(parts[:-1]) +
+                ("[dim] + [_dim]" if pretty_print else " and ") + parts[-1])
     return parts[0]
 
 
@@ -190,7 +190,7 @@ def main() -> None:
     estimated_secs = estimate_runtime(input_k)
     if estimated_secs >= 604800:
         FormatCodes.print(
-            f"\n[b|br:white](Calculation would too long to finish:)\n[br:cyan]{format_time(estimated_secs, pretty_printing=True)}[_]\n"
+            f"\n[b|bg:black]( π )[b|in]( CALCULATION WOULD TAKE TOO LONG )\n\n[br:cyan]{format_time(estimated_secs, pretty_print=True)}[_]\n"
         )
     else:
         FormatCodes.print(
@@ -205,9 +205,9 @@ def main() -> None:
             CALC_DONE = True
             animation_thread.join()
             FormatCodes.print(
-                "\r[#000|bg:yellow] Your computer doesn't have enough memory for this calculation! [_]",
-                "[b|br:white](Here's how long it would take to calculate if it had enough memory:)",
-                f"[br:cyan]{format_time(estimated_secs, pretty_printing=True)}[_]",
+                "\r[b|br:yellow](Your computer doesn't have enough memory for this calculation!)",
+                "[b|bg:black]( π )[b|in]( CALCULATION WOULD TAKE THIS LONG IF YOU HAD ENOUGH MEMORY )\n",
+                f"[br:cyan]{format_time(estimated_secs, pretty_print=True)}[_]",
                 end="\n\n",
                 sep="\n",
             )

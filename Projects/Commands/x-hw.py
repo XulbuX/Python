@@ -315,13 +315,13 @@ class HardwareInfo:
             FormatCodes.print("\n[b|br:cyan](System Information)")
             system_text = []
             if self.system.get("os"):
-                system_text.append(f"          [b](OS) : [white]({self.system['os']} {self.system.get('os_release', '')})")
+                system_text.append(f"          [b](OS) : [br:white]({self.system['os']} {self.system.get('os_release', '')})")
             if self.system.get("os_version"):
-                system_text.append(f"     [b](Version) : [white]({self.system['os_version']})")
+                system_text.append(f"     [b](Version) : [br:white]({self.system['os_version']})")
             if self.system.get("architecture"):
-                system_text.append(f"[b](Architecture) : [white]({self.system['architecture']})")
+                system_text.append(f"[b](Architecture) : [br:white]({self.system['architecture']})")
             if self.system.get("hostname"):
-                system_text.append(f"    [b](Hostname) : [white]({self.system['hostname']})")
+                system_text.append(f"    [b](Hostname) : [br:white]({self.system['hostname']})")
             Console.log_box_bordered(*system_text, border_style="br:cyan")
 
         # CPU INFO
@@ -329,23 +329,23 @@ class HardwareInfo:
             FormatCodes.print("\n[b|br:green](CPU Information)")
             cpu_text = []
             if self.cpu.get("processor"):
-                cpu_text.append(f"     [b](Processor) : [white]({self.cpu['processor']})")
+                cpu_text.append(f"     [b](Processor) : [br:white]({self.cpu['processor']})")
             if self.cpu.get("physical_cores"):
-                cpu_text.append(f"[b](Physical Cores) : [white]({self.cpu['physical_cores']})")
+                cpu_text.append(f"[b](Physical Cores) : [br:white]({self.cpu['physical_cores']})")
             if self.cpu.get("logical_cores"):
-                cpu_text.append(f" [b](Logical Cores) : [white]({self.cpu['logical_cores']})")
+                cpu_text.append(f" [b](Logical Cores) : [br:white]({self.cpu['logical_cores']})")
             if self.cpu.get("frequency"):
-                cpu_text.append(f"     [b](Frequency) : [white]({self.cpu['frequency']})")
+                cpu_text.append(f"     [b](Frequency) : [br:white]({self.cpu['frequency']})")
             if self.cpu.get("max_frequency"):
-                cpu_text.append(f" [b](Max Frequency) : [white]({self.cpu['max_frequency']})")
+                cpu_text.append(f" [b](Max Frequency) : [br:white]({self.cpu['max_frequency']})")
             if self.cpu.get("cpu_usage"):
-                cpu_text.append(f"     [b](CPU Usage) : [white]({self.cpu['cpu_usage']})")
+                cpu_text.append(f"     [b](CPU Usage) : [br:white]({self.cpu['cpu_usage']})")
             if self.cpu.get("per_core_usage"):
                 cpu_text.append("{hr}")
                 cores = self.cpu['per_core_usage']
                 formatted_cores = []
                 for i in range(0, len(cores), 10):
-                    formatted_cores.append('[white]' + ', '.join(cores[i:i + 10]))
+                    formatted_cores.append('[br:white]' + ', '.join(cores[i:i + 10]))
                 cpu_text.append(f"[b|br:green](Per-Core Usage)\n" + '\n'.join(formatted_cores) + "[_c]")
             Console.log_box_bordered(*cpu_text, border_style="br:green")
 
@@ -354,19 +354,19 @@ class HardwareInfo:
             FormatCodes.print("\n[b|br:yellow](Memory Information)")
             mem_text = []
             if self.memory.get("total"):
-                mem_text.append(f"     [b](Total) : [white]({self.memory['total']})")
+                mem_text.append(f"     [b](Total) : [br:white]({self.memory['total']})")
             if self.memory.get("available"):
-                mem_text.append(f" [b](Available) : [white]({self.memory['available']})")
+                mem_text.append(f" [b](Available) : [br:white]({self.memory['available']})")
             if self.memory.get("used"):
-                mem_text.append(f"      [b](Used) : [white]({self.memory['used']})")
+                mem_text.append(f"      [b](Used) : [br:white]({self.memory['used']})")
             if self.memory.get("usage_percent"):
-                mem_text.append(f"     [b](Usage) : [white]({self.memory['usage_percent']})")
+                mem_text.append(f"     [b](Usage) : [br:white]({self.memory['usage_percent']})")
             if self.memory.get("swap_total"):
-                mem_text.append(f"[b](Swap Total) : [white]({self.memory['swap_total']})")
+                mem_text.append(f"[b](Swap Total) : [br:white]({self.memory['swap_total']})")
             if self.memory.get("swap_used"):
-                mem_text.append(f" [b](Swap Used) : [white]({self.memory['swap_used']})")
+                mem_text.append(f" [b](Swap Used) : [br:white]({self.memory['swap_used']})")
             if self.memory.get("swap_percent"):
-                mem_text.append(f"[b](Swap Usage) : [white]({self.memory['swap_percent']})")
+                mem_text.append(f"[b](Swap Usage) : [br:white]({self.memory['swap_percent']})")
             Console.log_box_bordered(*mem_text, border_style="br:yellow")
 
         # DISK INFO
@@ -374,22 +374,22 @@ class HardwareInfo:
             FormatCodes.print("\n[b|br:magenta](Disk Information)")
             disk_text = []
             if self.disk.get("total_size"):
-                disk_text.append(f"[b](Total Size) : [white]({self.disk['total_size']})")
+                disk_text.append(f"[b](Total Size) : [br:white]({self.disk['total_size']})")
             if self.disk.get("total_used"):
-                disk_text.append(f"[b](Total Used) : [white]({self.disk['total_used']})")
+                disk_text.append(f"[b](Total Used) : [br:white]({self.disk['total_used']})")
             if self.disk.get("total_free"):
-                disk_text.append(f"[b](Total Free) : [white]({self.disk['total_free']})")
+                disk_text.append(f"[b](Total Free) : [br:white]({self.disk['total_free']})")
 
             if self.disk.get("partitions"):
                 for i, partition in enumerate(self.disk["partitions"]):
                     disk_text.append("{hr}")
                     disk_text.append(f"[b|br:magenta]({partition['device']})")
-                    disk_text.append(f"     [b](Mount) : [white]({partition['mountpoint']})")
-                    disk_text.append(f"[b](Filesystem) : [white]({partition['filesystem']})")
-                    disk_text.append(f"     [b](Total) : [white]({partition['total']})")
-                    disk_text.append(f"      [b](Used) : [white]({partition['used']})")
-                    disk_text.append(f"      [b](Free) : [white]({partition['free']})")
-                    disk_text.append(f"     [b](Usage) : [white]({partition['usage_percent']})")
+                    disk_text.append(f"     [b](Mount) : [br:white]({partition['mountpoint']})")
+                    disk_text.append(f"[b](Filesystem) : [br:white]({partition['filesystem']})")
+                    disk_text.append(f"     [b](Total) : [br:white]({partition['total']})")
+                    disk_text.append(f"      [b](Used) : [br:white]({partition['used']})")
+                    disk_text.append(f"      [b](Free) : [br:white]({partition['free']})")
+                    disk_text.append(f"     [b](Usage) : [br:white]({partition['usage_percent']})")
 
             Console.log_box_bordered(*disk_text, border_style="br:magenta")
 
@@ -400,7 +400,7 @@ class HardwareInfo:
             for i, gpu in enumerate(self.gpu["gpus"]):
                 if i > 0:
                     gpu_text.append("{hr}")
-                gpu_text.append(f"[b](GPU {i + 1}:) [white]({gpu['name']})")
+                gpu_text.append(f"[b](GPU {i + 1}) : [br:white]({gpu['name']})")
             Console.log_box_bordered(*gpu_text, border_style="br:blue")
 
         # NETWORK INFO
@@ -413,9 +413,9 @@ class HardwareInfo:
                 status = "[i|green](Connected)" if adapter["is_up"] else "[i|dim|white](Disconnected)"
                 net_text.append(f"[b|br:red]({adapter['name']}) {status}[_c]")
                 if adapter.get("mac"):
-                    net_text.append(f"  [b](MAC) : [white]({adapter['mac']})")
+                    net_text.append(f"  [b](MAC) : [br:white]({adapter['mac']})")
                 if adapter.get("speed"):
-                    net_text.append(f"[b](Speed) : [white]({adapter['speed']})")
+                    net_text.append(f"[b](Speed) : [br:white]({adapter['speed']})")
             Console.log_box_bordered(*net_text, border_style="br:red")
 
         # BATTERY INFO
@@ -424,12 +424,12 @@ class HardwareInfo:
             battery_text = []
             time_left = self.battery.get("time_left")
             if self.battery.get("percent"):
-                battery_text.append(f"{'        ' if time_left else ''}[b](Charge) : [white]({self.battery['percent']})")
+                battery_text.append(f"{'        ' if time_left else ''}[b](Charge) : [br:white]({self.battery['percent']})")
             if self.battery.get("power_plugged") is not None:
                 status = "[green](Plugged In)" if self.battery["power_plugged"] else "[i|yellow](On Battery)"
                 battery_text.append(f"{'        ' if time_left else ''}[b](Status) : {status}[_c]")
             if time_left:
-                battery_text.append(f"[b](Time Remaining) : [white]({time_left})")
+                battery_text.append(f"[b](Time Remaining) : [br:white]({time_left})")
             Console.log_box_bordered(*battery_text, border_style="br:white")
 
         print()
