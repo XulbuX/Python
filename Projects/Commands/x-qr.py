@@ -246,7 +246,7 @@ class WiFi:
 
         if not self.network_name:
             if current:
-                if Console.confirm(f"\nUse current network '{current}'?"):
+                if Console.confirm(f"\nUse current network [br:cyan]({current})?"):
                     self.network_name = current
 
             if not self.network_name:
