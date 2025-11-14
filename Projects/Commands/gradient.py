@@ -24,22 +24,22 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Gradient - Generate and preview advanced color gradients )
 
-[b](Usage:) [br:green](gradient) [br:cyan](<color1> [direction] <color2> [direction] <color3> ...) [br:blue]([options])
+[b](Usage:) [br:green](gradient) [br:cyan](<color_1> [direction] <color_2> ...) [br:blue]([options])
 
 [b](Arguments:)
-  [br:cyan](color)       Hex colors to create gradient between (at least 2 required) 
+  [br:cyan](color)       Hex colors to create gradient between [dim]((at least 2 required))
 
 [b](Direction:) [dim](only with --hsv or --oklch modes)
-  [br:cyan](>)           Rotate hue clockwise (longer path)
-  [br:cyan](<)           Rotate hue counterclockwise (longer path)
-  [dim](no arrow)    Use shortest hue path (default)
+  [br:cyan](>)           Rotate hue clockwise
+  [br:cyan](<)           Rotate hue counterclockwise
+  [dim](no arrow)    Use shortest hue path [dim]((default))
 
 [b](Options:)
-  [br:blue](-s), [br:blue](--steps N)     Number of gradient steps (total across all color segments)
+  [br:blue](-s), [br:blue](--steps N)     Number of gradient steps [dim]((total across all color segments))
   [br:blue](-H), [br:blue](--hsv)         Use HSV interpolation with hue rotation
   [br:blue](-O), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
   [br:blue](-l), [br:blue](--list)        Show list of all gradient colors
-  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors (implies -l)
+  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors [dim]/(implies[_dim] [br:blue](-l)[dim])[_dim]
 
 [b](Examples:)
   [br:green](gradient) [br:cyan](F00 00F)                [dim](# [i](Linear RGB interpolation))

@@ -199,7 +199,7 @@ def main() -> None:
                 usage_count = len(files)
                 line = f"\n [i|dim|br:green]({i:>{num_width}})  [b|br:green]({module})"
                 line += f" [dim](used in {usage_count} file{'s' if usage_count != 1 else ''})"
-                rendered_line_len = len(FormatCodes.remove_formatting(line))
+                rendered_line_len = len(FormatCodes.remove(line))
 
                 if usage_count <= 5:
                     if (rendered_line_len + len(file_paths := ", ".join(sorted(files)))) > console_w:
@@ -209,7 +209,7 @@ def main() -> None:
                 else:
                     file_paths = ", ".join(sorted(files)[:3])
                     overflow_part = f", [dim](+{usage_count - 3} more)"
-                    rendered_overflow_len = len(FormatCodes.remove_formatting(overflow_part))
+                    rendered_overflow_len = len(FormatCodes.remove(overflow_part))
                     if (rendered_line_len + len(file_paths) + rendered_overflow_len) > console_w:
                         line += f" [br:cyan]({file_paths[:console_w - (rendered_line_len + rendered_overflow_len + 2)]}…{overflow_part})"
                     else:

@@ -3,7 +3,7 @@
 from xulbux import FormatCodes, Console
 from xulbux.console import Args, COLOR
 import xml.etree.ElementTree as ET
-from typing import Optional, cast
+from typing import Optional
 import subprocess
 import tempfile
 import qrcode

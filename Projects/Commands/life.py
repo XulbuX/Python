@@ -114,10 +114,10 @@ def main():
     game = GameOfLife()
 
     FormatCodes.print("[b](Choose Initialization)\n"
-                      "[b](1) Random pattern\n"
-                      "[b](2) Some classic patterns")
+                      " [b|i](1)  Random pattern\n"
+                      " [b|i](2)  Some classic patterns")
     choice = Console.input(
-        "⮡ ",
+        "(1) [b](>) ",
         max_len=1,
         allowed_chars="12",
         default_val=1,
@@ -137,7 +137,7 @@ def main():
         case _:
             density = 0.2
             density = Console.input(
-                f"\nEnter density [[b](0.0 – 1.0)]/([i]({density})): ",
+                f"\n[b](Enter density) [0.0 – 1.0]({density}) [b](>) ",
                 allowed_chars=CHARS.FLOAT_DIGITS,
                 default_val=density,
                 output_type=float,
@@ -146,7 +146,7 @@ def main():
 
     delay = 0.02
     delay = Console.input(
-        f"\nDelay between generations [[b](secs)]/([i]({delay})): ",
+        f"\n[b](Delay between generations) [secs]({delay}) [b](>) ",
         allowed_chars=CHARS.FLOAT_DIGITS,
         default_val=delay,
         output_type=float,

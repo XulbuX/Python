@@ -13,10 +13,6 @@ ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+
 SYS_ARGV = re.compile(r"sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?", re.MULTILINE)
 DESC = re.compile(r"(?i)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1", re.DOTALL)
 
-TAB_SIZE = 2
-TAB3 = " " * (TAB_SIZE * 3 + 1)
-TAB4 = " " * (TAB_SIZE * 4 + 1)
-
 
 def parse_args_comment(s: str) -> dict:
     result, m = {}, cast(re.Match[str], re.match(r'\[(.*)\]', s))
@@ -39,50 +35,73 @@ def get_var_val(file_path: str, var_name: str) -> Optional[Any]:
     return var_val
 
 
-def arguments_desc(find_args: Optional[dict[str, list[str]]] = None) -> str:
+def arguments_desc(find_args: Optional[dict[str, list[str]]]) -> str:
     if not find_args or len(find_args) < 1:
-        return f"\n{TAB3}[blue](TAKES ARGUMENTS [dim]([[i](unknown)]))"
+        return f"\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
+
     arg_descs, keys = [], list(find_args.keys())
+
     for key, val in find_args.items():
         if len(val) < 1:
-            arg_descs.append(f"[white](non-flagged argument at position {keys.index(key) + 1})")
+            arg_descs.append(f"non-flagged argument at position {keys.index(key) + 1}")
         elif isinstance(val, str):
             if val.lower() == "before":
-                arg_descs.append(f"[white](all non flagged arguments before first flag)")
+                arg_descs.append("all non flagged arguments before first flag")
             elif val.lower() == "after":
-                arg_descs.append(f"[white](all non flagged arguments after last flag's value)")
+                arg_descs.append("all non flagged arguments after last flag's value")
             else:
-                arg_descs.append(f"[white]({val})")
+                arg_descs.append(val)
         elif isinstance(val, dict) and "flags" in val.keys():
             arg_descs.append(cast(dict, val)["flags"])
         else:
             arg_descs.append(val)
-    arg_descs = (
-        f"[white]({'[dim](,) '.join(arg_desc)})" if isinstance(arg_desc, list) else arg_desc for arg_desc in arg_descs
-    )
-    arg_descs = (f"[br:blue]([i]({keys[i]}):) {arg_desc}" for i, arg_desc in enumerate(arg_descs))
+
+    opt_descs = ["[_c], [br:blue]".join(d) for d in arg_descs if isinstance(d, list)]
+    opt_keys = [keys.pop(i - j) for j, (i, _) in enumerate((i, d) for i, d in enumerate(arg_descs) if isinstance(d, list))]
+
+    arg_descs = [d for d in arg_descs if isinstance(d, str)]
+    arg_keys = [f"<{keys[i]}>" for i, _ in enumerate(arg_descs)]
+
+    left_part_len = max(len(FormatCodes.remove(x)) for x in opt_descs + arg_keys)
+
+    opt_len_diff = [len(d) - len(FormatCodes.remove(d)) for d in opt_descs]
+    opt_descs = [
+        f"[br:blue]({d:<{left_part_len + opt_len_diff[i]}})"
+        f"    [blue]({FormatCodes.escape(f'[{opt_keys[i]}]')})"
+        for i, d in enumerate(opt_descs)
+    ]
+
+    arg_descs = [
+        f"[br:cyan]({arg_keys[i]:<{left_part_len}})"
+        f"    [cyan]({d})"
+        for i, d in enumerate(arg_descs)
+    ]
+
     return (
-        f"\n{TAB3}[u|blue](TAKES {len(find_args)} ARGUMENT{'S' if len(find_args) != 1 else ''})\n{TAB4}"
-        + f"\n{TAB4}".join(arg_descs)
+        (f"\n\n[b](Takes {len(arg_descs)} Argument{'' if len(arg_descs) == 1 else 's'}:)"
+        f"\n  {'\n  '.join(arg_descs)}") if len(arg_descs) > 0 else ""
+    ) + (
+        (f"\n\n[b](Has {len(opt_descs)} Option{'' if len(opt_descs) == 1 else 's'}:)"
+        f"\n  {'\n  '.join(opt_descs)}") if len(opt_descs) > 0 else ""
     )
 
 
-def get_commands() -> tuple[str, int]:
+def get_commands_str() -> str:
     i, commands, all_files = 0, "", os.listdir(Path.script_dir)
-    python_files = (f for f in all_files if os.path.splitext(f)[1] in (".py", ".pyw"))
+    python_files = [f for f in all_files if os.path.splitext(f)[1] in (".py", ".pyw")]
 
     for i, f in enumerate(sorted(python_files), 1):
         filename, _ = os.path.splitext(f)
         abs_path = os.path.join(Path.script_dir, f)
-        commands += f"\n [i|dim|br:green]({i}){' ' * ((TAB_SIZE * 2) - len(str(i)))}[b|br:green]({filename})"
+        cmd_title_len = len(str(i)) + len(filename) + 4
+        commands += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {filename} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
         sys_argv = None
 
         try:
             with open(abs_path, "r", encoding="utf-8") as file:
                 content = file.read()
                 if desc := DESC.match(content):
-                    desc = desc.group(2).strip("\n")
-                    commands += f"[i|br:cyan]\n{TAB3}" + f"\n{TAB3}".join(desc.split("\n")) + "[_]"
+                    commands += f"\n\n[i|white]{desc.group(2).strip("\n")}[_]"
                 args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
                 sys_argv = SYS_ARGV.findall(content)
         except Exception:
@@ -106,22 +125,14 @@ def get_commands() -> tuple[str, int]:
                     find_args.update(parse_args_comment(arg))
             commands += arguments_desc(find_args)
 
-        commands += "\n"
+        commands += "\n\n"
 
-    return commands, i
-
-
-def main() -> None:
-    cmds_str, num_cmds = get_commands()
-    FormatCodes.print(
-        f"\n[b|bg:black]([in]( FOUND ) {num_cmds} [in]( COMMAND{'' if num_cmds == 1 else 'S'} ))"
-        f"\n{cmds_str}\n"
-    )
+    return commands
 
 
 if __name__ == "__main__":
     try:
-        main()
+        FormatCodes.print(get_commands_str())
     except KeyboardInterrupt:
         print()
     except Exception as e:
