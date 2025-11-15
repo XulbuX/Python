@@ -19,7 +19,7 @@ ARGS = Console.get_args({
     "format": ["-f", "--format"],
     "debug": ["-d", "--debug"],
     "help": ["-h", "--help"],
-})
+}, allow_spaces=True)
 DEBUG = ARGS.debug.exists
 
 _COMPILED: dict[str, Pattern] = {

@@ -16,7 +16,7 @@ ARGS = Console.get_args({
     "no_formatting": ["-nf", "--no-formatting"],
     "as_json": ["-j", "--json"],
     "help": ["-h", "--help"],
-})
+}, allow_spaces=True)
 
 # PYTHON STANDARD LIBRARY MODULES (Python 3.x)
 STDLIB_MODULES = {

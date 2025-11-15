@@ -6,11 +6,10 @@ import random
 import time
 
 
-FIND_ARGS = {
+ARGS = Console.get_args({
     "fast_mode": ["-f", "--fast"],
     "color_mode": ["-c", "--color"],
-}
-ARGS = Console.get_args(FIND_ARGS)
+})
 
 x = ["0", "1"]
 f = ["dim", "bold", "inverse", "underline", "strikethrough", "double-underline"]

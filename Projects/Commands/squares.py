@@ -5,7 +5,9 @@ from xulbux import FormatCodes, Console
 import keyboard
 
 
-ARGS = Console.get_args({"table_cols": ["-c", "--cols", "--columns"]})
+ARGS = Console.get_args({
+    "table_cols": ["-c", "--cols", "--columns"],
+})
 TABLE_COLS = int(ARGS.table_cols.value) if ARGS.table_cols.value and ARGS.table_cols.value.replace("_", "").isdigit() else 4
 
 

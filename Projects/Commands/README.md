@@ -533,6 +533,22 @@ x-qr --help
 
 <br>
 
+### `x-rm`
+
+This command is used to force-delete files/directories that are locked somehow and can't be deleted with the normal `rm` or `del` commands.
+
+The confirmation step can be skipped with the `-nc` `--no-confirm` option:
+```bash
+x-rm "/path/to/file-or-directory" --no-confirm
+```
+
+To show help for the command, use the `-h` `--help` option:
+```bash
+x-rm --help
+```
+
+<br>
+
 ### `x-tree`
 
 This command generates an advanced directory tree. You have the following options when running the command:
