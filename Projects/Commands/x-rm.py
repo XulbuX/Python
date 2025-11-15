@@ -127,30 +127,29 @@ def is_protected_process(proc: psutil.Process) -> bool:
 def terminate_process(proc: psutil.Process) -> bool:
     """Attempt to terminate a process."""
     try:
-        print(f"  Terminating process: {proc.name()} (PID: {proc.pid})")
+        FormatCodes.print(f"  [dim](Terminating process:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
         proc.terminate()
         proc.wait(timeout=5)
         return True
     except psutil.TimeoutExpired:
-        print(f"  Process didn't terminate gracefully, killing: {proc.name()} (PID: {proc.pid})")
+        FormatCodes.print(
+            f"  [b|br:yellow](Process didn't terminate gracefully, killing:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
+        )
         try:
             proc.kill()
             return True
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):
-        print(f"  Access denied or process no longer exists: {proc.name()} (PID: {proc.pid})")
+        FormatCodes.print(
+            f"  [b|br:red](Access denied or process no longer exists:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
+        )
         return False
 
 
 def force_delete(path: Path) -> bool:
     """Force delete a file or directory, terminating processes if needed."""
-
-    if not path.exists():
-        print(f"Error: Path does not exist: {path}")
-        return False
-
-    print(f"\nAttempting to delete: {path}")
+    print()
 
     # TRY TO DELETE WITHOUT TERMINATING PROCESSES
     try:
@@ -158,65 +157,62 @@ def force_delete(path: Path) -> bool:
             path.unlink()
         else:
             shutil.rmtree(path)
-        print(f"✓ Successfully deleted: {path}")
+        FormatCodes.print(f"[b|br:green](✓ Successfully deleted:) [br:cyan]({path})")
         return True
     except PermissionError:
-        print("Permission denied. Searching for processes using this path...")
+        FormatCodes.print("[br:yellow]([b](Permission denied:) Searching for processes using this path...)")
     except OSError as e:
         # ON UNIX SYSTEMS, WE MIGHT GET DIFFERENT ERRORS
         if platform.system() != 'Windows':
-            print(f"Deletion blocked: {e}. Searching for processes using this path...")
+            FormatCodes.print(
+                f"[b|br:yellow](Deletion blocked:) [dim]({e})[br:yellow](. Searching for processes using this path...)"
+            )
         else:
-            print(f"Error during deletion: {e}")
+            FormatCodes.print(f"[b|br:red](Error during deletion:) [dim]({e})")
             return False
     except Exception as e:
-        print(f"Error during deletion: {e}")
+        FormatCodes.print(f"[b|br:red](Error during deletion:) [dim]({e})")
         return False
-
-    # [2] CHECK IF WE NEED ELEVATED PRIVILEGES
-    if platform.system() != 'Windows' and os.geteuid() != 0:  # type: ignore[unknown-attr]
-        print("\n⚠ Note: Running without root privileges. Some operations may fail.")
-        print("  Consider running with sudo for full functionality.\n")
 
     # FIND PROCESSES USING THE PATH
     processes = find_processes_using_path(path)
 
     if not processes:
-        print("No processes found using this path, but deletion still failed.")
+        FormatCodes.print("[br:yellow](No processes found using this path, but deletion still failed.)")
         if platform.system() == 'Windows':
-            print("The file may be locked by the system or you may need administrator privileges.")
+            FormatCodes.print("[dim](The file may be locked by the system or you may need administrator privileges.)")
         else:
-            print("The file may be locked by the system or you may need root privileges (sudo).")
+            FormatCodes.print("[dim](The file may be locked by the system or you may need root privileges (sudo).)")
         return False
 
-    print(f"\nFound {len(processes)} process(es) using this path:")
+    FormatCodes.print(f"\n[b](Found) [br:magenta]({len(processes)}) [b](process(es) using this path:)")
     for proc in processes:
         try:
-            print(f"  - {proc.name()} (PID: {proc.pid})")
+            FormatCodes.print(f"  [dim](•) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
 
     # CHECK FOR PROTECTED PROCESSES
     protected = [p for p in processes if is_protected_process(p)]
     if protected:
-        print("\n⚠ Warning: The following critical system processes are using this path:")
+        FormatCodes.print("\n[b|br:red](⚠ The following critical system processes are using this path:)")
         for proc in protected:
             try:
-                print(f"  - {proc.name()} (PID: {proc.pid})")
+                FormatCodes.print(f"  [dim](•) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
-        print("These processes will NOT be terminated for system safety.")
+        FormatCodes.print("[br:red](⮡ These processes will [b](NOT) be terminated for system safety.)")
         return False
 
     # TERMINATE NON-PROTECTED PROCESSES
-    print("\nTerminating processes...")
+    FormatCodes.print("\n[b](Terminating processes...)")
     terminated = []
     for proc in processes:
         if terminate_process(proc):
             terminated.append(proc)
 
     if not terminated:
-        print("Failed to terminate any processes.")
+        FormatCodes.print("[br:red](Failed to terminate any processes.)")
         return False
 
     # WAIT A MOMENT FOR FILE HANDLES TO BE RELEASED
@@ -228,12 +224,16 @@ def force_delete(path: Path) -> bool:
             path.unlink()
         else:
             shutil.rmtree(path)
-        print(f"\n✓ Successfully deleted: {path}")
+        FormatCodes.print(f"\n[b|br:green](✓ Successfully deleted:) [br:cyan]({path})\n")
         return True
     except Exception as e:
-        print(f"\n⨯ Failed to delete even after terminating processes: {e}")
-        if platform.system() != 'Windows' and os.geteuid() != 0:  # type: ignore[unknown-attr]
-            print("  Try running with sudo for elevated privileges.")
+        FormatCodes.print(f"\n[b|br:red](⨯ Failed to delete even after terminating processes:)\n"
+                          f"[br:red]({e})\n")
+        if not System.is_elevated:
+            if platform.system() == 'Windows':
+                FormatCodes.print("[dim|br:blue](ⓘ Try running with Administrator privileges.)\n")
+            else:
+                FormatCodes.print("[dim|br:blue](ⓘ Try running with sudo for elevated privileges.)\n")
         return False
 
 
@@ -249,34 +249,30 @@ def main():
         print_help()
         return
 
-    FormatCodes.print(
-        f"\n[b|bg:black]( {platform.system()} [in]( Force Delete Utility ))\n\n"
-        "[br:yellow]⚠ This script will terminate processes if needed.\n"
-        "  [dim](Critical system processes are protected.)[_c]\n"
+    FormatCodes.print(f"\n[b|bg:black]( {platform.system()} [in]( FORCE DELETE UTILITY ))")
+    Console.log_box_bordered(
+        "[br:yellow](This script will terminate processes if needed.)",
+        "[br:yellow](Critical system processes are protected.)",
+        border_style="dim|br:yellow",
     )
 
-    if len(target_path := "".join(ARGS.rem_path.values)) == 0:
-        target_path = Console.input(
-            "[b](Path to file/directory to delete > )",
-            validator=path_validator,
-        )
-    target_path = Path(target_path)
-
-    if not target_path.exists():
-        Console.fail(f"Path [br:cyan]({target_path}) does not exist!")
-
-    # CHECK PRIVILEGES
     if not System.is_elevated:
         if platform.system() == 'Windows':
-            FormatCodes.print("[br:yellow](⚠ Not running as Administrator. Some operations may fail.)\n")
+            FormatCodes.print("\n[br:yellow](⚠ Not running as Administrator. Some operations may fail.)")
         else:
             FormatCodes.print(
-                "[br:yellow](⚠ Not running as root. Some operations may fail.)\n"
-                "[dim|br:yellow](⮡ Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)\n"
+                "\n[br:yellow](⚠ Not running as root. Some operations may fail.)\n"
+                "  [dim|br:yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
             )
 
+    if len(target_path := "".join(ARGS.rem_path.values)) == 0:
+        target_path = Console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
+
+    if not (target_path := Path(target_path)).exists():
+        Console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
+
     if not ARGS.no_confirm.exists and not Console.confirm(
-            f"[b](Are you sure you want to delete) [br:cyan]({target_path})[b](?)",
+            f"\n[b](Are you sure you want to delete) [br:cyan]({target_path})[b](?)",
             default_is_yes=False,
     ):
         Console.exit("Deletion aborted.", start="\n", end="\n\n", exit_code=0)
