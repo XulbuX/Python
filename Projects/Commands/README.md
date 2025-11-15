@@ -106,7 +106,7 @@ The changes are now active, and you can run the files by typing their names (*e.
 ## What each script (*command*) does
 
 Here's a brief overview of what each script does and how to use it.<br>
-**⇾** Each process can be cancelled by pressing `Ctrl(⌘) + C`.
+**⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
 
 > [!NOTE]
 > If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.<br>

@@ -290,6 +290,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print()
+        FormatCodes.print("[b|br:red](⨯ Canceled by user.)\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")
