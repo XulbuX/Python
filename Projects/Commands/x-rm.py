@@ -127,13 +127,13 @@ def is_protected_process(proc: psutil.Process) -> bool:
 def terminate_process(proc: psutil.Process) -> bool:
     """Attempt to terminate a process."""
     try:
-        FormatCodes.print(f"  [dim](Terminating process:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
+        FormatCodes.print(f"  [b](Terminating process:) [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
         proc.terminate()
         proc.wait(timeout=5)
         return True
     except psutil.TimeoutExpired:
         FormatCodes.print(
-            f"  [b|br:yellow](Process didn't terminate gracefully, killing:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
+            f"  [b|br:yellow](⚠ Process didn't terminate gracefully, killing:) [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
         )
         try:
             proc.kill()
@@ -142,7 +142,7 @@ def terminate_process(proc: psutil.Process) -> bool:
             return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):
         FormatCodes.print(
-            f"  [b|br:red](Access denied or process no longer exists:) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
+            f"  [b|br:red](⨯ Access denied or process no longer exists:) [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))"
         )
         return False
 
@@ -157,51 +157,57 @@ def force_delete(path: Path) -> bool:
             path.unlink()
         else:
             shutil.rmtree(path)
-        FormatCodes.print(f"[b|br:green](✓ Successfully deleted:) [br:cyan]({path})")
+        FormatCodes.print(f"[b|br:green](✓ Successfully deleted:) [br:cyan]({path})\n")
         return True
     except PermissionError:
-        FormatCodes.print("[br:yellow]([b](Permission denied:) Searching for processes using this path...)")
+        FormatCodes.print("[br:yellow][b](⚠ Permission denied!)\n"
+                          "  Searching for processes using this path...[_]")
     except OSError as e:
         # ON UNIX SYSTEMS, WE MIGHT GET DIFFERENT ERRORS
         if platform.system() != 'Windows':
-            FormatCodes.print(
-                f"[b|br:yellow](Deletion blocked:) [dim]({e})[br:yellow](. Searching for processes using this path...)"
-            )
+            FormatCodes.print(f"[br:yellow][b](⚠ Deletion blocked:) {e}\n"
+                              "  Searching for processes using this path...[_]")
         else:
-            FormatCodes.print(f"[b|br:red](Error during deletion:) [dim]({e})")
+            FormatCodes.print(f"[br:red][b](⨯ Error during deletion:) {e}[_]\n")
             return False
     except Exception as e:
-        FormatCodes.print(f"[b|br:red](Error during deletion:) [dim]({e})")
+        FormatCodes.print(f"[br:red][b](⨯ Error during deletion:) {e}[_]\n")
         return False
 
     # FIND PROCESSES USING THE PATH
     processes = find_processes_using_path(path)
 
     if not processes:
-        FormatCodes.print("[br:yellow](No processes found using this path, but deletion still failed.)")
+        FormatCodes.print("[b|br:red](⨯ No processes found using this path, but deletion still failed.)\n")
         if platform.system() == 'Windows':
-            FormatCodes.print("[dim](The file may be locked by the system or you may need administrator privileges.)")
+            FormatCodes.print(
+                f"[dim|br:blue](ⓘ [i](The {'file' if path.is_file() else 'directory'} may be locked by the system"
+                f"{'' if System.is_elevated else ' or you may need administrator privileges'}.))\n"
+            )
         else:
-            FormatCodes.print("[dim](The file may be locked by the system or you may need root privileges (sudo).)")
+            FormatCodes.print(
+                f"[dim|br:blue](ⓘ [i](The {'file' if path.is_file() else 'directory'} may be locked by the system"
+                f"{'' if System.is_elevated else ' or you may need root privileges (sudo)'}.))\n"
+            )
         return False
 
-    FormatCodes.print(f"\n[b](Found) [br:magenta]({len(processes)}) [b](process(es) using this path:)")
+    FormatCodes.print(f"\n[b](Found [magenta]({(l := len(processes))}) process{'' if l == 1 else 'es'} using this path:)")
     for proc in processes:
         try:
-            FormatCodes.print(f"  [dim](•) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
+            FormatCodes.print(f"  [dim](•) [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
 
     # CHECK FOR PROTECTED PROCESSES
     protected = [p for p in processes if is_protected_process(p)]
     if protected:
-        FormatCodes.print("\n[b|br:red](⚠ The following critical system processes are using this path:)")
+        FormatCodes.print("\n[b|br:red](⯃ The following critical system processes are using this path:)")
         for proc in protected:
             try:
-                FormatCodes.print(f"  [dim](•) [br:magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
+                FormatCodes.print(f"  [dim](•) [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
-        FormatCodes.print("[br:red](⮡ These processes will [b](NOT) be terminated for system safety.)")
+        FormatCodes.print("  [br:red](These processes will [b](NOT) be terminated for system safety.)\n")
         return False
 
     # TERMINATE NON-PROTECTED PROCESSES
@@ -231,9 +237,9 @@ def force_delete(path: Path) -> bool:
                           f"[br:red]({e})\n")
         if not System.is_elevated:
             if platform.system() == 'Windows':
-                FormatCodes.print("[dim|br:blue](ⓘ Try running with Administrator privileges.)\n")
+                FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with Administrator privileges.))\n")
             else:
-                FormatCodes.print("[dim|br:blue](ⓘ Try running with sudo for elevated privileges.)\n")
+                FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with sudo for elevated privileges.))\n")
         return False
 
 
