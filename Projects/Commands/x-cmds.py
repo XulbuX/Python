@@ -188,7 +188,10 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         github_files = {}
         for item in response.json():
             if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
-                github_files[item["name"]] = item["download_url"]
+                github_files[item["name"]] = {
+                    "download_url": item["download_url"],
+                    "sha": item["sha"]  # GITHUB'S SHA HASH OF THE FILE
+                }
 
         # CHECK FOR NEW FILES
         if GITHUB_DIFFS["check_for_new_cmds"]:
@@ -196,27 +199,27 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                 if github_file not in local_files:
                     cmd_name = os.path.splitext(github_file)[0]
                     result["new_cmds"].append(cmd_name)
-                    result["download_urls"][github_file] = github_files[github_file]
+                    result["download_urls"][github_file] = github_files[github_file]["download_url"]
 
         # CHECK FOR UPDATED FILES
         if GITHUB_DIFFS["check_for_cmd_updates"]:
             for local_file in local_files:
                 if local_file in github_files:
                     try:
-                        # DOWNLOAD GITHUB FILE CONTENT
-                        gh_response = requests.get(github_files[local_file], timeout=10)
-                        gh_response.raise_for_status()
-                        github_content = gh_response.text
-
-                        # READ LOCAL FILE CONTENT
-                        with open(os.path.join(Path.script_dir, local_file), "r", encoding="utf-8") as f:
+                        # READ LOCAL FILE CONTENT AND COMPUTE SHA
+                        local_path = os.path.join(Path.script_dir, local_file)
+                        with open(local_path, "rb") as f:
                             local_content = f.read()
 
-                        # COMPARE CONTENT HASHES
-                        if hashlib.md5(github_content.encode()).hexdigest() != hashlib.md5(local_content.encode()).hexdigest():
+                        # GITHUB USES: "blob " + filesize + "\0" + content
+                        # THEN SHA1 HASH OF THAT
+                        local_sha = hashlib.sha1(f"blob {len(local_content)}\0".encode() + local_content).hexdigest()
+
+                        # COMPARE WITH GITHUB'S SHA
+                        if local_sha != github_files[local_file]["sha"]:
                             cmd_name = os.path.splitext(local_file)[0]
                             result["cmd_updates"].append(cmd_name)
-                            result["download_urls"][local_file] = github_files[local_file]
+                            result["download_urls"][local_file] = github_files[local_file]["download_url"]
 
                     except Exception:
                         pass  # SKIP FILES THAT CAN'T BE COMPARED
