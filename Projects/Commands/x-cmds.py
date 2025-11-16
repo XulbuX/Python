@@ -308,7 +308,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             success_count += 1
         except Exception as e:
             FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
-    
+
     color = 'br:green' if success_count == len(downloads) else 'br:red' if success_count == 0 else 'br:yellow'
     FormatCodes.print(f"\nSuccessfully downloaded & installed [{color}]([b]({success_count})/{len(downloads)}) command{'s' if len(downloads) > 1 else ''}!\n\n")
 
