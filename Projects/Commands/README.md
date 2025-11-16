@@ -424,10 +424,11 @@ x-calc --help
 This command outputs a list of all custom Python commands in the current directory,<br>
 with a short description (*if provided*) and their params (*if found*).
 
-To check if your local files are up-to-date with the latest versions on GitHub and if there are any new commands available, use the `-u` `--update-check` option:
+To check new commands / command-updates and optionally directly download and install them, use the `-u` `--update` option:
 ```bash
-x-cmds --update-check
+x-cmds --update
 ```
+⇾ To adjust some update-checking-options, you can edit the `GITHUB_DIFFS` variable, inside the script file.
 
 <br>
 

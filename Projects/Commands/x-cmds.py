@@ -20,7 +20,7 @@ GITHUB_DIFFS = {
 }
 
 ARGS = Console.get_args(find_args={
-    "update_check": ["-u", "--update-check"],
+    "update_check": ["-u", "--update"],
 })
 
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
