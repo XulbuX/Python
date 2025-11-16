@@ -298,13 +298,13 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
-            FormatCodes.print(f"[br:green](✓ Downloaded [b]({filename}))")
+            FormatCodes.print(f"[dim|br:green](✓ Downloaded [b]({filename}))")
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
             if sys.platform != "win32":
                 os.chmod(file_path, 0o755)
 
-            FormatCodes.print(f"[dim|br:green](✓ Installed [b]({cmd_name}))")
+            FormatCodes.print(f"[br:green](✓ Installed [b]({cmd_name}))")
             success_count += 1
         except Exception as e:
             FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
