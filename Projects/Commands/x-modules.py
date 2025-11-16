@@ -42,20 +42,6 @@ STDLIB_MODULES = {
 }
 
 
-def animate() -> None:
-    """Display loading animation while scanning for modules."""
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]",
-        "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]", "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not SCAN_DONE:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
-
-
 def print_help():
     help_text = """\
 [b|in|bg:black]( Modules - List all imported modules across scripts )
@@ -78,6 +64,20 @@ def print_help():
   [br:green](modules) [br:blue](--json)             [dim](# [i](Output as JSON format))
 """
     FormatCodes.print(help_text)
+
+
+def animate() -> None:
+    """Display loading animation while scanning for modules."""
+    frames, i = [
+        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]",
+        "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]", "[b]·· [_b]", "[b]·  [_b]"
+    ], 0
+    max_frame_len = max(len(frame) for frame in frames)
+    while not SCAN_DONE:
+        frame = frames[i % len(frames)]
+        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
+        time.sleep(0.2)
+        i += 1
 
 
 def extract_imports(file_path: str) -> set[str]:
