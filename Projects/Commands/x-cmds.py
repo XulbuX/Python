@@ -304,13 +304,13 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             if sys.platform != "win32":
                 os.chmod(file_path, 0o755)
 
-            FormatCodes.print(f"[br:green](✓ Installed [b]({cmd_name}))")
+            FormatCodes.print(f"[dim|br:green](✓ Installed [b]({cmd_name}))")
             success_count += 1
         except Exception as e:
             FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
     
     color = 'br:green' if success_count == len(downloads) else 'br:red' if success_count == 0 else 'br:yellow'
-    FormatCodes.print(f"\nSuccessfully downloaded & installed [{color}]([b]({success_count})[dim](/){len(downloads)}) command{'s' if len(downloads) > 1 else ''}!\n\n")
+    FormatCodes.print(f"\nSuccessfully downloaded & installed [{color}]([b]({success_count})/{len(downloads)}) command{'s' if len(downloads) > 1 else ''}!\n\n")
 
 
 def github_diffs_str(github_diffs: GitHubDiffs) -> str:
