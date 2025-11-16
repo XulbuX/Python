@@ -27,6 +27,27 @@ ARGS = Console.get_args(find_args={
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
 SYS_ARGV = re.compile(r"sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?", re.MULTILINE)
 DESC = re.compile(r"(?i)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1", re.DOTALL)
+PYTHON_SHEBANG = re.compile(r"(?i)^\s*#!.*python")
+
+
+def is_python_file(filepath: str) -> bool:
+    """Check if a file is a Python file by looking for shebang line."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            first_line = f.readline()
+            return bool(PYTHON_SHEBANG.match(first_line))
+    except Exception:
+        return False
+
+
+def get_python_files() -> set[str]:
+    """Get all Python files in the script directory by checking shebang lines."""
+    python_files = set()
+    for filename in os.listdir(Path.script_dir):
+        file_path = os.path.join(Path.script_dir, filename)
+        if os.path.isfile(file_path) and is_python_file(file_path):
+            python_files.add(filename)
+    return python_files
 
 
 def animate() -> None:
@@ -116,20 +137,19 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]]) -> str:
 
 
 def get_commands_str(python_files: set[str]) -> str:
-    i, commands = 0, ""
+    i, cmds = 0, ""
 
     for i, f in enumerate(sorted(python_files), 1):
-        filename, _ = os.path.splitext(f)
+        cmd_title_len = len(str(i)) + len(cmd_name := os.path.splitext(f)[0]) + 4
+        cmds += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
         abs_path = os.path.join(Path.script_dir, f)
-        cmd_title_len = len(str(i)) + len(filename) + 4
-        commands += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {filename} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
         sys_argv = None
 
         try:
             with open(abs_path, "r", encoding="utf-8") as file:
                 content = file.read()
                 if desc := DESC.match(content):
-                    commands += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
+                    cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
                 args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
                 sys_argv = SYS_ARGV.findall(content)
         except Exception:
@@ -142,7 +162,7 @@ def get_commands_str(python_files: set[str]) -> str:
                 else:
                     find_args = get_var_val(abs_path, args_var)
                 if find_args and isinstance(find_args, dict):
-                    commands += arguments_desc(find_args)
+                    cmds += arguments_desc(find_args)
             except Exception:
                 pass
         elif sys_argv:
@@ -151,11 +171,11 @@ def get_commands_str(python_files: set[str]) -> str:
                 arg = arg.strip()
                 if arg.startswith("["):
                     find_args.update(parse_args_comment(arg))
-            commands += arguments_desc(find_args)
+            cmds += arguments_desc(find_args)
 
-        commands += "\n\n"
+        cmds += "\n\n"
 
-    return commands
+    return cmds
 
 
 class GitHubDiffs(TypedDict):
@@ -188,26 +208,34 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         github_files = {}
         for item in response.json():
             if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
-                github_files[item["name"]] = {
+                cmd_name = os.path.splitext(item["name"])[0]
+                github_files[cmd_name] = {
+                    "filename": item["name"],
                     "download_url": item["download_url"],
-                    "sha": item["sha"]  # GITHUB'S SHA HASH OF THE FILE
+                    "sha": item["sha"],
                 }
+        
+        local_cmd_names = {os.path.splitext(f)[0] for f in local_files}
 
         # CHECK FOR NEW FILES
         if GITHUB_DIFFS["check_for_new_cmds"]:
-            for github_file in github_files.keys():
-                if github_file not in local_files:
-                    cmd_name = os.path.splitext(github_file)[0]
+            for cmd_name in github_files.keys():
+                if cmd_name not in local_cmd_names:
                     result["new_cmds"].append(cmd_name)
-                    result["download_urls"][github_file] = github_files[github_file]["download_url"]
+                    # STORE WITH FILENAME (INCLUDING EXTENSION) AS KEY
+                    result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name]["download_url"]
 
         # CHECK FOR UPDATED FILES
         if GITHUB_DIFFS["check_for_cmd_updates"]:
-            for local_file in local_files:
-                if local_file in github_files:
+            # CREATE A MAPPING FROM CMD NAME TO ACTUAL FILENAME
+            local_file_map = {os.path.splitext(f)[0]: f for f in local_files}
+            
+            for cmd_name in local_cmd_names:
+                if cmd_name in github_files:
                     try:
                         # READ LOCAL FILE CONTENT AND COMPUTE SHA
-                        local_path = os.path.join(Path.script_dir, local_file)
+                        local_filename = local_file_map[cmd_name]
+                        local_path = os.path.join(Path.script_dir, local_filename)
                         with open(local_path, "rb") as f:
                             local_content = f.read()
 
@@ -216,10 +244,10 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                         local_sha = hashlib.sha1(f"blob {len(local_content)}\0".encode() + local_content).hexdigest()
 
                         # COMPARE WITH GITHUB'S SHA
-                        if local_sha != github_files[local_file]["sha"]:
-                            cmd_name = os.path.splitext(local_file)[0]
+                        if local_sha != github_files[cmd_name]["sha"]:
                             result["cmd_updates"].append(cmd_name)
-                            result["download_urls"][local_file] = github_files[local_file]["download_url"]
+                            # STORE WITH FILENAME (INCLUDING EXTENSION) AS KEY
+                            result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name]["download_url"]
 
                     except Exception:
                         pass  # SKIP FILES THAT CAN'T BE COMPARED
@@ -257,19 +285,24 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
 
-            file_path = os.path.join(Path.script_dir, filename)
+            cmd_name = os.path.splitext(filename)[0]
+
+            # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
+            if sys.platform == "win32":
+                file_path = os.path.join(Path.script_dir, filename)
+            else:
+                file_path = os.path.join(Path.script_dir, cmd_name)
+
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
             FormatCodes.print(f"[br:green]✓ Downloaded [b]{filename}[_]")
 
-            # REMOVE FILE-EXTENSION AND MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
+            # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
             if sys.platform != "win32":
-                new_file_path = os.path.splitext(file_path)[0]
-                os.rename(file_path, new_file_path)
-                os.chmod(new_file_path, 0o755)
+                os.chmod(file_path, 0o755)
 
-            FormatCodes.print(f"[br:green]✓ Installed [b]({os.path.splitext(filename)[0]})")
+            FormatCodes.print(f"[br:green]✓ Installed [b]({cmd_name})")
             success_count += 1
         except Exception as e:
             FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
@@ -305,7 +338,7 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
 def main() -> None:
     global FETCHED_GITHUB
 
-    python_files = {f for f in os.listdir(Path.script_dir) if f.endswith((".py", ".pyw"))}
+    python_files = get_python_files()
 
     FormatCodes.print(get_commands_str(python_files))
 
