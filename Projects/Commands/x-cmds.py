@@ -214,7 +214,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                     "download_url": item["download_url"],
                     "sha": item["sha"],
                 }
-        
+
         local_cmd_names = {os.path.splitext(f)[0] for f in local_files}
 
         # CHECK FOR NEW FILES
@@ -229,14 +229,14 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         if GITHUB_DIFFS["check_for_cmd_updates"]:
             # CREATE A MAPPING FROM CMD NAME TO ACTUAL FILENAME
             local_file_map = {os.path.splitext(f)[0]: f for f in local_files}
-            
+
             for cmd_name in local_cmd_names:
                 if cmd_name in github_files:
                     try:
                         # READ LOCAL FILE CONTENT AND COMPUTE SHA
                         local_filename = local_file_map[cmd_name]
                         local_path = os.path.join(Path.script_dir, local_filename)
-                        
+
                         # READ AS TEXT AND NORMALIZE TO LF (UNIX) LINE ENDINGS LIKE GITHUB
                         with open(local_path, "r", encoding="utf-8", newline="") as f:
                             local_content = f.read().replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
@@ -257,7 +257,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     except Exception as e:
         print(f"DEBUG OUTER ERROR: {e}")
         pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
-    
+
     # FILTER DOWNLOAD URLS BASED ON SETTINGS
     files_to_download = {}
     for filename, url in result["download_urls"].items():
