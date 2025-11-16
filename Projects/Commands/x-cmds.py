@@ -21,7 +21,6 @@ GITHUB_DIFFS = {
 
 ARGS = Console.get_args(find_args={
     "update_check": ["-u", "--update-check"],
-    "download": ["-d", "--download"],
 })
 
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
@@ -277,7 +276,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
     if not len(downloads) > 0:
         return
 
-    if not ARGS.download.exists and not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
+    if not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
         FormatCodes.print(f"[dim|magenta](⨯ Not updating from [b]({GITHUB_DIFFS['url']}))\n\n")
         return
 
@@ -345,7 +344,7 @@ def main() -> None:
 
     FormatCodes.print(get_commands_str(python_files))
 
-    if ARGS.update_check.exists or ARGS.download.exists:
+    if ARGS.update_check.exists:
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
 
