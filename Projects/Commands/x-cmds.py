@@ -233,7 +233,7 @@ def github_diffs_str(github_diffs: dict[str, list[str]]) -> str:
     if num_updated_cmds:
         diffs += f"\n\n[b](Updated Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["updated_cmds"])
 
-    return f"{diffs}\n\n"
+    return f"{diffs}\n\n[dim|br:blue](ⓘ [i](Get the latest versions on [b]({GITHUB_DIFFS['url']})))\n\n"
 
 
 def main() -> None:
