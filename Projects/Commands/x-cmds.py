@@ -2,7 +2,7 @@
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from xulbux import FormatCodes, Console, String, Path
-from typing import Optional, Any, cast
+from typing import TypedDict, Optional, Any, cast
 import importlib.util
 import threading
 import requests
@@ -15,12 +15,13 @@ import re
 
 GITHUB_DIFFS = {
     "url": "https://github.com/XulbuX/Python/tree/main/Projects/Commands",
-    "alert_new_cmds": True,
-    "alert_updated_cmds": True,
+    "check_for_new_cmds": True,
+    "check_for_cmd_updates": True,
 }
 
 ARGS = Console.get_args(find_args={
     "update_check": ["-u", "--update-check"],
+    "download": ["-d", "--download"],
 })
 
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
@@ -157,9 +158,15 @@ def get_commands_str(python_files: set[str]) -> str:
     return commands
 
 
-def get_github_diffs(local_files: set[str]) -> dict[str, list[str]]:
+class GitHubDiffs(TypedDict):
+    new_cmds: list[str]
+    cmd_updates: list[str]
+    download_urls: dict[str, str]
+
+
+def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     """Check for new files and updated files on GitHub compared to local script-directory."""
-    result = {"new_cmds": [], "updated_cmds": []}
+    result: GitHubDiffs = {"new_cmds": [], "cmd_updates": [], "download_urls": {}}
 
     try:
         # PARSE THE URL TO EXTRACT REPO INFO
@@ -184,56 +191,110 @@ def get_github_diffs(local_files: set[str]) -> dict[str, list[str]]:
                 github_files[item["name"]] = item["download_url"]
 
         # CHECK FOR NEW FILES
-        for github_file in github_files.keys():
-            if github_file not in local_files:
-                result["new_cmds"].append(os.path.splitext(github_file)[0])
+        if GITHUB_DIFFS["check_for_new_cmds"]:
+            for github_file in github_files.keys():
+                if github_file not in local_files:
+                    cmd_name = os.path.splitext(github_file)[0]
+                    result["new_cmds"].append(cmd_name)
+                    result["download_urls"][github_file] = github_files[github_file]
 
         # CHECK FOR UPDATED FILES
-        for local_file in local_files:
-            if local_file in github_files:
-                try:
-                    # DOWNLOAD GITHUB FILE CONTENT
-                    gh_response = requests.get(github_files[local_file], timeout=10)
-                    gh_response.raise_for_status()
-                    github_content = gh_response.text
+        if GITHUB_DIFFS["check_for_cmd_updates"]:
+            for local_file in local_files:
+                if local_file in github_files:
+                    try:
+                        # DOWNLOAD GITHUB FILE CONTENT
+                        gh_response = requests.get(github_files[local_file], timeout=10)
+                        gh_response.raise_for_status()
+                        github_content = gh_response.text
 
-                    # READ LOCAL FILE CONTENT
-                    with open(os.path.join(Path.script_dir, local_file), "r", encoding="utf-8") as f:
-                        local_content = f.read()
+                        # READ LOCAL FILE CONTENT
+                        with open(os.path.join(Path.script_dir, local_file), "r", encoding="utf-8") as f:
+                            local_content = f.read()
 
-                    # COMPARE CONTENT HASHES
-                    if hashlib.md5(github_content.encode()).hexdigest() != hashlib.md5(local_content.encode()).hexdigest():
-                        result["updated_cmds"].append(os.path.splitext(local_file)[0])
+                        # COMPARE CONTENT HASHES
+                        if hashlib.md5(github_content.encode()).hexdigest() != hashlib.md5(local_content.encode()).hexdigest():
+                            cmd_name = os.path.splitext(local_file)[0]
+                            result["cmd_updates"].append(cmd_name)
+                            result["download_urls"][local_file] = github_files[local_file]
 
-                except Exception:
-                    pass  # SKIP FILES THAT CAN'T BE COMPARED
+                    except Exception:
+                        pass  # SKIP FILES THAT CAN'T BE COMPARED
 
     except Exception:
         pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
+    
+    # FILTER DOWNLOAD URLS BASED ON SETTINGS
+    files_to_download = {}
+    for filename, url in result["download_urls"].items():
+        cmd_name = os.path.splitext(filename)[0]
+        if (GITHUB_DIFFS["check_for_new_cmds"] and cmd_name in result["new_cmds"]) or \
+           (GITHUB_DIFFS["check_for_cmd_updates"] and cmd_name in result["cmd_updates"]):
+            files_to_download[filename] = url
+    result["download_urls"] = files_to_download
 
     return result
 
 
-def github_diffs_str(github_diffs: dict[str, list[str]]) -> str:
-    num_new_cmds = len(github_diffs["new_cmds"]) if GITHUB_DIFFS["alert_new_cmds"] else 0
-    num_updated_cmds = len(github_diffs["updated_cmds"]) if GITHUB_DIFFS["alert_updated_cmds"] else 0
+def download_files(github_diffs: GitHubDiffs) -> None:
+    """Download new and updated files from GitHub."""
+    downloads = github_diffs["download_urls"].items()
 
-    if not (num_new_cmds > 0 or num_updated_cmds > 0):
-        return "[dim|br:blue](ⓘ [i](You have all available command-files and they're all up-to-date.))\n\n"
+    if not len(downloads) > 0:
+        return
+
+    if not ARGS.download.exists and not Console.confirm("\n[b](Download these updates?)", default_is_yes=True):
+        FormatCodes.print(f"\n[dim|magenta](⨯ Not updating from [b]({GITHUB_DIFFS['url']}))\n\n")
+        return
+
+    # DOWNLOAD FILES
+    success_count = 0
+    for filename, url in github_diffs["download_urls"].items():
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+
+            file_path = os.path.join(Path.script_dir, filename)
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(response.text)
+
+            # REMOVE FILE-EXTENSION AND MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
+            if sys.platform != "win32":
+                new_file_path = os.path.splitext(file_path)[0]
+                os.rename(file_path, new_file_path)
+                os.chmod(new_file_path, 0o755)
+
+            FormatCodes.print(f"[br:green]✓ Downloaded [b]{filename}[_]")
+            success_count += 1
+        except Exception as e:
+            FormatCodes.print(f"[br:red]⨯ Failed to download [b]{filename}[_b] [dim]/({e})[_]")
+
+    FormatCodes.print(f"\n[br:green](Successfully downloaded {success_count}/{len(downloads)} file{'s' if len(downloads) > 1 else ''}!)\n")
+
+
+def github_diffs_str(github_diffs: GitHubDiffs) -> str:
+    num_new_cmds = len(github_diffs["new_cmds"])
+    num_cmd_updates = len(github_diffs["cmd_updates"])
+
+    if not (num_new_cmds > 0 or num_cmd_updates > 0):
+        return (
+            "[dim|br:blue](ⓘ [i](You have all available command-files"
+            f"{' and they\'re all up-to-date' if GITHUB_DIFFS['check_for_cmd_updates'] else ''}.))\n\n"
+        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[dim|br:blue](ⓘ [i](All your command-files are up-to-date.))\n\n"
 
     diffs_title_len = len(title := (
         (f"There {'is' if num_new_cmds == 1 else 'are'} {num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}" if num_new_cmds else "")
-        + (" and" if (num_new_cmds and num_updated_cmds) else " available." if num_new_cmds else "You have" if num_updated_cmds else "")
-        + (f" {num_updated_cmds} command-update{'' if num_updated_cmds == 1 else 's'} available." if num_updated_cmds else "")
+        + (" and" if (num_new_cmds and num_cmd_updates) else " available." if num_new_cmds else "You have" if num_cmd_updates else "")
+        + (f" {num_cmd_updates} command-update{'' if num_cmd_updates == 1 else 's'} available." if num_cmd_updates else "")
     )) + 5
     diffs = f"[b|br:blue|bg:br:blue]([[black]⇣[br:blue]][in|black]( {title} [bg:black]{'━' * (Console.w - diffs_title_len)}))"
 
     if num_new_cmds:
         diffs += f"\n\n[b](New Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["new_cmds"])
-    if num_updated_cmds:
-        diffs += f"\n\n[b](Updated Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["updated_cmds"])
+    if num_cmd_updates:
+        diffs += f"\n\n[b](Command Updates:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["cmd_updates"])
 
-    return f"{diffs}\n\n[dim|br:blue](ⓘ [i](Get the latest versions on [b]({GITHUB_DIFFS['url']})))\n\n"
+    return diffs
 
 
 def main() -> None:
@@ -243,7 +304,7 @@ def main() -> None:
 
     FormatCodes.print(get_commands_str(python_files))
 
-    if ARGS.update_check.exists:
+    if ARGS.update_check.exists or ARGS.download.exists:
         animation_thread = threading.Thread(target=animate)
         animation_thread.start()
 
@@ -255,6 +316,8 @@ def main() -> None:
             print("\r   \r", end="")
 
         FormatCodes.print(github_diffs_str(github_diffs))
+
+        download_files(github_diffs)
 
 
 if __name__ == "__main__":
