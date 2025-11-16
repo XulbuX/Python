@@ -236,10 +236,12 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                         # READ LOCAL FILE CONTENT AND COMPUTE SHA
                         local_filename = local_file_map[cmd_name]
                         local_path = os.path.join(Path.script_dir, local_filename)
-                        with open(local_path, "rb") as f:
-                            local_content = f.read()
+                        
+                        # READ AS TEXT AND NORMALIZE TO LF (UNIX) LINE ENDINGS LIKE GITHUB
+                        with open(local_path, "r", encoding="utf-8", newline="") as f:
+                            local_content = f.read().replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
 
-                        # GITHUB USES: "blob " + filesize + "\0" + content
+                        # GITHUB USES: "blob " + FILESIZE + "\0" + CONTENT
                         # THEN SHA1 HASH OF THAT
                         local_sha = hashlib.sha1(f"blob {len(local_content)}\0".encode() + local_content).hexdigest()
 
@@ -252,7 +254,8 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                     except Exception:
                         pass  # SKIP FILES THAT CAN'T BE COMPARED
 
-    except Exception:
+    except Exception as e:
+        print(f"DEBUG OUTER ERROR: {e}")
         pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
     
     # FILTER DOWNLOAD URLS BASED ON SETTINGS
