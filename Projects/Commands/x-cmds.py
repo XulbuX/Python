@@ -243,8 +243,8 @@ def download_files(github_diffs: GitHubDiffs) -> None:
     if not len(downloads) > 0:
         return
 
-    if not ARGS.download.exists and not Console.confirm("\n[b](Download these updates?)", default_is_yes=True):
-        FormatCodes.print(f"\n[dim|magenta](⨯ Not updating from [b]({GITHUB_DIFFS['url']}))\n\n")
+    if not ARGS.download.exists and not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
+        FormatCodes.print(f"[dim|magenta](⨯ Not updating from [b]({GITHUB_DIFFS['url']}))\n\n")
         return
 
     # DOWNLOAD FILES
@@ -258,18 +258,20 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
+            FormatCodes.print(f"[br:green]✓ Downloaded [b]{filename}[_]")
+
             # REMOVE FILE-EXTENSION AND MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
             if sys.platform != "win32":
                 new_file_path = os.path.splitext(file_path)[0]
                 os.rename(file_path, new_file_path)
                 os.chmod(new_file_path, 0o755)
 
-            FormatCodes.print(f"[br:green]✓ Downloaded [b]{filename}[_]")
+            FormatCodes.print(f"[br:green]✓ Installed [b]({os.path.splitext(filename)[0]})")
             success_count += 1
         except Exception as e:
-            FormatCodes.print(f"[br:red]⨯ Failed to download [b]{filename}[_b] [dim]/({e})[_]")
+            FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
 
-    FormatCodes.print(f"\n[br:green](Successfully downloaded {success_count}/{len(downloads)} file{'s' if len(downloads) > 1 else ''}!)\n")
+    FormatCodes.print(f"\n[br:green](Successfully downloaded & installed {success_count}/{len(downloads)} command{'s' if len(downloads) > 1 else ''}!)\n\n")
 
 
 def github_diffs_str(github_diffs: GitHubDiffs) -> str:
