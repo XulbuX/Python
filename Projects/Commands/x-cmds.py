@@ -310,7 +310,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
     
     color = 'br:green' if success_count == len(downloads) else 'br:red' if success_count == 0 else 'br:yellow'
-    FormatCodes.print(f"\n[b](Successfully downloaded & installed [{color}]({success_count}[dim](/){len(downloads)}) command{'s' if len(downloads) > 1 else ''}!)\n\n")
+    FormatCodes.print(f"\nSuccessfully downloaded & installed [{color}]([b]({success_count})[dim](/){len(downloads)}) command{'s' if len(downloads) > 1 else ''}!\n\n")
 
 
 def github_diffs_str(github_diffs: GitHubDiffs) -> str:
