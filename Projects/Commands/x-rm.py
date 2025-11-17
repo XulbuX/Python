@@ -48,7 +48,7 @@ def print_help():
 
 [b](Examples:)
   [br:green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
-  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file skipping confirmation))
+  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -259,7 +259,7 @@ def main():
 
     FormatCodes.print(f"\n[b|bg:black]( {platform.system()} [in]( FORCE DELETE UTILITY ))")
     Console.log_box_bordered(
-        "[br:yellow](This script will terminate processes if needed.)",
+        "[br:yellow](This will terminate processes if needed.)",
         "[br:yellow](Critical system processes are protected.)",
         border_style="dim|br:yellow",
     )
