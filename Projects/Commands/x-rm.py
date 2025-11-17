@@ -26,7 +26,7 @@ PROTECTED_PROCESSES_UNIX = {
 
 ARGS = Console.get_args(
     {
-        "rem_path": "before",
+        "rm_path": "before",
         "no_confirm": ["-nc", "--no-confirm"],
         "help": ["-h", "--help"],
     },
@@ -273,7 +273,7 @@ def main():
                 "  [dim|br:yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
             )
 
-    if len(target_path := "".join(ARGS.rem_path.values)) == 0:
+    if len(target_path := "".join(ARGS.rm_path.values)) == 0:
         target_path = Console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
 
     if not (target_path := Path(target_path)).exists():
