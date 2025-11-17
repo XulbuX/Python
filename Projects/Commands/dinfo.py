@@ -133,7 +133,7 @@ def is_gitignored(file_path: str, patterns: list) -> bool:
 
 
 def get_dir_files(directory: str) -> list:
-    """Recursively get the paths of all files in a directory."""
+    """Get the paths of all files in a directory, optionally recursively."""
     files = []
     gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
 
@@ -146,9 +146,12 @@ def get_dir_files(directory: str) -> list:
                 dirs.clear()
                 continue
 
-            dirs[:] = [d for d in dirs if not should_skip_path(os.path.join(root, d))]
-            if ARGS.apply_gitignore.exists:
-                dirs[:] = [d for d in dirs if not is_gitignored(os.path.join(root, d), gitignore_patterns)]
+            if not ARGS.recursive.exists:
+                dirs.clear()
+            else:
+                dirs[:] = [d for d in dirs if not should_skip_path(os.path.join(root, d))]
+                if ARGS.apply_gitignore.exists:
+                    dirs[:] = [d for d in dirs if not is_gitignored(os.path.join(root, d), gitignore_patterns)]
 
             for filename in filenames:
                 file_path = os.path.join(root, filename)
