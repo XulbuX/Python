@@ -13,15 +13,15 @@ import os
 ######################### CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED #########################
 
 PROTECTED_PROCESSES_WINDOWS = {
-    'system', 'smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'lsass.exe', 'winlogon.exe', 'dwm.exe', 'explorer.exe',
-    'svchost.exe'
+    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "winlogon.exe", "dwm.exe", "explorer.exe",
+    "svchost.exe"
 }
 PROTECTED_PROCESSES_MACOS = {
-    'WindowServer', 'Finder', 'Dock', 'SystemUIServer', 'loginwindow', 'kernel_task', 'UserEventAgent', 'coreaudiod', 'configd'
+    "WindowServer", "Finder", "Dock", "SystemUIServer", "loginwindow", "kernel_task", "UserEventAgent", "coreaudiod", "configd"
 }
 PROTECTED_PROCESSES_UNIX = {
-    'systemd', 'init', 'kthreadd', 'rcu_sched', 'migration', 'watchdog', 'systemd-journald', 'systemd-udevd', 'dbus-daemon',
-    'NetworkManager', 'sshd', 'cron', 'rsyslogd', 'login', 'bash', 'sh', 'zsh', 'fish', 'kernel', 'launchd'
+    "systemd", "init", "kthreadd", "rcu_sched", "migration", "watchdog", "systemd-journald", "systemd-udevd", "dbus-daemon",
+    "NetworkManager", "sshd", "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
 }
 
 ARGS = Console.get_args(
@@ -55,9 +55,9 @@ def print_help():
 
 def get_protected_processes() -> set[str]:
     """Get the appropriate protected processes list for the current OS."""
-    if (system := platform.system()) == 'Windows':
+    if (system := platform.system()) == "Windows":
         return PROTECTED_PROCESSES_WINDOWS
-    elif system == 'Darwin':  # macOS
+    elif system == "Darwin":  # macOS
         return PROTECTED_PROCESSES_UNIX | PROTECTED_PROCESSES_MACOS
     else:  # LINUX OR UNIX-LIKE
         return PROTECTED_PROCESSES_UNIX
@@ -69,18 +69,18 @@ def find_processes_using_path(path: Path) -> list[psutil.Process]:
     path = path.resolve()
     system = platform.system()
 
-    for proc in psutil.process_iter(['pid', 'name', 'open_files', 'cwd', 'exe']):
+    for proc in psutil.process_iter(["pid", "name", "open_files", "cwd", "exe"]):
         try:
             # CHECK OPEN FILES
-            if proc.info['open_files']:
-                for file in proc.info['open_files']:
-                    file_path = file.path if hasattr(file, 'path') else str(file)
+            if proc.info["open_files"]:
+                for file in proc.info["open_files"]:
+                    file_path = file.path if hasattr(file, "path") else str(file)
                     if (p := str(path).lower()) in (f := file_path.lower()) or f in p:
                         processes.append(proc)
                         break
 
             # ON UNIX SYSTEMS, ALSO CHECK CURRENT WORKING DIRECTORY
-            if system != 'Windows':
+            if system != "Windows":
                 try:
                     if ((p := str(path).lower()) in (c := proc.cwd().lower()) or c in p) and proc not in processes:
                         processes.append(proc)
@@ -104,7 +104,7 @@ def is_protected_process(proc: psutil.Process) -> bool:
             return True
 
         # FOR UNIX SYSTEMS, ALSO CHECK WITHOUT EXTENSION AND BASE NAME
-        if platform.system() != 'Windows':
+        if platform.system() != "Windows":
             base_name = os.path.basename(name)
             if base_name in protected_set:
                 return True
@@ -114,9 +114,9 @@ def is_protected_process(proc: psutil.Process) -> bool:
             return True
 
         # ON UNIX, PROTECT PROCESSES OWNED BY ROOT RUNNING CRITICAL SERVICES
-        if platform.system() != 'Windows':
+        if platform.system() != "Windows":
             try:
-                if proc.username() == 'root' and proc.pid < 1000:
+                if proc.username() == "root" and proc.pid < 1000:
                     return True
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
@@ -166,7 +166,7 @@ def force_delete(path: Path) -> bool:
                           "  Searching for processes using this path...[_]")
     except OSError as e:
         # ON UNIX SYSTEMS, WE MIGHT GET DIFFERENT ERRORS
-        if platform.system() != 'Windows':
+        if platform.system() != "Windows":
             FormatCodes.print(f"[br:yellow][b](⚠ Deletion blocked:) {e}\n"
                               "  Searching for processes using this path...[_]")
         else:
@@ -181,7 +181,7 @@ def force_delete(path: Path) -> bool:
 
     if not processes:
         FormatCodes.print("[b|br:red](⨯ No processes found using this path, but deletion still failed.)\n")
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             FormatCodes.print(
                 f"[dim|br:blue](ⓘ [i](The {'file' if path.is_file() else 'directory'} may be locked by the system"
                 f"{'' if System.is_elevated else ' or you may need administrator privileges'}.))\n"
@@ -238,7 +238,7 @@ def force_delete(path: Path) -> bool:
         FormatCodes.print(f"\n[b|br:red](⨯ Failed to delete even after terminating processes:)\n"
                           f"[br:red]({e})\n")
         if not System.is_elevated:
-            if platform.system() == 'Windows':
+            if platform.system() == "Windows":
                 FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with Administrator privileges.))\n")
             else:
                 FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with sudo for elevated privileges.))\n")
@@ -265,7 +265,7 @@ def main():
     )
 
     if not System.is_elevated:
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             FormatCodes.print("\n[br:yellow](⚠ Not running as Administrator. Some operations may fail.)")
         else:
             FormatCodes.print(
