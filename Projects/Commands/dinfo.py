@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Gives details about the files in the current directory.
-Information can be excluded, since it can take quite long to calculate.
-Hidden and/or system files/directories can be skipped.
-There's also the option apply .gitignore rules."""
+"""Get detailed information about files in the current directory."""
 from xulbux import FormatCodes, ProgressBar, Console
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
@@ -16,14 +13,37 @@ import os
 
 ARGS = Console.get_args(
     {
+        "recursive": ["-r", "--recursive"],
         "exclude_info": ["-e", "--exclude"],
         "skip_type": ["-s", "--skip"],
-        "gitignore": ["-g", "--gitignore"],
+        "apply_gitignore": ["-g", "--gitignore"],
+        "help": ["-h", "--help"],
     },
     allow_spaces=True,
 )
 EXCLUDE = {item.lower() for item in str(ARGS.exclude_info.value).split()}
 SKIP = {item.lower() for item in str(ARGS.skip_type.value).split()} if ARGS.skip_type.exists else set()
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Directory Info - Get details about files in the current directory )
+
+[b](Usage:) [br:green](x-qr) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-r), [br:blue](--recursive)    Also scan all subdirectories recursively
+  [br:blue](-e), [br:blue](--exclude S)    Exclude parts of the info [dim]((scope, size))
+  [br:blue](-s), [br:blue](--skip S)       Skip hidden and/or system items [dim]((hidden, system))
+  [br:blue](-g), [br:blue](--gitignore)    Apply .gitignore rules when scanning files
+
+[b](Examples:)
+  [br:green](dinfo)                         [dim](# [i](Get all directory info, not ignoring any items))
+  [br:green](dinfo) [br:blue](-e 'scope')              [dim](# [i](Exclude scope info))
+  [br:green](dinfo) [br:blue](-s 'hidden' 'system')    [dim](# [i](Skip hidden and system items))
+  [br:green](dinfo) [br:blue](--gitignore)             [dim](# [i](Apply .gitignore rules when scanning files))
+"""
+    FormatCodes.print(help_text)
 
 
 def is_hidden(path: str) -> bool:
@@ -115,26 +135,26 @@ def is_gitignored(file_path: str, patterns: list) -> bool:
 def get_dir_files(directory: str) -> list:
     """Recursively get the paths of all files in a directory."""
     files = []
-    gitignore_patterns = load_gitignore_patterns(directory) if ARGS.gitignore.exists else []
+    gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
 
     try:
         for root, dirs, filenames in os.walk(directory):
             if should_skip_path(root):
                 dirs.clear()
                 continue
-            if ARGS.gitignore.exists and is_gitignored(root, gitignore_patterns):
+            if ARGS.apply_gitignore.exists and is_gitignored(root, gitignore_patterns):
                 dirs.clear()
                 continue
 
             dirs[:] = [d for d in dirs if not should_skip_path(os.path.join(root, d))]
-            if ARGS.gitignore.exists:
+            if ARGS.apply_gitignore.exists:
                 dirs[:] = [d for d in dirs if not is_gitignored(os.path.join(root, d), gitignore_patterns)]
 
             for filename in filenames:
                 file_path = os.path.join(root, filename)
                 if should_skip_path(file_path):
                     continue
-                if ARGS.gitignore.exists and is_gitignored(file_path, gitignore_patterns):
+                if ARGS.apply_gitignore.exists and is_gitignored(file_path, gitignore_patterns):
                     continue
                 files.append(file_path)
     except PermissionError:
@@ -235,6 +255,10 @@ def format_bytes_size(bytes: int) -> str:
 
 
 def main():
+    if ARGS.help.exists:
+        print_help()
+        return
+
     FormatCodes.print("\033[2K\r[dim](searching files...)", end="")
     files = get_dir_files(os.getcwd())
 

@@ -187,6 +187,11 @@ The last option lets you decide if `.gitignore` rules should be applied when get
 dinfo --gitignore
 ```
 
+To show help for the command, use the `-h` `--help` option:
+```bash
+dinfo --help
+```
+
 <br>
 
 ### `gradient`

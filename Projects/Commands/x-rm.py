@@ -27,7 +27,7 @@ PROTECTED_PROCESSES_UNIX = {
 ARGS = Console.get_args(
     {
         "rm_path": "before",
-        "no_confirm": ["-nc", "--no-confirm"],
+        "confirm": ["-c", "--confirm"],
         "help": ["-h", "--help"],
     },
     allow_spaces=True,
@@ -41,14 +41,14 @@ def print_help():
 [b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
 
 [b](Arguments:)
-  [br:cyan](path)                 The path to the file or directory to delete
+  [br:cyan](path)             The path to the file or directory to delete
 
 [b](Options:)
-  [br:blue](-nc), [br:blue](--no-confirm)    Skip confirmation prompt before deletion
+  [br:blue](-c), [br:blue](--confirm)    Skip confirmation prompt before deletion
 
 [b](Examples:)
-  [br:green](x-rm) [br:cyan]("/path/to/directory")                [dim](# [i](Delete a directory))
-  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--no-confirm)    [dim](# [i](Delete a file skipping confirmation))
+  [br:green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
+  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -279,7 +279,7 @@ def main():
     if not (target_path := Path(target_path)).exists():
         Console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
 
-    if not ARGS.no_confirm.exists and not Console.confirm(
+    if not ARGS.confirm.exists and not Console.confirm(
             f"\n[b](Are you sure you want to delete) [br:cyan]({target_path})[b](?)",
             default_is_yes=False,
     ):

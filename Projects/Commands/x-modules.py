@@ -10,7 +10,7 @@ import os
 
 
 ARGS = Console.get_args({
-    "external": ["-e", "--external"],
+    "external_only": ["-e", "--external"],
     "directory": ["-d", "--dir", "--directory"],
     "recursive": ["-r", "--recursive"],
     "no_formatting": ["-nf", "--no-formatting"],
@@ -158,7 +158,7 @@ def main() -> None:
         modules = get_all_modules(
             directory=directory,
             recursive=ARGS.recursive.exists,
-            external_only=ARGS.external.exists,
+            external_only=ARGS.external_only.exists,
         )
     finally:
         SCAN_DONE = True
@@ -166,7 +166,7 @@ def main() -> None:
         print("\r   \r", end="")
 
     if not modules:
-        if ARGS.external.exists:
+        if ARGS.external_only.exists:
             FormatCodes.print("\n[i|dim](No external modules found)\n")
         else:
             FormatCodes.print("\n[i|dim](No modules found)\n")
@@ -186,7 +186,7 @@ def main() -> None:
 
     else:
         output = (
-            f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if ARGS.external.exists
+            f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if ARGS.external_only.exists
             else f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( MODULES ))\n"
         )
 
