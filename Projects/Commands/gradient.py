@@ -10,7 +10,7 @@ import colorsys
 
 
 ARGS = Console.get_args({
-    "color_a_b": "before",
+    "color_points": "before",
     "steps": ["-s", "--steps"],
     "hsv": ["-H", "--hsv"],
     "oklch": ["-O", "--oklch"],
@@ -371,7 +371,7 @@ def parse_color_args(
 
 
 def main() -> None:
-    if ARGS.help.exists or not (ARGS.color_a_b.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
+    if ARGS.help.exists or not (ARGS.color_points.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
         print_help()
         return
 
@@ -380,7 +380,7 @@ def main() -> None:
         raise ValueError("Cannot use both [br:blue](--hsv) and [br:blue](--oklch) options together")
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
-    color_args = ARGS.color_a_b.values
+    color_args = ARGS.color_points.values
 
 
     if len(color_args) < 2:
