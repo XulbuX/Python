@@ -152,10 +152,15 @@ code-extensions --json
 
 ### `dinfo`
 
-This command will give you the following info about your current working directory (`cwd`):
+This command will give you the following info about the files in your current working directory (`cwd`):
  * the files count
  * the total files scope (*lines count from all the files with text in them*)
  * the total size of the files
+
+To also scan all subdirectories recursively, use the `-r` `--recursive` option:
+```bash
+dinfo --recursive
+```
 
 It can take quite a bit of time to get this information, thus you can exclude info you don't need with the `-e` `--exclude` option.<br>
 Possible exclude values are `scope` and `size`:

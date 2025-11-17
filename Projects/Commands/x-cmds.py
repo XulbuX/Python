@@ -346,15 +346,14 @@ def main() -> None:
     FormatCodes.print(get_commands_str(python_files))
 
     if ARGS.update_check.exists:
-        animation_thread = threading.Thread(target=animate)
-        animation_thread.start()
+        (animation_thread := threading.Thread(target=animate)).start()
 
         try:
             github_diffs = get_github_diffs(python_files)
         finally:
             FETCHED_GITHUB = True
             animation_thread.join()
-            print("\r   \r", end="")
+            print("\033[2K\r", end="")
 
         FormatCodes.print(github_diffs_str(github_diffs))
 

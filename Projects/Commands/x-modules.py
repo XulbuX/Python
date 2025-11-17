@@ -149,10 +149,7 @@ def main() -> None:
         return
 
     directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
-
-    # START LOADING ANIMATION
-    animation_thread = threading.Thread(target=animate)
-    animation_thread.start()
+    (animation_thread := threading.Thread(target=animate)).start()
 
     try:
         modules = get_all_modules(
@@ -163,7 +160,7 @@ def main() -> None:
     finally:
         SCAN_DONE = True
         animation_thread.join()
-        print("\r   \r", end="")
+        print("\033[2K\r", end="")
 
     if not modules:
         if ARGS.external_only.exists:
