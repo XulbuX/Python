@@ -14,11 +14,11 @@ sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
 ARGS = Console.get_args({
     "calculation": "before",
-    "ans": ["-a", "--ans"],
-    "precision": ["-p", "--precision"],
-    "format": ["-f", "--format"],
-    "debug": ["-d", "--debug"],
-    "help": ["-h", "--help"],
+    "ans": {"-a", "--ans"},
+    "precision": {"-p", "--precision"},
+    "format": {"-f", "--format"},
+    "debug": {"-d", "--debug"},
+    "help": {"-h", "--help"},
 }, allow_spaces=True)
 DEBUG = ARGS.debug.exists
 

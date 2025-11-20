@@ -5,7 +5,7 @@ from xulbux import FormatCodes, Console
 
 ARGS = Console.get_args({
     "list_items": "before",
-    "separator": ["-s", "--sep"],
+    "separator": {"-s", "--sep", "--separator"},
 })
 
 
@@ -17,14 +17,14 @@ def main() -> None:
             input_str = input(">  ")
         else:
             input_str = " ".join(ARGS.list_items.values)
-        lst = [x for x in input_str.split(sep) if x.strip() not in (None, "")]
+        lst = [x for x in input_str.split(sep) if x.strip() not in {"", None}]
     else:
         lst = [str(val) for val in ARGS.list_items.values]
 
-    if len(lst) >= 1 and lst[0].strip() not in (None, ""):
+    if len(lst) >= 1 and lst[0].strip() not in {"", None}:
         FormatCodes.print(f"\n[b|bg:black]([in]( PROCESSED ) {len(lst)} [in]( LIST ENTRIES ))\n")
         FormatCodes.print(f"[bright:cyan]{'\n'.join(lst)}[_]\n")
-        if lst not in (None, "") and all(e.isnumeric() for e in lst):
+        if lst not in {"", None} and all(e.isnumeric() for e in lst):
             lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]
             average = lambda nums: sum(nums) / len(nums)
             Console.log_box_bordered(

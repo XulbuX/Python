@@ -12,9 +12,9 @@ import re
 
 
 ARGS = Console.get_args({
-    "ignore_dirs": ["-i", "--ignore", "--ignore-dirs"],
-    "no_progress": ["-n", "-np", "--no-progress"],
-    "help": ["-h", "--help"],
+    "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
+    "no_progress": {"-n", "-np", "--no-progress"},
+    "help": {"-h", "--help"},
 }, allow_spaces=True)
 DEFAULT = {
     "ignore_dirs": [],

@@ -11,12 +11,12 @@ import colorsys
 
 ARGS = Console.get_args({
     "color_points": "before",
-    "steps": ["-s", "--steps"],
-    "hsv": ["-H", "--hsv"],
-    "oklch": ["-O", "--oklch"],
-    "list": ["-l", "--list"],
-    "numerate": ["-n", "--numerate"],
-    "help": ["-h", "--help"],
+    "steps": {"-s", "--steps"},
+    "hsv": {"-H", "--hsv"},
+    "oklch": {"-O", "--oklch"},
+    "list": {"-l", "--list"},
+    "numerate": {"-n", "--numerate"},
+    "help": {"-h", "--help"},
 })
 
 

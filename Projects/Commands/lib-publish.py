@@ -12,9 +12,9 @@ import os
 
 ARGS = Console.get_args({
     "lib_base": "before",
-    "only_build": ["-ob", "--only-build"],
-    "verbose": ["-v", "--verbose"],
-    "help": ["-h", "--help"],
+    "only_build": {"-ob", "--only-build"},
+    "verbose": {"-v", "--verbose"},
+    "help": {"-h", "--help"},
 }, allow_spaces=True)
 
 
