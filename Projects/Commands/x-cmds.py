@@ -20,7 +20,7 @@ GITHUB_DIFFS = {
 }
 
 ARGS = Console.get_args(find_args={
-    "update_check": ["-u", "--update"],
+    "update_check": {"-u", "--update"},
 })
 
 ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
@@ -84,7 +84,7 @@ def get_var_val(file_path: str, var_name: str) -> Optional[Any]:
     return var_val
 
 
-def arguments_desc(find_args: Optional[dict[str, list[str]]]) -> str:
+def arguments_desc(find_args: Optional[dict]) -> str:
     if not find_args or len(find_args) < 1:
         return f"\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
 
@@ -105,8 +105,8 @@ def arguments_desc(find_args: Optional[dict[str, list[str]]]) -> str:
         else:
             arg_descs.append(val)
 
-    opt_descs = ["[_c], [br:blue]".join(d) for d in arg_descs if isinstance(d, list)]
-    opt_keys = [keys.pop(i - j) for j, (i, _) in enumerate((i, d) for i, d in enumerate(arg_descs) if isinstance(d, list))]
+    opt_descs = ["[_c], [br:blue]".join(d) for d in arg_descs if isinstance(d, (list, tuple, set, frozenset))]
+    opt_keys = [keys.pop(i - j) for j, (i, _) in enumerate((i, d) for i, d in enumerate(arg_descs) if isinstance(d, (list, tuple, set, frozenset)))]
 
     arg_descs = [d for d in arg_descs if isinstance(d, str)]
     arg_keys = [f"<{keys[i]}>" for i, _ in enumerate(arg_descs)]

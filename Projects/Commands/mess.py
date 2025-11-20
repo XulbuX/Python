@@ -7,8 +7,8 @@ import time
 
 
 ARGS = Console.get_args({
-    "fast_mode": ["-f", "--fast"],
-    "color_mode": ["-c", "--color"],
+    "fast_mode": {"-f", "--fast"},
+    "color_mode": {"-c", "--color"},
 })
 
 x = ["0", "1"]

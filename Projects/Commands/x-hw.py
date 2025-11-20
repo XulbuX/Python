@@ -8,9 +8,9 @@ import re
 
 
 ARGS = Console.get_args({
-    "detailed": ["-d", "--detailed"],
-    "json_output": ["-j", "--json"],
-    "help": ["-h", "--help"],
+    "detailed": {"-d", "--detailed"},
+    "json_output": {"-j", "--json"},
+    "help": {"-h", "--help"},
 })
 
 

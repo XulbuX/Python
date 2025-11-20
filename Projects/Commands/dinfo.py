@@ -15,11 +15,11 @@ import os
 
 ARGS = Console.get_args(
     {
-        "recursive": ["-r", "--recursive"],
-        "exclude_info": ["-e", "--exclude"],
-        "skip_type": ["-s", "--skip"],
-        "apply_gitignore": ["-g", "--gitignore"],
-        "help": ["-h", "--help"],
+        "recursive": {"-r", "--recursive"},
+        "exclude_info": {"-e", "--exclude"},
+        "skip_type": {"-s", "--skip"},
+        "apply_gitignore": {"-g", "--gitignore"},
+        "help": {"-h", "--help"},
     },
     allow_spaces=True,
 )

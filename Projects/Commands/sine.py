@@ -7,7 +7,7 @@ import time
 
 
 ARGS = Console.get_args({
-    "invert": ["-i", "--invert", "--inverse"],
+    "invert": {"-i", "--invert", "--inverse"},
 }, allow_spaces=True)
 
 
