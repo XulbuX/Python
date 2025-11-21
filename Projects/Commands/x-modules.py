@@ -13,7 +13,7 @@ ARGS = Console.get_args({
     "external_only": {"-e", "--external"},
     "directory": {"-d", "--dir", "--directory"},
     "recursive": {"-r", "--recursive"},
-    "no_formatting": {"-nf", "--no-formatting"},
+    "list": {"-l", "--list"},
     "as_json": {"-j", "--json"},
     "help": {"-h", "--help"},
 }, allow_spaces=True)
@@ -52,16 +52,16 @@ def print_help():
   [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
   [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan (default: script directory)
   [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
-  [br:blue](-nf), [br:blue](--no-formatting)    Only output the libraries-list without extra info
+  [br:blue](-l), [br:blue](--list)              Output only module names without extra info
   [br:blue](-j), [br:blue](--json)              Output as JSON format
 
 [b](Examples:)
-  [br:green](modules)                    [dim](# [i](List all imported modules))
-  [br:green](modules) [br:blue](--external)         [dim](# [i](List only external/third-party modules))
-  [br:green](modules) [br:blue](-d "./src")         [dim](# [i](Scan specific directory))
-  [br:green](modules) [br:blue](-d "./src" -r)      [dim](# [i](Scan directory recursively))
-  [br:green](modules) [br:blue](--no-formatting)    [dim](# [i](Output only the module names without extra info))
-  [br:green](modules) [br:blue](--json)             [dim](# [i](Output as JSON format))
+  [br:green](modules)                 [dim](# [i](List all imported modules))
+  [br:green](modules) [br:blue](--external)      [dim](# [i](List only external/third-party modules))
+  [br:green](modules) [br:blue](-d "./src")      [dim](# [i](Scan specific directory))
+  [br:green](modules) [br:blue](-d "./src" -r)   [dim](# [i](Scan directory recursively))
+  [br:green](modules) [br:blue](--list)          [dim](# [i](Output only the list of module names))
+  [br:green](modules) [br:blue](--json)          [dim](# [i](Output as JSON format))
 """
     FormatCodes.print(help_text)
 
@@ -170,7 +170,7 @@ def main() -> None:
         return
 
     if ARGS.as_json.exists:
-        if ARGS.no_formatting.exists:
+        if ARGS.list.exists:
             json_data = sorted(modules.keys())
         else:
             json_data = {module: sorted(files) for module, files in sorted(modules.items())}
@@ -187,7 +187,7 @@ def main() -> None:
             else f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( MODULES ))\n"
         )
 
-        if ARGS.no_formatting.exists:
+        if ARGS.list.exists:
             output += f"\n[b|br:green]{'\n'.join(sorted(modules.keys()))}[_]"
         else:
             console_w = Console.w
