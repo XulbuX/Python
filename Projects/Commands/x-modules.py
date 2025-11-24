@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """List all modules imported across Python files in the script directory.
 Can filter to show only non-standard library modules."""
+from xulbux.console import Spinner
 from xulbux import FormatCodes, Console, Data, Path
 from typing import Optional
-import threading
-import time
 import re
 import os
 
@@ -64,20 +63,6 @@ def print_help():
   [br:green](modules) [br:blue](--json)          [dim](# [i](Output as JSON format))
 """
     FormatCodes.print(help_text)
-
-
-def animate() -> None:
-    """Display loading animation while scanning for modules."""
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]",
-        "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]", "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not SCAN_DONE:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
 
 
 def extract_imports(file_path: str) -> set[str]:
@@ -141,7 +126,6 @@ def get_all_modules(directory: str, recursive: bool = False, external_only: bool
 
 
 def main() -> None:
-    global SCAN_DONE
     print()
 
     if ARGS.help.exists:
@@ -149,18 +133,14 @@ def main() -> None:
         return
 
     directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
-    (animation_thread := threading.Thread(target=animate)).start()
 
-    try:
+
+    with Spinner().context():
         modules = get_all_modules(
             directory=directory,
             recursive=ARGS.recursive.exists,
             external_only=ARGS.external_only.exists,
         )
-    finally:
-        SCAN_DONE = True
-        animation_thread.join()
-        print("\033[2K\r", end="")
 
     if not modules:
         if ARGS.external_only.exists:
@@ -219,12 +199,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    SCAN_DONE = False
     try:
         main()
     except KeyboardInterrupt:
-        SCAN_DONE = True
         print("\r   \r")
     except Exception as e:
-        SCAN_DONE = True
         Console.fail(e, start="\r   \r\n", end="\n\n")

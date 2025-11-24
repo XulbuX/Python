@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Get detailed information about files in the current directory."""
+from xulbux.console import Spinner
 from xulbux import FormatCodes, ProgressBar, Console
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from typing import Callable
 from pathlib import Path
-import threading
 import fnmatch
 import math
 import stat
-import time
 import os
 
 
@@ -46,20 +45,6 @@ def print_help():
   [br:green](dinfo) [br:blue](--gitignore)             [dim](# [i](Apply .gitignore rules when scanning files))
 """
     FormatCodes.print(help_text)
-
-
-def animate() -> None:
-    """Display loading animation while scanning for modules."""
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]", "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]",
-        "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not FILE_SEARCH_DONE:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\rsearching files {frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
 
 
 def is_hidden(path: str) -> bool:
@@ -274,21 +259,14 @@ def format_bytes_size(bytes: int) -> str:
 
 
 def main():
-    global FILE_SEARCH_DONE
-
     if ARGS.help.exists:
         print_help()
         return
 
     print()
-    (animation_thread := threading.Thread(target=animate)).start()
 
-    try:
+    with Spinner("Searching items").context():
         files = get_dir_files(os.getcwd())
-    finally:
-        FILE_SEARCH_DONE = True
-        animation_thread.join()
-        print("\033[2K\r", end="")
 
     if "scope" in EXCLUDE and "size" in EXCLUDE:
         files_count = len(files)
@@ -314,12 +292,9 @@ def main():
 
 
 if __name__ == "__main__":
-    FILE_SEARCH_DONE = False
     try:
         main()
     except KeyboardInterrupt:
-        FILE_SEARCH_DONE = True
         FormatCodes.print("\033[2K\r[b|br:red](⨯)\n")
     except Exception as e:
-        FILE_SEARCH_DONE = True
         Console.fail(e, start="\n", end="\n\n")

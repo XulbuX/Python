@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
+from xulbux.console import Spinner
 from xulbux import FormatCodes, Console, String, Path
 from typing import TypedDict, Optional, Any, cast
 import importlib.util
-import threading
 import requests
 import hashlib
-import time
 import sys
 import os
 import re
@@ -47,20 +46,6 @@ def get_python_files() -> set[str]:
         if os.path.isfile(file_path) and is_python_file(file_path):
             python_files.add(filename)
     return python_files
-
-
-def animate() -> None:
-    """Display loading animation while scanning for modules."""
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]",
-        "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]", "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not FETCHED_GITHUB:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
 
 
 def parse_args_comment(s: str) -> dict:
@@ -339,21 +324,16 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
 
 
 def main() -> None:
-    global FETCHED_GITHUB
-
     python_files = get_python_files()
 
     FormatCodes.print(get_commands_str(python_files))
 
     if ARGS.update_check.exists:
-        (animation_thread := threading.Thread(target=animate)).start()
+        spinner = Spinner("⟳ Checking for updates")
+        spinner.set_format("[br:blue]({l} [b]({a}))")
 
-        try:
+        with spinner.context():
             github_diffs = get_github_diffs(python_files)
-        finally:
-            FETCHED_GITHUB = True
-            animation_thread.join()
-            print("\033[2K\r", end="")
 
         FormatCodes.print(github_diffs_str(github_diffs))
 
@@ -361,12 +341,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    FETCHED_GITHUB = False
     try:
         main()
     except KeyboardInterrupt:
-        FETCHED_GITHUB = True
         print()
     except Exception as e:
-        FETCHED_GITHUB = True
         Console.fail(e, start="\n", end="\n\n")

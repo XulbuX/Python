@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Calculate the value of pi to a specified number of decimal places."""
+from xulbux.console import Spinner
 from xulbux import FormatCodes, Console
 from typing import Iterator
 import threading
@@ -155,19 +156,6 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
     return parts[0]
 
 
-def animate() -> None:
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]", "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]",
-        "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not CALC_DONE:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
-
-
 def p() -> Iterator[int]:
     q, r, t, j = 1, 180, 60, 2
     while True:
@@ -187,8 +175,8 @@ def main() -> None:
         int(ARGS.decimal_places.values[0])
         if len(ARGS.decimal_places.values) > 0 and ARGS.decimal_places.values[0].replace("_", "").isdigit() else 10
     )
-    estimated_secs = estimate_runtime(input_k)
-    if estimated_secs >= 604800:
+
+    if (estimated_secs := estimate_runtime(input_k)) >= 604800:
         FormatCodes.print(
             f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
         )
@@ -196,14 +184,12 @@ def main() -> None:
         FormatCodes.print(
             f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)" if estimated_secs > 1 else ""
         )
-        animation_thread = threading.Thread(target=animate)
-        animation_thread.start()
         result = None
+
         try:
-            result = pi(input_k)
+            with Spinner().context():
+                result = pi(input_k)
         except MemoryError:
-            CALC_DONE = True
-            animation_thread.join()
             FormatCodes.print(
                 "\r[b|br:yellow](Your computer doesn't have enough memory for this calculation!)",
                 "[b|bg:black]( π [in]( CALCULATION WOULD TAKE THIS LONG IF YOU HAD ENOUGH MEMORY ))\n",
@@ -212,12 +198,9 @@ def main() -> None:
                 sep="\n",
             )
         except KeyboardInterrupt:
-            CALC_DONE = True
-            animation_thread.join()
             FormatCodes.print("\r[b|br:red](⨯)  \n")
             sys.exit(0)
-        CALC_DONE = True
-        animation_thread.join()
+
         if result:
             FormatCodes.print(f"\r[br:cyan]({result})\n")
         else:
@@ -225,5 +208,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    CALC_DONE = False
     main()

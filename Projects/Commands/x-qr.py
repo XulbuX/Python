@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Lets you quickly generate QR codes directly within the terminal."""
+from xulbux.console import Spinner, Args, COLOR
 from xulbux import FormatCodes, Console
-from xulbux.console import Args, COLOR
 import xml.etree.ElementTree as ET
 from typing import Optional
 import subprocess
-import threading
 import tempfile
 import qrcode
-import time
 import re
 import os
 
@@ -48,20 +46,6 @@ def print_help():
   [br:green](x-qr) [br:blue](--wifi)                             [dim](# [i](WiFi QR code for detected networks))
 """
     FormatCodes.print(help_text)
-
-
-def animate() -> None:
-    """Display loading animation while scanning for modules."""
-    frames, i = [
-        "[b]·  [_b]", "[b]·· [_b]", "[b]···[_b]", "[b] ··[_b]", "[b]  ·[_b]", "[b]  ·[_b]", "[b] ··[_b]", "[b]···[_b]",
-        "[b]·· [_b]", "[b]·  [_b]"
-    ], 0
-    max_frame_len = max(len(frame) for frame in frames)
-    while not SCAN_DONE:
-        frame = frames[i % len(frames)]
-        FormatCodes.print(f"\r{frame}{' ' * (max_frame_len - len(frame))} ", end="")
-        time.sleep(0.2)
-        i += 1
 
 
 def phone_validator(user_input: str) -> Optional[str]:
@@ -251,17 +235,9 @@ class WiFi:
         return 'WPA'
 
     def _prompt_for_details(self) -> dict[str, str | bool]:
-        global SCAN_DONE
-
-        (animation_thread := threading.Thread(target=animate)).start()
-
-        try:
+        with Spinner().context():
             profiles = self._get_saved_profiles()
             current = self._get_current_network()
-        finally:
-            SCAN_DONE = True
-            animation_thread.join()
-            print("\033[2K\r", end="")
 
         if profiles:
             FormatCodes.print(f"[b](Found {len(profiles)} saved networks:)")
@@ -443,12 +419,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    SCAN_DONE = False
     try:
         main()
     except KeyboardInterrupt:
-        SCAN_DONE = True
         print()
     except Exception as e:
-        SCAN_DONE = True
         Console.fail(e, start="\n", end="\n\n")
