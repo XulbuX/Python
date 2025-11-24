@@ -67,7 +67,6 @@ def main():
     print()
 
     batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.replace("_", "").isdigit() else 1
-    update_progress_at = 1 if batch <= 100 else 101 if batch <= 10_000 else 1_001
 
     match len(ARGS.digits_or_min_max.values):
 
@@ -81,7 +80,7 @@ def main():
                     for i in range(batch):
                         random_int = gen_random_int(digits=digits)
                         random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
-                        if i % update_progress_at == 0: update_progress(i + 1)
+                        update_progress(i + 1)
                 FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
                 FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}[_]")
             else:
@@ -107,7 +106,7 @@ def main():
                         random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
                         if random_int < lowest_int: lowest_int = random_int
                         if random_int > highest_int: highest_int = random_int
-                        if i % update_progress_at == 0: update_progress(i + 1)
+                        update_progress(i + 1)
                 FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
                 FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}")
                 FormatCodes.print(
