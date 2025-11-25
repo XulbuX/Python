@@ -330,7 +330,7 @@ def main() -> None:
 
     if ARGS.update_check.exists:
         spinner = Spinner("⟳ Checking for updates")
-        spinner.set_format("[br:blue]({l} [b]({a}))")
+        spinner.set_format(["[br:blue]({l})", "[b|br:blue]({a})"])
 
         with spinner.context():
             github_diffs = get_github_diffs(python_files)
