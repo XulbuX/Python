@@ -516,6 +516,11 @@ You can also output the info as a JSON object with the `-j` `--json` option:
 x-modules --json
 ```
 
+There's also the option to directly install all found external modules with `pip` by using the `-i` `--install` option:
+```bash  
+x-modules --install
+```
+
 To show help for the command, use the `-h` `--help` option:
 ```bash
 x-modules --help

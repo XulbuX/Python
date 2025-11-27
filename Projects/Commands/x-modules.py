@@ -4,8 +4,10 @@ Can filter to show only non-standard library modules."""
 from xulbux.console import Spinner
 from xulbux import FormatCodes, Console, Data, Path
 from typing import Optional
+import subprocess
 import re
 import os
+import sys
 
 
 ARGS = Console.get_args({
@@ -14,6 +16,7 @@ ARGS = Console.get_args({
     "recursive": {"-r", "--recursive"},
     "list": {"-l", "--list"},
     "as_json": {"-j", "--json"},
+    "install": {"-i", "--install"},
     "help": {"-h", "--help"},
 }, allow_spaces=True)
 
@@ -49,10 +52,11 @@ def print_help():
 
 [b](Options:)
   [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
-  [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan (default: script directory)
+  [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan [dim]((default: script directory))
   [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
   [br:blue](-l), [br:blue](--list)              Output only module names without extra info
-  [br:blue](-j), [br:blue](--json)              Output as JSON format
+  [br:blue](-j), [br:blue](--json)              Output as JSON format [dim]((ignored if [br:blue](-i) is used))
+  [br:blue](-i), [br:blue](--install)           Install all external modules using pip
 
 [b](Examples:)
   [br:green](modules)                 [dim](# [i](List all imported modules))
@@ -61,6 +65,7 @@ def print_help():
   [br:green](modules) [br:blue](-d "./src" -r)   [dim](# [i](Scan directory recursively))
   [br:green](modules) [br:blue](--list)          [dim](# [i](Output only the list of module names))
   [br:green](modules) [br:blue](--json)          [dim](# [i](Output as JSON format))
+  [br:green](modules) [br:blue](--install)       [dim](# [i](Install all external modules))
 """
     FormatCodes.print(help_text)
 
@@ -125,6 +130,85 @@ def get_all_modules(directory: str, recursive: bool = False, external_only: bool
     return module_usage
 
 
+def show_and_install_modules(modules: dict[str, list[str]], external_only: bool, install: bool = False) -> None:
+    title_start = "INSTALLING" if install else "FOUND"
+    output = (
+        f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if external_only
+        else f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( MODULES ))\n"
+    )
+
+    if ARGS.list.exists:
+        output += f"\n[b|br:cyan]{'\n'.join(sorted(modules.keys()))}[_]"
+    else:
+        console_w = Console.w
+        num_width = len(str(len(modules)))
+        for i, (module, files) in enumerate(sorted(modules.items()), 1):
+            usage_count = len(files)
+            line = f"\n [i|dim|br:cyan]({i:>{num_width}})  [b|br:cyan]({module})"
+            line += f" [dim](used in {usage_count} file{'s' if usage_count != 1 else ''})"
+            rendered_line_len = len(FormatCodes.remove(line))
+
+            if usage_count <= 5:
+                if (rendered_line_len + len(file_paths := ", ".join(sorted(files)))) > console_w:
+                    line += f" {file_paths[:console_w - (rendered_line_len + 1)]}…"
+                else:
+                    line += f" {file_paths}"
+            else:
+                file_paths = ", ".join(sorted(files)[:3])
+                overflow_part = f", [dim](+{usage_count - 3} more)"
+                rendered_overflow_len = len(FormatCodes.remove(overflow_part))
+                if (rendered_line_len + len(file_paths) + rendered_overflow_len) > console_w:
+                    line += f" {file_paths[:console_w - (rendered_line_len + rendered_overflow_len + 1)]}…{overflow_part}"
+                else:
+                    line += f" {file_paths}{overflow_part}"
+
+            output += line
+
+    output += "\n"
+    FormatCodes.print(output)
+
+    ################################################## INSTALLATION ##################################################
+    if not install:
+        return
+    if not Console.confirm("Proceed with installation?"):
+        FormatCodes.print("\n[i|dim](Installation cancelled.)\n")
+        return
+
+    print()
+    failed_modules = []
+
+    for module in sorted(modules):
+        with Spinner(f"Installing [b]({module})", ["[br:cyan]({l} [b]({a})) "]).context():
+            try:
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "--upgrade", module],
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 MINUTE TIMEOUT PER MODULE
+                )
+                
+                if result.returncode == 0:
+                    FormatCodes.print(f"[br:green](✓ Installed [b]({module}))")
+                else:
+                    FormatCodes.print(f"[br:red](⨯ Failed to install [b]({module}):)\n[red]│ " + "\n[red]│ ".join(result.stderr.strip().splitlines()) + "[_]")
+                    failed_modules.append(module)
+            except subprocess.TimeoutExpired:
+                FormatCodes.print(f"[br:red](⨯ Timed out installing [b]({module}))")
+                failed_modules.append(module)
+            except Exception as e:
+                FormatCodes.print(f"[br:red](⨯ Error installing [b]({module}):)\n[red]│ " + "\n[red]│ ".join(str(e).splitlines()) + "[_]")
+                failed_modules.append(module)
+
+    print()
+    if failed_modules:
+        FormatCodes.print(f"[b|br:yellow](Failed to install {len(failed_modules)} module{'s' if len(failed_modules) != 1 else ''}:)")
+        for module in failed_modules:
+            FormatCodes.print(f"[yellow]([dim]( • ){module})")
+        print()
+    else:
+        FormatCodes.print("[b|br:green](All modules installed successfully!)\n")
+
+
 def main() -> None:
     print()
 
@@ -132,24 +216,24 @@ def main() -> None:
         print_help()
         return
 
+    external_only = ARGS.external_only.exists or ARGS.install.exists
     directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
-
 
     with Spinner().context():
         modules = get_all_modules(
             directory=directory,
             recursive=ARGS.recursive.exists,
-            external_only=ARGS.external_only.exists,
+            external_only=external_only,
         )
 
     if not modules:
-        if ARGS.external_only.exists:
-            FormatCodes.print("\n[i|dim](No external modules found)\n")
+        if external_only:
+            FormatCodes.print("[i|dim](No external modules found)\n")
         else:
-            FormatCodes.print("\n[i|dim](No modules found)\n")
+            FormatCodes.print("[i|dim](No modules found)\n")
         return
 
-    if ARGS.as_json.exists:
+    if not ARGS.install.exists and ARGS.as_json.exists:
         if ARGS.list.exists:
             json_data = sorted(modules.keys())
         else:
@@ -162,46 +246,13 @@ def main() -> None:
         )}\n")
 
     else:
-        output = (
-            f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if ARGS.external_only.exists
-            else f"[b|bg:black]([in]( FOUND ) {len(modules)} [in]( MODULES ))\n"
-        )
-
-        if ARGS.list.exists:
-            output += f"\n[b|br:green]{'\n'.join(sorted(modules.keys()))}[_]"
-        else:
-            console_w = Console.w
-            num_width = len(str(len(modules)))
-            for i, (module, files) in enumerate(sorted(modules.items()), 1):
-                usage_count = len(files)
-                line = f"\n [i|dim|br:green]({i:>{num_width}})  [b|br:green]({module})"
-                line += f" [dim](used in {usage_count} file{'s' if usage_count != 1 else ''})"
-                rendered_line_len = len(FormatCodes.remove(line))
-
-                if usage_count <= 5:
-                    if (rendered_line_len + len(file_paths := ", ".join(sorted(files)))) > console_w:
-                        line += f" [br:cyan]({file_paths[:console_w - (rendered_line_len + 2)]}…)"
-                    else:
-                        line += f" [br:cyan]({file_paths})"
-                else:
-                    file_paths = ", ".join(sorted(files)[:3])
-                    overflow_part = f", [dim](+{usage_count - 3} more)"
-                    rendered_overflow_len = len(FormatCodes.remove(overflow_part))
-                    if (rendered_line_len + len(file_paths) + rendered_overflow_len) > console_w:
-                        line += f" [br:cyan]({file_paths[:console_w - (rendered_line_len + rendered_overflow_len + 2)]}…{overflow_part})"
-                    else:
-                        line += f" [br:cyan]({file_paths}{overflow_part})"
-
-                output += line
-
-        output += "\n"
-        FormatCodes.print(output)
+        show_and_install_modules(modules, external_only, ARGS.install.exists)
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\r   \r")
+        FormatCodes.print("\n[i|dim](Cancelled by user.)\n")
     except Exception as e:
-        Console.fail(e, start="\r   \r\n", end="\n\n")
+        Console.fail(e, start="\n", end="\n\n")
