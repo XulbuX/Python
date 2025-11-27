@@ -65,7 +65,7 @@ class VCard:
         self.details = self.get_vcard_details()
 
     def get_vcard_details(self) -> dict:
-        lines = self.vcard_str.strip().split('\n')
+        lines = self.vcard_str.strip().split("\n")
         details = {"name": "", "phone": "", "email": ""}
 
         if self.vcard_str.strip().startswith("BEGIN:VCARD") and self.vcard_str.strip().endswith("END:VCARD"):
@@ -103,9 +103,9 @@ class VCard:
     def get_display_info(self) -> str:
         info = self.details
         display = f"Name: {info['name']}\n"
-        if info['phone']:
+        if info["phone"]:
             display += f"Phone: {info['phone']}\n"
-        if info['email']:
+        if info["email"]:
             display += f"Email: {info['email']}\n"
         return display.strip()
 
@@ -119,13 +119,13 @@ class WiFi:
     def _get_saved_profiles(self) -> list[str]:
         """Get list of saved WiFi profiles."""
         try:
-            result = subprocess.run(['netsh', 'wlan', 'show', 'profiles'], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["netsh", "wlan", "show", "profiles"], capture_output=True, text=True, timeout=10)
 
             profiles = []
             if result.returncode == 0:
-                for line in result.stdout.split('\n'):
-                    if 'All User Profile' in line:
-                        ssid = line.split(':', 1)[1].strip()
+                for line in result.stdout.split("\n"):
+                    if "All User Profile" in line:
+                        ssid = line.split(":", 1)[1].strip()
                         profiles.append(ssid)
             return profiles
         except:
@@ -140,14 +140,14 @@ class WiFi:
 
         for method in methods:
             try:
-                if method.startswith('netsh'):
+                if method.startswith("netsh"):
                     result = subprocess.run(method, shell=True, capture_output=True, text=True, timeout=10)
                     if result.returncode == 0:
-                        for line in result.stdout.split('\n'):
-                            if 'SSID' in line and 'BSSID' not in line:
-                                return line.split(':', 1)[1].strip()
+                        for line in result.stdout.split("\n"):
+                            if "SSID" in line and "BSSID" not in line:
+                                return line.split(":", 1)[1].strip()
                 else:
-                    result = subprocess.run(['powershell', '-NoProfile', '-Command', method],
+                    result = subprocess.run(["powershell", "-NoProfile", "-Command", method],
                                             capture_output=True,
                                             text=True,
                                             timeout=10)
@@ -176,20 +176,20 @@ class WiFi:
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 result = subprocess.run(
-                    ['netsh', 'wlan', 'export', 'profile', f'name={ssid}', f'folder={temp_dir}', 'key=clear'],
+                    ["netsh", "wlan", "export", "profile", f"name={ssid}", f"folder={temp_dir}", "key=clear"],
                     capture_output=True,
                     text=True,
                     timeout=15,
                 )
                 if result.returncode == 0:
                     for filename in os.listdir(temp_dir):
-                        if filename.endswith('.xml'):
+                        if filename.endswith(".xml"):
                             xml_path = os.path.join(temp_dir, filename)
                             try:
                                 tree = ET.parse(xml_path)
                                 root = tree.getroot()
                                 for elem in root.iter():
-                                    if elem.tag.endswith('keyMaterial') and elem.text:
+                                    if elem.tag.endswith("keyMaterial") and elem.text:
                                         return elem.text
                             except ET.ParseError:
                                 continue
@@ -201,15 +201,15 @@ class WiFi:
         """Try different netsh command variations."""
         commands = [
             f'netsh wlan show profile "{ssid}" key=clear', f'netsh wlan show profile name="{ssid}" key=clear',
-            f'netsh wlan show profile {ssid} key=clear'
+            f"netsh wlan show profile {ssid} key=clear"
         ]
         for cmd in commands:
             try:
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
                 if result.returncode == 0:
-                    for line in result.stdout.split('\n'):
-                        if any(keyword in line for keyword in ['Key Content', 'Schlüsselinhalt']):
-                            password = line.split(':', 1)[1].strip()
+                    for line in result.stdout.split("\n"):
+                        if any(keyword in line for keyword in ["Key Content", "Schlüsselinhalt"]):
+                            password = line.split(":", 1)[1].strip()
                             if password:
                                 return password
             except:
@@ -219,20 +219,20 @@ class WiFi:
     def _get_security_type(self, ssid: str) -> str:
         """Determine the security type of the network."""
         try:
-            result = subprocess.run(['netsh', 'wlan', 'show', 'profile', ssid], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(["netsh", "wlan", "show", "profile", ssid], capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
-                for line in result.stdout.split('\n'):
-                    if 'Authentication' in line:
-                        auth = line.split(':', 1)[1].strip().upper()
-                        if any(wpa in auth for wpa in ['WPA2', 'WPA3', 'WPA']):
-                            return 'WPA'
-                        elif 'WEP' in auth:
-                            return 'WEP'
-                        elif 'OPEN' in auth:
-                            return 'nopass'
+                for line in result.stdout.split("\n"):
+                    if "Authentication" in line:
+                        auth = line.split(":", 1)[1].strip().upper()
+                        if any(wpa in auth for wpa in ["WPA2", "WPA3", "WPA"]):
+                            return "WPA"
+                        elif "WEP" in auth:
+                            return "WEP"
+                        elif "OPEN" in auth:
+                            return "nopass"
         except:
             pass
-        return 'WPA'
+        return "WPA"
 
     def _prompt_for_details(self) -> dict[str, str | bool]:
         with Spinner().context():
@@ -340,16 +340,28 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
     try:
         scale = int(args.scale.value) if args.scale.value and args.scale.value.replace("_", "").isdigit() else 1
         invert = args.invert.exists
-        error_level = {
-            'L': qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
-            'M': qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
-            'Q': qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
-            'H': qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
-        }.get((args.error_correction.value or "M").upper(), qrcode.constants.ERROR_CORRECT_M)  # type: ignore[name-defined]
+        error_level = { \
+            "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
+            "M": qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+            "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
+            "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
+        }.get( \
+            (args.error_correction.value or "M").upper(),
+            qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+        )
 
         qr = qrcode.QRCode(version=1, error_correction=error_level, box_size=1, border=0)
         qr.add_data(text)
-        qr.make(fit=True)
+
+        try:
+            qr.make(fit=True)
+        except ValueError as e:
+            if "Invalid version" in (err_str := str(e)) or "expected 1 to 40" in err_str:
+                raise ValueError(
+                    f"Cannot fit {len(text)} characters into a QR code.\n"
+                    f"Please reduce the amount of data or try a lower error correction level ([br:blue](-e L))."
+                )
+            raise
 
         matrix = qr.get_matrix()
         lines = []
@@ -388,7 +400,7 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
         return "  " + "\n  ".join(lines)
 
     except ValueError as e:
-        Console.fail(f"Invalid argument: {e}")
+        Console.fail(e)
 
 
 def main() -> None:
