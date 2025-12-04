@@ -304,16 +304,16 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
 
     if not (num_new_cmds > 0 or num_cmd_updates > 0):
         return (
-            "[dim|br:blue](ⓘ [i](You have all available command-files"
+            "[magenta](ⓘ [i](You have all available command-files"
             f"{' and they\'re all up-to-date' if GITHUB_DIFFS['check_for_cmd_updates'] else ''}.))\n\n"
-        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[dim|br:blue](ⓘ [i](All your command-files are up-to-date.))\n\n"
+        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
 
     diffs_title_len = len(title := (
         (f"There {'is' if num_new_cmds == 1 else 'are'} {num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}" if num_new_cmds else "")
         + (" and" if (num_new_cmds and num_cmd_updates) else " available." if num_new_cmds else "You have" if num_cmd_updates else "")
         + (f" {num_cmd_updates} command-update{'' if num_cmd_updates == 1 else 's'} available." if num_cmd_updates else "")
     )) + 5
-    diffs = f"[b|br:blue|bg:br:blue]([[black]⇣[br:blue]][in|black]( {title} [bg:black]{'━' * (Console.w - diffs_title_len)}))"
+    diffs = f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( {title} [bg:black]{'━' * (Console.w - diffs_title_len)}))"
 
     if num_new_cmds:
         diffs += f"\n\n[b](New Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["new_cmds"])
@@ -330,7 +330,7 @@ def main() -> None:
 
     if ARGS.update_check.exists:
         spinner = Spinner("⟳ Checking for updates")
-        spinner.set_format(["[br:blue]({l})", "[b|br:blue]({a})"])
+        spinner.set_format(["[magenta]({l})", "[b|magenta]({a})"])
 
         with spinner.context():
             github_diffs = get_github_diffs(python_files)
