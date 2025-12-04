@@ -304,9 +304,9 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
 
     if not (num_new_cmds > 0 or num_cmd_updates > 0):
         return (
-            "[magenta](ⓘ [i](You have all available command-files"
+            "[dim|magenta](ⓘ [i](You have all available command-files"
             f"{' and they\'re all up-to-date' if GITHUB_DIFFS['check_for_cmd_updates'] else ''}.))\n\n"
-        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
+        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[dim|magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
 
     diffs_title_len = len(title := (
         (f"There {'is' if num_new_cmds == 1 else 'are'} {num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}" if num_new_cmds else "")
