@@ -4,7 +4,7 @@ This repository contains various Python projects, libraries, and experiments I'v
 
 ## Repositories
 * <a href="#projects" title="scroll to Projects">Projects</a>
-  * <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./Projects/Commands" title="open Commands directory">open</a>** ✨ *most useful*
+  * <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./Projects/Commands" title="open Commands directory">open</a>** ⚡ *most useful*
   * <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./Projects/x-convert" title="open x-convert directory">open</a>**
 * <a href="#experiments" title="scroll to Experiments">Experiments</a>
   * <a href="#sendtofriend" title="scroll to SendToFriend">SendToFriend</a> | **<a href="./Experiments/SendToFriend" title="open SendToFriend directory">open</a>**
