@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate a truly random number with a specific number of digits or within a range.
 Provide either the number of digits or a min and max range."""
-from xulbux import FormatCodes, ProgressBar, Console
+from xulbux.console import ProgressBar
+from xulbux import FormatCodes, Console
 from typing import Optional
 import secrets
 import sys
