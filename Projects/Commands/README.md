@@ -1,5 +1,6 @@
 # Custom Commands
-This repository contains quite a few Python files, which are supposed to be run as commands in the console and do some useful stuff.<br>
+This repository contains quite a few Python files, which are supposed<br>
+to be run as commands in the console and do some useful stuff.<br>
 **[Figure out what each script (*command*) does.](#what-each-cmd-does)**
 
 <br>
@@ -34,11 +35,11 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 > [!IMPORTANT]
 > The way you prepare the files depends on your operating system:
 >
->  * **Windows:** You can leave the `.py` extension on the files.<br>
->    As long as `PY` is in your system's `PATHEXT` environment variable (*which is the default*),<br>
->    you can run the commands without typing `.py`.
+>  * **Windows:** You can leave the `.py` or `.pyw` extension on the files.<br>
+>    As long as both `PY` and `PYW` are in your system's `PATHEXT` environment variable<br>
+>    (*which is the default*), you can run the commands without typing `.py`.
 >
->  * **macOS and Linux:** You **must remove the `.py` extension** from the script files.
+>  * **macOS and Linux:** You **must remove the `.py` or `.pyw` extension** from the script files.<br>
 >    For example, rename `x-cmds.py` to `x-cmds`.<br>
 >    This allows the operating system to execute them as native commands.
 
@@ -62,34 +63,42 @@ Before the scripts can run, you need to install their required Python packages. 
    
 <br>
 
-### Step 3: Add Scripts to the System PATH
+### Step 3: Make Scripts Executable as Commands
 
 This makes your commands available from any location in your console. ⚙️
 
 #### Windows:
 
-1. Open the Start Menu, search for `Environment Variables`, and select "Edit the system environment variables".
-2. In the `System Properties` window, click `Environment Variables...`.
-3. Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
-4. Click `New` and paste in the absolute path to your *commands-directory*.
-5. Click `OK` to close all dialogs.
+* **Add the *commands-directory* to your system's `Path` environment variable:**
+  1. Open the Start Menu, search for "Environment Variables", and select `Edit the system environment variables`.
+  2. In the `System Properties` window, click `Environment Variables...`.
+  3. Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
+  4. Click `New` and paste in the absolute path to your *commands-directory*.
+  5. Click `OK` to close all dialogs.
+* **Assure correct file associations for `.py` and `.pyw` files:**
+   1. In the File Explorer, right-click on any `.py` file and select `Open with` > `Choose another app`.
+   2. Scroll all the way down and click `Choose an app on your PC`.
+   3. Navigate to your Python installation directory (*e.g.* `C:\Program Files\Python\`), select `python.exe`, and click `Open`.
+   4. Now click on `Always` to set Python as the default app for `.py` files.
+   5. Lastly, repeat the same steps for a <code>.py**w**</code> file, but select <code>python**w**.exe</code> instead of `python.exe` under step 3.
+
 
 #### macOS and Linux:
 
-1. **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
-   (*Note: This is already done for you in all the repository's files.*)
-2. **Make the files executable:** Open your console and run the following command, replacing the path with your own:
-   ```bash
-   chmod +x "/path/to/your/commands-directory/*"
-   ```
-3. **Add the directory to your console's PATH:**
-    * For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
-    * For most **Linux** distributions, edit `~/.bashrc`.
-    * Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
+* **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
+  (*Note: This is already done for you in all the repository's files.*)
+* **Make the files executable:** Open your console and run the following command, replacing the path with your own:
+  ```bash
+  chmod +x "/path/to/your/commands-directory/*"
+  ```
+* **Add the directory to your console's PATH:**
+   1. For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
+   2. For most **Linux** distributions, edit `~/.bashrc`.
+   3. Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
       ```bash
       export PATH="$PATH:/path/to/your/commands-directory"
       ```
-    * Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
+   4. Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
 
 <br>
 
