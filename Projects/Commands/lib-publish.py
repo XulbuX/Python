@@ -51,9 +51,10 @@ def get_latest_python_version() -> Optional[str]:
 
 
 def find_twine_path() -> Optional[str]:
+    twine_exe_paths = [os.path.join(sys.base_prefix, "Scripts", "twine.exe")]
+
     if py_version := get_latest_python_version():
-        twine_exe_paths = [
-            os.path.join(sys.base_prefix, "Scripts", "twine.exe"),
+        twine_exe_paths.extend([
             os.path.join(
                 os.path.expanduser("~"), "AppData", "Local", "Programs",
                 "Python", py_version, "Scripts", "twine.exe"
@@ -62,10 +63,22 @@ def find_twine_path() -> Optional[str]:
                 os.path.expanduser("~"), "AppData", "Roaming",
                 "Python", py_version, "Scripts", "twine.exe"
             ),
-        ]
-        for path in twine_exe_paths:
-            if os.path.isfile(path):
-                return path
+        ])
+
+    # CHECK PROGRAM FILES FOR PYTHON INSTALLATIONS
+    program_files = os.environ.get("ProgramFiles", "C:\\Program Files")
+    if os.path.exists(program_files):
+        try:
+            for d in os.listdir(program_files):
+                if d.startswith("Python"):
+                    twine_exe_paths.append(os.path.join(program_files, d, "Scripts", "twine.exe"))
+        except OSError:
+            pass
+
+    for path in twine_exe_paths:
+        if os.path.isfile(path):
+            return path
+
     Console.fail("[white](twine.exe) not found in expected locations. Please verify installation.")
 
 
