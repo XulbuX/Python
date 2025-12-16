@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 
 
-ARGS = Console.get_args({"path": "before"})
+ARGS = Console.get_args(path="before")
 
 
 def is_text_file(filepath: Path):

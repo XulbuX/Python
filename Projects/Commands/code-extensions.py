@@ -8,7 +8,7 @@ import platform
 import sys
 
 
-ARGS = Console.get_args({"as_json": {"-j", "--json"}})
+ARGS = Console.get_args(as_json={"-j", "--json"})
 
 
 def check_vscode_installed() -> bool:

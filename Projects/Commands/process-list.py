@@ -3,10 +3,10 @@
 from xulbux import FormatCodes, Console
 
 
-ARGS = Console.get_args({
-    "list_items": "before",
-    "separator": {"-s", "--sep", "--separator"},
-})
+ARGS = Console.get_args(
+    list_items="before",
+    separator={"-s", "--sep", "--separator"},
+)
 
 
 def main() -> None:

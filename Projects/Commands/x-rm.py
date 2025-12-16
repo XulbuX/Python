@@ -26,12 +26,10 @@ PROTECTED_PROCESSES_UNIX = {
 }
 
 ARGS = Console.get_args(
-    {
-        "rm_path": "before",
-        "confirm": {"-c", "--confirm"},
-        "help": {"-h", "--help"},
-    },
     allow_spaces=True,
+    rm_path="before",
+    confirm={"-c", "--confirm"},
+    help={"-h", "--help"},
 )
 
 

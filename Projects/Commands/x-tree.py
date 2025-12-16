@@ -11,11 +11,12 @@ import os
 import re
 
 
-ARGS = Console.get_args({
-    "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
-    "no_progress": {"-n", "-np", "--no-progress"},
-    "help": {"-h", "--help"},
-}, allow_spaces=True)
+ARGS = Console.get_args(
+    allow_spaces=True,
+    ignore_dirs={"-i", "--ignore", "--ignore-dirs"},
+    no_progress={"-n", "-np", "--no-progress"},
+    help={"-h", "--help"},
+)
 DEFAULT = {
     "ignore_dirs": [],
     "auto_ignore": True,

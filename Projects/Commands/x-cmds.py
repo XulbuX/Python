@@ -2,6 +2,7 @@
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from xulbux.console import Spinner
+from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, String, Path
 from typing import TypedDict, Optional, Any, cast
 import importlib.util
@@ -18,14 +19,14 @@ GITHUB_DIFFS = {
     "check_for_cmd_updates": True,
 }
 
-ARGS = Console.get_args(find_args={
-    "update_check": {"-u", "--update"},
-})
+ARGS = Console.get_args(update_check={"-u", "--update"})
 
-ARGS_VAR = re.compile(r"Console\s*.\s*get_args\(\s*(?:find_args\s*=\s*)?(\w+|{.+?})\s*(?:,\s*\w+\s*=\s*.*)*\)", re.DOTALL)
-SYS_ARGV = re.compile(r"sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?", re.MULTILINE)
-DESC = re.compile(r"(?i)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1", re.DOTALL)
-PYTHON_SHEBANG = re.compile(r"(?i)^\s*#!.*python")
+PATTERNS = LazyRegex(
+    args_var = r"(?s)Console\s*.\s*get_args\(\s*(?:\s*\w+\s*=\s*.*\s*,?)*\s*\)",
+    sys_argv = r"(?m)sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?",
+    desc = r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
+    python_shebang = r"(?i)^\s*#!.*python",
+)
 
 
 def is_python_file(filepath: str) -> bool:
@@ -33,7 +34,7 @@ def is_python_file(filepath: str) -> bool:
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             first_line = f.readline()
-            return bool(PYTHON_SHEBANG.match(first_line))
+            return bool(PATTERNS.python_shebang.match(first_line))
     except Exception:
         return False
 
@@ -132,10 +133,10 @@ def get_commands_str(python_files: set[str]) -> str:
         try:
             with open(abs_path, "r", encoding="utf-8") as file:
                 content = file.read()
-                if desc := DESC.match(content):
+                if desc := PATTERNS.desc.match(content):
                     cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
-                args_var = m.group(1).strip() if (m := ARGS_VAR.search(content)) else None
-                sys_argv = SYS_ARGV.findall(content)
+                args_var = m.group(1).strip() if (m := PATTERNS.args_var.search(content)) else None
+                sys_argv = PATTERNS.sys_argv.findall(content)
         except Exception:
             args_var = None
 

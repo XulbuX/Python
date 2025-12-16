@@ -11,15 +11,15 @@ import re
 import os
 
 
-ARGS = Console.get_args({
-    "text": "before",
-    "invert": {"-i", "--invert"},
-    "scale": {"-s", "--scale"},
-    "error_correction": {"-e", "--error"},
-    "contact": {"-c", "--contact"},
-    "wifi": {"-w", "--wifi"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    text="before",
+    invert={"-i", "--invert"},
+    scale={"-s", "--scale"},
+    error_correction={"-e", "--error"},
+    contact={"-c", "--contact"},
+    wifi={"-w", "--wifi"},
+    help={"-h", "--help"},
+)
 
 
 def print_help():

@@ -3,14 +3,13 @@
 from xulbux.console import Spinner
 from xulbux import FormatCodes, Console
 from typing import Iterator
-import threading
 import psutil
 import math
 import time
 import sys
 
 
-ARGS = Console.get_args({"decimal_places": "before"})
+ARGS = Console.get_args(decimal_places="before")
 REFERENCE_TIMES = {
     1000: 0.01,  # 1K DIGITS
     5000: 0.175,  # 5K DIGITS

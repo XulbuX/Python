@@ -10,15 +10,16 @@ import os
 import sys
 
 
-ARGS = Console.get_args({
-    "external_only": {"-e", "--external"},
-    "directory": {"-d", "--dir", "--directory"},
-    "recursive": {"-r", "--recursive"},
-    "list": {"-l", "--list"},
-    "as_json": {"-j", "--json"},
-    "install": {"-i", "--install"},
-    "help": {"-h", "--help"},
-}, allow_spaces=True)
+ARGS = Console.get_args(
+    allow_spaces=True,
+    external_only={"-e", "--external"},
+    directory={"-d", "--dir", "--directory"},
+    recursive={"-r", "--recursive"},
+    list={"-l", "--list"},
+    as_json={"-j", "--json"},
+    install={"-i", "--install"},
+    help={"-h", "--help"},
+)
 
 # PYTHON STANDARD LIBRARY MODULES (Python 3.x)
 STDLIB_MODULES = {

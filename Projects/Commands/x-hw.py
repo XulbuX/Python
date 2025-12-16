@@ -7,11 +7,11 @@ import platform
 import re
 
 
-ARGS = Console.get_args({
-    "detailed": {"-d", "--detailed"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    detailed={"-d", "--detailed"},
+    json_output={"-j", "--json"},
+    help={"-h", "--help"},
+)
 
 
 def print_help():

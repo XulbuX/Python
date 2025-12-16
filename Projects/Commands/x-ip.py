@@ -8,12 +8,12 @@ import json
 import re
 
 
-ARGS = Console.get_args({
-    "get_geo": {"-g", "--geo", "--location"},
-    "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    get_geo={"-g", "--geo", "--location"},
+    provider={"flags": {"-p", "--provider"}, "default": "ipify"},
+    json_output={"-j", "--json"},
+    help={"-h", "--help"},
+)
 
 
 def print_help():

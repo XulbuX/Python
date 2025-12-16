@@ -12,14 +12,15 @@ import re
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args({
-    "calculation": "before",
-    "ans": {"-a", "--ans"},
-    "precision": {"-p", "--precision"},
-    "format": {"-f", "--format"},
-    "debug": {"-d", "--debug"},
-    "help": {"-h", "--help"},
-}, allow_spaces=True)
+ARGS = Console.get_args(
+    allow_spaces=True,
+    calculation="before",
+    ans={"-a", "--ans"},
+    precision={"-p", "--precision"},
+    format={"-f", "--format"},
+    debug= {"-d", "--debug"},
+    help={"-h", "--help"},
+)
 DEBUG = ARGS.debug.exists
 
 _COMPILED: dict[str, Pattern] = {
