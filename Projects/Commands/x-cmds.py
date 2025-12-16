@@ -22,11 +22,11 @@ GITHUB_DIFFS = {
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
-    sys_argv = r"(?m)sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?",
-    get_args = r"(?m)Console\s*.\s*get_args\s*" + Regex.brackets(is_group=True),
-    arg = r"\s*(\w+)\s*=\s*(.*)\s*,?",
-    desc = r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
-    python_shebang = r"(?i)^\s*#!.*python",
+    sys_argv=r"(?m)sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?",
+    get_args=r"(?m)Console\s*.\s*get_args\s*" + Regex.brackets(is_group=True),
+    arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
+    desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
+    python_shebang=r"(?i)^\s*#!.*python",
 )
 
 
