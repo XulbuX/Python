@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
+from xulbux.base.types import ArgConfigWithDefault
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, String, Regex, Path
-from typing import TypedDict, Optional, Any, cast
-import importlib.util
+from typing import TypedDict, Optional, Literal, cast
 import requests
 import hashlib
 import sys
@@ -59,23 +59,16 @@ def parse_args_comment(s: str) -> dict:
     return result
 
 
-def get_var_val(file_path: str, var_name: str) -> Optional[Any]:
-    sys.stdout = open(os.devnull, "w")
-    sys.stderr = open(os.devnull, "w")
-    spec = importlib.util.spec_from_file_location(os.path.basename(file_path), file_path)
-    module = importlib.util.module_from_spec(spec)  # type: ignore[call-arg]
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    var_val = getattr(module, var_name, None)
-    sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
-    return var_val
+def sort_flags(flags: list[str]) -> list[str]:
+    return sorted(flags, key=lambda x: (len(x) - len(x.lstrip("-")), x))
 
 
-def arguments_desc(find_args: Optional[dict]) -> str:
+def arguments_desc(find_args: Optional[dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]]) -> str:
     if not find_args or len(find_args) < 1:
         return f"\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
 
-    arg_descs, keys = [], list(find_args.keys())
+    arg_descs: list[str | list[str]] = []
+    keys = list(find_args.keys())
 
     for key, val in find_args.items():
         if len(val) < 1:
@@ -88,9 +81,11 @@ def arguments_desc(find_args: Optional[dict]) -> str:
             else:
                 arg_descs.append(val)
         elif isinstance(val, dict) and "flags" in val.keys():
-            arg_descs.append(cast(dict, val)["flags"])
+            arg_descs.append(sort_flags(list(val["flags"])))
+        elif isinstance(val, (list, tuple, set, frozenset)):
+            arg_descs.append(sort_flags(list(val)))
         else:
-            arg_descs.append(val)
+            arg_descs.append(repr(val))
 
     opt_descs = ["[_c], [br:blue]".join(d) for d in arg_descs if isinstance(d, (list, tuple, set, frozenset))]
     opt_keys = [keys.pop(i - j) for j, (i, _) in enumerate((i, d) for i, d in enumerate(arg_descs) if isinstance(d, (list, tuple, set, frozenset)))]
@@ -115,7 +110,7 @@ def arguments_desc(find_args: Optional[dict]) -> str:
 
     return (
         (f"\n\n[b](Takes {len(arg_descs)} Argument{'' if len(arg_descs) == 1 else 's'}:)"
-        f"\n  {'\n  '.join(arg_descs)}") if len(arg_descs) > 0 else ""
+        f"\n  {'\n  '.join(cast(list[str], arg_descs))}") if len(arg_descs) > 0 else ""
     ) + (
         (f"\n\n[b](Has {len(opt_descs)} Option{'' if len(opt_descs) == 1 else 's'}:)"
         f"\n  {'\n  '.join(opt_descs)}") if len(opt_descs) > 0 else ""
