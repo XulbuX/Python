@@ -3,7 +3,7 @@
 A short description and command arguments are displayed if available."""
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
-from xulbux import FormatCodes, Console, String, Path
+from xulbux import FormatCodes, Console, String, Regex, Path
 from typing import TypedDict, Optional, Any, cast
 import importlib.util
 import requests
@@ -22,8 +22,9 @@ GITHUB_DIFFS = {
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
-    args_var = r"(?s)Console\s*.\s*get_args\(\s*(?:\s*\w+\s*=\s*.*\s*,?)*\s*\)",
     sys_argv = r"(?m)sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?",
+    get_args = r"(?m)Console\s*.\s*get_args\s*" + Regex.brackets(is_group=True),
+    arg = r"\s*(\w+)\s*=\s*(.*)\s*,?",
     desc = r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
     python_shebang = r"(?i)^\s*#!.*python",
 )
@@ -132,24 +133,25 @@ def get_commands_str(python_files: set[str]) -> str:
 
         try:
             with open(abs_path, "r", encoding="utf-8") as file:
-                content = file.read()
-                if desc := PATTERNS.desc.match(content):
+                if desc := PATTERNS.desc.match(content := file.read()):
                     cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
-                args_var = m.group(1).strip() if (m := PATTERNS.args_var.search(content)) else None
-                sys_argv = PATTERNS.sys_argv.findall(content)
-        except Exception:
-            args_var = None
 
-        if args_var:
+                sys_argv = PATTERNS.sys_argv.findall(content)
+                get_args = m.group(1).strip() if (m := PATTERNS.get_args.search(content)) else None
+
+        except Exception:
+            get_args = None
+
+        if get_args:
             try:
-                if args_var.startswith("{"):
-                    find_args = String.to_type(args_var)
-                else:
-                    find_args = get_var_val(abs_path, args_var)
-                if find_args and isinstance(find_args, dict):
-                    cmds += arguments_desc(find_args)
+                find_args = {}
+                for arg in PATTERNS.arg.finditer(get_args):
+                    if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "allow_spaces":
+                        find_args[key.strip()] = String.to_type(val.strip().rstrip(","))
+                cmds += arguments_desc(find_args)
             except Exception:
                 pass
+
         elif sys_argv:
             find_args = {}
             for arg in sys_argv:
