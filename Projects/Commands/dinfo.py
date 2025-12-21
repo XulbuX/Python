@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Get detailed information about files in the current directory."""
+from xulbux.base.types import ProgressUpdater
 from xulbux.console import ProgressBar, Spinner
 from xulbux import FormatCodes, Console
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
-from typing import Callable
 from pathlib import Path
 import fnmatch
 import math
@@ -210,7 +210,7 @@ def process_file(file_path: str) -> tuple[int, int, int]:
         return 1, 0, 0
 
 
-def calc_files_scope(files: list, update_progress: Callable[[int], None]) -> tuple[int, int, int]:
+def calc_files_scope(files: list, update_progress: ProgressUpdater) -> tuple[int, int, int]:
     cpu_count = os.cpu_count() or 4
     if len(files) < 50:
         max_workers = min(len(files), cpu_count)
@@ -276,7 +276,7 @@ def main():
                 update_progress(0)
                 files_count, files_scope, files_size = calc_files_scope(files, update_progress)
         else:
-            files_count, files_scope, files_size = calc_files_scope(files, lambda x: None)
+            files_count, files_scope, files_size = calc_files_scope(files, lambda current=None, label=None: None)
 
     files_size = format_bytes_size(files_size)
     info_parts = [f"[b|bg:black]([in]( TOTAL FILES: ) {files_count:,} )"]
