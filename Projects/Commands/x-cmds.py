@@ -19,6 +19,8 @@ GITHUB_DIFFS = {
     "check_for_cmd_updates": True,
 }
 
+IS_WIN = sys.platform == "win32"
+
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
@@ -270,13 +272,9 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
 
-            cmd_name = os.path.splitext(filename)[0]
-
             # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
-            if sys.platform == "win32":
-                file_path = os.path.join(Path.script_dir, filename)
-            else:
-                file_path = os.path.join(Path.script_dir, cmd_name)
+            cmd_name = os.path.splitext(filename)[0]
+            file_path = os.path.join(Path.script_dir, filename if IS_WIN else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
@@ -284,7 +282,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             FormatCodes.print(f"[dim|br:green](✓ Downloaded [b]({filename}))")
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
-            if sys.platform != "win32":
+            if not IS_WIN:
                 os.chmod(file_path, 0o755)
 
             FormatCodes.print(f"[br:green](✓ Installed [b]({cmd_name}))")
