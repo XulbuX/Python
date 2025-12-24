@@ -36,7 +36,7 @@ def main() -> None:
     FormatCodes.print(f"\n[b|bg:black]([in]( FOUND ) {len(extensions)} [in]( INSTALLED VSCODE EXTENSIONS ))")
     FormatCodes.print(
         "\n[white]" + (
-            Data.to_str(
+            Data.render(
                 extensions,
                 indent=2,
                 as_json=True,

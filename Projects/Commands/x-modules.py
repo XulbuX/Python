@@ -239,7 +239,7 @@ def main() -> None:
             json_data = sorted(modules.keys())
         else:
             json_data = {module: sorted(files) for module, files in sorted(modules.items())}
-        FormatCodes.print(f"\n{Data.to_str(
+        FormatCodes.print(f"\n{Data.render(
             json_data,
             indent=2,
             as_json=True,
