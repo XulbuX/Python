@@ -243,7 +243,7 @@ def main() -> None:
             json_data,
             indent=2,
             as_json=True,
-            _syntax_highlighting=True,
+            syntax_highlighting=True,
         )}\n")
 
     else:

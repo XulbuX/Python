@@ -11,11 +11,11 @@ VERSION = "1.4.26"
 COMMAND = "x-convert"
 JSON_FILE = "config.json"
 FIND_ARGS = {
-    "filepath": ["-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"],
-    "indent": ["-i", "--indent", "-is", "--indent-spaces"],
-    "blade_vue": ["-bv", "--blade-vue", "--blade-to-vue"],
-    "help": ["-h", "--help"],
-    "debug": ["-d", "--debug"],
+    "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
+    "indent": {"-i", "--indent", "-is", "--indent-spaces"},
+    "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
+    "help": {"-h", "--help"},
+    "debug": {"-d", "--debug"},
 }
 DEFAULT_JSON = {
     "component_replacements": {
@@ -155,10 +155,10 @@ def show_help():
 
   [b|#7090FF]Examples [_b]((Blade ➜ Vue)):[*]
     Full path with 2 spaces indentation:
-      [_]C:\Users\{Console.usr}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
+      [_]C:\Users\{Console.user}> [#FF9E6A]x-convert [#7B7C8F]-f [#4DF1C2]D:\full\path\to\file.blade.php [#7B7C8F]-i [#77EFEF]2 [#7B7C8F]-bv[*]
 
     Relative path with 4 spaces indentation:
-      [_]C:\Users\{Console.usr}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
+      [_]C:\Users\{Console.user}> [#FF9E6A]cd [#4DF1C2]D:\full\path[*]
       [_]D:\full\path> [#FF9E6A]x-convert [#7B7C8F]--file-path [#4DF1C2].\to\file.blade.php [#7B7C8F]--indent-spaces [#77EFEF]4 [#7B7C8F]--blade-to-vue[*]
 
   [b|#7090FF]Supported conversion:[*]
@@ -796,16 +796,16 @@ def main(args: Args):
     if args.filepath.value in (None, ""):
         Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
     args.filepath.value = Path.extend(str(args.filepath.value), raise_error=True, use_closest_match=True)
-    if not os.path.isfile(args.filepath.value):
+    if not os.path.isfile(args.filepath.value or ""):
         Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
 
-    with open(args.filepath.value, "r") as file:
+    with open(args.filepath.value or "", "r") as file:
         file_content = file.read()
     converter = blade_to_vue()
-    converted_content = (converter.convert(file_content, args.indent.value) if args.blade_vue.exists else None)
+    converted_content = (converter.convert(file_content, int(args.indent.value or 2)) if args.blade_vue.exists else None)
 
     if converted_content:
-        new_file_path = File.rename_extension(args.filepath.value, ".vue", camel_case_filename=True)
+        new_file_path = File.rename_extension(args.filepath.value or "", ".vue", camel_case_filename=True)
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
@@ -826,7 +826,7 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    args = Console.get_args(FIND_ARGS)
+    args = Console.get_args(allow_spaces=True, **FIND_ARGS)
     DEBUG = args.debug.exists
     if DEBUG:
         if args.help.exists:

@@ -40,7 +40,7 @@ def main() -> None:
                 extensions,
                 indent=2,
                 as_json=True,
-                _syntax_highlighting=True,
+                syntax_highlighting=True,
             ) if ARGS.as_json.exists else "\n".join(extensions)
         ) + "[_]\n"
     )
