@@ -14,7 +14,7 @@ To run these Python scripts as native commands in your console, follow these ste
 
 ### Prerequisites
 
-> [!IMPORTANT]
+> [!IMPORTANT]<br>
 > Before you begin, ensure you have Python installed and **added to your system's PATH**.<br>
 > This is crucial for the commands to be recognized and executed.
 > 
@@ -32,7 +32,7 @@ To run these Python scripts as native commands in your console, follow these ste
 Download the Python files you want to use, along with the [`requirements.txt`](./requirements.txt) file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
-> [!IMPORTANT]
+> [!IMPORTANT]<br>
 > The way you prepare the files depends on your operating system:
 >
 >  * **Windows:** You can leave the `.py` or `.pyw` extension on the files.<br>
@@ -117,7 +117,7 @@ The changes are now active, and you can run the files by typing their names (*e.
 Here's a brief overview of what each script does and how to use it.<br>
 **⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
 
-> [!NOTE]
+> [!NOTE]<br>
 > If any of the scripts doesn't work, make sure you have updated all the required dependencies to their latest versions.<br>
 > To do that download the [`requirements.txt`](./requirements.txt) file again and then follow the [**dependencies installing steps**](#install-dependencies) again.
 
