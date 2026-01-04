@@ -146,19 +146,6 @@ capitalize-hex "/path/to/directory"
 
 <br>
 
-### `code-extensions`
-
-This command will output info about all installed Visual Studio Code extensions:
-1. the installed extensions count
-2. a list of all installed extensions
-
-You can also output the list of installed extensions, formatted as a JSON array, with the `-j` `--json` option:
-```bash
-code-extensions --json
-```
-
-<br>
-
 ### `dinfo`
 
 This command will give you the following info about the files in your current working directory (`cwd`):
@@ -401,6 +388,19 @@ This command gives you the option to get a nicely formatted table with the squar
 You can specify the number of table columns with the `-c` `--cols` `--columns` option:
 ```bash
 squares --columns 6
+```
+
+<br>
+
+### `vscode-ext`
+
+This command will output info about all installed Visual Studio Code extensions:
+1. the installed extensions count
+2. a list of all installed extensions
+
+You can also output the list of installed extensions, formatted as a JSON array, with the `-j` `--json` option:
+```bash
+code-extensions --json
 ```
 
 <br>
