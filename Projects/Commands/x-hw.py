@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
 """Get detailed hardware information about your PC."""
 from xulbux import FormatCodes, Console, Data
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import subprocess
 import platform
 import re
 
+if TYPE_CHECKING:
+    import psutil
+
+# CHECK IF PSUTIL IS AVAILABLE (MAY FAIL ON PYTHON 3.14)
+PSUTIL_AVAILABLE = False
+PSUTIL_ERROR = None
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    PSUTIL_ERROR = str(e)
 
 ARGS = Console.get_args(
     detailed={"-d", "--detailed"},
@@ -66,8 +77,7 @@ class HardwareInfo:
             "cpu_usage": None,
         }
 
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE:
             info["physical_cores"] = psutil.cpu_count(logical=False)
             info["logical_cores"] = psutil.cpu_count(logical=True)
 
@@ -80,8 +90,6 @@ class HardwareInfo:
 
             if detailed:
                 info["per_core_usage"] = [f"{x}%" for x in psutil.cpu_percent(interval=1, percpu=True)]
-        except ImportError:
-            pass
 
         return info
 
@@ -94,8 +102,7 @@ class HardwareInfo:
             "usage_percent": None,
         }
 
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE:
             mem = psutil.virtual_memory()
             info["total"] = self._format_bytes(mem.total)
             info["available"] = self._format_bytes(mem.available)
@@ -107,8 +114,6 @@ class HardwareInfo:
                 info["swap_total"] = self._format_bytes(swap.total)
                 info["swap_used"] = self._format_bytes(swap.used)
                 info["swap_percent"] = f"{swap.percent}%"
-        except ImportError:
-            pass
 
         return info
 
@@ -121,8 +126,7 @@ class HardwareInfo:
             "total_free": None,
         }
 
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE:
             partitions = psutil.disk_partitions()
 
             total_size = 0
@@ -155,10 +159,8 @@ class HardwareInfo:
             info["total_free"] = self._format_bytes(total_free)
 
             if not detailed:
-                # In non-detailed mode, only show summary
+                # IN NON-DETAILED MODE, ONLY SHOW SUMMARY
                 info["partitions"] = []
-        except ImportError:
-            pass
 
         return info
 
@@ -187,7 +189,7 @@ class HardwareInfo:
 
         elif system == "Linux":
             try:
-                # Try lspci for GPU info
+                # TRY 'lspci' FOR GPU INFO
                 result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     for line in result.stdout.split("\n"):
@@ -203,7 +205,7 @@ class HardwareInfo:
                 result = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     lines = result.stdout.split("\n")
-                    for i, line in enumerate(lines):
+                    for line in lines:
                         if "Chipset Model:" in line:
                             gpu_name = line.split(":", 1)[1].strip()
                             info["gpus"].append({"name": gpu_name})
@@ -218,8 +220,7 @@ class HardwareInfo:
             "adapters": [],
         }
 
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE:
             stats = psutil.net_if_stats()
             addrs = psutil.net_if_addrs()
 
@@ -231,15 +232,13 @@ class HardwareInfo:
                         "speed": f"{stats[interface_name].speed} Mbps" if stats[interface_name].speed > 0 else "Unknown",
                     }
 
-                    # Get MAC address
+                    # GET MAC ADDRESS
                     for addr in addrs[interface_name]:
                         if addr.family.name == 'AF_LINK' or addr.family.name == 'AF_PACKET':
                             adapter_info["mac"] = addr.address
                             break
 
                     info["adapters"].append(adapter_info)
-        except ImportError:
-            pass
 
         return info
 
@@ -252,19 +251,19 @@ class HardwareInfo:
             "time_left": None,
         }
 
-        try:
-            import psutil
-            battery = psutil.sensors_battery()
-            if battery:
-                info["has_battery"] = True
-                info["percent"] = f"{battery.percent}%"
-                info["power_plugged"] = battery.power_plugged
-                if battery.secsleft != psutil.POWER_TIME_UNLIMITED and battery.secsleft > 0:
-                    hours = battery.secsleft // 3600
-                    minutes = (battery.secsleft % 3600) // 60
-                    info["time_left"] = f"{hours}h {minutes}m"
-        except (ImportError, AttributeError):
-            pass
+        if PSUTIL_AVAILABLE:
+            try:
+                battery = psutil.sensors_battery()
+                if battery:
+                    info["has_battery"] = True
+                    info["percent"] = f"{battery.percent}%"
+                    info["power_plugged"] = battery.power_plugged
+                    if battery.secsleft != psutil.POWER_TIME_UNLIMITED and battery.secsleft > 0:
+                        hours = battery.secsleft // 3600
+                        minutes = (battery.secsleft % 3600) // 60
+                        info["time_left"] = f"{hours}h {minutes}m"
+            except AttributeError:
+                pass
 
         return info
 
@@ -278,6 +277,11 @@ class HardwareInfo:
 
     def gather_info(self, detailed: bool = False) -> None:
         """Gather all hardware information."""
+        if not PSUTIL_AVAILABLE:
+            FormatCodes.print(
+                "\n[br:yellow][b](⚠ Library psutil failed to initialize - some hardware info will be missing!)"
+                "\n  [dim](This is likely due to incompatibility with your Python version.)[_c]\n"
+            )
         Console.info("Gathering hardware information...", start="\n")
         self.system = self._get_system_info()
         self.cpu = self._get_cpu_info(detailed)
@@ -312,7 +316,7 @@ class HardwareInfo:
 
         # SYSTEM INFO
         if self.system:
-            FormatCodes.print("\n[b|br:cyan](System Information)")
+            FormatCodes.print("\n[b|br:green](System Information)")
             system_text = []
             if self.system.get("os"):
                 system_text.append(f"          [b](OS) : [br:white]({self.system['os']} {self.system.get('os_release', '')})")
@@ -322,14 +326,14 @@ class HardwareInfo:
                 system_text.append(f"[b](Architecture) : [br:white]({self.system['architecture']})")
             if self.system.get("hostname"):
                 system_text.append(f"    [b](Hostname) : [br:white]({self.system['hostname']})")
-            Console.log_box_bordered(*system_text, border_style="br:cyan")
+            Console.log_box_bordered(*system_text, border_style="br:green")
 
         # CPU INFO
         if self.cpu:
-            FormatCodes.print("\n[b|br:green](CPU Information)")
+            FormatCodes.print("\n[b|br:cyan](CPU Information)")
             cpu_text = []
             if self.cpu.get("processor"):
-                cpu_text.append(f"     [b](Processor) : [br:white]({self.cpu['processor']})")
+                cpu_text.append(f"{'     ' if PSUTIL_AVAILABLE else ''}[b](Processor) : [br:white]({self.cpu['processor']})")
             if self.cpu.get("physical_cores"):
                 cpu_text.append(f"[b](Physical Cores) : [br:white]({self.cpu['physical_cores']})")
             if self.cpu.get("logical_cores"):
@@ -346,12 +350,22 @@ class HardwareInfo:
                 formatted_cores = []
                 for i in range(0, len(cores), 10):
                     formatted_cores.append('[br:white]' + ', '.join(cores[i:i + 10]))
-                cpu_text.append(f"[b|br:green](Per-Core Usage)\n" + '\n'.join(formatted_cores) + "[_c]")
-            Console.log_box_bordered(*cpu_text, border_style="br:green")
+                cpu_text.append(f"[b|br:cyan](Per-Core Usage)\n" + '\n'.join(formatted_cores) + "[_c]")
+            Console.log_box_bordered(*cpu_text, border_style="br:cyan")
+
+        # GPU INFO
+        if self.gpu and self.gpu.get("gpus"):
+            FormatCodes.print("\n[b|br:blue](GPU Information)")
+            gpu_text = []
+            for i, gpu in enumerate(self.gpu["gpus"]):
+                if i > 0:
+                    gpu_text.append("{hr}")
+                gpu_text.append(f"[b](GPU {i + 1}) : [br:white]({gpu['name']})")
+            Console.log_box_bordered(*gpu_text, border_style="br:blue")
 
         # MEMORY INFO
         if self.memory:
-            FormatCodes.print("\n[b|br:yellow](Memory Information)")
+            FormatCodes.print("\n[b|magenta](Memory Information)")
             mem_text = []
             if self.memory.get("total"):
                 mem_text.append(f"     [b](Total) : [br:white]({self.memory['total']})")
@@ -367,7 +381,7 @@ class HardwareInfo:
                 mem_text.append(f" [b](Swap Used) : [br:white]({self.memory['swap_used']})")
             if self.memory.get("swap_percent"):
                 mem_text.append(f"[b](Swap Usage) : [br:white]({self.memory['swap_percent']})")
-            Console.log_box_bordered(*mem_text, border_style="br:yellow")
+            Console.log_box_bordered(*mem_text, border_style="magenta")
 
         # DISK INFO
         if self.disk:
@@ -392,16 +406,6 @@ class HardwareInfo:
                     disk_text.append(f"     [b](Usage) : [br:white]({partition['usage_percent']})")
 
             Console.log_box_bordered(*disk_text, border_style="br:magenta")
-
-        # GPU INFO
-        if self.gpu and self.gpu.get("gpus"):
-            FormatCodes.print("\n[b|br:blue](GPU Information)")
-            gpu_text = []
-            for i, gpu in enumerate(self.gpu["gpus"]):
-                if i > 0:
-                    gpu_text.append("{hr}")
-                gpu_text.append(f"[b](GPU {i + 1}) : [br:white]({gpu['name']})")
-            Console.log_box_bordered(*gpu_text, border_style="br:blue")
 
         # NETWORK INFO
         if self.network and self.network.get("adapters"):

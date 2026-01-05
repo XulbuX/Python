@@ -263,7 +263,7 @@ class IPInfo:
         """Display IP information in formatted output."""
         print()
 
-        FormatCodes.print("\n[b|br:cyan](Local IP Addresses)")
+        FormatCodes.print("\n[b|br:green](Local IP Addresses)")
         local_ips_text = []
         if self.local_ipv4:
             local_ips_text.append(f"[b](IPv4) : [white]({self.local_ipv4})")
@@ -273,9 +273,9 @@ class IPInfo:
             local_ips_text.append(f"[b](IPv6) : [white]({self.local_ipv6})")
         else:
             local_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*local_ips_text, border_style=f"br:cyan")
+        Console.log_box_bordered(*local_ips_text, border_style=f"br:green")
 
-        FormatCodes.print("\n[b|br:magenta](Public IP Addresses)")
+        FormatCodes.print("\n[b|br:cyan](Public IP Addresses)")
         public_ips_text = []
         if self.public_ipv4:
             public_ips_text.append(f"[b](IPv4) : [white]({self.public_ipv4})")
@@ -285,16 +285,16 @@ class IPInfo:
             public_ips_text.append(f"[b](IPv6) : [white]({self.public_ipv6})")
         else:
             public_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*public_ips_text, border_style=f"br:magenta")
+        Console.log_box_bordered(*public_ips_text, border_style=f"br:cyan")
 
         if self.all_interfaces:
-            FormatCodes.print("\n[b|br:yellow](All Network Interfaces)")
+            FormatCodes.print("\n[b|br:blue](All Network Interfaces)")
             interfaces_text, i = [], 0
             for interface, addrs in self.all_interfaces.items():
                 status = (
                     f" [i|{'green' if addrs['status'].lower() == 'connected' else 'dim|white'}]({addrs['status']})"
                 ) if "status" in addrs else ""
-                interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|br:yellow]({interface}){status}")
+                interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|br:blue]({interface}){status}")
                 p = "   " if "dns_suffix" in addrs else ""
                 # IPv4 INFO
                 if "ipv4" in addrs:
@@ -310,9 +310,10 @@ class IPInfo:
                 if "dns_suffix" in addrs:
                     interfaces_text.append(f"[b](DNS Suffix) : [white]({addrs['dns_suffix']})")
                 i += 1
-            Console.log_box_bordered(*interfaces_text, border_style="br:yellow")
+            Console.log_box_bordered(*interfaces_text, border_style="br:blue")
 
         if self.geo_info:
+            FormatCodes.print("\n[b|magenta](Geolocation Information)")
             geo = self.geo_info
             geo_text = []
             has_coords = geo.get("lat") is not None and geo.get("lng") is not None
@@ -332,8 +333,7 @@ class IPInfo:
                 geo_text.append(f"{p}     [b](ISP) : [white]{geo['org']}[_c]")
             if geo.get("asn"):
                 geo_text.append(f"{p}     [b](ASN) : [white]{geo['asn']}[_c]")
-            FormatCodes.print("\n[b|br:blue](Geolocation Information)")
-            Console.log_box_bordered(*geo_text, border_style=f"br:blue")
+            Console.log_box_bordered(*geo_text, border_style=f"magenta")
 
         print()
 

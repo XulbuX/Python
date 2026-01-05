@@ -21,7 +21,7 @@ def smooth_wave(amplitude: int, speed: tuple[float, int]) -> Generator[Any, None
             time.sleep(1 / (speed[1] * 100))
 
 
-def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] = [" ", "█"]) -> None:
+def show_wave(width: int, speed: tuple[float, int] = (10, 1), chars: list[str] = ["  ", "██"]) -> None:
     for i in smooth_wave(amplitude=round(width / 2), speed=speed):
         idx = int(i + (width // 2))
         print(idx * chars[0] + chars[1] + (width - idx - 1) * chars[0])
@@ -31,9 +31,9 @@ if __name__ == "__main__":
     try:
         print()
         show_wave(
-            width=Console.w - 1,
+            width=(Console.w // 2) - 1,
             speed=(5, 1),
-            chars=["█", " "] if ARGS.invert.exists else [" ", "█"],
+            chars=["██", "  "] if ARGS.invert.exists else ["  ", "██"],
         )
     except KeyboardInterrupt:
         print()

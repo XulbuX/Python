@@ -3,9 +3,7 @@
 specified color channel with a specified number of steps."""
 from xulbux import FormatCodes, Console, Color
 from xulbux.color import rgba, hexa
-from colorspacious import cspace_convert
 from typing import Literal
-import numpy as np
 import colorsys
 
 
@@ -64,6 +62,15 @@ def interpolate_oklch(
     - `t` -⠀interpolation factor (0.0 to 1.0)
     - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise"
     """
+    try:
+        from colorspacious import cspace_convert
+        import numpy as np
+    except ImportError as e:
+        raise ImportError(
+            "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.\n"
+            "Please use [br:blue](--hsv) mode instead, or downgrade your Python to a version that supports these packages."
+        ) from e
+
     # CONVERT RGB (0-255) TO SRGB (0-1)
     rgb_a = np.array([color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0])
     rgb_b = np.array([color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0])

@@ -3,7 +3,6 @@
 from xulbux.console import Spinner
 from xulbux import FormatCodes, Console
 from typing import Iterator
-import psutil
 import math
 import time
 import sys
@@ -23,12 +22,19 @@ REFERENCE_TIMES = {
 
 
 def get_hardware_score() -> float:
-    cpu_freq = psutil.cpu_freq()
-    max_freq = cpu_freq.max if cpu_freq else 3000
-    cpu_count = psutil.cpu_count(logical=False) or 1
-    memory = psutil.virtual_memory()
-    memory_factor = 1 + (0.3 * (1 - memory.available / memory.total))
-    return ((max_freq * math.sqrt(cpu_count)) / 4000) / memory_factor
+    try:
+        import psutil
+
+        cpu_freq = psutil.cpu_freq()
+        max_freq = cpu_freq.max if cpu_freq else 3000
+        cpu_count = psutil.cpu_count(logical=False) or 1
+        memory = psutil.virtual_memory()
+        memory_factor = 1 + (0.3 * (1 - memory.available / memory.total))
+        return ((max_freq * math.sqrt(cpu_count)) / 4000) / memory_factor
+
+    except (ImportError, AttributeError):
+        # FALLBACK: USE DEFAULT HARDWARE SCORE (ASSUMES MODERN MID-RANGE SYSTEM)
+        return 1.0
 
 
 def estimate_runtime(precision: int) -> float:
