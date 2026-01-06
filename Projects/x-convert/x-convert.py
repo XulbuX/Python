@@ -1,8 +1,8 @@
-from xulbux import FormatCodes, EnvPath, String, Regex, Code, Data, File, Json, Path
-from xulbux.console import Console, Args
+from pathlib import Path
 from typing import Optional, cast
+from xulbux import FormatCodes, EnvPath, FileSys, String, Regex, Code, Data, File, Json
+from xulbux.console import Console, Args
 import regex as rx
-import pathlib
 import os
 import re
 
@@ -206,7 +206,7 @@ def get_missing_args(args: Args) -> Args:
 
 
 def add_to_env_vars() -> None:
-    base_dir = Path.script_dir
+    base_dir = FileSys.script_dir
     try:
         if JSON["is_in_env_vars"] != base_dir:
             if not EnvPath.has_path(base_dir=True):
@@ -337,7 +337,7 @@ class blade_to_vue:
                 )[:2]
                 if import_path:
                     replacement_name = replacement_name.replace(
-                        ":filename", pathlib.Path(import_path).stem
+                        ":filename", Path(import_path).stem
                     )
                     if import_path not in JS_IMPORTS:
                         JS_IMPORTS[replacement_name] = import_path
@@ -795,9 +795,9 @@ def main(args: Args):
     args = get_missing_args(args)
     if args.filepath.value in (None, ""):
         Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args.filepath.value = Path.extend(str(args.filepath.value), raise_error=True, use_closest_match=True)
+    args.filepath.value = FileSys.extend_path(str(args.filepath.value), raise_error=True, fuzzy_match=True)
     if not os.path.isfile(args.filepath.value or ""):
-        Console.fail(f'Path is not a file: [white]{args.filepath.value}', pause=DEBUG)
+        Console.fail(f"Path is not a file: [white]{args.filepath.value}", pause=DEBUG)
 
     with open(args.filepath.value or "", "r") as file:
         file_content = file.read()
