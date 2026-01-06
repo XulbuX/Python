@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tries to package and upload the library in the current or given directory.
 Uses 'build'  to build and 'twine' to try to upload the packaged library to PyPI."""
+from pathlib import Path
 from typing import Optional
 from xulbux import FormatCodes, Console, FileSys
 import subprocess
@@ -39,45 +40,39 @@ def print_help():
 
 
 def get_latest_python_version() -> Optional[str]:
-    py_dir = os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "Python")
+    py_dir = Path.home() / "AppData" / "Roaming" / "Python"
     versions = []
     try:
-        for d in os.listdir(py_dir):
-            if d.startswith("Python3"):
-                versions.append(d)
+        for d in py_dir.iterdir():
+            if d.name.startswith("Python3"):
+                versions.append(d.name)
         return sorted(versions)[-1] if versions else None
     except:
         return None
 
 
 def find_twine_path() -> Optional[str]:
-    twine_exe_paths = [os.path.join(sys.base_prefix, "Scripts", "twine.exe")]
+    twine_exe_paths = [Path(sys.base_prefix) / "Scripts" / "twine.exe"]
 
     if py_version := get_latest_python_version():
         twine_exe_paths.extend([
-            os.path.join(
-                os.path.expanduser("~"), "AppData", "Local", "Programs",
-                "Python", py_version, "Scripts", "twine.exe"
-            ),
-            os.path.join(
-                os.path.expanduser("~"), "AppData", "Roaming",
-                "Python", py_version, "Scripts", "twine.exe"
-            ),
+            Path.home() / "AppData" / "Local" / "Programs" / "Python" / py_version / "Scripts" / "twine.exe",
+            Path.home() / "AppData" / "Roaming" / "Python" / py_version / "Scripts" / "twine.exe",
         ])
 
     # CHECK PROGRAM FILES FOR PYTHON INSTALLATIONS
-    program_files = os.environ.get("ProgramFiles", "C:\\Program Files")
-    if os.path.exists(program_files):
+    program_files = Path(os.environ.get("ProgramFiles", "C:\\Program Files"))
+    if program_files.exists():
         try:
-            for d in os.listdir(program_files):
-                if d.startswith("Python"):
-                    twine_exe_paths.append(os.path.join(program_files, d, "Scripts", "twine.exe"))
+            for d in program_files.iterdir():
+                if d.name.startswith("Python"):
+                    twine_exe_paths.append(d / "Scripts" / "twine.exe")
         except OSError:
             pass
 
     for path in twine_exe_paths:
-        if os.path.isfile(path):
-            return path
+        if Path(path).is_file():
+            return str(path)
 
     Console.fail("[white](twine.exe) not found in expected locations. Please verify installation.")
 
@@ -93,19 +88,19 @@ def run_command(command: str, verbose: bool = False) -> None:
 
 
 def remove_dir_contents(dir: str, remove_dir: bool = False) -> None:
-    if os.path.exists(dir) and os.path.isdir(dir):
+    dir_path = Path(dir)
+    if dir_path.exists() and dir_path.is_dir():
         if remove_dir:
-            shutil.rmtree(dir)
+            shutil.rmtree(dir_path)
             return None
-        for filename in os.listdir(dir):
-            file_path = os.path.join(dir, filename)
+        for item in dir_path.iterdir():
             try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+                if item.is_file() or item.is_symlink():
+                    item.unlink()
+                elif item.is_dir():
+                    shutil.rmtree(item)
             except Exception as e:
-                Console.fail(f"Failed to delete [white]{file_path}[_c]. Reason: {e}")
+                Console.fail(f"Failed to delete [white]{item}[_c]. Reason: {e}")
 
 
 def main() -> None:
@@ -116,7 +111,7 @@ def main() -> None:
     if ARGS.lib_base.exists:
         os.chdir(str(ARGS.lib_base.values[0]))  # CHANGE CWD TO LIB BASE
     run_command(f"py -m build{' --verbose ' if ARGS.verbose.exists else ''}", verbose=ARGS.verbose.exists)
-    dist = os.path.join(os.getcwd(), "dist")
+    dist = str(Path.cwd() / "dist")
 
     if ARGS.only_build.exists:
         Console.done(f"Built to [white]{dist}[_c]\n[dim](Not uploading as per argument.)", start="\n", end="\n\n")

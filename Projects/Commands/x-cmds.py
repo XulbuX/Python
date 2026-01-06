@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
+from pathlib import Path
 from typing import TypedDict, Optional, Literal, cast
 from xulbux.base.types import ArgConfigWithDefault
 from xulbux.console import Spinner
@@ -45,10 +46,9 @@ def is_python_file(filepath: str) -> bool:
 def get_python_files() -> set[str]:
     """Get all Python files in the script directory by checking shebang lines."""
     python_files = set()
-    for filename in os.listdir(FileSys.script_dir):
-        file_path = os.path.join(FileSys.script_dir, filename)
-        if os.path.isfile(file_path) and is_python_file(file_path):
-            python_files.add(filename)
+    for file_path in FileSys.script_dir.iterdir():
+        if file_path.is_file() and is_python_file(str(file_path)):
+            python_files.add(file_path.name)
     return python_files
 
 
@@ -123,9 +123,10 @@ def get_commands_str(python_files: set[str]) -> str:
     i, cmds = 0, ""
 
     for i, f in enumerate(sorted(python_files), 1):
-        cmd_title_len = len(str(i)) + len(cmd_name := os.path.splitext(f)[0]) + 4
+        cmd_name = Path(f).stem
+        cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
-        abs_path = os.path.join(FileSys.script_dir, f)
+        abs_path = FileSys.script_dir / f
         sys_argv = None
 
         try:
@@ -192,14 +193,14 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         github_files = {}
         for item in response.json():
             if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
-                cmd_name = os.path.splitext(item["name"])[0]
+                cmd_name = Path(item["name"]).stem
                 github_files[cmd_name] = {
                     "filename": item["name"],
                     "download_url": item["download_url"],
                     "sha": item["sha"],
                 }
 
-        local_cmd_names = {os.path.splitext(f)[0] for f in local_files}
+        local_cmd_names = {Path(f).stem for f in local_files}
 
         # CHECK FOR NEW FILES
         if GITHUB_DIFFS["check_for_new_cmds"]:
@@ -212,14 +213,14 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         # CHECK FOR UPDATED FILES
         if GITHUB_DIFFS["check_for_cmd_updates"]:
             # CREATE A MAPPING FROM CMD NAME TO ACTUAL FILENAME
-            local_file_map = {os.path.splitext(f)[0]: f for f in local_files}
+            local_file_map = {Path(f).stem: f for f in local_files}
 
             for cmd_name in local_cmd_names:
                 if cmd_name in github_files:
                     try:
                         # READ LOCAL FILE CONTENT AND COMPUTE SHA
                         local_filename = local_file_map[cmd_name]
-                        local_path = os.path.join(FileSys.script_dir, local_filename)
+                        local_path = FileSys.script_dir / local_filename
 
                         # READ AS TEXT AND NORMALIZE TO LF (UNIX) LINE ENDINGS LIKE GITHUB
                         with open(local_path, "r", encoding="utf-8", newline="") as f:
@@ -245,7 +246,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     # FILTER DOWNLOAD URLS BASED ON SETTINGS
     files_to_download = {}
     for filename, url in result["download_urls"].items():
-        cmd_name = os.path.splitext(filename)[0]
+        cmd_name = Path(filename).stem
         if (GITHUB_DIFFS["check_for_new_cmds"] and cmd_name in result["new_cmds"]) or \
            (GITHUB_DIFFS["check_for_cmd_updates"] and cmd_name in result["cmd_updates"]):
             files_to_download[filename] = url
@@ -273,8 +274,8 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             response.raise_for_status()
 
             # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
-            cmd_name = os.path.splitext(filename)[0]
-            file_path = os.path.join(FileSys.script_dir, filename if IS_WIN else cmd_name)
+            cmd_name = Path(filename).stem
+            file_path = FileSys.script_dir / (filename if IS_WIN else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)

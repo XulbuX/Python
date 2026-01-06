@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Play a maze game in the console.
 Controls and options are shown on startup."""
-from xulbux import FormatCodes, Console, FileSys
 from collections import deque
 from pathlib import Path
 from typing import Optional, cast
+from xulbux import FormatCodes, Console, FileSys
 from heapq import heappush, heappop
 import keyboard
 import random
@@ -12,7 +12,6 @@ import array
 import math
 import time
 import sys
-import os
 
 
 class MazeTooLargeError(Exception):
@@ -375,12 +374,12 @@ def main():
                         "x",
                     )
                 )
-                dir_path = Path(FormatCodes.input(
-                    "[br:green]In which directory should the maze files be saved? [dim](([i](base directory)))[_]\n ⤷ "
-                )) or FileSys.script_dir
+                dir_path = Path(input_path) if len(input_path := FormatCodes.input(
+                    "[br:green]In which directory should the maze files be saved? [dim](([i](script directory)))[_]\n ⤷ "
+                ).strip()) > 0 else FileSys.script_dir
                 files = (
-                    os.path.normpath(f"{dir_path}/maze_{w}x{h}.txt"),
-                    os.path.normpath(f"{dir_path}/maze_{w}x{h}_solution.txt"),
+                    dir_path / f"maze_{w}x{h}.txt",
+                    dir_path / f"maze_{w}x{h}_solution.txt",
                 )
                 FormatCodes.print("\n[dim](generating maze...       )", end="")
                 maze = Maze(w, h, render_ascii=True)
@@ -403,8 +402,8 @@ def main():
                 FormatCodes.print("\r[dim](finalizing...            )", end="")
                 sizes = [
                     f"(" + next(
-                        f"{os.path.getsize(f)/1024**i:.1f} {u}"
-                        for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if os.path.getsize(f) < 1024**(i + 1)
+                        f"{Path(f).stat().st_size/1024**i:.1f} {u}"
+                        for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
                     ) + ")" for f in files
                 ]
                 Console.log_box_filled(

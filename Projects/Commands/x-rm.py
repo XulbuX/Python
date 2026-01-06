@@ -238,7 +238,7 @@ def is_protected_process(proc: psutil.Process) -> bool:
 
         # FOR UNIX SYSTEMS, ALSO CHECK WITHOUT EXTENSION AND BASE NAME
         if platform.system() != "Windows":
-            base_name = os.path.basename(name)
+            base_name = Path(name).name
             if base_name in protected_set:
                 return True
 

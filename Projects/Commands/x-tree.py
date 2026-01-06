@@ -2,6 +2,7 @@
 """A really advanced directory tree generator
 with a lost of options and customization."""
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional, NamedTuple, cast
 from xulbux.base.consts import COLOR
 from xulbux import FormatCodes, Console, File
@@ -136,7 +137,7 @@ class Tree:
 
     def __init__(
         self,
-        base_dir: str = "",
+        base_dir: Path,
         ignore_dirs: Optional[list[str]] = [],
         auto_ignore: Optional[bool] = True,
         include_file_contents: Optional[bool] = False,
@@ -144,7 +145,7 @@ class Tree:
         indent: int = 2,
         display_progress: Optional[bool] = True,
     ):
-        self.base_dir: str = base_dir
+        self.base_dir: Path = base_dir.resolve()
         self.ignore_dirs: list[str] = (ignore_dirs or []) + (self.IGNORE_DIRS if auto_ignore else [])
         self.auto_ignore: Optional[bool] = auto_ignore
         self.include_file_contents: Optional[bool] = include_file_contents
@@ -199,7 +200,6 @@ class Tree:
 
     def generate(
         self,
-        base_dir: Optional[str] = None,
         ignore_dirs: list[str] = [],
         auto_ignore: Optional[bool] = None,
         include_file_contents: Optional[bool] = None,
@@ -213,7 +213,6 @@ class Tree:
         else:
             Console.info("generating tree...", start="\n")
         self.gen_stats = GenerationStats()
-        self.base_dir = base_dir or self.base_dir
         self.ignore_dirs += ignore_dirs
         if not auto_ignore:
             self.ignore_dirs = []
@@ -221,14 +220,13 @@ class Tree:
         self.include_file_contents = include_file_contents or self.include_file_contents
         self.style = style if style is not None and style >= 1 else self.style
         self.indent = (indent if indent is not None and indent >= 0 else self.indent) + 1
-        self.base_dir = os.path.abspath(str(self.base_dir))
-        if not os.path.isdir(self.base_dir):
+        if not self.base_dir.is_dir():
             raise ValueError(f"Invalid base directory: {self.base_dir}")
         self.ignore_set = (
             frozenset() if len(
                 norm_ignore_dirs := set(
-                    # Normalize paths and convert absolute paths to start with /
-                    (d.lower().replace("\\", "/") if not os.path.isabs(d) else "/" + d.lower().replace("\\", "/").lstrip("/"))
+                    # NORMALIZE PATHS AND CONVERT ABSOLUTE PATHS TO START WITH /
+                    (d.lower().replace("\\", "/") if not Path(d).is_absolute() else "/" + d.lower().replace("\\", "/").lstrip("/"))
                     for d in self.ignore_dirs
                 )
             ) == 0 else frozenset(norm_ignore_dirs)
@@ -287,7 +285,7 @@ class Tree:
         prefixes = {}
         suffixes = {}
         for name in names:
-            base, _ = os.path.splitext(name)
+            base = Path(name).stem
             for i in range(1, len(base) + 1):
                 prefix = base[:i]
                 if len(prefix) >= min_pattern_length:
@@ -302,7 +300,7 @@ class Tree:
         return (max(best_prefix_count, best_suffix_count) >= 5 and pattern_ratio >= 0.7), pattern_ratio
 
     @lru_cache(maxsize=1024)
-    def _scan_directory(self, dir_path: str) -> DirScanResult:
+    def _scan_directory(self, dir_path: Path) -> DirScanResult:
         """Cached directory scanning with analysis."""
         if not self.auto_ignore:
             with os.scandir(dir_path) as it:
@@ -312,7 +310,7 @@ class Tree:
                 entries = tuple(it)
             if not entries:
                 return DirScanResult(False, 0, 0, False, entries)
-            dir_name = os.path.basename(dir_path)
+            dir_name = Path(dir_path).name
             total_count = len(entries)
             if total_count < 3:
                 return DirScanResult(False, total_count, 0, False, entries)
@@ -363,7 +361,7 @@ class Tree:
     @staticmethod
     @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
-        if os.path.splitext(filepath)[1].lower() in Tree.BINARY_EXTENSIONS:
+        if Path(filepath).suffix.lower() in Tree.BINARY_EXTENSIONS:
             return False
         try:
             with open(filepath, "rb") as f:
@@ -373,22 +371,23 @@ class Tree:
         except Exception:
             return False
 
-    def _update_progress(self, current_dir: str, is_dir: bool = True) -> None:
+    def _update_progress(self, current_dir: Path, is_dir: bool = True) -> None:
         """Update the generation progress display."""
         if is_dir:
             self.gen_stats.processed_dirs += 1
         else:
             self.gen_stats.processed_files += 1
-        self.gen_stats.current_depth = current_dir.count(os.sep) - self.base_dir.count(os.sep)
+        self.gen_stats.current_depth = len(Path(current_dir).parts) - len(Path(self.base_dir).parts)
         self.gen_stats.max_depth = max(self.gen_stats.max_depth, self.gen_stats.current_depth)
         if not self.display_progress:
             return
         elif (current_time := time.time()) - self._last_progress_update < self._progress_update_interval:
             return
         self._last_progress_update = current_time
-        rel_path = current_dir[len(self.base_dir):].lstrip(os.sep) if current_dir.startswith(
-            self.base_dir
-        ) else os.path.basename(current_dir)
+        try:
+            rel_path = str(Path(current_dir).relative_to(self.base_dir))
+        except ValueError:
+            rel_path = Path(current_dir).name
         formatted_dirs, formatted_files = format(self.gen_stats.processed_dirs, ','), format(self.gen_stats.processed_files, ',')
         max_rel_path_len = Console.w - (
             30 + len(
@@ -404,7 +403,7 @@ class Tree:
             start="\033[F\033[K",
         )
 
-    def _gen_tree(self, _dir: str, _prefix: str = "", _level: int = 0, _parent_path: str = "") -> str:
+    def _gen_tree(self, _dir: Path, _prefix: str = "", _level: int = 0, _parent_path: str = "") -> str:
         """Generate tree for directory.
         _dir: Current directory path
         _prefix: Line prefix for visual tree structure
@@ -414,12 +413,13 @@ class Tree:
         result = bytearray()
         try:
             if (_level == 0):
-                base_name = os.path.basename(_dir.rstrip(os.sep)) or os.path.splitdrive(_dir)[0]
+                dir_path = Path(_dir)
+                base_name = dir_path.name or dir_path.drive.rstrip(":\\")
                 result.extend(base_name.encode())
                 result.extend(self._dirname_end_b)
                 result.extend(self._NEWLINE)
                 _parent_path = ""
-            scan_result = self._scan_directory(_dir)
+            scan_result = self._scan_directory(str(_dir))
             entries = scan_result.entries
             if not entries:
                 return "" if result is None else bytes(result).decode()
@@ -429,7 +429,8 @@ class Tree:
                 result.extend(self._corners_b[0])
                 result.extend(self._ignored_suffix_b)
                 return "" if result is None else bytes(result).decode()
-            should_ignore, _, _, show_partial = scan_result.should_ignore, scan_result.total_count, scan_result.hash_count, scan_result.show_partial
+            should_ignore = scan_result.should_ignore
+            show_partial = scan_result.show_partial
             if should_ignore:
                 result.extend(prefix_bytes)
                 result.extend(self._corners_b[0])
@@ -511,7 +512,7 @@ class Tree:
                     is_dir, is_last = entry.is_dir(), idx == entries_count - 1
                     branch = self._corners_b[0] if is_last else self._branch_new_b
                     current_prefix = prefix_bytes + branch + self._line_hor_b
-                    current_rel_path = os.path.join(_parent_path, entry.name)
+                    current_rel_path = str(Path(_parent_path) / entry.name)
                     if self._should_ignore_path(current_rel_path) or (is_dir
                                                                       and self._scan_directory(entry.path).should_ignore):
                         result.extend(current_prefix)
@@ -580,7 +581,7 @@ def main():
         print_help()
         return
 
-    tree = Tree(os.getcwd())
+    tree = Tree(Path.cwd())
 
     if ARGS.ignore_dirs.exists:
         ignore_dirs = ARGS.ignore_dirs.value.split("|") if ARGS.ignore_dirs.value else []

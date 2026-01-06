@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Lists all installed Visual Studio Code extensions with
 the option to directly format them as a JSON list."""
+from pathlib import Path
 from typing import Optional, cast
 from xulbux import FormatCodes, Console, Data
 import subprocess
@@ -23,32 +24,39 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
 
         if localappdata:
             locations.extend([
-                ("code", os.path.join(localappdata, "Programs", "Microsoft VS Code", "bin", "code.cmd")),
+                ("code", str(Path(localappdata) / "Programs" / "Microsoft VS Code" / "bin" / "code.cmd")),
                 (
                     "code-insiders",
-                    os.path.join(localappdata, "Programs", "Microsoft VS Code Insiders", "bin", "code-insiders.cmd")
+                    str(Path(localappdata) / "Programs" / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")
                 ),
             ])
         if programfiles:
             locations.extend([
-                ("code", os.path.join(programfiles, "Microsoft VS Code", "bin", "code.cmd")),
-                ("code-insiders", os.path.join(programfiles, "Microsoft VS Code Insiders", "bin", "code-insiders.cmd")),
+                ("code", str(Path(programfiles) / "Microsoft VS Code" / "bin" / "code.cmd")),
+                ("code-insiders", str(Path(programfiles) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),
             ])
         if programfiles_x86:
             locations.extend([
-                ("code", os.path.join(programfiles_x86, "Microsoft VS Code", "bin", "code.cmd")),
-                ("code-insiders", os.path.join(programfiles_x86, "Microsoft VS Code Insiders", "bin", "code-insiders.cmd")),
+                ("code", str(Path(programfiles_x86) / "Microsoft VS Code" / "bin" / "code.cmd")),
+                ("code-insiders", str(Path(programfiles_x86) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),
             ])
 
     elif system == "Darwin":  # macOS
         locations.extend([
             ("code", "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"),
             ("code-insiders", "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code-insiders"),
-            ("code", os.path.expanduser("~/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code")),
+            (
+                "code",
+                str(
+                    Path.home() / "Applications" / "Visual Studio Code.app" / "Contents" / "Resources" / "app" / "bin" / "code"
+                )
+            ),
             (
                 "code-insiders",
-                os.path
-                .expanduser("~/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code-insiders")
+                str(
+                    Path.home() / "Applications" / "Visual Studio Code - Insiders.app" / "Contents" / "Resources" / "app"
+                    / "bin" / "code-insiders"
+                )
             ),
             ("code", "/usr/local/bin/code"),
             ("code-insiders", "/usr/local/bin/code-insiders"),
@@ -60,8 +68,8 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
             ("code-insiders", "/usr/bin/code-insiders"),
             ("code", "/usr/local/bin/code"),
             ("code-insiders", "/usr/local/bin/code-insiders"),
-            ("code", os.path.expanduser("~/.local/bin/code")),
-            ("code-insiders", os.path.expanduser("~/.local/bin/code-insiders")),
+            ("code", str(Path.home() / ".local" / "bin" / "code")),
+            ("code-insiders", str(Path.home() / ".local" / "bin" / "code-insiders")),
         ])
 
     return locations
@@ -83,7 +91,7 @@ def find_vscode_executable() -> Optional[tuple[str, str]]:
 
     # IF NOT IN 'PATH' ENV-VAR, CHECK COMMON INSTALLATION LOCATIONS
     for variant, location in get_common_vscode_locations():
-        if os.path.isfile(location):
+        if Path(location).is_file():
             return (variant, location)
 
     return None

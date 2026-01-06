@@ -47,7 +47,7 @@ def print_help():
 
 def is_hidden(path: str) -> bool:
     """Check if a file or directory is hidden."""
-    name = os.path.basename(path)
+    name = Path(path).name
     if name.startswith("."):
         return True
     if os.name == "nt":
@@ -105,27 +105,29 @@ def is_gitignored(file_path: str, patterns: list) -> bool:
     if not patterns:
         return False
 
-    file_path = os.path.abspath(file_path)
+    file_path = str(Path(file_path).resolve())
 
     for gitignore_dir, pattern in patterns:
         if pattern.startswith("/"):
-            full_pattern = os.path.join(gitignore_dir, pattern[1:])
+            full_pattern = str(Path(gitignore_dir) / pattern[1:])
         else:
-            full_pattern = os.path.join(gitignore_dir, pattern)
+            full_pattern = str(Path(gitignore_dir) / pattern)
 
-        full_pattern = os.path.normpath(full_pattern)
+        full_pattern = str(Path(full_pattern))
 
         if pattern.endswith("/"):
-            if os.path.isdir(file_path) and (fnmatch.fnmatch(file_path, full_pattern)
-                                             or fnmatch.fnmatch(file_path + os.sep, full_pattern)):
+            if Path(file_path).is_dir() and ( \
+                fnmatch.fnmatch(file_path, full_pattern)
+                or fnmatch.fnmatch(file_path + str(Path().resolve().anchor), full_pattern)
+            ):
                 return True
         else:
             if fnmatch.fnmatch(file_path, full_pattern):
                 return True
-            parent = file_path
-            while parent != os.path.dirname(parent):
-                parent = os.path.dirname(parent)
-                if fnmatch.fnmatch(parent, full_pattern):
+            parent = Path(file_path)
+            while parent != parent.parent:
+                parent = parent.parent
+                if fnmatch.fnmatch(str(parent), full_pattern):
                     return True
 
     return False
@@ -148,12 +150,12 @@ def get_dir_files(directory: str) -> list:
             if not ARGS.recursive.exists:
                 dirs.clear()
             else:
-                dirs[:] = [d for d in dirs if not should_skip_path(os.path.join(root, d))]
+                dirs[:] = [d for d in dirs if not should_skip_path(str(Path(root) / d))]
                 if ARGS.apply_gitignore.exists:
-                    dirs[:] = [d for d in dirs if not is_gitignored(os.path.join(root, d), gitignore_patterns)]
+                    dirs[:] = [d for d in dirs if not is_gitignored(str(Path(root) / d), gitignore_patterns)]
 
             for filename in filenames:
-                file_path = os.path.join(root, filename)
+                file_path = str(Path(root) / filename)
                 if should_skip_path(file_path):
                     continue
                 if ARGS.apply_gitignore.exists and is_gitignored(file_path, gitignore_patterns):
@@ -167,7 +169,7 @@ def get_dir_files(directory: str) -> list:
 def count_lines(file_path: str) -> int:
     try:
         with open(file_path, "rb") as f:
-            file_size = os.path.getsize(file_path)
+            file_size = Path(file_path).stat().st_size
             if file_size == 0: return 0
             if file_size < 1024 * 1024:
                 content = f.read()
@@ -201,7 +203,7 @@ def process_file(file_path: str) -> tuple[int, int, int]:
     try:
         if "size" in EXCLUDE and "scope" in EXCLUDE:
             return 1, 0, 0
-        size = os.path.getsize(file_path)
+        size = Path(file_path).stat().st_size
         if "scope" in EXCLUDE: lines = 0
         elif size == 0: lines = 0
         else: lines = count_lines(file_path)
@@ -264,7 +266,7 @@ def main():
     print()
 
     with Spinner("Searching items").context():
-        files = get_dir_files(os.getcwd())
+        files = get_dir_files(str(Path.cwd()))
 
     if "scope" in EXCLUDE and "size" in EXCLUDE:
         files_count = len(files)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Lets you quickly generate QR codes directly within the terminal."""
+from pathlib import Path
 from typing import Optional
 from xulbux.console import Spinner, Args, COLOR
 from xulbux import FormatCodes, Console
@@ -8,7 +9,6 @@ import subprocess
 import tempfile
 import qrcode
 import re
-import os
 
 
 ARGS = Console.get_args(
@@ -119,7 +119,14 @@ class WiFi:
     def _get_saved_profiles(self) -> list[str]:
         """Get list of saved WiFi profiles."""
         try:
-            result = subprocess.run(["netsh", "wlan", "show", "profiles"], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["netsh", "wlan", "show", "profiles"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                timeout=10,
+            )
 
             profiles = []
             if result.returncode == 0:
@@ -135,22 +142,34 @@ class WiFi:
         """Try to detect current WiFi network."""
         methods = [
             'netsh wlan show interfaces | findstr /i "SSID"',
-            '(Get-NetConnectionProfile | Where-Object {$_.NetworkCategory -ne "DomainAuthenticated"}).Name'
+            '(Get-NetConnectionProfile | Where-Object {$_.NetworkCategory -ne "DomainAuthenticated"}).Name',
         ]
 
         for method in methods:
             try:
                 if method.startswith("netsh"):
-                    result = subprocess.run(method, shell=True, capture_output=True, text=True, timeout=10)
+                    result = subprocess.run(
+                        method,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="ignore",
+                        timeout=10,
+                    )
                     if result.returncode == 0:
                         for line in result.stdout.split("\n"):
                             if "SSID" in line and "BSSID" not in line:
                                 return line.split(":", 1)[1].strip()
                 else:
-                    result = subprocess.run(["powershell", "-NoProfile", "-Command", method],
-                                            capture_output=True,
-                                            text=True,
-                                            timeout=10)
+                    result = subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", method],
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="ignore",
+                        timeout=10,
+                    )
                     if result.returncode == 0 and result.stdout.strip():
                         return result.stdout.strip()
             except:
@@ -179,16 +198,15 @@ class WiFi:
                     ["netsh", "wlan", "export", "profile", f"name={ssid}", f"folder={temp_dir}", "key=clear"],
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="ignore",
                     timeout=15,
                 )
                 if result.returncode == 0:
-                    for filename in os.listdir(temp_dir):
-                        if filename.endswith(".xml"):
-                            xml_path = os.path.join(temp_dir, filename)
+                    for file_item in Path(temp_dir).iterdir():
+                        if file_item.suffix == ".xml":
                             try:
-                                tree = ET.parse(xml_path)
-                                root = tree.getroot()
-                                for elem in root.iter():
+                                for elem in ET.parse(file_item).getroot().iter():
                                     if elem.tag.endswith("keyMaterial") and elem.text:
                                         return elem.text
                             except ET.ParseError:
@@ -200,12 +218,21 @@ class WiFi:
     def _netsh_variations(self, ssid: str) -> Optional[str]:
         """Try different netsh command variations."""
         commands = [
-            f'netsh wlan show profile "{ssid}" key=clear', f'netsh wlan show profile name="{ssid}" key=clear',
-            f"netsh wlan show profile {ssid} key=clear"
+            f'netsh wlan show profile "{ssid}" key=clear',
+            f'netsh wlan show profile name="{ssid}" key=clear',
+            f"netsh wlan show profile {ssid} key=clear",
         ]
         for cmd in commands:
             try:
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
+                result = subprocess.run(
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                    timeout=10,
+                )
                 if result.returncode == 0:
                     for line in result.stdout.split("\n"):
                         if any(keyword in line for keyword in ["Key Content", "Schlüsselinhalt"]):
@@ -219,7 +246,14 @@ class WiFi:
     def _get_security_type(self, ssid: str) -> str:
         """Determine the security type of the network."""
         try:
-            result = subprocess.run(["netsh", "wlan", "show", "profile", ssid], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["netsh", "wlan", "show", "profile", ssid],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                timeout=10,
+            )
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
                     if "Authentication" in line:
