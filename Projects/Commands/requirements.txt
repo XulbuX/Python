@@ -5,6 +5,7 @@ netifaces
 numpy
 psutil
 qrcode
+requests
 sympy
 twine
 xulbux
