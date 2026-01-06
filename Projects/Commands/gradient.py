@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
+from typing import Literal
 from xulbux import FormatCodes, Console, Color
 from xulbux.color import rgba, hexa
-from typing import Literal
 import colorsys
 
 

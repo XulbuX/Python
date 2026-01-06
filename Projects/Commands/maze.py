@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Play a maze game in the console.
 Controls and options are shown on startup."""
-from xulbux import FormatCodes, Console, Path
-from heapq import heappush, heappop
-from typing import Optional, cast
+from xulbux import FormatCodes, Console, FileSys
 from collections import deque
+from pathlib import Path
+from typing import Optional, cast
+from heapq import heappush, heappop
 import keyboard
 import random
 import array
@@ -374,9 +375,9 @@ def main():
                         "x",
                     )
                 )
-                dir_path = FormatCodes.input(
+                dir_path = Path(FormatCodes.input(
                     "[br:green]In which directory should the maze files be saved? [dim](([i](base directory)))[_]\n ⤷ "
-                ) or Path.script_dir
+                )) or FileSys.script_dir
                 files = (
                     os.path.normpath(f"{dir_path}/maze_{w}x{h}.txt"),
                     os.path.normpath(f"{dir_path}/maze_{w}x{h}_solution.txt"),

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Get detailed information about files in the current directory."""
-from xulbux.base.types import ProgressUpdater
-from xulbux.console import ProgressBar, Spinner
-from xulbux import FormatCodes, Console
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from pathlib import Path
+from xulbux.base.types import ProgressUpdater
+from xulbux.console import ProgressBar, Spinner
+from xulbux import FormatCodes, Console
 import fnmatch
 import math
 import stat

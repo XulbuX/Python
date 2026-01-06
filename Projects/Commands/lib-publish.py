@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tries to package and upload the library in the current or given directory.
 Uses 'build'  to build and 'twine' to try to upload the packaged library to PyPI."""
-from xulbux import FormatCodes, Console, Path
 from typing import Optional
+from xulbux import FormatCodes, Console, FileSys
 import subprocess
 import shutil
 import sys
@@ -126,7 +126,7 @@ def main() -> None:
         Console.done(f"\nSuccessfully built and uploaded the library.", start="\n", end="\n\n")
 
         if FormatCodes.input("\nDirectly remove [white](dist) directory? [dim]((Y/n) > )").lower() in ("", "y", "yes"):
-            Path.remove(dist)
+            FileSys.remove(dist)
             print()
 
 

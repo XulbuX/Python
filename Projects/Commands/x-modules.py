@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """List all modules imported across Python files in the script directory.
 Can filter to show only non-standard library modules."""
-from xulbux.console import Spinner
-from xulbux import FormatCodes, Console, Data, Path
+from pathlib import Path
 from typing import Optional
+from xulbux.console import Spinner
+from xulbux import FormatCodes, Console, FileSys, Data
 import subprocess
-import re
-import os
 import sys
+import re
 
 
 ARGS = Console.get_args(
@@ -71,7 +71,7 @@ def print_help():
     FormatCodes.print(help_text)
 
 
-def extract_imports(file_path: str) -> set[str]:
+def extract_imports(file_path: Path) -> set[str]:
     """Extract all imported module names from a Python file."""
     imports = set()
     import_pattern = re.compile(r"^\s*(?:from\s+(\S+)|import\s+(\S+))", re.MULTILINE)
@@ -101,28 +101,27 @@ def extract_imports(file_path: str) -> set[str]:
     return imports
 
 
-def get_all_modules(directory: str, recursive: bool = False, external_only: bool = False) -> dict[str, list[str]]:
+def get_all_modules(directory: Path, recursive: bool = False, external_only: bool = False) -> dict[str, list[str]]:
     """Get all modules used across Python files, grouped by module name."""
     module_usage: dict[str, list[str]] = {}
 
-    if not os.path.isdir(directory):
+    if not directory.is_dir():
         raise ValueError(f"Directory not found: {directory}")
 
-    def scan_directory(dir_path: str, base_path: Optional[str] = None):
+    def scan_directory(dir_path: Path, base_path: Optional[Path] = None):
         """Scan a directory for Python files and extract imports."""
         if base_path is None:
             base_path = dir_path
         try:
-            for entry in os.listdir(dir_path):
-                full_path = os.path.join(dir_path, entry)
-                if os.path.isfile(full_path) and os.path.splitext(entry)[1] in (".py", ".pyw"):
+            for full_path in dir_path.iterdir():
+                if full_path.is_file() and full_path.suffix in (".py", ".pyw"):
                     for module in extract_imports(full_path):
                         if external_only and module in STDLIB_MODULES:
                             continue
                         if module not in module_usage:
                             module_usage[module] = []
-                        module_usage[module].append(os.path.splitext(os.path.relpath(full_path, base_path))[0])
-                elif recursive and os.path.isdir(full_path):
+                        module_usage[module].append(str(full_path.relative_to(base_path).with_suffix('')))
+                elif recursive and full_path.is_dir():
                     scan_directory(full_path, base_path)
         except PermissionError:
             pass  # SKIP DIRECTORIES WE CAN'T ACCESS
@@ -218,7 +217,7 @@ def main() -> None:
         return
 
     external_only = ARGS.external_only.exists or ARGS.install.exists
-    directory = os.path.abspath(os.path.expanduser(ARGS.directory.value)) if ARGS.directory.value else Path.script_dir
+    directory = Path(ARGS.directory.value).expanduser().resolve() if ARGS.directory.value else FileSys.script_dir
 
     with Spinner().context():
         modules = get_all_modules(

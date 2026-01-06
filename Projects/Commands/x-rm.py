@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Force delete files or directories, even if they are locked by processes."""
-from xulbux import FormatCodes, Console, System
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+from xulbux import FormatCodes, Console, System
 import subprocess
 import platform
 import shutil

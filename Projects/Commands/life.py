@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Conway's game of life in the console."""
+from typing import Optional
 from xulbux.base.consts import CHARS
 from xulbux import FormatCodes, Console
-from typing import Optional
 import random
 import time
 import sys

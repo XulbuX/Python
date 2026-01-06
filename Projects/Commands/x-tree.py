@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """A really advanced directory tree generator
 with a lost of options and customization."""
-from typing import Optional, Pattern, NamedTuple, cast
-from xulbux import FormatCodes, Console, File
-from xulbux.base.consts import COLOR
 from functools import lru_cache
+from typing import Optional, NamedTuple, cast
+from xulbux.base.consts import COLOR
+from xulbux import FormatCodes, Console, File
 import time
 import sys
 import os
@@ -103,7 +103,7 @@ class IGNORE:
         "domain_hex": rf"{reoccurring['domain']}_{reoccurring['hex']}",
         "camelCase_version-hex64": r"[a-z]+(?:[A-Z][a-z]+)*?_[0-9]{1,2}(?:\.[0-9]{1,2})+-[a-fA-F0-9]{64}",
     }
-    pattern: Pattern[str] = re.compile(
+    pattern: re.Pattern[str] = re.compile(
         rf"(?:^(?:{'|'.join(standalones.values())})$|{pre}(?:(?:{sep})?(?:{'|'.join(reoccurring.values())}))+{ext})"
     )
 

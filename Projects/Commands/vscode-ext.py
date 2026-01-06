@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Lists all installed Visual Studio Code extensions with
 the option to directly format them as a JSON list."""
-from xulbux import FormatCodes, Console, Data
 from typing import Optional, cast
+from xulbux import FormatCodes, Console, Data
 import subprocess
 import platform
 import os
