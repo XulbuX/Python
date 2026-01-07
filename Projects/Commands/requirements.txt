@@ -4,6 +4,7 @@ keyboard
 netifaces
 numpy
 psutil
+pyperclip
 qrcode
 requests
 sympy

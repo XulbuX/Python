@@ -2,7 +2,7 @@
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from pathlib import Path
-from typing import TypedDict, Optional, Literal, cast
+from typing import TypeAlias, TypedDict, Optional, Literal, cast
 from xulbux.base.types import ArgConfigWithDefault
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
@@ -13,6 +13,13 @@ import sys
 import os
 import re
 
+
+"""
+The script will automatically find and parse the use of `Console.get_args()`.
+For manual argument parsing using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
+The structure of the comment is similar to how the `**find_args` kwargs are defined for `Console.get_args()`:
+# [pos_arg1: before, arg2: {-a2, --arg2}, arg3: {-a3, --arg3}, pos_arg4: after]
+"""
 
 GITHUB_DIFFS = {
     "url": "https://github.com/XulbuX/Python/tree/main/Projects/Commands",
@@ -25,12 +32,15 @@ IS_WIN = sys.platform == "win32"
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
-    sys_argv=r"(?m)sys\s*\.\s*argv(?:.*#\s*(\[.+?\])$)?",
+    sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
+    args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
     get_args=r"(?m)Console\s*.\s*get_args\s*" + Regex.brackets(is_group=True),
     arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
     desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
     python_shebang=r"(?i)^\s*#!.*python",
 )
+
+FindArgs: TypeAlias = dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]
 
 
 def is_python_file(filepath: str) -> bool:
@@ -52,12 +62,17 @@ def get_python_files() -> set[str]:
     return python_files
 
 
-def parse_args_comment(s: str) -> dict:
-    result, m = {}, cast(re.Match[str], re.match(r"\[(.*)\]", s))
-    pattern = re.finditer(r"(\w+)(?:\s*:\s*\[([^\]]*)\])?", m[1])
-    for match in pattern:
-        key, values = match[1], match[2].split(",") if match[2] else []
-        result[key] = [v.strip() for v in values]
+def parse_args_comment(comment_str: str) -> FindArgs:
+    result: FindArgs = {}
+
+    for match in PATTERNS.args_comment.finditer(cast(re.Match[str], re.match(r"\[(.*)\]", comment_str)).group(1)):
+        key = str(match.group(1))
+        if (val := match.group(3)) in {"before", "after"}:
+            result[key] = cast(Literal["before", "after"], val)
+        else:
+            flags = {flag.strip() for flag in match.group(2).split(",")} if match.group(2) else set()
+            result[key] = flags
+
     return result
 
 
@@ -65,9 +80,9 @@ def sort_flags(flags: list[str]) -> list[str]:
     return sorted(flags, key=lambda x: (len(x) - len(x.lstrip("-")), x))
 
 
-def arguments_desc(find_args: Optional[dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]]) -> str:
+def arguments_desc(find_args: Optional[FindArgs]) -> str:
     if not find_args or len(find_args) < 1:
-        return f"\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
+        return f"\n\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
 
     arg_descs: list[str | list[str]] = []
     keys = list(find_args.keys())
@@ -140,9 +155,10 @@ def get_commands_str(python_files: set[str]) -> str:
         except Exception:
             get_args = None
 
+        find_args: FindArgs = {}
+
         if get_args:
             try:
-                find_args = {}
                 for arg in PATTERNS.arg.finditer(get_args):
                     if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "allow_spaces":
                         find_args[key.strip()] = String.to_type(val.strip().rstrip(","))
