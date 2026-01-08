@@ -602,3 +602,39 @@ To show help for the command, use the `-h` `--help` option:
 ```bash
 x-tree --help
 ```
+
+<br>
+
+### `xc`
+
+This tool can be used to run a command and automatically copy the full output including metadata to the clipboard, after execution.
+
+You can directly give the command to run as an argument:
+```bash
+xc dinfo -r
+```
+
+To not include the ran command in the clipboard, use the `-nc` `--no-command` option:
+```bash
+xc --no-command dinfo -r
+```
+
+To not include the metadata in the clipboard, use the `-nm` `--no-metadata` option:
+```bash
+xc --no-metadata x-modules -e
+```
+
+You can also only copy the output without metadata or command, with the `-o` `--only` option:
+```bash
+xc --only x-hw --detailed
+```
+
+If ANSI codes should be included in the clipboard output, use the `-a` `--ansi` option:
+```bash
+xc --ansi x-ip --geo
+```
+
+To show help for the command, use the `-h` `--help` option:
+```bash
+xc --help
+```
