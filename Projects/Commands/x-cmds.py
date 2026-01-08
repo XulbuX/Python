@@ -141,46 +141,43 @@ def get_commands_str(python_files: set[str]) -> str:
         cmd_name = Path(f).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
-        abs_path = FileSys.script_dir / f
-        sys_argv_comments = []
-        get_args = ""
 
-        try:
-            with open(abs_path, "r", encoding="utf-8") as file:
-                if desc := PATTERNS.desc.match(content := file.read()):
-                    cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
+        sys_argv_comments, get_args_funcs = [], []
 
-                # FIND COMMENTS AFTER sys.argv USAGES
-                sys_argv_comments = PATTERNS.sys_argv.findall(content)
+        with open(FileSys.script_dir / f, "r", encoding="utf-8") as file:
+            if desc := PATTERNS.desc.match(content := file.read()):
+                cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
 
-                # GET FIRST OCCURRENCE OF Console.get_args() THAT HAS ARGUMENTS
-                if len(matches := PATTERNS.get_args.findall(content)) > 1:
-                    for m in matches:
-                        if (func_args := m.strip()):
-                            get_args = func_args
-                            break
-                elif len(matches) == 1:
-                    get_args = matches[0]
-
-        except Exception:
-            get_args = ""
+            sys_argv_comments = PATTERNS.sys_argv.findall(content)
+            get_args_funcs = PATTERNS.get_args.findall(content)
 
         find_args: FindArgs = {}
 
-        if get_args:
+        if len(get_args_funcs) > 0:
             try:
-                for arg in PATTERNS.arg.finditer(get_args):
+                # GET ARGUMENTS OF FIRST NON-EMPTY Console.get_args() CALL
+                func_args = ""
+                if len(get_args_funcs) > 1:
+                    for func_args in get_args_funcs:
+                        if (func_args := func_args.strip()):
+                            break
+                elif len(get_args_funcs) == 1:
+                    func_args = get_args_funcs[0]
+
+                # PARSE THE FUNCTION ARGUMENTS
+                for arg in PATTERNS.arg.finditer(func_args):
                     if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "allow_spaces":
                         find_args[key.strip()] = String.to_type(val.strip().rstrip(","))
                 cmds += arguments_desc(find_args)
+
             except Exception:
                 pass
 
         elif len(sys_argv_comments) > 0:
-            find_args = {}
-            for arg in sys_argv_comments:
-                if (arg := arg.strip()).startswith("["):
-                    find_args.update(parse_args_comment(arg))
+            # PARSE FIRST NON-EMPTY ARGS-DESCRIBING COMMENT
+            for comment in sys_argv_comments:
+                if (comment := comment.strip()).startswith("["):
+                    find_args.update(parse_args_comment(comment))
             cmds += arguments_desc(find_args)
 
         cmds += "\n\n"
