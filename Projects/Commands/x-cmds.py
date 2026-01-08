@@ -34,7 +34,7 @@ ARGS = Console.get_args(update_check={"-u", "--update"})
 PATTERNS = LazyRegex(
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
-    get_args=r"(?m)Console\s*.\s*get_args\s*" + Regex.brackets(is_group=True),
+    get_args=r"(?m)Console\s*\.\s*get_args\s*" + Regex.brackets(is_group=True),
     arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
     desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
     python_shebang=r"(?i)^\s*#!.*python",
@@ -142,18 +142,28 @@ def get_commands_str(python_files: set[str]) -> str:
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
         abs_path = FileSys.script_dir / f
-        sys_argv = None
+        sys_argv_comments = []
+        get_args = ""
 
         try:
             with open(abs_path, "r", encoding="utf-8") as file:
                 if desc := PATTERNS.desc.match(content := file.read()):
                     cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
 
-                sys_argv = PATTERNS.sys_argv.findall(content)
-                get_args = m.group(1).strip() if (m := PATTERNS.get_args.search(content)) else None
+                # FIND COMMENTS AFTER sys.argv USAGES
+                sys_argv_comments = PATTERNS.sys_argv.findall(content)
+
+                # GET FIRST OCCURRENCE OF Console.get_args() THAT HAS ARGUMENTS
+                if len(matches := PATTERNS.get_args.findall(content)) > 1:
+                    for m in matches:
+                        if (func_args := m.strip()):
+                            get_args = func_args
+                            break
+                elif len(matches) == 1:
+                    get_args = matches[0]
 
         except Exception:
-            get_args = None
+            get_args = ""
 
         find_args: FindArgs = {}
 
@@ -166,11 +176,10 @@ def get_commands_str(python_files: set[str]) -> str:
             except Exception:
                 pass
 
-        elif sys_argv:
+        elif len(sys_argv_comments) > 0:
             find_args = {}
-            for arg in sys_argv:
-                arg = arg.strip()
-                if arg.startswith("["):
+            for arg in sys_argv_comments:
+                if (arg := arg.strip()).startswith("["):
                     find_args.update(parse_args_comment(arg))
             cmds += arguments_desc(find_args)
 
