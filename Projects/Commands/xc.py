@@ -6,15 +6,17 @@ from typing import Optional, IO, cast
 from xulbux import FormatCodes, Console, System
 import subprocess
 import platform
+import locale
+import shutil
 import shlex
 import time
 import sys
 
 try:
     import pyperclip
-except ImportError:
-    FormatCodes.print("[br:red](Error: 'pyperclip' module not found.)")
-    FormatCodes.print("[yellow](Please run: [b](pip install pyperclip))")
+except Exception as e:
+    fmt_error = "\n  ".join(str(e).splitlines())
+    FormatCodes.print(f"\n[red]([b]([ERROR]) 'pyperclip' module failed to initialize:)\n  [br:red]{fmt_error}[_c]\n")
     sys.exit(1)
 
 
@@ -23,7 +25,8 @@ def print_help():
 [b|in|bg:black]( Execute & Copy - Run a command and copy its output to clipboard )
 
 [b|br:yellow]⚠ Commands that use dynamic progress bars and such
-  may not render correctly using this tool.[_b|_c]
+  may not render correctly using this tool.
+  Interactive STDIN is currently not supported.[_b|_c]
 
 [b](Usage:) [br:green](xc) [br:blue]([options]) [br:cyan](<command> [args...])
 
@@ -52,7 +55,7 @@ def parse_flags_and_command(args: list[str]) -> tuple[bool, bool, bool, bool, li
     i = 0
     while i < len(args):
         arg = args[i].lower().strip()
-        
+
         # CHECK FOR XC FLAGS
         if arg in {"-h", "--help"}:
             show_help = True
@@ -101,10 +104,23 @@ def main() -> None:
         print_help()
         sys.exit(0)
 
-    # PROPERLY RE-QUOTE ARGS THAT CONTAIN SPACES OR SPECIAL CHARS
-    command_str = shlex.join(command_args)
+    # PROPERLY CONSTRUCT COMMAND STRING FOR THE SHELL
+    if platform.system() == "Windows":
+        # ON WINDOWS, USE POWERSHELL-STYLE COMMAND WITH -Command FLAG
+        escaped_args = []
+        for arg in command_args:
+            if " " in arg or '"' in arg or "'" in arg:
+                escaped_arg = "'" + arg.replace("'", "''") + "'"
+            else:
+                escaped_arg = arg
+            escaped_args.append(escaped_arg)
+        command_for_shell = " ".join(escaped_args)
+        command_str_display = subprocess.list2cmdline(command_args)
+    else:
+        command_for_shell = shlex.join(command_args)
+        command_str_display = command_for_shell
 
-    FormatCodes.print(f"\n[br:cyan](━━━ Capturing: [b]({command_str}) ━━━)\n")
+    FormatCodes.print(f"\n[br:cyan](━━━ Capturing: [b]({command_str_display}) ━━━)\n")
 
     process: Optional[subprocess.Popen[str]] = None
     add_nl_before_end = True
@@ -115,16 +131,33 @@ def main() -> None:
     #################################### RUN THE COMMAND ####################################
     try:
         # bufsize=1 AND text=True ENABLES LINE-BY-LINE TEXT STREAMING
-        process = subprocess.Popen(
-            command_str,
-            stdout=subprocess.PIPE,  # ALLOWS US TO READ IT
-            stderr=subprocess.STDOUT,  # MERGES ERRORS INTO THE MAIN OUTPUT STREAM (CHRONOLOGICAL ORDER)
-            shell=True,  # USE SHELL TO INTERPRET FOR ACCESS TO ALIASES, PATH, …
-            text=True,
-            bufsize=1,
-            encoding="utf-8",
-            errors="replace",  # REPLACE INVALID CHARS INSTEAD OF FAILING
-        )
+        general_popen_kwargs = {
+            "stdin": None,  # KEEP STDIN CONNECTED TO TERMINAL FOR INTERACTIVE COMMANDS
+            "stdout": subprocess.PIPE,  # ALLOWS US TO READ IT
+            "stderr": subprocess.STDOUT,  # MERGES ERRORS INTO THE MAIN OUTPUT STREAM (CHRONOLOGICAL ORDER)
+            "shell": True,  # USE SHELL TO INTERPRET FOR ACCESS TO ALIASES, PATH, …
+            "text": True,
+            "bufsize": 1,
+            "errors": "replace",  # REPLACE INVALID CHARS INSTEAD OF FAILING
+        }
+
+        if platform.system() == "Windows":
+            process = subprocess.Popen(
+                [
+                    "pwsh.exe" if shutil.which("pwsh") else "powershell.exe",
+                    "-NoProfile",
+                    "-Command",
+                    f"$env:PYTHONIOENCODING='utf-8'; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; {command_for_shell}",
+                ],
+                encoding="utf-8",
+                **general_popen_kwargs,
+            )
+        else:
+            process = subprocess.Popen(
+                command_for_shell,
+                encoding=sys.stdout.encoding or "utf-8",
+                **general_popen_kwargs,
+            )
 
         # STREAM OUTPUT TO CONSOLE + CAPTURE IT
         while True:
@@ -164,7 +197,7 @@ def main() -> None:
         terminate_process(process)
 
     duration = time.time() - start_time
-    duration_str = f"{duration * 1000:.2f}ms" if duration < 1 else f"{duration:.2f}s"
+    duration_str = f"{int(duration * 1000 + 0.5)}ms" if duration < 1 else f"{int(duration + 0.5)}s"
 
     ################################ BUILD CLIPBOARD CONTENT ################################
     clipboard_parts = []
@@ -174,7 +207,7 @@ def main() -> None:
             ("Administrator" if System.is_elevated else Console.user) +
             f" on {platform.node()} ({platform.system()})"
             f" at {"~" if (cwd := Path.cwd()).expanduser() == Path.home() else cwd}\n"
-            f"$ {command_str}\n\n"
+            f"$ {command_str_display}\n\n"
         )
 
     str_output = "".join(captured_output)
@@ -203,7 +236,7 @@ def main() -> None:
         ("\n" if add_nl_before_end else "") +
         f"[{'br:green' if exit_code == 0 else 'br:red'}](━━━ Output copied to clipboard ━━━ "
         f"[dim]/([b]({lines_count})[dim] line{'s' if lines_count != 1 else ''}, "
-        f"[b]({duration_str})[dim], exit code [b]({exit_code})[dim])[_dim])\n"
+        f"[b]({duration_str})[dim], exit [b]({exit_code})[dim])[_dim])\n"
     )
 
     # EXIT WITH THE SAME CODE AS THE COMMAND

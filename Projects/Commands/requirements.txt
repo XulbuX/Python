@@ -5,6 +5,7 @@ netifaces
 numpy
 psutil
 pyperclip
+pywinpty; sys_platform == 'win32'
 qrcode
 requests
 sympy
