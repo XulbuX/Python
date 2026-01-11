@@ -425,7 +425,7 @@ You can also specify the calculation precision (*result decimal places*) with th
 x-calc "sqrt(ln(10) + 1) / cos(π / 4)" --precision 1000
 ```
 
-And yes, it can do **very** complex calculations (*no flex* 🙃):
+And yes, it can do **very** complex calculations:
 ```bash
 x-calc "(((sinh(2.7) * cosh(1.3) + tanh(0.5)) / (sqrt(abs(sin(π/6) - cos(π/3))) + exp(ln(2)))) * (log10(100) + ln(e^2)) - ((fac(5) / (4! + 3!)) * (2^8 - 3^5)) + (((asin(0.5) + acos(0.5)) * atan(1)) / (sqrt(2) * sqrt(3))) + (cbrt(27) * sqrt(49) - pow(2, 10) / 1024) + ((sinh(1) + cosh(1)) / (1 + tanh(0))) * log(1000, 10) - (((sin(π/4))^2 + (cos(π/4))^2) * exp(0)) + (arctan(sqrt(3)) - arcsin(1/2)) * (log2(256) / ln(e^8)) + ((fac(6) - 5^3) / (sqrt(144) + cbrt(64))) * (sinh(0.5)^2 - cosh(0.5)^2 + 1) - (((2 * φ * sqrt(5)) / (1 + sqrt(5))) * (log(e^10) - ln(exp(10)))) + ((acos(-1) / 2 + asin(1)) * (tan(π/4) + cot(π/4))) / (sec(0) * csc(π/2))) ^ τ" -p 1000
 ```
