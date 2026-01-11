@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Get detailed hardware information about your PC."""
 from xulbux import FormatCodes, Console, Data
 from typing import Optional, TYPE_CHECKING

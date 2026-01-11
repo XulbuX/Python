@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """List all modules imported across Python files in the script directory.
 Can filter to show only non-standard library modules."""
 from pathlib import Path

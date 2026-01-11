@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Get detailed information about files in the current directory."""
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Lists all installed Visual Studio Code extensions with
 the option to directly format them as a JSON list."""
 from pathlib import Path

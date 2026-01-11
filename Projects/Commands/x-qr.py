@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Lets you quickly generate QR codes directly within the terminal."""
 from pathlib import Path
 from typing import Optional

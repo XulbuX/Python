@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Conway's game of life in the console."""
 from typing import Optional
 from xulbux.base.consts import CHARS

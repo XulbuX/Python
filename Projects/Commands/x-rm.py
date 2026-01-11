@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Force delete files or directories, even if they are locked by processes."""
 from pathlib import Path
 from typing import Optional

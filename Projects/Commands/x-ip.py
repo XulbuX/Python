@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Get local and public IP addresses with optional geolocation information."""
 from xulbux import FormatCodes, Console, Data
 from typing import Optional

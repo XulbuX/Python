@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from pathlib import Path
@@ -13,18 +14,31 @@ import sys
 import os
 import re
 
-
 """
-The script will automatically find and parse the use of `Console.get_args()`.
-For manual argument parsing using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
+[1] WHICH FILES ARE CONSIDERED COMMANDS?
+The script will only files starting with a python shebang line (e.g. `#!/usr/bin/env python3`).
+
+[2] WHICH FILES WILL BE CHECKED FOR UPDATES?
+Only files that include the comment `#[x-cmds]: UPDATE` at the top of the file will be checked for updates from GitHub.
+
+[3] SCRIPT DESCRIPTION
+The first multi-line comment (triple quotes) at the start of the file is used as a short description.
+
+[4] SCRIPT ARGUMENTS & OPTIONS
+The use of `Console.get_args()` will automatically be parsed and displayed correctly.
+When getting args using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
 The structure of the comment is similar to how the `**find_args` kwargs are defined for `Console.get_args()`:
 # [pos_arg1: before, arg2: {-a2, --arg2}, arg3: {-a3, --arg3}, pos_arg4: after]
 """
 
-GITHUB_DIFFS = {
-    "url": "https://github.com/XulbuX/Python/tree/main/Projects/Commands",
-    "check_for_new_cmds": True,
-    "check_for_cmd_updates": True,
+
+CONFIG = {
+    "script_dir": FileSys.script_dir,  # MUST BE A `pathlib.Path` OBJECT
+    "github_updates" : {
+        "github_repo_urls": ["https://github.com/XulbuX/Python/tree/main/Projects/Commands"],
+        "check_for_new_scripts": True,
+        "check_for_script_updates": True,
+    },
 }
 
 IS_WIN = sys.platform == "win32"
@@ -32,12 +46,13 @@ IS_WIN = sys.platform == "win32"
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
+    python_shebang=r"(?i)^\s*#!.*python",
+    update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*UPDATE\s*$",
+    desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
     get_args=r"(?m)Console\s*\.\s*get_args\s*" + Regex.brackets(is_group=True),
     arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
-    desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
-    python_shebang=r"(?i)^\s*#!.*python",
 )
 
 FindArgs: TypeAlias = dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]
@@ -46,9 +61,8 @@ FindArgs: TypeAlias = dict[str, set[str] | ArgConfigWithDefault | Literal["befor
 def is_python_file(filepath: str) -> bool:
     """Check if a file is a Python file by looking for shebang line."""
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            first_line = f.readline()
-            return bool(PATTERNS.python_shebang.match(first_line))
+        with open(filepath, "r", encoding="utf-8") as file:
+            return bool(PATTERNS.python_shebang.match(file.readline()))
     except Exception:
         return False
 
@@ -56,24 +70,27 @@ def is_python_file(filepath: str) -> bool:
 def get_python_files() -> set[str]:
     """Get all Python files in the script directory by checking shebang lines."""
     python_files = set()
-    for file_path in FileSys.script_dir.iterdir():
+    for file_path in CONFIG["script_dir"].iterdir():
         if file_path.is_file() and is_python_file(str(file_path)):
             python_files.add(file_path.name)
     return python_files
 
 
-def parse_args_comment(comment_str: str) -> FindArgs:
-    result: FindArgs = {}
-
-    for match in PATTERNS.args_comment.finditer(cast(re.Match[str], re.match(r"\[(.*)\]", comment_str)).group(1)):
-        key = str(match.group(1))
-        if (val := match.group(3)) in {"before", "after"}:
-            result[key] = cast(Literal["before", "after"], val)
-        else:
-            flags = {flag.strip() for flag in match.group(2).split(",")} if match.group(2) else set()
-            result[key] = flags
-
-    return result
+def get_xcmds_options(filepath: str) -> dict[str, bool]:
+    """Get options for `x-cmds` set using special `#[x-cmds]: …` comments."""
+    options: dict[str, bool] = {}
+    try:
+        with open(filepath, "r", encoding="utf-8") as file:
+            for line in file:
+                if PATTERNS.python_shebang.match(line):
+                    continue  # SKIP SHEBANG LINE
+                elif PATTERNS.update_marker.match(line):
+                    options["update_check"] = True
+                else:
+                    break  # STOP AT FIRST NON-MATCHING LINE
+    except Exception:
+        pass
+    return options
 
 
 def sort_flags(flags: list[str]) -> list[str]:
@@ -134,6 +151,20 @@ def arguments_desc(find_args: Optional[FindArgs]) -> str:
     )
 
 
+def parse_args_comment(comment_str: str) -> FindArgs:
+    result: FindArgs = {}
+
+    for match in PATTERNS.args_comment.finditer(cast(re.Match[str], re.match(r"\[(.*)\]", comment_str)).group(1)):
+        key = str(match.group(1))
+        if (val := match.group(3)) in {"before", "after"}:
+            result[key] = cast(Literal["before", "after"], val)
+        else:
+            flags = {flag.strip() for flag in match.group(2).split(",")} if match.group(2) else set()
+            result[key] = flags
+
+    return result
+
+
 def get_commands_str(python_files: set[str]) -> str:
     i, cmds = 0, ""
 
@@ -144,7 +175,7 @@ def get_commands_str(python_files: set[str]) -> str:
 
         sys_argv_comments, get_args_funcs = [], []
 
-        with open(FileSys.script_dir / f, "r", encoding="utf-8") as file:
+        with open(CONFIG["script_dir"] / f, "r", encoding="utf-8") as file:
             if desc := PATTERNS.desc.match(content := file.read()):
                 cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
 
@@ -186,158 +217,201 @@ def get_commands_str(python_files: set[str]) -> str:
 
 
 class GitHubDiffs(TypedDict):
-    new_cmds: list[str]
-    cmd_updates: list[str]
+    new_scripts: list[str]
+    updated_scripts: list[str]
+    deleted_scripts: list[str]
     download_urls: dict[str, str]
 
 
 def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
-    """Check for new files and updated files on GitHub compared to local script-directory."""
-    result: GitHubDiffs = {"new_cmds": [], "cmd_updates": [], "download_urls": {}}
+    """Check for new files, updated files, and deleted files on GitHub compared to local script-directory."""
+    result: GitHubDiffs = {"new_scripts": [], "updated_scripts": [], "deleted_scripts": [], "download_urls": {}}
 
     try:
-        # PARSE THE URL TO EXTRACT REPO INFO
-        url = GITHUB_DIFFS["url"]
-        url_pattern = re.match(r"https?://github\.com/([^/]+)/([^/]+)(?:/(?:tree|blob)/([^/]+)(/.*)?)?", url)
-        if not url_pattern:
-            return result
+        # MERGE FILES FROM ALL GITHUB REPO URLS
+        github_files: dict[str, dict[str, str]] = {}
+        
+        for repo_url in CONFIG["github_updates"]["github_repo_urls"]:
+            try:
+                # PARSE THE URL TO EXTRACT REPO INFO
+                url_pattern = re.match(r"https?://github\.com/([^/]+)/([^/]+)(?:/(?:tree|blob)/([^/]+)(/.*)?)?", repo_url)
+                if not url_pattern:
+                    continue
 
-        user, repo, branch, path = url_pattern.groups()
-        branch, path = branch or "main", (path or "").strip("/")
+                user, repo, branch, path = url_pattern.groups()
+                branch, path = branch or "main", (path or "").strip("/")
 
-        # USE GITHUB API TO GET DIRECTORY CONTENTS
-        api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
-        if branch: api_url += f"?ref={branch}"
+                # USE GITHUB API TO GET DIRECTORY CONTENTS
+                api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
+                if branch: api_url += f"?ref={branch}"
 
-        response = requests.get(api_url, timeout=10)
-        response.raise_for_status()
+                response = requests.get(api_url, timeout=10)
+                response.raise_for_status()
 
-        github_files = {}
-        for item in response.json():
-            if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
-                cmd_name = Path(item["name"]).stem
-                github_files[cmd_name] = {
-                    "filename": item["name"],
-                    "download_url": item["download_url"],
-                    "sha": item["sha"],
-                }
+                # MERGE FILES FROM THIS REPO (LATER URLS OVERRIDE EARLIER ONES IF SAME NAME)
+                for item in response.json():
+                    if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
+                        cmd_name = Path(item["name"]).stem
+                        github_files[cmd_name] = {
+                            "filename": item["name"],
+                            "download_url": item["download_url"],
+                            "sha": item["sha"],
+                        }
+            except Exception:
+                pass  # SKIP REPOS THAT CAN'T BE ACCESSED
 
-        local_cmd_names = {Path(f).stem for f in local_files}
+        # CREATE MAPPING FROM CMD NAME TO ACTUAL FILENAME FOR LOCAL FILES
+        local_file_map = {Path(f).stem: f for f in local_files}
+        local_cmd_names = set(local_file_map.keys())
+        
+        # GET LOCAL FILES THAT HAVE UPDATE MARKER
+        local_updateable_files = set()
+        for filename in local_files:
+            filepath = CONFIG["script_dir"] / filename
+            options = get_xcmds_options(str(filepath))
+            if options.get("update_check"):
+                local_updateable_files.add(Path(filename).stem)
 
         # CHECK FOR NEW FILES
-        if GITHUB_DIFFS["check_for_new_cmds"]:
+        if CONFIG["github_updates"]["check_for_new_scripts"]:
             for cmd_name in github_files.keys():
                 if cmd_name not in local_cmd_names:
-                    result["new_cmds"].append(cmd_name)
-                    # STORE WITH FILENAME (INCLUDING EXTENSION) AS KEY
+                    result["new_scripts"].append(cmd_name)
                     result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name]["download_url"]
 
-        # CHECK FOR UPDATED FILES
-        if GITHUB_DIFFS["check_for_cmd_updates"]:
-            # CREATE A MAPPING FROM CMD NAME TO ACTUAL FILENAME
-            local_file_map = {Path(f).stem: f for f in local_files}
-
-            for cmd_name in local_cmd_names:
+        # CHECK FOR UPDATED FILES (ONLY THOSE WITH UPDATE MARKER)
+        if CONFIG["github_updates"]["check_for_script_updates"]:
+            for cmd_name in local_updateable_files:
                 if cmd_name in github_files:
                     try:
-                        # READ LOCAL FILE CONTENT AND COMPUTE SHA
                         local_filename = local_file_map[cmd_name]
-                        local_path = FileSys.script_dir / local_filename
+                        local_path = CONFIG["script_dir"] / local_filename
 
                         # READ AS TEXT AND NORMALIZE TO LF (UNIX) LINE ENDINGS LIKE GITHUB
                         with open(local_path, "r", encoding="utf-8", newline="") as f:
                             local_content = f.read().replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
 
-                        # GITHUB USES: "blob " + FILESIZE + "\0" + CONTENT
-                        # THEN SHA1 HASH OF THAT
+                        # GITHUB USES: "blob " + FILESIZE + "\0" + CONTENT THEN SHA1 HASH
                         local_sha = hashlib.sha1(f"blob {len(local_content)}\0".encode() + local_content).hexdigest()
 
                         # COMPARE WITH GITHUB'S SHA
                         if local_sha != github_files[cmd_name]["sha"]:
-                            result["cmd_updates"].append(cmd_name)
-                            # STORE WITH FILENAME (INCLUDING EXTENSION) AS KEY
+                            result["updated_scripts"].append(cmd_name)
                             result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name]["download_url"]
-
                     except Exception:
                         pass  # SKIP FILES THAT CAN'T BE COMPARED
 
-    except Exception as e:
-        print(f"DEBUG OUTER ERROR: {e}")
-        pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
+        # CHECK FOR DELETED FILES (LOCAL FILES WITH UPDATE MARKER NOT IN GITHUB)
+        if CONFIG["github_updates"]["check_for_new_scripts"]:
+            for cmd_name in local_updateable_files:
+                if cmd_name not in github_files and cmd_name not in result["updated_scripts"]:
+                    result["deleted_scripts"].append(cmd_name)
 
-    # FILTER DOWNLOAD URLS BASED ON SETTINGS
-    files_to_download = {}
-    for filename, url in result["download_urls"].items():
-        cmd_name = Path(filename).stem
-        if (GITHUB_DIFFS["check_for_new_cmds"] and cmd_name in result["new_cmds"]) or \
-           (GITHUB_DIFFS["check_for_cmd_updates"] and cmd_name in result["cmd_updates"]):
-            files_to_download[filename] = url
-    result["download_urls"] = files_to_download
+    except Exception:
+        pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
 
     return result
 
 
 def download_files(github_diffs: GitHubDiffs) -> None:
-    """Download new and updated files from GitHub."""
+    """Download new and updated files from GitHub, and delete removed files."""
     downloads = github_diffs["download_urls"].items()
+    deletions = github_diffs["deleted_scripts"]
+    total_operations = len(downloads) + len(deletions)
 
-    if not len(downloads) > 0:
+    if total_operations == 0:
         return
 
     if not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
-        FormatCodes.print(f"[dim|magenta](⨯ Not updating from [b]({GITHUB_DIFFS['url']}))\n\n")
+        FormatCodes.print(f"[dim|magenta](⨯ Not updating scripts from GitHub)\n\n")
         return
 
-    # DOWNLOAD FILES
     success_count = 0
-    for filename, url in github_diffs["download_urls"].items():
+
+    # DOWNLOAD NEW AND UPDATED FILES
+    for filename, url in downloads:
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
 
             # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
             cmd_name = Path(filename).stem
-            file_path = FileSys.script_dir / (filename if IS_WIN else cmd_name)
+            file_path = CONFIG["script_dir"] / (filename if IS_WIN else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
-
-            FormatCodes.print(f"[dim|br:green](✓ Downloaded [b]({filename}))")
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
             if not IS_WIN:
                 os.chmod(file_path, 0o755)
 
-            FormatCodes.print(f"[br:green](✓ Installed [b]({cmd_name}))")
+            action = "Added" if cmd_name in github_diffs["new_scripts"] else "Updated"
+            FormatCodes.print(f"[br:green](✓ {action} [b]({cmd_name}))")
             success_count += 1
         except Exception as e:
-            FormatCodes.print(f"[br:red]⨯ Failed to download [b]({filename}) [dim]/({e})[_]")
+            FormatCodes.print(f"[br:red](⨯ Failed to download [b]({filename}) [dim]/({e})[_])")
 
-    color = 'br:green' if success_count == len(downloads) else 'br:red' if success_count == 0 else 'br:yellow'
-    FormatCodes.print(f"\nSuccessfully downloaded & installed [{color}]([b]({success_count})/{len(downloads)}) command{'s' if len(downloads) > 1 else ''}!\n\n")
+    # DELETE REMOVED FILES
+    for cmd_name in deletions:
+        try:
+            # TRY BOTH WITH AND WITHOUT EXTENSION
+            deleted = False
+            for ext in [".py", ".pyw", ""]:
+                file_path = CONFIG["script_dir"] / f"{cmd_name}{ext}"
+                if file_path.exists():
+                    file_path.unlink()
+                    deleted = True
+                    break
+            
+            if deleted:
+                FormatCodes.print(f"[br:yellow](✓ Deleted [b]({cmd_name}))")
+                success_count += 1
+            else:
+                FormatCodes.print(f"[dim|yellow](⚠ Could not find [b]({cmd_name}) to delete)")
+        except Exception as e:
+            FormatCodes.print(f"[br:red](⨯ Failed to delete [b]({cmd_name}) [dim]/({e})[_])")
+
+    color = 'br:green' if success_count == total_operations else 'br:red' if success_count == 0 else 'br:yellow'
+    FormatCodes.print(f"\nSuccessfully completed [{color}]([b]({success_count})/{total_operations}) operation{'s' if total_operations > 1 else ''}!\n\n")
 
 
 def github_diffs_str(github_diffs: GitHubDiffs) -> str:
-    num_new_cmds = len(github_diffs["new_cmds"])
-    num_cmd_updates = len(github_diffs["cmd_updates"])
+    num_new_cmds = len(github_diffs["new_scripts"])
+    num_cmd_updates = len(github_diffs["updated_scripts"])
+    num_deleted_cmds = len(github_diffs["deleted_scripts"])
+    total_changes = num_new_cmds + num_cmd_updates + num_deleted_cmds
 
-    if not (num_new_cmds > 0 or num_cmd_updates > 0):
+    if total_changes == 0:
         return (
             "[magenta](ⓘ [i](You have all available command-files"
-            f"{' and they\'re all up-to-date' if GITHUB_DIFFS['check_for_cmd_updates'] else ''}.))\n\n"
-        ) if GITHUB_DIFFS["check_for_new_cmds"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
+            f"{' and they\'re all up-to-date' if CONFIG['github_updates']['check_for_script_updates'] else ''}.))\\n\\n"
+        ) if CONFIG["github_updates"]["check_for_new_scripts"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\\n\\n"
 
-    diffs_title_len = len(title := (
-        (f"There {'is' if num_new_cmds == 1 else 'are'} {num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}" if num_new_cmds else "")
-        + (" and" if (num_new_cmds and num_cmd_updates) else " available." if num_new_cmds else "You have" if num_cmd_updates else "")
-        + (f" {num_cmd_updates} command-update{'' if num_cmd_updates == 1 else 's'} available." if num_cmd_updates else "")
-    )) + 5
+    # BUILD TITLE
+    title_parts = []
+    if num_new_cmds:
+        title_parts.append(f"{num_new_cmds} new")
+    if num_cmd_updates:
+        title_parts.append(f"{num_cmd_updates} update{'' if num_cmd_updates == 1 else 's'}")
+    if num_deleted_cmds:
+        title_parts.append(f"{num_deleted_cmds} deletion{'' if num_deleted_cmds == 1 else 's'}")
+    
+    if len(title_parts) == 1:
+        title = f"There {'is' if total_changes == 1 else 'are'} {title_parts[0]} available."
+    elif len(title_parts) == 2:
+        title = f"There are {title_parts[0]} and {title_parts[1]} available."
+    else:
+        title = f"There are {title_parts[0]}, {title_parts[1]}, and {title_parts[2]} available."
+
+    diffs_title_len = len(title) + 5
     diffs = f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( {title} [bg:black]{'━' * (Console.w - diffs_title_len)}))"
 
     if num_new_cmds:
-        diffs += f"\n\n[b](New Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["new_cmds"])
+        diffs += f"\n\n[b](New Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in sorted(github_diffs["new_scripts"]))
     if num_cmd_updates:
-        diffs += f"\n\n[b](Command Updates:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in github_diffs["cmd_updates"])
+        diffs += f"\n\n[b](Updated Commands:)\n  " + "\n  ".join(f"[br:blue]{cmd}[_]" for cmd in sorted(github_diffs["updated_scripts"]))
+    if num_deleted_cmds:
+        diffs += f"\n\n[b](Deleted Commands:)\n  " + "\n  ".join(f"[br:red]{cmd}[_]" for cmd in sorted(github_diffs["deleted_scripts"]))
 
     return diffs
 

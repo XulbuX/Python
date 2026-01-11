@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
 from typing import Literal

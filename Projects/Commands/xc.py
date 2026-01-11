@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Execute a command and automatically copy the full output
 including metadata to the clipboard, after execution."""
 from pathlib import Path
@@ -6,7 +7,6 @@ from typing import Optional, IO, cast
 from xulbux import FormatCodes, Console, System
 import subprocess
 import platform
-import locale
 import shutil
 import shlex
 import time

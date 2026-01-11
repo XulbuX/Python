@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Play a maze game in the console.
 Controls and options are shown on startup."""
 from collections import deque

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Process a list of items and display some statistics."""
 from xulbux import FormatCodes, Console
 

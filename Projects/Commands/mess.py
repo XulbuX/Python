@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Displays an animated, random text character mess.
 The mess can be made faster and displayed in color."""
 from xulbux import FormatCodes, Console

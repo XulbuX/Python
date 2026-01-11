@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Get the squares of all numbers up to a given number."""
 from xulbux.base.consts import CHARS
 from xulbux import FormatCodes, Console

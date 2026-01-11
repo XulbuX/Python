@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Tries to package and upload the library in the current or given directory.
 Uses 'build'  to build and 'twine' to try to upload the packaged library to PyPI."""
 from pathlib import Path

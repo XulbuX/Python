@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """A really advanced directory tree generator
 with a lost of options and customization."""
 from functools import lru_cache

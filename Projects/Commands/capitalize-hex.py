@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Searches and capitalizes all found hex colors
 in a single file or every file in a directory."""
 from pathlib import Path

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
 There's no number size limit - the only limit is your system's memory."""

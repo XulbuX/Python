@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#[x-cmds]: UPDATE
 """Calculate the value of pi to a specified number of decimal places."""
 from typing import Iterator
 from xulbux.console import Spinner
