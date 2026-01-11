@@ -41,8 +41,6 @@ CONFIG = {
     },
 }
 
-IS_WIN = sys.platform == "win32"
-
 ARGS = Console.get_args(update_check={"-u", "--update"})
 
 PATTERNS = LazyRegex(
@@ -54,6 +52,8 @@ PATTERNS = LazyRegex(
     get_args=r"(?m)Console\s*\.\s*get_args\s*" + Regex.brackets(is_group=True),
     arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
 )
+
+IS_WIN = sys.platform == "win32"
 
 FindArgs: TypeAlias = dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]
 

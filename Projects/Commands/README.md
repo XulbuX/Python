@@ -447,7 +447,25 @@ To check new commands / command-updates and optionally directly download and ins
 ```bash
 x-cmds --update
 ```
-⇾ To adjust some update-checking-options, you can edit the `GITHUB_DIFFS` variable, inside the script file.
+⇾ To adjust some update-checking-options, you can edit the `CONFIG` variable, inside the script file.
+
+#### How the Update System Works
+
+The update system is designed to keep managed commands up-to-date while protecting your custom files:
+
+ * **Managed Commands:** Only files with the comment `#[x-cmds]: UPDATE` at the top (*after the shebang*) are checked for updates.<br>
+   These commands can be automatically updated or deleted if they're removed from the repository.
+
+ * **User Commands:** Files **without** the `#[x-cmds]: UPDATE` marker are considered user-created and<br>
+   will **never** be modified or deleted by the update system, keeping your custom commands safe.
+
+ * **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>
+   merges all available commands, and detects three types of changes:
+   - **New commands** - available in the repository but not locally
+   - **Updated commands** - local managed commands with content changes
+   - **Deleted commands** - local managed commands no longer in any repository
+
+This approach allows you to safely add your own commands to the directory while still benefiting from automatic updates.
 
 <br>
 
