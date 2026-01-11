@@ -384,8 +384,8 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
     if total_changes == 0:
         return (
             "[magenta](ⓘ [i](You have all available command-files"
-            f"{' and they\'re all up-to-date' if CONFIG['github_updates']['check_for_script_updates'] else ''}.))\\n\\n"
-        ) if CONFIG["github_updates"]["check_for_new_scripts"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\\n\\n"
+            f"{' and they\'re all up-to-date' if CONFIG['github_updates']['check_for_script_updates'] else ''}.))\n\n"
+        ) if CONFIG["github_updates"]["check_for_new_scripts"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
 
     # BUILD TITLE
     title_parts = []
