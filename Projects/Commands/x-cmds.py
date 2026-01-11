@@ -230,7 +230,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     try:
         # MERGE FILES FROM ALL GITHUB REPO URLS
         github_files: dict[str, dict[str, str]] = {}
-        
+
         for repo_url in CONFIG["github_updates"]["github_repo_urls"]:
             try:
                 # PARSE THE URL TO EXTRACT REPO INFO
@@ -263,7 +263,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         # CREATE MAPPING FROM CMD NAME TO ACTUAL FILENAME FOR LOCAL FILES
         local_file_map = {Path(f).stem: f for f in local_files}
         local_cmd_names = set(local_file_map.keys())
-        
+
         # GET LOCAL FILES THAT HAVE UPDATE MARKER
         local_updateable_files = set()
         for filename in local_files:
@@ -328,12 +328,10 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
     # BUILD TITLE
     title_parts = []
     if num_new_cmds:
-        title_parts.append(f"{num_new_cmds} new")
+        title_parts.append(f"{num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}")
     if num_cmd_updates:
-        title_parts.append(f"{num_cmd_updates} update{'' if num_cmd_updates == 1 else 's'}")
-    if num_deleted_cmds:
-        title_parts.append(f"{num_deleted_cmds} deletion{'' if num_deleted_cmds == 1 else 's'}")
-    
+        title_parts.append(f"{num_cmd_updates} command update{'' if num_cmd_updates == 1 else 's'}")
+
     if len(title_parts) == 1:
         title = f"There {'is' if total_changes == 1 else 'are'} {title_parts[0]} available."
     elif len(title_parts) == 2:
@@ -403,7 +401,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
                     file_path.unlink()
                     deleted = True
                     break
-            
+
             if deleted:
                 FormatCodes.print(f"[br:green](✓ Deleted [b]({cmd_name}))")
                 success_count += 1
