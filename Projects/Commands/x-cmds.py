@@ -46,7 +46,7 @@ ARGS = Console.get_args(update_check={"-u", "--update"})
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
     update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*UPDATE\s*$",
-    desc=r"(?is)^(?:\s*#![\\/\w\s]+)?\s*(\"{3}|'{3})(.+?)\1",
+    desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
     get_args=r"(?m)Console\s*\.\s*get_args\s*" + Regex.brackets(is_group=True),
@@ -171,13 +171,13 @@ def get_commands_str(python_files: set[str]) -> str:
     for i, f in enumerate(sorted(python_files), 1):
         cmd_name = Path(f).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
-        cmds += f"\n[b|br:green|bg:br:green]([[black]{i}[br:green]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
+        cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
 
         sys_argv_comments, get_args_funcs = [], []
 
         with open(CONFIG["command_dir"] / f, "r", encoding="utf-8") as file:
             if desc := PATTERNS.desc.match(content := file.read()):
-                cmds += f"\n\n[i]{desc.group(2).strip("\n")}[_]"
+                cmds += f"\n\n[i]{desc.group(1).strip("\n\"'")}[_]"
 
             sys_argv_comments = PATTERNS.sys_argv.findall(content)
             get_args_funcs = PATTERNS.get_args.findall(content)
