@@ -388,7 +388,7 @@ def main() -> None:
         raise ValueError("Cannot use both [br:blue](--hsv) and [br:blue](--oklch) options together")
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
-    color_args = ARGS.color_points.values
+    color_args = " ".join(ARGS.color_points.values).split()
 
 
     if len(color_args) < 2:
