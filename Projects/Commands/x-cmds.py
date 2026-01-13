@@ -4,7 +4,7 @@
 A short description and command arguments are displayed if available."""
 from pathlib import Path
 from typing import TypeAlias, TypedDict, Optional, Literal, cast
-from xulbux.base.types import ArgConfigWithDefault
+from xulbux.base.types import FindArgConfig
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, FileSys, String, Regex
@@ -55,7 +55,7 @@ PATTERNS = LazyRegex(
 
 IS_WIN = sys.platform == "win32"
 
-FindArgs: TypeAlias = dict[str, set[str] | ArgConfigWithDefault | Literal["before", "after"]]
+FindArgs: TypeAlias = dict[str, FindArgConfig]
 
 
 def is_python_file(filepath: str) -> bool:
