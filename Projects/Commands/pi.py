@@ -9,7 +9,7 @@ import time
 import sys
 
 
-ARGS = Console.get_args(decimal_places="before")
+ARGS = Console.get_args({"decimal_places": "before"})
 REFERENCE_TIMES = {
     1000: 0.01,  # 1K DIGITS
     5000: 0.175,  # 5K DIGITS

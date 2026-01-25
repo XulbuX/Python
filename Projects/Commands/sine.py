@@ -7,10 +7,7 @@ import math
 import time
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    invert={"-i", "--invert", "--inverse"},
-)
+ARGS = Console.get_args({"invert": {"-i", "--invert", "--inverse"}})
 
 
 def smooth_wave(amplitude: int, speed: tuple[float, int]) -> Generator[Any, None, None]:

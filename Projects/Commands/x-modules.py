@@ -11,16 +11,15 @@ import sys
 import re
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    external_only={"-e", "--external"},
-    directory={"-d", "--dir", "--directory"},
-    recursive={"-r", "--recursive"},
-    list={"-l", "--list"},
-    as_json={"-j", "--json"},
-    install={"-i", "--install"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "external_only": {"-e", "--external"},
+    "directory": {"-d", "--dir", "--directory"},
+    "recursive": {"-r", "--recursive"},
+    "list": {"-l", "--list"},
+    "as_json": {"-j", "--json"},
+    "install": {"-i", "--install"},
+    "help": {"-h", "--help"},
+})
 
 # PYTHON STANDARD LIBRARY MODULES (Python 3.x)
 STDLIB_MODULES = {
@@ -218,7 +217,7 @@ def main() -> None:
         return
 
     external_only = ARGS.external_only.exists or ARGS.install.exists
-    directory = Path(ARGS.directory.value).expanduser().resolve() if ARGS.directory.value else FileSys.script_dir
+    directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values[0] else FileSys.script_dir
 
     with Spinner().context():
         modules = get_all_modules(

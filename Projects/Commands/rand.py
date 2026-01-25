@@ -11,12 +11,12 @@ import sys
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args(
-    digits_or_min_max="before",
-    batch_gen={"-b", "--batch", "--batch-gen"},
-    format={"-f", "--format"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "digits_or_min_max": "before",
+    "batch_gen": {"-b", "--batch", "--batch-gen"},
+    "format": {"-f", "--format"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():
@@ -68,7 +68,8 @@ def main():
 
     print()
 
-    batch = int(ARGS.batch_gen.value) if ARGS.batch_gen.value and ARGS.batch_gen.value.replace("_", "").isdigit() else 1
+    batch = int(ARGS.batch_gen.values[0]
+                ) if ARGS.batch_gen.values[0] and ARGS.batch_gen.values[0].replace("_", "").isdigit() else 1
 
     match len(ARGS.digits_or_min_max.values):
 

@@ -4,10 +4,7 @@
 from xulbux import FormatCodes, Console
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    hex_value="before",
-)
+ARGS = Console.get_args({"hex_value": "before"})
 
 
 def hex_to_percent(hex_val: str) -> float:

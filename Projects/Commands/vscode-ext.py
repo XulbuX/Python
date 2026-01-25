@@ -10,7 +10,7 @@ import platform
 import os
 
 
-ARGS = Console.get_args(as_json={"-j", "--json"})
+ARGS = Console.get_args({"as_json": {"-j", "--json"}})
 
 
 def get_common_vscode_locations() -> list[tuple[str, str]]:

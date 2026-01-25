@@ -6,8 +6,12 @@ from xulbux import FormatCodes, Console
 import keyboard
 
 
-ARGS = Console.get_args(table_cols={"-c", "--cols", "--columns"})
-TABLE_COLS = int(ARGS.table_cols.value) if ARGS.table_cols.value and ARGS.table_cols.value.replace("_", "").isdigit() else 4
+ARGS = Console.get_args({"table_cols": {"-c", "--cols", "--columns"}})
+TABLE_COLS = (
+    int(ARGS.table_cols.values[0]) \
+    if ARGS.table_cols.values[0] and ARGS.table_cols.values[0].replace("_", "").isdigit() \
+    else 4
+)
 
 
 def clear_last_lines(count):

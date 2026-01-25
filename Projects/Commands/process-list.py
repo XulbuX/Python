@@ -4,14 +4,14 @@
 from xulbux import FormatCodes, Console
 
 
-ARGS = Console.get_args(
-    list_items="before",
-    separator={"-s", "--sep", "--separator"},
-)
+ARGS = Console.get_args({
+    "list_items": "before",
+    "separator": {"-s", "--sep", "--separator"},
+})
 
 
 def main() -> None:
-    sep = str(ARGS.separator.value or "")
+    sep = str(ARGS.separator.values[0] or "")
 
     if sep != "":
         if not ARGS.list_items.exists:
