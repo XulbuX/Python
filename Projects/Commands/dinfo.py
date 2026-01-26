@@ -13,16 +13,15 @@ import stat
 import os
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    recursive={"-r", "--recursive"},
-    exclude_info={"-e", "--exclude"},
-    skip_type={"-s", "--skip"},
-    apply_gitignore={"-g", "--gitignore"},
-    help={"-h", "--help"},
-)
-EXCLUDE = {item.lower() for item in str(ARGS.exclude_info.value).split()}
-SKIP = {item.lower() for item in str(ARGS.skip_type.value).split()} if ARGS.skip_type.exists else set()
+ARGS = Console.get_args({
+    "recursive": {"-r", "--recursive"},
+    "exclude_info": {"-e", "--exclude"},
+    "skip_type": {"-s", "--skip"},
+    "apply_gitignore": {"-g", "--gitignore"},
+    "help": {"-h", "--help"},
+})
+EXCLUDE = {item.lower() for item in str(ARGS.exclude_info.values[0]).split()}
+SKIP = {item.lower() for item in str(ARGS.skip_type.values[0]).split()} if ARGS.skip_type.exists else set()
 
 
 def print_help():

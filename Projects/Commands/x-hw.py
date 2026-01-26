@@ -19,11 +19,11 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     PSUTIL_ERROR = str(e)
 
-ARGS = Console.get_args(
-    detailed={"-d", "--detailed"},
-    json_output={"-j", "--json"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "detailed": {"-d", "--detailed"},
+    "json_output": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():

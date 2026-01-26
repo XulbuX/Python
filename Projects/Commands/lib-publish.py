@@ -11,13 +11,12 @@ import sys
 import os
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    lib_base="before",
-    only_build={"-ob", "--only-build"},
-    verbose={"-v", "--verbose"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "lib_base": "before",
+    "only_build": {"-ob", "--only-build"},
+    "verbose": {"-v", "--verbose"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():

@@ -8,15 +8,15 @@ from xulbux.color import rgba, hexa
 import colorsys
 
 
-ARGS = Console.get_args(
-    color_points="before",
-    steps={"-s", "--steps"},
-    hsv={"-H", "--hsv"},
-    oklch={"-O", "--oklch"},
-    list={"-l", "--list"},
-    numerate={"-n", "--numerate"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "color_points": "before",
+    "steps": {"-s", "--steps"},
+    "hsv": {"-H", "--hsv"},
+    "oklch": {"-O", "--oklch"},
+    "list": {"-l", "--list"},
+    "numerate": {"-n", "--numerate"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():
@@ -405,10 +405,10 @@ def main() -> None:
     while len(directions) < len(colors) - 1:
         directions.append("shortest")
 
-    if ARGS.steps.value and int(ARGS.steps.value) <= 1:
+    if ARGS.steps.values[0] and int(ARGS.steps.values[0]) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(ARGS.steps.value) if ARGS.steps.value and ARGS.steps.value.replace("_", "").isdigit() else Console.w * 2
+    total_steps = int(ARGS.steps.values[0]) if ARGS.steps.values[0] and ARGS.steps.values[0].replace("_", "").isdigit() else Console.w * 2
 
     gradient = generate_multi_gradient(
         colors=colors,

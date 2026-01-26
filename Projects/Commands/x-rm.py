@@ -26,12 +26,11 @@ PROTECTED_PROCESSES_UNIX = {
     "NetworkManager", "sshd", "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
 }
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    rm_path="before",
-    confirm={"-c", "--confirm"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "rm_path": "before",
+    "confirm": {"-c", "--confirm"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():

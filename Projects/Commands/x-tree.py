@@ -13,12 +13,11 @@ import os
 import re
 
 
-ARGS = Console.get_args(
-    allow_spaces=True,
-    ignore_dirs={"-i", "--ignore", "--ignore-dirs"},
-    no_progress={"-n", "-np", "--no-progress"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
+    "no_progress": {"-n", "-np", "--no-progress"},
+    "help": {"-h", "--help"},
+})
 DEFAULT = {
     "ignore_dirs": [],
     "auto_ignore": True,
@@ -585,7 +584,7 @@ def main():
     tree = Tree(Path.cwd())
 
     if ARGS.ignore_dirs.exists:
-        ignore_dirs = ARGS.ignore_dirs.value.split("|") if ARGS.ignore_dirs.value else []
+        ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values[0] else []
     else:
         ignore_dirs = Console.input(
             "[b](Enter directory names/paths which's content should be ignored) ([br:cyan](|) separated) [b](>) "

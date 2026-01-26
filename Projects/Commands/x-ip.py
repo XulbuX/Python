@@ -9,12 +9,12 @@ import json
 import re
 
 
-ARGS = Console.get_args(
-    get_geo={"-g", "--geo", "--location"},
-    provider={"flags": {"-p", "--provider"}, "default": "ipify"},
-    json_output={"-j", "--json"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "get_geo": {"-g", "--geo", "--location"},
+    "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
+    "json_output": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():
@@ -347,7 +347,7 @@ def main() -> None:
     ip_info = IPInfo()
 
     try:
-        ip_info.gather_info(provider=ARGS.provider.value, get_geo=ARGS.get_geo.exists)
+        ip_info.gather_info(provider=ARGS.provider.values[0], get_geo=ARGS.get_geo.exists)
     except Exception as e:
         Console.fail(f"Error gathering IP information: {e}", end="\n\n")
         return

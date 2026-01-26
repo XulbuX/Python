@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, cast
 from xulbux import FormatCodes, EnvPath, FileSys, String, Regex, Code, Data, File, Json
-from xulbux.console import Console, Args
+from xulbux.console import Console, ParsedArgs
 import regex as rx
 import os
 import re
@@ -10,13 +10,6 @@ import re
 VERSION = "1.4.26"
 COMMAND = "x-convert"
 JSON_FILE = "config.json"
-FIND_ARGS = {
-    "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
-    "indent": {"-i", "--indent", "-is", "--indent-spaces"},
-    "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
-    "help": {"-h", "--help"},
-    "debug": {"-d", "--debug"},
-}
 DEFAULT_JSON = {
     "component_replacements": {
         ">> OLD COMPONENT-NAME": [
@@ -134,6 +127,15 @@ C_BR = Regex.brackets("{", "}", is_group=True)
 A_BR = Regex.brackets("<", ">", is_group=True)
 
 
+ARGS = Console.get_args({
+    "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
+    "indent": {"-i", "--indent", "-is", "--indent-spaces"},
+    "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
+    "help": {"-h", "--help"},
+    "debug": {"-d", "--debug"},
+})
+
+
 def show_help():
     FormatCodes.print(
         rf"""  [_|b|#7075FF]        [#FF9E6A]                                      __
@@ -167,7 +169,7 @@ def show_help():
     )
 
 
-def get_json(args: Args) -> None:
+def get_json(args: ParsedArgs) -> None:
     try:
         global JSON, _JSON
         JSON, _JSON = Json.read(
@@ -185,11 +187,11 @@ def get_json(args: Args) -> None:
             Console.exit(start="\n", end="\n\n")
 
 
-def get_missing_args(args: Args) -> Args:
-    if not args.filepath.value or not args.blade_vue.exists:
+def get_missing_args(args: ParsedArgs) -> ParsedArgs:
+    if not args.filepath.values[0] or not args.blade_vue.exists:
         print()
-    if not args.filepath.value:
-        args.filepath.value = FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
+    if not args.filepath.values[0]:
+        args.filepath.values[0] = FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
     if not args.blade_vue.exists:
         FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")
         FormatCodes.print("[+|b]  1  [*]Blade to Vue[_]", default_color="#3EE6DE")
@@ -778,34 +780,34 @@ class blade_to_vue:
             outside_template_script_pattern, "", code, flags=re.DOTALL
         )
         vue_content = f"<template>\n{Code.add_indent(code.strip(), Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
-        if isinstance(args.indent.value, int):
+        if isinstance(ARGS.indent.values[0], int):
             vue_content = String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
             Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
-            if not args.indent.value < 1:
+            if not ARGS.indent.values[0] < 1:
                 vue_content = Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
                 Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
         return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
 
 
-def main(args: Args):
+def main(args: ParsedArgs):
     get_json(args)
     if DEBUG and not Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
         Console.debug(f"{JSON_FILE} does not match the default json.")
     add_to_env_vars()
     args = get_missing_args(args)
-    if args.filepath.value in (None, ""):
+    if args.filepath.values[0] in (None, ""):
         Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
-    args.filepath.value = FileSys.extend_path(str(args.filepath.value), raise_error=True, fuzzy_match=True)
-    if not os.path.isfile(args.filepath.value or ""):
-        Console.fail(f"Path is not a file: [white]{args.filepath.value}", pause=DEBUG)
+    args.filepath.values[0] = str(FileSys.extend_path(str(args.filepath.values[0]), raise_error=True, fuzzy_match=True))
+    if not os.path.isfile(args.filepath.values[0] or ""):
+        Console.fail(f"Path is not a file: [white]{args.filepath.values[0]}", pause=DEBUG)
 
-    with open(args.filepath.value or "", "r") as file:
+    with open(args.filepath.values[0] or "", "r") as file:
         file_content = file.read()
     converter = blade_to_vue()
-    converted_content = (converter.convert(file_content, int(args.indent.value or 2)) if args.blade_vue.exists else None)
+    converted_content = (converter.convert(file_content, int(args.indent.values[0] or 2)) if args.blade_vue.exists else None)
 
     if converted_content:
-        new_file_path = File.rename_extension(args.filepath.value or "", ".vue", camel_case_filename=True)
+        new_file_path = File.rename_extension(args.filepath.values[0] or "", ".vue", camel_case_filename=True)
         if os.path.exists(new_file_path):
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
@@ -826,21 +828,20 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    args = Console.get_args(allow_spaces=True, **FIND_ARGS)
-    DEBUG = args.debug.exists
+    DEBUG = ARGS.debug.exists
     if DEBUG:
-        if args.help.exists:
+        if ARGS.help.exists:
             show_help()
         else:
-            main(args)
+            main(ARGS)
     else:
         try:
-            if args.help.exists:
+            if ARGS.help.exists:
                 show_help()
             else:
-                main(args)
+                main(ARGS)
         except FileNotFoundError:
-            Console.fail(f"File not found: [white]{args.filepath.value}", pause=DEBUG, start="\n", end="\n\n")
+            Console.fail(f"File not found: [white]{ARGS.filepath.values[0]}", pause=DEBUG, start="\n", end="\n\n")
         except KeyboardInterrupt:
             Console.exit(start="\n\n", end="\n\n")
         except Exception as e:

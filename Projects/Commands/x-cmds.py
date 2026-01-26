@@ -4,7 +4,7 @@
 A short description and command arguments are displayed if available."""
 from pathlib import Path
 from typing import TypeAlias, TypedDict, Optional, Literal, cast
-from xulbux.base.types import FindArgConfig
+from xulbux.base.types import ArgParseConfigs, ArgParseConfig
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, FileSys, String, Regex
@@ -27,7 +27,7 @@ The first multi-line comment (triple quotes) at the start of the file is used as
 [4] COMMAND ARGUMENTS & OPTIONS
 The use of `Console.get_args()` will automatically be parsed and displayed correctly.
 When getting args using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
-The structure of the comment is similar to how the `**find_args` kwargs are defined for `Console.get_args()`:
+The structure of the comment is similar to how the `**arg_parse_configs` kwargs are defined for `Console.get_args()`:
 # [pos_arg1: before, arg2: {-a2, --arg2}, arg3: {-a3, --arg3}, pos_arg4: after]
 """
 
@@ -41,7 +41,7 @@ CONFIG = {
     },
 }
 
-ARGS = Console.get_args(update_check={"-u", "--update"})
+ARGS = Console.get_args({"update_check": {"-u", "--update"}})
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
@@ -54,8 +54,6 @@ PATTERNS = LazyRegex(
 )
 
 IS_WIN = sys.platform == "win32"
-
-FindArgs: TypeAlias = dict[str, FindArgConfig]
 
 
 def is_python_file(filepath: str) -> bool:
@@ -97,14 +95,14 @@ def sort_flags(flags: list[str]) -> list[str]:
     return sorted(flags, key=lambda x: (len(x) - len(x.lstrip("-")), x))
 
 
-def arguments_desc(find_args: Optional[FindArgs]) -> str:
-    if not find_args or len(find_args) < 1:
+def arguments_desc(arg_parse_configs: Optional[ArgParseConfigs]) -> str:
+    if not arg_parse_configs or len(arg_parse_configs) < 1:
         return f"\n\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
 
     arg_descs: list[str | list[str]] = []
-    keys = list(find_args.keys())
+    keys = list(arg_parse_configs.keys())
 
-    for key, val in find_args.items():
+    for key, val in arg_parse_configs.items():
         if len(val) < 1:
             arg_descs.append(f"non-flagged argument at position {keys.index(key) + 1}")
         elif isinstance(val, str):
@@ -151,8 +149,8 @@ def arguments_desc(find_args: Optional[FindArgs]) -> str:
     )
 
 
-def parse_args_comment(comment_str: str) -> FindArgs:
-    result: FindArgs = {}
+def parse_args_comment(comment_str: str) -> ArgParseConfigs:
+    result: ArgParseConfigs = {}
 
     for match in PATTERNS.args_comment.finditer(cast(re.Match[str], re.match(r"\[(.*)\]", comment_str)).group(1)):
         key = str(match.group(1))
@@ -182,7 +180,7 @@ def get_commands_str(python_files: set[str]) -> str:
             sys_argv_comments = PATTERNS.sys_argv.findall(content)
             get_args_funcs = PATTERNS.get_args.findall(content)
 
-        find_args: FindArgs = {}
+        arg_parse_configs: ArgParseConfigs = {}
 
         if len(get_args_funcs) > 0:
             try:
@@ -197,9 +195,9 @@ def get_commands_str(python_files: set[str]) -> str:
 
                 # PARSE THE FUNCTION ARGUMENTS
                 for arg in PATTERNS.arg.finditer(func_args):
-                    if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "allow_spaces":
-                        find_args[key.strip()] = String.to_type(val.strip().rstrip(","))
-                cmds += arguments_desc(find_args)
+                    if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "join_values":
+                        arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
+                cmds += arguments_desc(arg_parse_configs)
 
             except Exception:
                 pass
@@ -208,8 +206,8 @@ def get_commands_str(python_files: set[str]) -> str:
             # PARSE FIRST NON-EMPTY ARGS-DESCRIBING COMMENT
             for comment in sys_argv_comments:
                 if (comment := comment.strip()).startswith("["):
-                    find_args.update(parse_args_comment(comment))
-            cmds += arguments_desc(find_args)
+                    arg_parse_configs.update(parse_args_comment(comment))
+            cmds += arguments_desc(arg_parse_configs)
 
         cmds += "\n\n"
 

@@ -3,7 +3,7 @@
 """Lets you quickly generate QR codes directly within the terminal."""
 from pathlib import Path
 from typing import Optional
-from xulbux.console import Spinner, Args, COLOR
+from xulbux.console import Spinner, ParsedArgs, COLOR
 from xulbux import FormatCodes, Console
 import xml.etree.ElementTree as ET
 import subprocess
@@ -12,15 +12,15 @@ import qrcode
 import re
 
 
-ARGS = Console.get_args(
-    text="before",
-    invert={"-i", "--invert"},
-    scale={"-s", "--scale"},
-    error_correction={"-e", "--error"},
-    contact={"-c", "--contact"},
-    wifi={"-w", "--wifi"},
-    help={"-h", "--help"},
-)
+ARGS = Console.get_args({
+    "text": "before",
+    "invert": {"-i", "--invert"},
+    "scale": {"-s", "--scale"},
+    "error_correction": {"-e", "--error"},
+    "contact": {"-c", "--contact"},
+    "wifi": {"-w", "--wifi"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help():
@@ -370,10 +370,10 @@ class WiFi:
         return display
 
 
-def ascii_qr(text: str, args: Args) -> Optional[str]:
+def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
-        scale = int(args.scale.value) if args.scale.value and args.scale.value.replace("_", "").isdigit() else 1
+        scale = int(args.scale.values[0]) if args.scale.values[0] and args.scale.values[0].replace("_", "").isdigit() else 1
         invert = args.invert.exists
         error_level = { \
             "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
@@ -381,7 +381,7 @@ def ascii_qr(text: str, args: Args) -> Optional[str]:
             "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
             "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
         }.get( \
-            (args.error_correction.value or "M").upper(),
+            (args.error_correction.values[0] or "M").upper(),
             qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
         )
 
