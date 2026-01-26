@@ -272,7 +272,7 @@ class WiFi:
     def _prompt_for_details(self) -> dict[str, str | bool]:
         with Spinner().context():
             profiles = self._get_saved_profiles()
-            current = self._get_current_network()
+            current = (self._get_current_network() or "").replace("\n", " ").strip()
 
         if profiles:
             FormatCodes.print(f"[b](Found {len(profiles)} saved networks:)")
@@ -373,7 +373,7 @@ class WiFi:
 def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
-        scale = int(args.scale.values[0]) if args.scale.values[0] and args.scale.values[0].replace("_", "").isdigit() else 1
+        scale = int(args.scale.values[0]) if args.scale.values and args.scale.values[0].replace("_", "").isdigit() else 1
         invert = args.invert.exists
         error_level = { \
             "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
@@ -381,7 +381,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
             "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
             "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
         }.get( \
-            (args.error_correction.values[0] or "M").upper(),
+            ((args.error_correction.values or [None])[0] or "M").upper(),
             qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
         )
 

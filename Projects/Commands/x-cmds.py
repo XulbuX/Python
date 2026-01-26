@@ -3,8 +3,8 @@
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
 from pathlib import Path
-from typing import TypeAlias, TypedDict, Optional, Literal, cast
-from xulbux.base.types import ArgParseConfigs, ArgParseConfig
+from typing import TypedDict, Optional, Literal, cast
+from xulbux.base.types import ArgParseConfigs
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, FileSys, String, Regex

@@ -347,7 +347,7 @@ def main() -> None:
     ip_info = IPInfo()
 
     try:
-        ip_info.gather_info(provider=ARGS.provider.values[0], get_geo=ARGS.get_geo.exists)
+        ip_info.gather_info(provider=(ARGS.provider.values or [None])[0], get_geo=ARGS.get_geo.exists)
     except Exception as e:
         Console.fail(f"Error gathering IP information: {e}", end="\n\n")
         return

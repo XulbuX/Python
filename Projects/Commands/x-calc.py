@@ -149,7 +149,7 @@ class CONSTANTS:
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
     IMPLEMENT: dict[str, object] = {
-        ANS[0]: ARGS.ans.values[0],
+        ANS[0]: (ARGS.ans.values or [None])[0],
         E[0]: sympy.E,
         INF[0]: sympy.oo,
         PI[0]: sympy.pi,
@@ -446,7 +446,7 @@ class Calc:
             if DEBUG:
                 print_line("FORMATTING WITH SEPARATORS")
                 FormatCodes.print(f"[dim](should format:) {ARGS.format.exists}")
-            if ARGS.format.values[0] is None:
+            if not ARGS.format.values:
                 sep = ","
             else:
                 sep = str(ARGS.format.values[0])
@@ -934,7 +934,7 @@ class Calc:
 def main():
     print()
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
-        precision_value = int(ARGS.precision.values[0]) if ARGS.precision.values[0] and ARGS.precision.values[0].lstrip("-").isdigit() else 100
+        precision_value = int(ARGS.precision.values[0]) if ARGS.precision.values and ARGS.precision.values[0].lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
             Console.fail(f"[b](ValueError:) Precision must be positive or [br:cyan](-1) for infinite precision, got [br:cyan]({precision_value})", end="\n\n")
             return
@@ -948,7 +948,7 @@ def main():
         
         calculation = Calc(
             calc_str=" ".join(str(v) for v in calc_str_parts),
-            last_ans=ARGS.ans.values[0],
+            last_ans=(ARGS.ans.values or [None])[0],
             precision=precision,
             max_num_len=max_num_len,
         )

@@ -9,7 +9,7 @@ import keyboard
 ARGS = Console.get_args({"table_cols": {"-c", "--cols", "--columns"}})
 TABLE_COLS = (
     int(ARGS.table_cols.values[0]) \
-    if ARGS.table_cols.values[0] and ARGS.table_cols.values[0].replace("_", "").isdigit() \
+    if ARGS.table_cols.values and ARGS.table_cols.values[0].replace("_", "").isdigit() \
     else 4
 )
 

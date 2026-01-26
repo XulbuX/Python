@@ -68,6 +68,112 @@ class GenerationStats:
 
 class IGNORE:
 
+    paths: set[str] = {
+        "__pycache__",
+        "__tests__",
+        "_locales",
+        "_site",
+        ".adobe",
+        ".angular",
+        ".cache",
+        ".codeium",
+        ".coverage",
+        ".docker",
+        ".DS_Store",
+        ".env",
+        ".git",
+        ".gitlab",
+        ".gradle",
+        ".hg",
+        ".idea",
+        ".ipynb_checkpoints",
+        ".jekyll-cache",
+        ".kube",
+        ".mvn",
+        ".mypy_cache",
+        ".next",
+        ".npm",
+        ".nuxt",
+        ".nvm",
+        ".nx",
+        ".output",
+        ".parcel-cache",
+        ".pytest_cache",
+        ".pytest_cache",
+        ".sass-cache",
+        ".scannerwork",
+        ".sonar",
+        ".svn",
+        ".terraform",
+        ".tox",
+        ".venv",
+        ".vs",
+        ".webpack",
+        ".yarn",
+        "$recycle.bin", 
+        "addons-l10n",
+        "artifacts",
+        "AutofillStates",
+        "bin",
+        "bower_components",
+        "build",
+        "cache_data",
+        "cache",
+        "celerybeat-schedule",
+        "code cache",
+        "code_tracker",
+        "component_crx_cache",
+        "coverage-reports",
+        "coverage",
+        "cvs",
+        "D3DSCache",
+        "DawnGraphiteCache", 
+        "DawnWebGPUCache",
+        "debug",
+        "debugbar",
+        "devsense/packages-cache",
+        "dist-newstyle",
+        "dist",
+        "docker",
+        "docs/_build",
+        "env",
+        "GPUCache",
+        "GrShaderCache",
+        "HTMLCache",
+        "htmlcov",
+        "hyphen-data",
+        "jspm_packages",
+        "junit",
+        "log",
+        "logs",
+        "migrations",
+        "node_modules",
+        "node-compile-cache",
+        "node",
+        "npm",
+        "nvm",
+        "obj",
+        "out",
+        "packages",
+        "patch64",
+        "pods",
+        "program64",
+        "release",
+        "reports",
+        "site-packages",
+        "storage/framework",
+        "target",
+        "temp",
+        "test-results",
+        "tmp",
+        "vendor",
+        "venv",
+        "wheels",
+        "x64",
+        "x86",
+        "xcuserdata",
+    }
+
     sep: str = r"[-_~x@\s]+"
     ext: str = r"(?:\.[-_a-zA-Z0-9]+)*?$"
     pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:\w+{sep}\w*)*?"
@@ -118,22 +224,7 @@ class Tree:
         ".exe", ".dll", ".so", ".dylib", ".bin", ".dat", ".db", ".sqlite", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".cur",
         ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".tar", ".gz", ".7z", ".rar", ".mp3", ".mp4", ".avi", ".mov"
     })
-    IGNORE_DIRS: list[str] = [
-        d.lower() for d in {
-            "$RECYCLE.BIN", ".git", "code_tracker", "node_modules", "storage/framework", "addons-l10n", "__pycache__", "npm",
-            ".npm", "nvm", ".nvm", "env", "venv", ".env", ".venv", "build", "dist", "cache", "cache_data", "HTMLCache",
-            "Code Cache", "D3DSCache", "DawnGraphiteCache", "GrShaderCache", "DawnWebGPUCache", "GPUCache",
-            "node-compile-cache", "component_crx_cache", "DEVSENSE/packages-cache", "target", "bin", "_locales",
-            "AutofillStates", "obj", ".idea", ".vscode", ".vs", ".codeium", ".adobe", "coverage", "logs", "log", "tmp", "temp",
-            ".next", ".nuxt", "out", ".output", ".cache", "vendor", "packages", ".terraform", ".angular", ".svn", "CVS", ".hg",
-            ".pytest_cache", ".coverage", "htmlcov", ".tox", "site-packages", ".DS_Store", "bower_components", ".sass-cache",
-            ".parcel-cache", ".webpack", ".gradle", ".mvn", "Pods", "xcuserdata", "hyphen-data", "junit", "reports", ".github",
-            ".gitlab", "docker", ".docker", ".kube", "node", "jspm_packages", ".npm", "artifacts", ".yarn", "wheels",
-            "docs/_build", "_site", ".jekyll-cache", ".ipynb_checkpoints", ".mypy_cache", ".pytest_cache",
-            "celerybeat-schedule", ".sonar", ".scannerwork", "migrations", "__tests__", "test-results", "coverage-reports",
-            ".nx", "dist-newstyle", "target", "debugbar", "Debug", "Release", "Patch64", "Program64", "Programm64", "x64", "x86"
-        }
-    ]
+    IGNORE_DIRS: list[str] = [d.lower() for d in IGNORE.paths]
 
     def __init__(
         self,
@@ -584,7 +675,7 @@ def main():
     tree = Tree(Path.cwd())
 
     if ARGS.ignore_dirs.exists:
-        ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values[0] else []
+        ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values else []
     else:
         ignore_dirs = Console.input(
             "[b](Enter directory names/paths which's content should be ignored) ([br:cyan](|) separated) [b](>) "
