@@ -162,26 +162,26 @@ dinfo --recursive
 It can take quite a bit of time to get this information, thus you can exclude info you don't need with the `-e` `--exclude` option.<br>
 Possible exclude values are `scope` and `size`:
 ```shell
-dinfo --exclude 'scope'
+dinfo --exclude='scope'
 ```
 ```shell
-dinfo --ignore 'size'
+dinfo --exclude='size'
 ```
 ```shell
-dinfo --ignore 'scope' 'size'
+dinfo --exclude='scope size'
 ```
 The files count will always be included, since it doesn't affect the performance.
 
 You can also decide whether hidden files/directories and/or system files/directories should be skipped with the `-s` `--skip` option.<br>
 Possible skip values are `hidden` and `system`:
 ```shell
-dinfo --skip 'hidden'
+dinfo --skip='hidden'
 ```
 ```shell
-dinfo --skip 'system'
+dinfo --skip='system'
 ```
 ```shell
-dinfo --skip 'hidden' 'system'
+dinfo --skip='hidden system'
 ```
 
 The last option lets you decide if `.gitignore` rules should be applied when getting the info, with the `-g` `--gitignore` option:
@@ -205,46 +205,46 @@ gradient '#F00' '#00F'
 
 You can also create multicolor gradients by specifying more than two colors:
 ```shell
-gradient F00 00F 0F0
+gradient 'F00' '00F' '0F0'
 ```
 
 You can specify the number of steps in the gradient with the `-s` `--steps` option:
 ```shell
-gradient F00 00F --steps 10
+gradient 'F00' '00F' --steps=10
 ```
 
 Per default the gradient is generated using linear RGB interpolation.<br>
 To generate the gradient using HSV color space, use the `-H` `--hsv` option:
 ```shell
-gradient F00 00F --hsv
+gradient 'F00' '00F' --hsv
 ```
 
 To generate the gradient using perceptually uniform OKLCH color space, use the `-O` `--oklch` option:
 ```shell
-gradient F00 00F --oklch
+gradient 'F00' '00F' --oklch
 ```
 
 When using HSV or OKLCH modes, you can control the direction of hue rotation between colors using `>` (*clockwise*) or `<` (*counterclockwise*):
 ```shell
-gradient F00 '<' 00F --hsv
+gradient 'F00' '<' '00F' --hsv
 ```
 ```shell
-gradient F00 '>' 00F --oklch
+gradient 'F00' '>' '00F' --oklch
 ```
 
 You can combine multiple colors with different directions:
 ```shell
-gradient F00 '>' 00F '<' 0F0 --hsv
+gradient 'F00' '>' '00F' '<' '0F0' --hsv
 ```
 
 To show a list of all the colors in the generated gradient, use the `-l` `--list` option:
 ```shell
-gradient F00 00F --list
+gradient 'F00' '00F' --list
 ```
 
 To show step numbers alongside the listed colors, use the `-n` `--numerate` option:
 ```shell
-gradient F00 00F --numerate
+gradient 'F00' '00F' --numerate
 ```
 
 To show help for the command, use the `-h` `--help` option:
@@ -335,7 +335,7 @@ In addition to that it will display some info about the items. When all the item
 
 Per default, the list items are separated by a `space`, but this can be changed to anything else with the option `-s` `--sep`:
 ```shell
-process-list "item1;item2;item3" --sep ';'
+process-list "item1;item2;item3" --sep=';'
 ```
 
 <br>
@@ -356,7 +356,7 @@ rand 0 100
 
 You can also batch generate multiple numbers at once with the option `-b` `--batch` `--batch-gen`:
 ```shell
-rand 10 --batch 5
+rand 10 --batch=5
 ```
 
 To format the generated number/s with thousands-separators, use the option `-f` `--format`:
@@ -367,6 +367,17 @@ rand -1_000_000 1_000_000 --format
 To show help for the command, use the `-h` `--help` option:
 ```shell
 rand --help
+```
+
+<br>
+
+### `shell-colors`
+
+This command will display all the standard shell colors in your console using a simple sample text.
+
+To use a custom sample text, use the `-t` `--text` option:
+```shell
+shell-colors --text="Hello, world!"
 ```
 
 <br>
@@ -388,7 +399,7 @@ This command gives you the option to get a nicely formatted table with the squar
 
 You can specify the number of table columns with the `-c` `--cols` `--columns` option:
 ```shell
-squares --columns 6
+squares --cols=6
 ```
 
 <br>
@@ -417,12 +428,12 @@ x-calc "2 + 2 * 2"
 
 There's also an option to specify a previous answer with the `-a` `--ans` option:
 ```shell
-x-calc "ans * 2" --ans 6
+x-calc "ans * 2" --ans=6
 ```
 
 You can also specify the calculation precision (*result decimal places*) with the `-p` `--precision` option:
 ```shell
-x-calc "sqrt(ln(10) + 1) / cos(π / 4)" --precision 1000
+x-calc "sqrt(ln(10) + 1) / cos(π / 4)" --precision=1000
 ```
 
 And yes, it can do **very** complex calculations:
@@ -502,7 +513,7 @@ x-ip --geo
 
 To specify a specific provider for the geolocation information, use the `-p` `--provider` option:
 ```shell
-x-ip --geo --provider "ipinfo"
+x-ip --geo --provider="ipinfo"
 ```
 
 You can also output the info as a JSON object with the `-j` `--json-output` option:
@@ -528,10 +539,10 @@ x-modules --external
 
 To specify a specific directory to scan, use the `-d` `--directory` option and add the `-r` `--recursive` option to scan subdirectories recursively:
 ```shell
-x-modules --directory "./src"
+x-modules --directory="./src"
 ```
 ```shell
-x-modules --directory "./src" -r
+x-modules --directory="./src" -r
 ```
 
 To only get the list of modules without any additional info, use the `-nf` `--no-formatting` option:
@@ -609,7 +620,7 @@ This command generates an advanced directory tree. You have the following option
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names, separated by* `|`):
 ```shell
-x-tree --ignore "/abs/to/dir1 | rel/to/dir2 | dir3"
+x-tree --ignore="/abs/to/dir1 | rel/to/dir2 | dir3"
 ```
 
 With the option `-n` `-np` `--no-progress`, you can disable the progress from being shown while generating the tree (*might make the generation a bit faster*):
