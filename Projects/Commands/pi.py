@@ -178,8 +178,9 @@ def pi(decimals: int = 10) -> str:
 def main() -> None:
     global CALC_DONE
     input_k = (
-        int(ARGS.decimal_places.values[0])
-        if len(ARGS.decimal_places.values) > 0 and ARGS.decimal_places.values[0].replace("_", "").isdigit() else 10
+        int(ARGS.decimal_places.values[0]) \
+        if ARGS.decimal_places.values and ARGS.decimal_places.values[0].replace("_", "").isdigit()
+        else 10
     )
 
     if (estimated_secs := estimate_runtime(input_k)) >= 604800:

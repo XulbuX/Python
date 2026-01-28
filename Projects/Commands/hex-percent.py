@@ -13,7 +13,7 @@ def hex_to_percent(hex_val: str) -> float:
 
 def main():
     hex_val = (
-        ARGS.hex_value.values[0] if len(ARGS.hex_value.values) > 0 else Console.input(
+        ARGS.hex_value.values[0] if ARGS.hex_value.values else Console.input(
             "\n[b](Enter 2 digit HEX value) (e.g. [br:cyan](FF)) [b](>) ",
             min_len=2,
             max_len=2,

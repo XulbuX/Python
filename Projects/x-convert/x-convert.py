@@ -188,9 +188,9 @@ def get_json(args: ParsedArgs) -> None:
 
 
 def get_missing_args(args: ParsedArgs) -> ParsedArgs:
-    if not args.filepath.values[0] or not args.blade_vue.exists:
+    if not args.filepath.values or not args.blade_vue.exists:
         print()
-    if not args.filepath.values[0]:
+    if not args.filepath.values:
         args.filepath.values[0] = FormatCodes.input("Path to your file[_|dim] >  [_]", default_color="#3EE6DE").strip()
     if not args.blade_vue.exists:
         FormatCodes.print("What conversion to do?[_]", default_color="#3EE6DE")

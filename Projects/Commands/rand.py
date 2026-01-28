@@ -68,8 +68,11 @@ def main():
 
     print()
 
-    batch = int(ARGS.batch_gen.values[0]
-                ) if ARGS.batch_gen.values[0] and ARGS.batch_gen.values[0].replace("_", "").isdigit() else 1
+    batch = (
+        int(ARGS.batch_gen.values[0]) \
+        if ARGS.batch_gen.values and ARGS.batch_gen.values[0].replace("_", "").isdigit()
+        else 1
+    )
 
     match len(ARGS.digits_or_min_max.values):
 

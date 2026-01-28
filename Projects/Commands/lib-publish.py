@@ -108,7 +108,7 @@ def main() -> None:
         print_help()
         return
 
-    if ARGS.lib_base.exists:
+    if ARGS.lib_base.values:
         os.chdir(str(ARGS.lib_base.values[0]))  # CHANGE CWD TO LIB BASE
     run_command(f"py -m build{' --verbose ' if ARGS.verbose.exists else ''}", verbose=ARGS.verbose.exists)
     dist = str(Path.cwd() / "dist")

@@ -11,7 +11,7 @@ ARGS = Console.get_args({
 
 
 def main() -> None:
-    sep = str(ARGS.separator.values[0] or "")
+    sep = ARGS.separator.values[0] if ARGS.separator.values else ""
 
     if sep != "":
         if not ARGS.list_items.exists:

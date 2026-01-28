@@ -341,14 +341,17 @@ def print_line(title: Optional[str] = None, char: str = "═", width: int = Cons
     if not title:
         FormatCodes.print(f"[dim]{char * width}[_dim]", end=end)
         return
+
     line = char * round((width / 2) - ((len(title) + 2) / 2))
     final = FormatCodes.to_ansi(f"[dim]{line}[_dim] [b]{title}[_b] [dim]{line}")
     final_len = len(FormatCodes.remove_ansi(final))
+
     if not final_len == width:
         if final_len > width:
             final = final[:width + (len(final) - final_len)]
         if final_len < width:
             final = final + (width - final_len) * char
+
     FormatCodes.print(f"{final}[_dim]", end=end)
 
 
@@ -446,36 +449,44 @@ class Calc:
             if DEBUG:
                 print_line("FORMATTING WITH SEPARATORS")
                 FormatCodes.print(f"[dim](should format:) {ARGS.format.exists}")
-            if not ARGS.format.values:
-                sep = ","
-            else:
-                sep = str(ARGS.format.values[0])
+
+            sep = ARGS.format.values[0] if ARGS.format.values else ","
+
             if DEBUG:
                 FormatCodes.print(f"[dim](separator:) {sep}")
                 FormatCodes.print(f"[dim](input num_str:) {num_str}")
+
             if "." in num_str:
                 int_part, decimal_part = num_str.split(".", 1)
+
                 if int_part.lstrip("-").isdigit() and len(int_part.lstrip("-")) > 3:
                     formatted_int = ""
                     sign = "-" if int_part.startswith("-") else ""
                     digits = int_part.lstrip("-")
+
                     for i, digit in enumerate(reversed(digits)):
                         if i > 0 and i % 3 == 0:
                             formatted_int = sep + formatted_int
                         formatted_int = digit + formatted_int
+
                     num_str = sign + formatted_int + "." + decimal_part
+
                     if DEBUG:
                         FormatCodes.print(f"[dim](formatted decimal number:) {num_str}")
+
             else:
                 if num_str.lstrip("-").isdigit() and len(num_str.lstrip("-")) > 3:
                     formatted_num = ""
                     sign = "-" if num_str.startswith("-") else ""
                     digits = num_str.lstrip("-")
+
                     for i, digit in enumerate(reversed(digits)):
                         if i > 0 and i % 3 == 0:
                             formatted_num = sep + formatted_num
                         formatted_num = digit + formatted_num
+
                     num_str = sign + formatted_num
+
                     if DEBUG:
                         FormatCodes.print(f"[dim](formatted whole number:) {num_str}")
 
@@ -484,6 +495,7 @@ class Calc:
             num_str = num_str[:-10]
             int_part, decimal_part = num_str.split(".")
             short_decimal_part = decimal_part[:self.max_num_len]
+
             if DEBUG:
                 print_line(f"TRUNCATING REPEATING DECIMAL")
                 FormatCodes.print(f"[dim](input string:) {num_str}")
@@ -504,47 +516,54 @@ class Calc:
             num_str = self._format_exponents(num_str)
             if DEBUG:
                 FormatCodes.print(f"[dim](formatted string:) {num_str}")
+
         return num_str
 
     def _format_exponents(self, string: str) -> str:
         pattern = re.compile(r"(\d*\.\d+|\d+)(?![\de])")
 
         def replace_match(match):
-            number_sequence = match.group(1)
-            if len(str(number_sequence)) <= self.max_num_len:
+            if len(str(number_sequence := match.group(1))) <= self.max_num_len:
                 return number_sequence
+
             base = number_sequence[:self.max_num_len]
             exponent_value = len(number_sequence) - self.max_num_len
+
             if exponent_value >= 0:
                 sign = "+"
             else:
                 sign = "-"
-            exponent_form = base + "e" + sign + str(abs(exponent_value))
-            return exponent_form
 
-        formatted_str = re.sub(pattern, replace_match, string)
-        return formatted_str
+            return base + "e" + sign + str(abs(exponent_value))
+
+        return pattern.sub(replace_match, string)
 
     def _is_recurring(self, string: str, max_check_loops: int = -1) -> list | bool:
-        repts = list(self._get_rept(string))
-        if not repts:
+        if not (repts := list(self._get_rept(string))):
             return False
+
         repts.reverse()
         loops = (len(repts) if max_check_loops < 0 or len(repts) < max_check_loops else max_check_loops)
+
         for loop in range(loops):
             rept = repts[loop]
+
             if not string[-((len(rept)) * 2):] == rept * 2:
                 found = i = 0
+
                 for i in range(len(string), 1, -1):
                     if string[i - len(rept):i] == rept:
                         if found > 0:
                             break
                         else:
                             found += 1
+
                 if not found:
                     return False
+
                 else:
                     rept_i = 0
+
                     for char in string[i:]:
                         if char == rept[rept_i]:
                             i += 1
@@ -554,25 +573,30 @@ class Calc:
                         rept_i += 1
                         if rept_i == len(rept):
                             rept_i = 0
+
                     if i > 0:
                         return True
                     elif loop == loops - 1:
                         return False
+
             else:
                 return True
+
         return False
 
     @staticmethod
     def _get_rept(string: str):
-        r = re.compile(r"(.+?)\1+")
-        for match in r.finditer(string):
+        for match in re.finditer(r"(.+?)\1+", string):
             yield match.group(1)
 
     def _convert_ids_to_symbols(self, tokens: list[str | object]) -> str:
         """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
         result = []
+
         for token in tokens:
+
             if isinstance(token, str):
+
                 if token.startswith("o:"):
                     for op_id, symbols in OPERATORS.ALL:
                         if op_id == token:
@@ -580,6 +604,7 @@ class Calc:
                             break
                     else:
                         result.append(token)
+
                 elif token.startswith("c:"):
                     for const_id, symbols in CONSTANTS.ALL:
                         if const_id == token:
@@ -587,6 +612,7 @@ class Calc:
                             break
                     else:
                         result.append(token)
+
                 elif token.startswith("f:"):
                     for func_id, symbols in FUNCTIONS.ALL:
                         if func_id == token:
@@ -594,18 +620,23 @@ class Calc:
                             break
                     else:
                         result.append(token)
+
                 else:
                     result.append(token)
+
             else:
                 result.append(str(token))
+
         return "".join(result)
 
     def _find_matches(self, text: str) -> list[str | object]:
         preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
         matches = []
         i = 0
+
         while i < len(preliminary_matches):
             match = preliminary_matches[i]
+
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
             if (match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
@@ -632,9 +663,11 @@ class Calc:
                     # KEEP AS SEPARATE SUBTRACTION OPERATOR
                     matches.append(match)
                     i += 1
+
             # DISTINGUISH BETWEEN 'FACTORIAL' AND 'NOT'
             elif match == "!":
                 should_be_factorial = False
+
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
@@ -643,11 +676,14 @@ class Calc:
                         or CONSTANTS.is_constant(prev_match)
                     ):
                         should_be_factorial = True
+
                 if should_be_factorial:
                     matches.append(OPERATORS.FACTORIAL[0])
                 else:
                     matches.append(OPERATORS.NOT[0])
+
                 i += 1
+
             else:
                 # CONVERT TOKENS TO IDS FOR OPERATORS, CONSTANTS AND FUNCTIONS
                 if OPERATORS.is_operator(match):
@@ -659,6 +695,7 @@ class Calc:
                 else:
                     # CLEAN UNDERSCORES FROM NUMERIC TOKENS
                     matches.append(clean_number(match))
+
                 i += 1
 
         if DEBUG:
@@ -666,6 +703,7 @@ class Calc:
             FormatCodes.print(f"[dim](input text:)\n[b|dim](>>>) {text}")
             FormatCodes.print(f"[dim](preliminary matches:) {preliminary_matches}")
             FormatCodes.print(f"[dim](final matches:) {matches}")
+
         return matches
 
     def _perform_eval(self, calc_str: str) -> str:
@@ -680,8 +718,10 @@ class Calc:
 
             # FIND THE INNERMOST PARENTHESES
             for i, char in enumerate(calc_str):
+
                 if char == "(":
                     paren_stack.append(i)
+
                 elif char == ")":
                     if paren_stack:
                         start_idx = paren_stack.pop()
@@ -703,6 +743,7 @@ class Calc:
                         should_add_mult = (start_idx > 0 and calc_str[start_idx - 1].isdigit())
                         calc_str = calc_str[:start_idx] + ("*" if should_add_mult else "") + result + calc_str[end_idx + 1:]
                         break
+
             else:
                 break
 
@@ -712,6 +753,7 @@ class Calc:
         # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
         def sympify(split_matches: list[str | object]) -> list[str | object]:
             split_sympy: list[str | object] = []
+
             for token in split_matches:
                 if isinstance(token, str) and token.startswith(("o:", "c:", "f:")):
                     split_sympy.append(token)
@@ -720,6 +762,7 @@ class Calc:
                         split_sympy.append(sympy.sympify(token))
                     except:
                         split_sympy.append(token)
+
             return split_sympy
 
         split_sympy = sympify(split)
@@ -728,14 +771,18 @@ class Calc:
         for c_id, _ in CONSTANTS.ALL:
             while c_id in split:
                 idx = split.index(c_id)
+
                 if DEBUG:
                     print_line(f"CALCULATING CONSTANT")
                     FormatCodes.print(f"[dim](constant ID:) {c_id}")
+
                 constant_value = CONSTANTS.get(c_id)
+
                 if c_id == CONSTANTS.ANS[0] and constant_value is None:
                     raise Exception("Answer constant was not specified")
                 if DEBUG:
                     FormatCodes.print(f"[dim](value:) {constant_value}")
+
                 formatted_result = str(self.format_result(constant_value))
                 new_split = split[:idx] + [formatted_result] + split[idx + 1:]
                 split = new_split
@@ -749,6 +796,7 @@ class Calc:
                 if (idx + 1 < len(split) and split[idx + 1] == "("):
                     paren_count = 0
                     end_paren_idx = -1
+
                     for i in range(idx + 1, len(split)):
                         if split[i] == "(":
                             paren_count += 1
@@ -774,6 +822,7 @@ class Calc:
                         if function_impl is None:
                             break
                         result = function_impl(arg_value)
+
                     else:
                         if "," in arg_tokens:
                             comma_idx = arg_tokens.index(",")
