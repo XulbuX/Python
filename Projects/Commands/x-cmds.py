@@ -7,10 +7,9 @@ from typing import TypedDict, Optional, Literal, cast
 from xulbux.base.types import ArgParseConfigs
 from xulbux.console import Spinner
 from xulbux.regex import LazyRegex
-from xulbux import FormatCodes, Console, FileSys, String, Regex
+from xulbux import FormatCodes, Console, FileSys, String, System, Regex
 import requests
 import hashlib
-import sys
 import os
 import re
 
@@ -49,11 +48,9 @@ PATTERNS = LazyRegex(
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
-    get_args=r"(?m)Console\s*\.\s*get_args\s*" + Regex.brackets(is_group=True),
-    arg=r"\s*(\w+)\s*=\s*(.*)\s*,?",
+    get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?" + Regex.brackets("{", "}", is_group=True) + r"(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
+    arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
 )
-
-IS_WIN = sys.platform == "win32"
 
 
 def is_python_file(filepath: str) -> bool:
@@ -166,19 +163,22 @@ def parse_args_comment(comment_str: str) -> ArgParseConfigs:
 def get_commands_str(python_files: set[str]) -> str:
     i, cmds = 0, ""
 
-    for i, f in enumerate(sorted(python_files), 1):
-        cmd_name = Path(f).stem
+    for i, file in enumerate(sorted(python_files), 1):
+        print("\n\n")
+        cmd_name = Path(file).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
 
         sys_argv_comments, get_args_funcs = [], []
 
-        with open(CONFIG["command_dir"] / f, "r", encoding="utf-8") as file:
-            if desc := PATTERNS.desc.match(content := file.read()):
+        with open(CONFIG["command_dir"] / file, "r", encoding="utf-8") as f:
+            if desc := PATTERNS.desc.match(content := f.read()):
                 cmds += f"\n\n[i]{desc.group(1).strip("\n\"'")}[_]"
 
             sys_argv_comments = PATTERNS.sys_argv.findall(content)
-            get_args_funcs = PATTERNS.get_args.findall(content)
+            get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
+
+            print(cmd_name, sys_argv_comments, PATTERNS.get_args.findall(content), sep="\n", end="\n\n")
 
         arg_parse_configs: ArgParseConfigs = {}
 
@@ -195,7 +195,8 @@ def get_commands_str(python_files: set[str]) -> str:
 
                 # PARSE THE FUNCTION ARGUMENTS
                 for arg in PATTERNS.arg.finditer(func_args):
-                    if (key := arg.group(1)) and (val := arg.group(2)) and not key.strip() == "join_values":
+                    print(arg.groups())
+                    if (key := arg.group(2)) and (val := arg.group(3)):
                         arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
                 cmds += arguments_desc(arg_parse_configs)
 
@@ -373,13 +374,13 @@ def download_files(github_diffs: GitHubDiffs) -> None:
 
             # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
             cmd_name = Path(filename).stem
-            file_path = CONFIG["command_dir"] / (filename if IS_WIN else cmd_name)
+            file_path = CONFIG["command_dir"] / (filename if System.is_win else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
-            if not IS_WIN:
+            if not System.is_win:
                 os.chmod(file_path, 0o755)
 
             action = "Added" if cmd_name in github_diffs["new_commands"] else "Updated"

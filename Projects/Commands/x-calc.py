@@ -804,7 +804,7 @@ class Calc:
                                 FormatCodes.print(f"[dim](arg2:) {arg2_value}")
 
                             result = function_impl(arg1_value, arg2_value)
-                        
+
                         # SINGLE COMPLEX ARGUMENT
                         else:
                             arg_str = self._convert_ids_to_symbols(arg_tokens)
@@ -815,7 +815,7 @@ class Calc:
                             if function_impl is None:
                                 break
                             result = function_impl(arg_value)
-                    
+
                     if DEBUG:
                         FormatCodes.print(f"[dim](result:) {result}")
                     formatted_result = self.format_result(result)
@@ -945,7 +945,7 @@ def main():
         else:
             precision = precision_value + 10
             max_num_len = precision_value
-        
+
         calculation = Calc(
             calc_str=" ".join(str(v) for v in calc_str_parts),
             last_ans=(ARGS.ans.values or [None])[0],

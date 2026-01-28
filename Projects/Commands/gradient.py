@@ -196,13 +196,13 @@ def generate_multi_gradient(
         raise ValueError(f"Need {len(colors) - 1} directions for {len(colors)} colors")
 
     num_segments = len(colors) - 1
-    
+
     # WE WANT `steps` TOTAL COLORS IN THE FINAL GRADIENT
     # WHEN JOINING SEGMENTS, WE SKIP FIRST COLOR OF EACH NON-FIRST SEGMENT
     # SO: total_colors = seg1_colors + seg2_colors - 1 + seg3_colors - 1 + ...
     # WHICH MEANS: steps = sum(segment_steps) - (num_segments - 1)
     # THEREFORE: sum(segment_steps) = steps + (num_segments - 1)
-    
+
     total_segment_steps = steps + (num_segments - 1)
     steps_per_segment = total_segment_steps // num_segments
     remainder = total_segment_steps % num_segments
@@ -374,7 +374,7 @@ def parse_color_args(
                 directions.append("shortest")
 
             i += 1
-    
+
     return colors, directions
 
 

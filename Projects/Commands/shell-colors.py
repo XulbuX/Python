@@ -1,4 +1,4 @@
-from xulbux import FormatCodes, Console
+from xulbux import FormatCodes
 
 
 SHELL_COLORS = {
@@ -12,20 +12,23 @@ SHELL_COLORS = {
     "Magenta": ["magenta", "br:magenta", "black|bg:magenta", "black|bg:br:magenta"],
 }
 
-ARGS = Console.get_args({"sample_text": {"-t", "--text"}})
-
 
 def show_shell_colors():
-    sample_text = ARGS.sample_text.values[0] if ARGS.sample_text.values else "Some sample text."
+    print()
 
     for format_codes in SHELL_COLORS.values():
-        print()
-
-        for i, format_code in enumerate(format_codes):
-            display_text = f"[{format_code}]({sample_text})"
-            FormatCodes.print(f"{display_text:<{len(display_text) + 2}}", end="" if not i % 2 else "\n")
-
+        FormatCodes.print(f"[{format_codes[0]}](Aa) ", end="")
+    print("  ", end="")
+    for format_codes in SHELL_COLORS.values():
+        FormatCodes.print(f"[{format_codes[2]}]( Aa )", end="")
     print()
+    for format_codes in SHELL_COLORS.values():
+        FormatCodes.print(f"[{format_codes[1]}](Aa) ", end="")
+    print("  ", end="")
+    for format_codes in SHELL_COLORS.values():
+        FormatCodes.print(f"[{format_codes[3]}]( Aa )", end="")
+
+    print("\n")
 
 
 if __name__ == "__main__":

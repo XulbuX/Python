@@ -186,7 +186,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
                     text=True,
                     timeout=300  # 5 MINUTE TIMEOUT PER MODULE
                 )
-                
+
                 if result.returncode == 0:
                     FormatCodes.print(f"[br:green](✓ Installed [b]({module}))")
                 else:

@@ -60,7 +60,7 @@ Before the scripts can run, you need to install their required Python packages. 
    ```shell
    pip install --upgrade -r "requirements.txt"
    ```
-   
+
 <br>
 
 ### Step 3: Make Scripts Executable as Commands
