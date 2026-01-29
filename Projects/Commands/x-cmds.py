@@ -31,14 +31,27 @@ The structure of the comment is similar to how the `**arg_parse_configs` kwargs 
 """
 
 
-CONFIG = {
-    "command_dir": FileSys.script_dir,  # MUST BE A `pathlib.Path` OBJECT
+CONFIG: ScriptConfig = {
+    "command_dir": FileSys.script_dir,
     "github_updates" : {
         "github_repo_urls": ["https://github.com/XulbuX/Python/tree/main/Projects/Commands"],
         "check_for_new_commands": True,
         "check_for_command_updates": True,
     },
 }
+
+
+class GithubUpdatesConfig(TypedDict):
+    """Schema for GitHub updates configuration."""
+    github_repo_urls: list[str]
+    check_for_new_commands: bool
+    check_for_command_updates: bool
+
+class ScriptConfig(TypedDict):
+    """Schema for the script configuration."""
+    command_dir: Path
+    github_updates: GithubUpdatesConfig
+
 
 ARGS = Console.get_args({"update_check": {"-u", "--update"}})
 
@@ -64,7 +77,7 @@ def is_python_file(filepath: str) -> bool:
 
 def get_python_files() -> set[str]:
     """Get all Python files in the command directory by checking shebang lines."""
-    python_files = set()
+    python_files: set[str] = set()
     for file_path in CONFIG["command_dir"].iterdir():
         if file_path.is_file() and is_python_file(str(file_path)):
             python_files.add(file_path.name)
@@ -154,7 +167,7 @@ def parse_args_comment(comment_str: str) -> ArgParseConfigs:
         if (val := match.group(3)) in {"before", "after"}:
             result[key] = cast(Literal["before", "after"], val)
         else:
-            flags = {flag.strip() for flag in match.group(2).split(",")} if match.group(2) else set()
+            flags: set[str] = {flag.strip() for flag in match.group(2).split(",")} if match.group(2) else set()
             result[key] = flags
 
     return result
@@ -264,7 +277,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
         local_cmd_names = set(local_file_map.keys())
 
         # GET LOCAL FILES THAT HAVE UPDATE MARKER
-        local_updateable_files = set()
+        local_updateable_files: set[str] = set()
         for filename in local_files:
             filepath = CONFIG["command_dir"] / filename
             options = get_xcmds_options(str(filepath))
@@ -325,7 +338,7 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
         ) if CONFIG["github_updates"]["check_for_new_commands"] else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
 
     # BUILD TITLE
-    title_parts = []
+    title_parts: list[str] = []
     if num_new_cmds:
         title_parts.append(f"{num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}")
     if num_cmd_updates:
