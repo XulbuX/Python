@@ -3,7 +3,7 @@
 """Execute a command and automatically copy the full output
 including metadata to the clipboard, after execution."""
 from pathlib import Path
-from typing import Optional, IO, cast
+from typing import Optional, Any, IO, cast
 from xulbux import FormatCodes, Console, System
 import subprocess
 import platform
@@ -107,7 +107,7 @@ def main() -> None:
     # PROPERLY CONSTRUCT COMMAND STRING FOR THE SHELL
     if platform.system() == "Windows":
         # ON WINDOWS, USE POWERSHELL-STYLE COMMAND WITH -Command FLAG
-        escaped_args = []
+        escaped_args: list[str] = []
         for arg in command_args:
             if " " in arg or '"' in arg or "'" in arg:
                 escaped_arg = "'" + arg.replace("'", "''") + "'"
@@ -123,15 +123,15 @@ def main() -> None:
     FormatCodes.print(f"\n[br:cyan](━━━ Capturing: [b]({command_str_display}) ━━━)\n")
 
     process: Optional[subprocess.Popen[str]] = None
+    captured_output: list[str] = []
     add_nl_before_end = True
-    captured_output = []
     start_time = time.time()
     exit_code = 0
 
     #################################### RUN THE COMMAND ####################################
     try:
         # bufsize=1 AND text=True ENABLES LINE-BY-LINE TEXT STREAMING
-        general_popen_kwargs = {
+        general_popen_kwargs: dict[str, Any] = {
             "stdin": None,  # KEEP STDIN CONNECTED TO TERMINAL FOR INTERACTIVE COMMANDS
             "stdout": subprocess.PIPE,  # ALLOWS US TO READ IT
             "stderr": subprocess.STDOUT,  # MERGES ERRORS INTO THE MAIN OUTPUT STREAM (CHRONOLOGICAL ORDER)
@@ -200,7 +200,7 @@ def main() -> None:
     duration_str = f"{int(duration * 1000 + 0.5)}ms" if duration < 1 else f"{int(duration + 0.5)}s"
 
     ################################ BUILD CLIPBOARD CONTENT ################################
-    clipboard_parts = []
+    clipboard_parts: list[str] = []
 
     if not exclude_cmd:
         clipboard_parts.append(

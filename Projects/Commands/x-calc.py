@@ -3,7 +3,7 @@
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
 There's no number size limit - the only limit is your system's memory."""
-from typing import Callable, Optional, Pattern
+from typing import Callable, Optional, Any
 from xulbux import FormatCodes, Console
 import sympy
 import numpy
@@ -23,11 +23,11 @@ ARGS = Console.get_args({
 })
 DEBUG = ARGS.debug.exists
 
-_COMPILED: dict[str, Pattern] = {
+_COMPILED: dict[str, re.Pattern[str]] = {
     "thousands_seps": re.compile(r"(?<=\d)[_'](?=\d)"),
 }
 
-sanitize = lambda a: sympy.sympify(a)
+sanitize: Callable[[Any], sympy.Basic] = lambda a: sympy.sympify(a)  # type: ignore[return-type]
 
 def clean_number(token: str) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
@@ -81,7 +81,7 @@ class OPERATORS:
         XOR[0]: -3,
     }
 
-    IMPLEMENT: dict[str, Callable] = {
+    IMPLEMENT: dict[str, Callable[[Any, Any], Any]] = {
         # ARITHMETIC OPERATORS
         MINUS[0]: lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
         PLUS[0]: lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
@@ -227,7 +227,7 @@ class FUNCTIONS:
     )
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-    IMPLEMENT: dict[str, Callable] = {
+    IMPLEMENT: dict[str, Callable[[Any], Any]] = {
         # PROGRAMMING FUNCTIONS
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
@@ -337,7 +337,7 @@ def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
     FormatCodes.print(f"\033[2K\r{sep.join(str(val) for val in values)}", end=end)
 
 
-def print_line(title: Optional[str] = None, char: str = "═", width: int = Console.w, end="\n") -> None:
+def print_line(title: Optional[str] = None, char: str = "═", width: int = Console.w, end: str = "\n") -> None:
     if not title:
         FormatCodes.print(f"[dim]{char * width}[_dim]", end=end)
         return
@@ -522,7 +522,7 @@ class Calc:
     def _format_exponents(self, string: str) -> str:
         pattern = re.compile(r"(\d*\.\d+|\d+)(?![\de])")
 
-        def replace_match(match):
+        def replace_match(match: re.Match[str]) -> str:
             if len(str(number_sequence := match.group(1))) <= self.max_num_len:
                 return number_sequence
 
@@ -538,7 +538,7 @@ class Calc:
 
         return pattern.sub(replace_match, string)
 
-    def _is_recurring(self, string: str, max_check_loops: int = -1) -> list | bool:
+    def _is_recurring(self, string: str, max_check_loops: int = -1) -> list[bool] | bool:
         if not (repts := list(self._get_rept(string))):
             return False
 
@@ -591,7 +591,7 @@ class Calc:
 
     def _convert_ids_to_symbols(self, tokens: list[str | object]) -> str:
         """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
-        result = []
+        result: list[str] = []
 
         for token in tokens:
 
@@ -631,7 +631,7 @@ class Calc:
 
     def _find_matches(self, text: str) -> list[str | object]:
         preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
-        matches = []
+        matches: list[str | object] = []
         i = 0
 
         while i < len(preliminary_matches):
@@ -712,7 +712,7 @@ class Calc:
 
         # HANDLE MATHEMATICAL GROUPING PARENTHESES (NOT FUNCTION CALLS)
         while "(" in calc_str and ")" in calc_str:
-            paren_stack = []
+            paren_stack: list[int] = []
             start_idx = -1
             end_idx = -1
 
@@ -878,7 +878,7 @@ class Calc:
 
         # ITERATE OVER OPERATORS BASED ON PRECEDENCE
         while len(split) > 1:
-            operator_positions = []
+            operator_positions: list[tuple[int, str, int]] = []
             for i, token in enumerate(split):
                 if isinstance(token, str) and token.startswith("o:"):
                     precedence = OPERATORS.get_precedence(token)

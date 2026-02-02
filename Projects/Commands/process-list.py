@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
 """Process a list of items and display some statistics."""
+from typing import Callable
 from xulbux import FormatCodes, Console
 
 
@@ -27,7 +28,7 @@ def main() -> None:
         FormatCodes.print(f"[bright:cyan]{'\n'.join(lst)}[_]\n")
         if all(e.isnumeric() for e in lst):
             lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]
-            average = lambda nums: sum(nums) / len(nums)
+            average: Callable[[list[int | float]], float] = lambda nums: sum(nums) / len(nums)
             Console.log_box_bordered(
                 f"[b](Min)     : [br:cyan]({min(lst)})",
                 f"[b](Max)     : [br:cyan]({max(lst)})",

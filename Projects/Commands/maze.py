@@ -94,7 +94,7 @@ class Maze:
         center_y: int,
         center_x: int,
     ) -> tuple[int, int]:
-        visited = set()
+        visited: set[tuple[int, int]] = set()
         queue = deque([(center_y, center_x, 0)])
         furthest_point = (center_y, center_x)
         max_dist = 0
@@ -161,7 +161,7 @@ class Maze:
                     break
             if not found_path:
                 stack.pop()
-        maze_2d = []
+        maze_2d: list[bytearray] = []
         for y in range(height):
             start_idx = y * width
             row = bytearray(maze[start_idx:start_idx + width])
@@ -212,15 +212,15 @@ class Maze:
         def manhattan_distance(pos1: tuple[int, int]) -> int:
             return abs(pos1[0] - goal_pos[0]) + abs(pos1[1] - goal_pos[1])
 
-        open_set = []
+        open_set: list[tuple[int, tuple[int, int]]] = []
         heappush(open_set, (0, start_pos))
-        came_from = {}
+        came_from: dict[tuple[int, int], tuple[int, int]] = {}
         g_score = {start_pos: 0}
         f_score = {start_pos: manhattan_distance(start_pos)}
         while open_set:
             current = heappop(open_set)[1]
             if current == goal_pos:
-                path = []
+                path: list[tuple[int, int]] = []
                 while current in came_from:
                     path.append(current)
                     current = came_from[current]
@@ -253,7 +253,8 @@ class Maze:
         duration: Animation duration in seconds
         noise: Noise percentage (0-100) affecting the circle shape
         fps: Frames per second for the animation"""
-        start_time, noise_range, noise_map = time.time(), noise / 100.0, {}
+        start_time, noise_range = time.time(), noise / 100.0
+        noise_map: dict[tuple[int, int], float] = {}
         min_noise, max_noise = 1 - noise_range, 1 + noise_range
         width, height = len(self.maze[0]), len(self.maze)
         max_distance = math.sqrt(height**2 + width**2)
@@ -281,7 +282,7 @@ class Maze:
         if self.show_solution or show_solution:
             solution_path = self._find_path(self.player_byte, self.goal_byte)
         else:
-            solution_path = set()
+            solution_path: set[tuple[int, int]] = set()
         maze_lines = ()
         for y, row in enumerate(self.maze):
             line = ""
@@ -301,7 +302,7 @@ class Maze:
             return "\n".join(maze_lines)
 
     def _game_main_loop(self) -> None:
-        directions = {
+        directions: dict[int | str, tuple[int, int]] = {
             72: (-1, 0),  # UP
             80: (1, 0),  # DOWN
             75: (0, -1),  # LEFT

@@ -4,7 +4,7 @@
 Can filter to show only non-standard library modules."""
 from pathlib import Path
 from typing import Optional
-from xulbux.console import Spinner
+from xulbux.console import Throbber
 from xulbux import FormatCodes, Console, FileSys, Data
 import subprocess
 import sys
@@ -73,7 +73,7 @@ def print_help():
 
 def extract_imports(file_path: Path) -> set[str]:
     """Extract all imported module names from a Python file."""
-    imports = set()
+    imports: set[str] = set()
     import_pattern = re.compile(r"^\s*(?:from\s+(\S+)|import\s+(\S+))", re.MULTILINE)
 
     try:
@@ -175,10 +175,10 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
         return
 
     print()
-    failed_modules = []
+    failed_modules: list[str] = []
 
     for module in sorted(modules):
-        with Spinner(f"Installing [b]({module})", ["[br:cyan]({l} [b]({a})) "]).context():
+        with Throbber(label=f"Installing [b]({module})", throbber_format=["[br:cyan]({l} [b]({a})) "]).context():
             try:
                 result = subprocess.run(
                     [sys.executable, "-m", "pip", "install", "--upgrade", module],
@@ -219,7 +219,7 @@ def main() -> None:
     external_only = ARGS.external_only.exists or ARGS.install.exists
     directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else FileSys.script_dir
 
-    with Spinner().context():
+    with Throbber().context():
         modules = get_all_modules(
             directory=directory,
             recursive=ARGS.recursive.exists,

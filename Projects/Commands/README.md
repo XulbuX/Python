@@ -265,27 +265,6 @@ hex-percent 'FF'
 
 <br>
 
-### `lib-publish`
-
-This is just a single command, which runs the two required commands to package and directly upload your own Python library to [PyPI](https://pypi.org/).
-
-You can also directly specify the path to the library to package and upload and if the process should be verbose:
-```shell
-lib-publish "/path/to/library/root-directory" --verbose
-```
-
-To build but not upload the library, use the option `-ob` `--only-build`:
-```shell
-lib-publish "/path/to/library/root-directory" --only-build
-```
-
-To show help for the command, use the `-h` `--help` option:
-```shell
-lib-publish --help
-```
-
-<br>
-
 ### `life`
 
 This command starts a simulation of [Conway's Game of Life](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the console.

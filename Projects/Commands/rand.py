@@ -80,7 +80,7 @@ def main():
             digits = int(ARGS.digits_or_min_max.values[0])
             FormatCodes.print("[dim](generating...)", end="")
             if batch > 1:
-                random_ints = []
+                random_ints: list[str] = []
                 with ProgressBar().progress_context(batch, "generating...") as update_progress:
                     update_progress(0)
                     for i in range(batch):

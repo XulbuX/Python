@@ -4,7 +4,7 @@
 with a lost of options and customization."""
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, NamedTuple, cast
+from typing import NamedTuple, TypedDict, Optional, cast
 from xulbux.base.consts import COLOR
 from xulbux import FormatCodes, Console, File
 import time
@@ -18,7 +18,8 @@ ARGS = Console.get_args({
     "no_progress": {"-n", "-np", "--no-progress"},
     "help": {"-h", "--help"},
 })
-DEFAULT = {
+
+DEFAULT: ScriptDefaults = {
     "ignore_dirs": [],
     "auto_ignore": True,
     "include_file_contents": False,
@@ -45,21 +46,29 @@ def print_help():
     FormatCodes.print(help_text)
 
 
+class ScriptDefaults(TypedDict):
+    ignore_dirs: list[str]
+    auto_ignore: bool
+    include_file_contents: bool
+    tree_style: int
+    indent: int
+    into_file: bool
+
+
 class IgnoreDirectory(Exception):
-    pass
+    """Raised when a directory should be ignored."""
+    ...
 
 
 class DirScanResult(NamedTuple):
-
     should_ignore: bool
     total_count: int
     hash_count: int
     show_partial: bool
-    entries: tuple
+    entries: tuple[os.DirEntry[str], ...]
 
 
 class GenerationStats:
-
     processed_dirs: int = 0
     processed_files: int = 0
     current_depth: int = 0
@@ -373,8 +382,8 @@ class Tree:
         """Analyze filenames to detect patterns indicating localization, versioning etc."""
         if len(names) < 5:
             return False, 0.0
-        prefixes = {}
-        suffixes = {}
+        prefixes: dict[str, int] = {}
+        suffixes: dict[str, int] = {}
         for name in names:
             base = Path(name).stem
             for i in range(1, len(base) + 1):
@@ -406,7 +415,7 @@ class Tree:
             if total_count < 3:
                 return DirScanResult(False, total_count, 0, False, entries)
             hash_count = normal_count = 0
-            filenames = []
+            filenames: list[str] = []
             for entry in entries:
                 name = entry.name
                 if name.startswith("."):
@@ -501,7 +510,7 @@ class Tree:
         _level: Current recursion depth
         _parent_path: Relative path from base_dir to current dir"""
         self._update_progress(_dir)
-        result = bytearray()
+        result: bytearray = bytearray()
         try:
             if (_level == 0):
                 dir_path = Path(_dir)
@@ -513,25 +522,26 @@ class Tree:
             scan_result = self._scan_directory(str(_dir))
             entries = scan_result.entries
             if not entries:
-                return "" if result is None else bytes(result).decode()
+                return bytes(result).decode() if result else ""
             prefix_bytes = self._encode_str(_prefix)
             if scan_result.should_ignore:
                 result.extend(prefix_bytes)
                 result.extend(self._corners_b[0])
                 result.extend(self._ignored_suffix_b)
-                return "" if result is None else bytes(result).decode()
+                return bytes(result).decode() if result else ""
             should_ignore = scan_result.should_ignore
             show_partial = scan_result.show_partial
             if should_ignore:
                 result.extend(prefix_bytes)
                 result.extend(self._corners_b[0])
                 result.extend(self._ignored_suffix_b)
-                return "" if result is None else bytes(result).decode()
+                return bytes(result).decode() if result else ""
             entries_count = len(entries)
             prefix_ver = prefix_bytes + self._line_ver_b + self._tab[:-1]
             prefix_tab = prefix_bytes + self._tab
             if show_partial:
-                visible_entries, last_was_ignored = [], False
+                visible_entries: list[Optional[os.DirEntry[str]]] = []
+                last_was_ignored = False
                 for entry in entries:
                     is_ignored = self._is_likely_hash_name(entry.name)
                     if not is_ignored:
@@ -558,9 +568,9 @@ class Tree:
                         result.extend(self._dirname_end_b)
                         result.extend(self._NEWLINE)
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
-                        result.extend(self._gen_tree(entry.path, new_prefix, _level + 1).encode())
+                        result.extend(self._gen_tree(Path(entry.path), new_prefix, _level + 1).encode())
                     else:
-                        self._update_progress(entry.path, is_dir=False)
+                        self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
                         result.extend(entry.name.encode())
                         result.extend(self._NEWLINE)
@@ -623,9 +633,9 @@ class Tree:
                         result.extend(self._dirname_end_b)
                         result.extend(self._NEWLINE)
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
-                        result.extend(self._gen_tree(entry.path, new_prefix, _level + 1, current_rel_path).encode())
+                        result.extend(self._gen_tree(Path(entry.path), new_prefix, _level + 1, current_rel_path).encode())
                     else:
-                        self._update_progress(entry.path, is_dir=False)
+                        self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
                         result.extend(entry.name.encode())
                         result.extend(self._NEWLINE)
@@ -664,7 +674,7 @@ class Tree:
         except Exception as e:
             error_prefix = (_prefix + self.corners[0] + (self.line_hor * (self.indent - 1)))
             result.extend(f"{error_prefix}{self._error_suffix}{str(e)}]\n".encode())
-        return "" if result is None else bytes(result).decode()
+        return bytes(result).decode() if result else ""
 
 
 def main():

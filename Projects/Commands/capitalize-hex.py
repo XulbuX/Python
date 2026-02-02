@@ -24,7 +24,7 @@ def capitalize_hex_colors(content: str) -> tuple[str, int]:
     pattern = r"(#|0x)([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b"
     changed = 0
 
-    def replace_match(match: re.Match) -> str:
+    def replace_match(match: re.Match[str]) -> str:
         nonlocal changed
         prefix, hex_value = match.groups()
         upper_hex = hex_value.upper()

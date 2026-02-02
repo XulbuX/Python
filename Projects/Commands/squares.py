@@ -14,7 +14,7 @@ TABLE_COLS = (
 )
 
 
-def clear_last_lines(count):
+def clear_last_lines(count: int) -> None:
     for _ in range(count):
         print("\033[F\033[K", end="")
 

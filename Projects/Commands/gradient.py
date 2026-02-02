@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
-from typing import Literal
+from typing import Literal, cast
 from xulbux import FormatCodes, Console, Color
 from xulbux.color import rgba, hexa
 import colorsys
@@ -64,7 +64,7 @@ def interpolate_oklch(
     - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise"
     """
     try:
-        from colorspacious import cspace_convert
+        from colorspacious import cspace_convert  # type: ignore[no-stubs]
         import numpy as np
     except ImportError as e:
         raise ImportError(
@@ -77,8 +77,8 @@ def interpolate_oklch(
     rgb_b = np.array([color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0])
 
     # CONVERT SRGB TO OKLCH (using CAM02-UCS / JCh which is similar to OKLCH)
-    oklch_a = cspace_convert(rgb_a, "sRGB1", "JCh")
-    oklch_b = cspace_convert(rgb_b, "sRGB1", "JCh")
+    oklch_a = cast(np.ndarray, cspace_convert(rgb_a, "sRGB1", "JCh"))
+    oklch_b = cast(np.ndarray, cspace_convert(rgb_b, "sRGB1", "JCh"))
 
     # INTERPOLATE IN OKLCH SPACE
     L = oklch_a[0] + (oklch_b[0] - oklch_a[0]) * t
@@ -111,7 +111,7 @@ def interpolate_oklch(
 
     # CONVERT BACK TO SRGB
     oklch_interpolated = np.array([L, C, h])
-    rgb_interpolated = cspace_convert(oklch_interpolated, "JCh", "sRGB1")
+    rgb_interpolated = cast(np.ndarray, cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
 
     # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
     rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
@@ -182,7 +182,7 @@ def generate_multi_gradient(
     directions: list[Literal["shortest", "clockwise", "counterclockwise"]],
     steps: int,
     mode: Literal["linear", "hsv", "oklch"] = "linear",
-) -> tuple[hexa]:
+) -> tuple[hexa, ...]:
     """Generate a multi-color gradient with optional directional hue rotation.\n
     ------------------------------------------------------------------------------------------------
     - `colors` -⠀list of rgba colors to interpolate between
@@ -207,7 +207,7 @@ def generate_multi_gradient(
     steps_per_segment = total_segment_steps // num_segments
     remainder = total_segment_steps % num_segments
 
-    gradient = []
+    gradient: list[hexa] = []
 
     for seg_idx in range(num_segments):
         # DISTRIBUTE REMAINDER STEPS ACROSS FIRST SEGMENTS
@@ -236,7 +236,7 @@ def generate_gradient(
     steps: int,
     mode: Literal["linear", "hsv", "oklch"] = "linear",
     hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
-) -> tuple[hexa]:
+) -> tuple[hexa, ...]:
     """Generate and display a color gradient.\n
     ------------------------------------------------------------------------------------------------
     - `color_1` -⠀starting hex color
@@ -245,7 +245,7 @@ def generate_gradient(
     - `mode` -⠀"linear" (RGB), "oklch", or "hsv" interpolation
     - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise" (only for oklch/hsv)
     """
-    gradient = []
+    gradient: list[hexa] = []
 
     if mode == "oklch":
         # OKLCH INTERPOLATION FOR PERCEPTUAL UNIFORMITY
@@ -272,7 +272,7 @@ def generate_gradient(
 
 
 def display_gradient(
-    gradient: tuple[hexa],
+    gradient: tuple[hexa, ...],
     source_colors: list[hexa],
     width: int,
     list_colors: bool = False,
@@ -288,8 +288,8 @@ def display_gradient(
     """
     # EACH ▌ SHOWS 2 COLORS (FG + BG), SO WE FILL total_width POSITIONS
     # WE NEED TO MAP total_colors ACROSS total_width * 2 HALF-POSITIONS
+    gradient_parts: list[str] = []
     total_colors = len(gradient)
-    gradient_parts = []
 
     for i in range(width):
         # MAP CHARACTER POSITION TO GRADIENT COLOR INDICES

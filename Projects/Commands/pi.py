@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Calculate the value of pi to a specified number of decimal places."""
 from typing import Iterator
-from xulbux.console import Spinner
+from xulbux.console import Throbber
 from xulbux import FormatCodes, Console
 import math
 import time
@@ -10,7 +10,7 @@ import sys
 
 
 ARGS = Console.get_args({"decimal_places": "before"})
-REFERENCE_TIMES = {
+REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
     5000: 0.175,  # 5K DIGITS
     10000: 0.75,  # 10K DIGITS
@@ -137,7 +137,7 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
             ("second", 1),
         ),
     )
-    parts = []
+    parts: list[str] = []
     b_val, val_name, a_name = (
         "[b|br:cyan]" if pretty_print else "",
         f"{'' if short else ' '}{'[_b|i|cyan]' if pretty_print else ''}",
@@ -152,7 +152,7 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
     if not parts:
         formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
         parts.append(
-            f"{b_val}{formatted_seconds}{val_name}{units[0 if short else 1][-1][0] if seconds == '1' or short else f'{units[0 if short else 1][-1][0]}s'}{a_name}"
+            f"{b_val}{formatted_seconds}{val_name}{units[0 if short else 1][-1][0] if seconds == 1 or short else f'{units[0 if short else 1][-1][0]}s'}{a_name}"
         )
     if short:
         return ("[dim](:)" if pretty_print else ":").join(parts)
@@ -194,7 +194,7 @@ def main() -> None:
         result = None
 
         try:
-            with Spinner().context():
+            with Throbber().context():
                 result = pi(input_k)
         except MemoryError:
             FormatCodes.print(

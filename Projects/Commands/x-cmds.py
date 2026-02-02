@@ -5,7 +5,7 @@ A short description and command arguments are displayed if available."""
 from pathlib import Path
 from typing import TypedDict, Optional, Literal, cast
 from xulbux.base.types import ArgParseConfigs
-from xulbux.console import Spinner
+from xulbux.console import Throbber
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, FileSys, String, System, Regex
 import requests
@@ -432,10 +432,10 @@ def main() -> None:
     FormatCodes.print(get_commands_str(python_files))
 
     if ARGS.update_check.exists:
-        spinner = Spinner("⟳ Checking for updates")
-        spinner.set_format(["[magenta]({l})", "[b|magenta]({a})"])
+        throbber = Throbber(label="⟳ Checking for updates")
+        throbber.set_format(["[magenta]({l})", "[b|magenta]({a})"])
 
-        with spinner.context():
+        with throbber.context():
             github_diffs = get_github_diffs(python_files)
 
         FormatCodes.print(github_diffs_str(github_diffs))

@@ -3,7 +3,8 @@
 """Lets you quickly generate QR codes directly within the terminal."""
 from pathlib import Path
 from typing import Optional
-from xulbux.console import Spinner, ParsedArgs, COLOR
+from xulbux.base.consts import COLOR
+from xulbux.console import ParsedArgs, Throbber
 from xulbux import FormatCodes, Console
 import xml.etree.ElementTree as ET
 import subprocess
@@ -65,7 +66,7 @@ class VCard:
         self.vcard_str = vcard_str
         self.details = self.get_vcard_details()
 
-    def get_vcard_details(self) -> dict:
+    def get_vcard_details(self) -> dict[str, str]:
         lines = self.vcard_str.strip().split("\n")
         details = {"name": "", "phone": "", "email": ""}
 
@@ -129,7 +130,7 @@ class WiFi:
                 timeout=10,
             )
 
-            profiles = []
+            profiles: list[str] = []
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
                     if "All User Profile" in line:
@@ -270,7 +271,7 @@ class WiFi:
         return "WPA"
 
     def _prompt_for_details(self) -> dict[str, str | bool]:
-        with Spinner().context():
+        with Throbber().context():
             profiles = self._get_saved_profiles()
             current = (self._get_current_network() or "").replace("\n", " ").strip()
 
@@ -375,7 +376,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
     try:
         scale = int(args.scale.values[0]) if args.scale.values and args.scale.values[0].replace("_", "").isdigit() else 1
         invert = args.invert.exists
-        error_level = { \
+        error_level = int({ \
             "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
             "M": qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
             "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
@@ -383,7 +384,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
         }.get( \
             ((args.error_correction.values or [None])[0] or "M").upper(),
             qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
-        )
+        ))
 
         qr = qrcode.QRCode(version=1, error_correction=error_level, box_size=1, border=0)
         qr.add_data(text)
@@ -399,7 +400,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
             raise
 
         matrix = qr.get_matrix()
-        lines = []
+        lines: list[str] = []
 
         if scale == 1:
             for i in range(0, len(matrix), 2):

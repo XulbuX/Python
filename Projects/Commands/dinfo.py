@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from pathlib import Path
 from xulbux.base.types import ProgressUpdater
-from xulbux.console import ProgressBar, Spinner
+from xulbux.console import ProgressBar, Throbber
 from xulbux import FormatCodes, Console
 import fnmatch
 import math
@@ -20,8 +20,8 @@ ARGS = Console.get_args({
     "apply_gitignore": {"-g", "--gitignore"},
     "help": {"-h", "--help"},
 })
-EXCLUDE = {item.lower() for item in str(ARGS.exclude_info.values[0]).split()} if ARGS.exclude_info.values else set()
-SKIP = {item.lower() for item in str(ARGS.skip_type.values[0]).split()} if ARGS.skip_type.values else set()
+EXCLUDE: set[str] = {item.lower() for item in str(ARGS.exclude_info.values[0]).split()} if ARGS.exclude_info.values else set()
+SKIP: set[str] = {item.lower() for item in str(ARGS.skip_type.values[0]).split()} if ARGS.skip_type.values else set()
 
 
 def print_help():
@@ -80,9 +80,9 @@ def should_skip_path(path: str) -> bool:
     return False
 
 
-def load_gitignore_patterns(directory: str) -> list:
+def load_gitignore_patterns(directory: str) -> list[tuple[str, str]]:
     """Load .gitignore patterns from the given directory and parent directories."""
-    patterns = []
+    patterns: list[tuple[str, str]] = []
     current_dir = Path(directory).resolve()
 
     for parent in [current_dir] + list(current_dir.parents):
@@ -100,7 +100,7 @@ def load_gitignore_patterns(directory: str) -> list:
     return patterns
 
 
-def is_gitignored(file_path: str, patterns: list) -> bool:
+def is_gitignored(file_path: str, patterns: list[tuple[str, str]]) -> bool:
     """Check if a file should be ignored based on .gitignore patterns."""
     if not patterns:
         return False
@@ -133,9 +133,9 @@ def is_gitignored(file_path: str, patterns: list) -> bool:
     return False
 
 
-def get_dir_files(directory: str) -> list:
+def get_dir_files(directory: str) -> list[str]:
     """Get the paths of all files in a directory, optionally recursively."""
-    files = []
+    files: list[str] = []
     gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
 
     try:
@@ -212,7 +212,7 @@ def process_file(file_path: str) -> tuple[int, int, int]:
         return 1, 0, 0
 
 
-def calc_files_scope(files: list, update_progress: ProgressUpdater) -> tuple[int, int, int]:
+def calc_files_scope(files: list[str], update_progress: ProgressUpdater) -> tuple[int, int, int]:
     cpu_count = os.cpu_count() or 4
     if len(files) < 50:
         max_workers = min(len(files), cpu_count)
@@ -265,7 +265,7 @@ def main():
 
     print()
 
-    with Spinner("Searching items").context():
+    with Throbber(label="Searching items").context():
         files = get_dir_files(str(Path.cwd()))
 
     if "scope" in EXCLUDE and "size" in EXCLUDE:

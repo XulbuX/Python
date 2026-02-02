@@ -198,9 +198,9 @@ def try_advanced_deletion_techniques(path: Path) -> bool:
 
 def find_processes_using_path(path: Path) -> list[psutil.Process]:
     """Find all processes that have handles to the given path."""
-    processes = []
-    path = path.resolve()
+    processes: list[psutil.Process] = []
     system = platform.system()
+    path = path.resolve()
 
     for proc in psutil.process_iter(["pid", "name", "open_files", "cwd", "exe"]):
         try:
@@ -349,7 +349,7 @@ def force_delete(path: Path) -> bool:
 
         # TERMINATE NON-PROTECTED PROCESSES
         FormatCodes.print("[b](Terminating processes...)")
-        terminated = []
+        terminated: list[psutil.Process] = []
         for proc in processes:
             if terminate_process(proc):
                 terminated.append(proc)
