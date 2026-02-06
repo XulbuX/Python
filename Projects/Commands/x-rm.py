@@ -37,17 +37,17 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Force Remove - Delete files/directories even if locked by processes )
 
-[b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
+[b](Usage:) [green](x-rm) [cyan](<path>) [blue]([options])
 
 [b](Arguments:)
-  [br:cyan](path)             The path to the file or directory to delete
+  [cyan](path)             The path to the file or directory to delete
 
 [b](Options:)
-  [br:blue](-c), [br:blue](--confirm)    Skip confirmation prompt before deletion
+  [blue](-c), [blue](--confirm)    Skip confirmation prompt before deletion
 
 [b](Examples:)
-  [br:green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
-  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
+  [green](x-rm) [cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
+  [green](x-rm) [cyan]("/path/to/file.txt") [blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -76,7 +76,7 @@ def take_ownership_windows(path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            FormatCodes.print(f"[br:yellow][b](⚠ takeown failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ takeown failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
             return False
 
         # GRANT FULL CONTROL USING 'icacls'
@@ -88,14 +88,14 @@ def take_ownership_windows(path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            FormatCodes.print(f"[br:yellow][b](⚠ icacls failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ icacls failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
             return False
 
-        FormatCodes.print(f"[br:green](✓ Successfully took ownership)")
+        FormatCodes.print(f"[green](✓ Successfully took ownership)")
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[br:red][b](⨯ Error taking ownership:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](⨯ Error taking ownership:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -112,14 +112,14 @@ def remove_attributes_windows(path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            FormatCodes.print(f"[br:yellow][b](⚠ attrib failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ attrib failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
             return False
 
-        FormatCodes.print(f"[br:green](✓ Successfully removed attributes)")
+        FormatCodes.print(f"[green](✓ Successfully removed attributes)")
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[br:red][b](⨯ Error removing attributes:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](⨯ Error removing attributes:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -136,14 +136,14 @@ def change_permissions_unix(path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            FormatCodes.print(f"[br:yellow][b](⚠ chmod failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ chmod failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
             return False
 
-        FormatCodes.print(f"[br:green](✓ Successfully changed permissions)")
+        FormatCodes.print(f"[green](✓ Successfully changed permissions)")
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[br:red][b](⨯ Error changing permissions:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](⨯ Error changing permissions:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -161,14 +161,14 @@ def unlock_file_macos(path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            FormatCodes.print(f"[br:yellow][b](⚠ chflags failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ chflags failed:)\n  {result.stderr.strip().replace('\n', '\n  ')}[_]")
             return False
 
-        FormatCodes.print(f"[br:green](✓ Successfully unlocked file)")
+        FormatCodes.print(f"[green](✓ Successfully unlocked file)")
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[br:red][b](⨯ Error unlocking file:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](⨯ Error unlocking file:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -262,14 +262,14 @@ def is_protected_process(proc: psutil.Process) -> bool:
 def terminate_process(proc: psutil.Process) -> bool:
     """Attempt to terminate a process."""
     try:
-        FormatCodes.print(f"  Terminating [magenta]({proc.name().strip()}) [dim]((PID [br:magenta]({proc.pid})))...")
+        FormatCodes.print(f"  Terminating [magenta]({proc.name().strip()}) [dim]((PID [magenta]({proc.pid})))...")
         proc.terminate()
         proc.wait(timeout=5)
         return True
     except psutil.TimeoutExpired:
         FormatCodes.print(
-            f"  [b|br:yellow](⚠ Process didn't terminate gracefully, killing:)\n"
-            f"    [magenta]({proc.name().strip()}) [dim|br:yellow]((PID [br:magenta]({proc.pid})[br:yellow]))"
+            f"  [b|yellow](⚠ Process didn't terminate gracefully, killing:)\n"
+            f"    [magenta]({proc.name().strip()}) [dim|yellow]((PID [magenta]({proc.pid})[yellow]))"
         )
         try:
             proc.kill()
@@ -278,8 +278,8 @@ def terminate_process(proc: psutil.Process) -> bool:
             return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):
         FormatCodes.print(
-            f"  [b|br:red](⨯ Access denied or process no longer exists:)\n"
-            f"    [magenta]({proc.name().strip()}) [dim]((PID [br:magenta]({proc.pid})))"
+            f"  [b|red](⨯ Access denied or process no longer exists:)\n"
+            f"    [magenta]({proc.name().strip()}) [dim]((PID [magenta]({proc.pid})))"
         )
         return False
 
@@ -293,15 +293,15 @@ def attempt_deletion(path: Path) -> bool:
         else:
             shutil.rmtree(path)
     except PermissionError:
-        FormatCodes.print("[b|br:yellow](⚠ Permission denied!)")
+        FormatCodes.print("[b|yellow](⚠ Permission denied!)")
     except OSError as e:
         # ON UNIX SYSTEMS, WE MIGHT GET DIFFERENT ERRORS
         if platform.system() != "Windows":
-            FormatCodes.print(f"[br:yellow][b](⚠ Deletion blocked:)\n  {str(e).replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ Deletion blocked:)\n  {str(e).replace('\n', '\n  ')}[_]")
         else:
-            FormatCodes.print(f"[br:red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
     except Exception as e:
-        FormatCodes.print(f"[br:red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
     return not path.exists()
 
 
@@ -311,40 +311,40 @@ def force_delete(path: Path) -> bool:
 
     # TRY TO DELETE WITHOUT TERMINATING PROCESSES
     if attempt_deletion(path):
-        FormatCodes.print(f"[b|br:green](✓ Successfully deleted:) [br:cyan]({path})\n")
+        FormatCodes.print(f"[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
         return True
 
     # FIRST TRY ADVANCED DELETION TECHNIQUES
-    FormatCodes.print("[br:yellow](  Trying advanced deletion techniques...)")
+    FormatCodes.print("[yellow](  Trying advanced deletion techniques...)")
 
     if try_advanced_deletion_techniques(path):
         time.sleep(0.5)
         if attempt_deletion(path):
-            FormatCodes.print(f"\n[b|br:green](✓ Successfully deleted:) [br:cyan]({path})\n")
+            FormatCodes.print(f"\n[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
             return True
 
     # NOW TRY TO FIND PROCESSES USING THE PATH
-    FormatCodes.print("[br:yellow](  Searching for processes using this path...)")
+    FormatCodes.print("[yellow](  Searching for processes using this path...)")
     processes = find_processes_using_path(path)
 
     if processes:
         FormatCodes.print(f"[b](Found [magenta]({(l := len(processes))}) process{'' if l == 1 else 'es'} using this path:)")
         for proc in processes:
             try:
-                FormatCodes.print(f"  [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
+                FormatCodes.print(f"  [magenta]({proc.name()}) [dim]((PID [magenta]({proc.pid})))")
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
 
         # CHECK FOR PROTECTED PROCESSES
         protected = [p for p in processes if is_protected_process(p)]
         if protected:
-            FormatCodes.print("\n[b|br:red](⯃ The following critical system processes are using this path:)")
+            FormatCodes.print("\n[b|red](⯃ The following critical system processes are using this path:)")
             for proc in protected:
                 try:
-                    FormatCodes.print(f"  [magenta]({proc.name()}) [dim]((PID [br:magenta]({proc.pid})))")
+                    FormatCodes.print(f"  [magenta]({proc.name()}) [dim]((PID [magenta]({proc.pid})))")
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
-            FormatCodes.print("  [br:red](These processes will [b](NOT) be terminated for system safety.)\n")
+            FormatCodes.print("  [red](These processes will [b](NOT) be terminated for system safety.)\n")
             return False
 
         # TERMINATE NON-PROTECTED PROCESSES
@@ -355,24 +355,24 @@ def force_delete(path: Path) -> bool:
                 terminated.append(proc)
 
         if not terminated:
-            FormatCodes.print("[br:red](Failed to terminate any processes.)\n")
+            FormatCodes.print("[red](Failed to terminate any processes.)\n")
         else:
             time.sleep(1)
             if attempt_deletion(path):
-                FormatCodes.print(f"\n[b|br:green](✓ Successfully deleted:) [br:cyan]({path})\n")
+                FormatCodes.print(f"\n[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
                 return True
 
     # STILL FAILED - GIVE UP :(
-    FormatCodes.print(f"\n[b|br:red](⨯ Failed to delete even after trying all techniques :()\n")
+    FormatCodes.print(f"\n[b|red](⨯ Failed to delete even after trying all techniques :()\n")
 
     if not System.is_elevated:
         if platform.system() == "Windows":
-            FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with Administrator privileges.))\n")
+            FormatCodes.print("[dim|blue](ⓘ [i](Try running with Administrator privileges.))\n")
         else:
-            FormatCodes.print("[dim|br:blue](ⓘ [i](Try running with sudo for elevated privileges.))\n")
+            FormatCodes.print("[dim|blue](ⓘ [i](Try running with sudo for elevated privileges.))\n")
     else:
         FormatCodes.print(
-            "[dim|br:blue](ⓘ [i](The file/directory may be protected by the system or in use by a kernel-level process.))\n"
+            "[dim|blue](ⓘ [i](The file/directory may be protected by the system or in use by a kernel-level process.))\n"
         )
 
     return False
@@ -392,18 +392,18 @@ def main():
 
     FormatCodes.print(f"\n[b|bg:black]( {platform.system()} [in]( FORCE DELETE UTILITY ))")
     Console.log_box_bordered(
-        "[br:yellow](This will terminate processes if needed.)",
-        "[br:yellow](Critical system processes are protected.)",
-        border_style="dim|br:yellow",
+        "[yellow](This will terminate processes if needed.)",
+        "[yellow](Critical system processes are protected.)",
+        border_style="dim|yellow",
     )
 
     if not System.is_elevated:
         if platform.system() == "Windows":
-            FormatCodes.print("\n[br:yellow](⚠ Not running as Administrator. Some operations may fail.)")
+            FormatCodes.print("\n[yellow](⚠ Not running as Administrator. Some operations may fail.)")
         else:
             FormatCodes.print(
-                "\n[br:yellow](⚠ Not running as root. Some operations may fail.)\n"
-                "  [dim|br:yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
+                "\n[yellow](⚠ Not running as root. Some operations may fail.)\n"
+                "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [green](x-rm) [cyan](<path>)"
             )
 
     if len(target_path := "".join(ARGS.rm_path.values)) == 0:
@@ -425,6 +425,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("[b|br:red](⨯ Canceled by user.)\n")
+        FormatCodes.print("[b|red](⨯ Canceled by user.)\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")
