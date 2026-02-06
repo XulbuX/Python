@@ -190,13 +190,13 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
                 if result.returncode == 0:
                     FormatCodes.print(f"[br:green](✓ Installed [b]({module}))")
                 else:
-                    FormatCodes.print(f"[br:red](⨯ Failed to install [b]({module}):)\n[red]│ " + "\n[red]│ ".join(result.stderr.strip().splitlines()) + "[_]")
+                    FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[red]│ " + "\n[red]│ ".join(result.stderr.strip().splitlines()) + "[_]")
                     failed_modules.append(module)
             except subprocess.TimeoutExpired:
-                FormatCodes.print(f"[br:red](⨯ Timed out installing [b]({module}))")
+                FormatCodes.print(f"[br:red](✗ Timed out installing [b]({module}))")
                 failed_modules.append(module)
             except Exception as e:
-                FormatCodes.print(f"[br:red](⨯ Error installing [b]({module}):)\n[red]│ " + "\n[red]│ ".join(str(e).splitlines()) + "[_]")
+                FormatCodes.print(f"[br:red](✗ Error installing [b]({module}):)\n[red]│ " + "\n[red]│ ".join(str(e).splitlines()) + "[_]")
                 failed_modules.append(module)
 
     print()

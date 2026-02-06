@@ -1017,7 +1017,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print_overwrite("[b|br:red](⨯)\n")
+        print_overwrite("[b|br:red](✗)\n")
     except RecursionError:
         Console.fail("[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))", start="\n\n", end="\n\n")
     except MemoryError:

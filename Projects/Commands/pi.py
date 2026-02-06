@@ -205,13 +205,13 @@ def main() -> None:
                 sep="\n",
             )
         except KeyboardInterrupt:
-            FormatCodes.print("\r[b|br:red](⨯)  \n")
+            FormatCodes.print("\r[b|br:red](✗)  \n")
             sys.exit(0)
 
         if result:
             FormatCodes.print(f"\r[br:cyan]({result})\n")
         else:
-            FormatCodes.print("\r[b|br:red](⨯)  \n")
+            FormatCodes.print("\r[b|br:red](✗)  \n")
 
 
 if __name__ == "__main__":

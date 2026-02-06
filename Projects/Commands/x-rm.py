@@ -95,7 +95,7 @@ def take_ownership_windows(path: Path) -> bool:
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[red][b](⨯ Error taking ownership:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](✗ Error taking ownership:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -119,7 +119,7 @@ def remove_attributes_windows(path: Path) -> bool:
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[red][b](⨯ Error removing attributes:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](✗ Error removing attributes:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -143,7 +143,7 @@ def change_permissions_unix(path: Path) -> bool:
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[red][b](⨯ Error changing permissions:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](✗ Error changing permissions:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -168,7 +168,7 @@ def unlock_file_macos(path: Path) -> bool:
         return True
 
     except Exception as e:
-        FormatCodes.print(f"[red][b](⨯ Error unlocking file:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](✗ Error unlocking file:)\n  {str(e).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -278,7 +278,7 @@ def terminate_process(proc: psutil.Process) -> bool:
             return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):
         FormatCodes.print(
-            f"  [b|red](⨯ Access denied or process no longer exists:)\n"
+            f"  [b|red](✗ Access denied or process no longer exists:)\n"
             f"    [magenta]({proc.name().strip()}) [dim]((PID [magenta]({proc.pid})))"
         )
         return False
@@ -299,9 +299,9 @@ def attempt_deletion(path: Path) -> bool:
         if platform.system() != "Windows":
             FormatCodes.print(f"[yellow][b](⚠ Deletion blocked:)\n  {str(e).replace('\n', '\n  ')}[_]")
         else:
-            FormatCodes.print(f"[red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
     except Exception as e:
-        FormatCodes.print(f"[red][b](⨯ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
+        FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
     return not path.exists()
 
 
@@ -363,7 +363,7 @@ def force_delete(path: Path) -> bool:
                 return True
 
     # STILL FAILED - GIVE UP :(
-    FormatCodes.print(f"\n[b|red](⨯ Failed to delete even after trying all techniques :()\n")
+    FormatCodes.print(f"\n[b|red](✗ Failed to delete even after trying all techniques :()\n")
 
     if not System.is_elevated:
         if platform.system() == "Windows":
@@ -425,6 +425,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("[b|red](⨯ Canceled by user.)\n")
+        FormatCodes.print("[b|red](✗ Canceled by user.)\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")

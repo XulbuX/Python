@@ -374,7 +374,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
         return
 
     if not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
-        FormatCodes.print(f"[dim|magenta](⨯ Not updating commands from GitHub)\n\n")
+        FormatCodes.print(f"[dim|magenta](✗ Not updating commands from GitHub)\n\n")
         return
 
     success_count = 0
@@ -400,7 +400,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             FormatCodes.print(f"[br:green](✓ {action} [b]({cmd_name}))")
             success_count += 1
         except Exception as e:
-            FormatCodes.print(f"[br:red](⨯ Failed to download [b]({filename}) [dim]/({e})[_])")
+            FormatCodes.print(f"[br:red](✗ Failed to download [b]({filename}) [dim]/({e})[_])")
 
     # DELETE REMOVED FILES
     for cmd_name in deletions:
@@ -420,7 +420,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             else:
                 FormatCodes.print(f"[dim|br:yellow](⚠ Could not find [b]({cmd_name}) to delete)")
         except Exception as e:
-            FormatCodes.print(f"[br:red](⨯ Failed to delete [b]({cmd_name}) [dim]/({e})[_])")
+            FormatCodes.print(f"[br:red](✗ Failed to delete [b]({cmd_name}) [dim]/({e})[_])")
 
     color = 'br:green' if success_count == total_operations else 'br:red' if success_count == 0 else 'br:yellow'
     FormatCodes.print(f"\nSuccessfully completed [{color}]([b]({success_count})/{total_operations}) operation{'s' if total_operations > 1 else ''}!\n\n")

@@ -489,7 +489,7 @@ def backup_registry(backup_dir: Path) -> bool:
             else:
                 FormatCodes.print(f"  [green](✓) Exported [dim]({full_path})")
         except Exception as e:
-            FormatCodes.print(f"  [red](⨯ Error exporting [dim]({full_path})[red]:)\n    {e}")
+            FormatCodes.print(f"  [red](✗ Error exporting [dim]({full_path})[red]:)\n    {e}")
             success = False
 
     return success
@@ -526,7 +526,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
         FormatCodes.print(f"  [green](✓) Saved env vars to [dim]({backup_file})")
         return True
     except Exception as e:
-        FormatCodes.print(f"  [red](⨯ Failed to save env vars backup:)\n    {e}")
+        FormatCodes.print(f"  [red](✗ Failed to save env vars backup:)\n    {e}")
         return False
 
 
@@ -572,11 +572,11 @@ def restore_env_vars(backup_path: Path) -> None:
             except Exception as e:
                 msg = f"Failed to restore {scope}/{name}: {e}"
                 failures.append(msg)
-                FormatCodes.print(f"  [red](⨯) {msg}")
+                FormatCodes.print(f"  [red](✗) {msg}")
 
     FormatCodes.print(f"\n[b|green](✓ Restored {restored} variable(s).)")
     if failures:
-        FormatCodes.print(f"[b|red](⨯ {len(failures)} failure(s).)\n")
+        FormatCodes.print(f"[b|red](✗ {len(failures)} failure(s).)\n")
 
     # BROADCAST ENVIRONMENT CHANGE
     _broadcast_env_change()
@@ -615,7 +615,7 @@ def execute_registry_cleanup(issues: list[dict], app_path_issues: list[dict]) ->
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
                 failures.append(msg)
-                FormatCodes.print(f"  [red](⨯) {msg}")
+                FormatCodes.print(f"  [red](✗) {msg}")
 
     if app_path_issues:
         FormatCodes.print("\n[b](Cleaning registry App Paths entries...)")
@@ -629,7 +629,7 @@ def execute_registry_cleanup(issues: list[dict], app_path_issues: list[dict]) ->
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
                 failures.append(msg)
-                FormatCodes.print(f"  [red](⨯) {msg}")
+                FormatCodes.print(f"  [red](✗) {msg}")
 
     return failures
 
@@ -711,7 +711,7 @@ def execute_env_cleanup(env_issues: dict) -> list[str]:
             except Exception as e:
                 msg = f"Failed to clean {scope}/{name}: {e}"
                 failures.append(msg)
-                FormatCodes.print(f"  [red](⨯) {msg}")
+                FormatCodes.print(f"  [red](✗) {msg}")
 
     # BROADCAST ENVIRONMENT CHANGE
     _broadcast_env_change()
@@ -738,7 +738,7 @@ def execute_shortcut_cleanup(shortcut_issues: list[dict]) -> list[str]:
             except Exception as e:
                 msg = f"Failed to delete {lnk_path}: {e}"
                 failures.append(msg)
-                FormatCodes.print(f"    [red](⨯) {msg}")
+                FormatCodes.print(f"    [red](✗) {msg}")
 
     # CLEAN UP EMPTY DIRECTORIES LEFT BEHIND
     shortcut_dirs = _build_shortcut_dirs()
@@ -1083,7 +1083,7 @@ def main():
         )
         FormatCodes.print("[b](Failed operations:)")
         for msg in all_failures:
-            FormatCodes.print(f"  [red](⨯) [dim]({msg})")
+            FormatCodes.print(f"  [red](✗) [dim]({msg})")
         FormatCodes.print(f"\n  [dim](Backups are at: [br:cyan]({backup_dir}))\n")
 
 
@@ -1091,6 +1091,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\n[b|red](⨯ Canceled by user.)\n")
+        FormatCodes.print("\n[b|red](✗ Canceled by user.)\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")

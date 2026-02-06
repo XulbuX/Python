@@ -136,7 +136,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\x1b[2K\r[b|br:red](⨯)\n")
+        FormatCodes.print("\x1b[2K\r[b|br:red](✗)\n")
     except MemoryError:
         Console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
     except OverflowError as e:
