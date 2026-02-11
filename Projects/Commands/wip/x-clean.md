@@ -70,7 +70,7 @@ For whatever other cleanup you add that is not inside the registry or env vars, 
 
 ## Script Tools
 
-As the main tool for pretty printing to the console, I want you to use the `xulbux` Python library (installed already). Please read the [**library docs**](https://github.com/XulbuX/PythonLibraryXulbuX/wiki) and don't just write code using this library without knowing how exactly.
+As the main tool for pretty printing to the console, I want you to use the `xulbux` Python library (installed already). Please read the [**library docs**](https://github.com/xulbux/python-lib-xulbux/wiki) and don't just write code using this library without knowing how exactly.
 With this library you can also easily access paths like the script's directory to save the backups in there (maybe in a folder `backups` in the script directory) as a `pathlib.Path` object, using the `xulbux.FileSys.script_dir` and other such class properties.
 To see how I use this lib, see the script [`x-rm`](../x-rm.py) I once wrote using it.
 

@@ -29,7 +29,7 @@ To run these Python scripts as native commands in your console, follow these ste
 
 ### Step 1: Download the Files
 
-Download the Python files you want to use, along with the [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/XulbuX/Python/blob/main/Projects/Commands/requirements.txt) file.<br>
+Download the Python files you want to use, along with the [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/Projects/Commands/requirements.txt) file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]<br>
@@ -120,7 +120,7 @@ Here's a brief overview of what each script does and how to use it.<br>
 > [!NOTE]<br>
 > If any of the scripts doesn't work (*especially after you updated them to their latest versions*),<br>
 > make sure you have updated all the required dependencies to their latest versions.<br>
-> For that download the latest [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/XulbuX/Python/blob/main/Projects/Commands/requirements.txt) file and then follow the [**dependencies installing steps**](#install-dependencies) again.
+> For that download the latest [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/Projects/Commands/requirements.txt) file and then follow the [**dependencies installing steps**](#install-dependencies) again.
 
 <br>
 
