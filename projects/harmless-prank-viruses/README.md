@@ -1,6 +1,6 @@
-# Send To Friend
+# Harmless Prank Viruses
 
-This repository contains **harmless** prank scripts (*also as [executables](./executables)*), that do all sorts of annoying things.
+This repository contains **harmless** prank scripts (*also as [executables](./exe)*), that do all sorts of annoying things.
 
 > [!CAUTION]<br>
 > These scripts lead to actions on your PC that you may not want.

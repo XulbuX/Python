@@ -1,5 +1,6 @@
-# Custom Commands
-This repository contains quite a few Python files, which are supposed<br>
+# Commands
+
+This folder contains quite a few Python files, which are supposed<br>
 to be run as commands in the console and do some useful stuff.
 
 **[Figure out what each script (*command*) does.](#what-each-cmd-does)**
