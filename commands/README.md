@@ -1,6 +1,7 @@
 # Custom Commands
 This repository contains quite a few Python files, which are supposed<br>
-to be run as commands in the console and do some useful stuff.<br>
+to be run as commands in the console and do some useful stuff.
+
 **[Figure out what each script (*command*) does.](#what-each-cmd-does)**
 
 <br>
@@ -29,7 +30,7 @@ To run these Python scripts as native commands in your console, follow these ste
 
 ### Step 1: Download the Files
 
-Download the Python files you want to use, along with the [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/Projects/Commands/requirements.txt) file.<br>
+Download the Python files you want to use, along with the [**`requirements.txt`**](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt) file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]<br>
@@ -120,7 +121,7 @@ Here's a brief overview of what each script does and how to use it.<br>
 > [!NOTE]<br>
 > If any of the scripts doesn't work (*especially after you updated them to their latest versions*),<br>
 > make sure you have updated all the required dependencies to their latest versions.<br>
-> For that download the latest [`requirements.txt`](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/Projects/Commands/requirements.txt) file and then follow the [**dependencies installing steps**](#install-dependencies) again.
+> For that download the latest [**`requirements.txt`**](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt) file and then follow the [**dependencies installing steps**](#install-dependencies) again.
 
 <br>
 
@@ -267,7 +268,7 @@ hex-percent 'FF'
 
 ### `life`
 
-This command starts a simulation of [Conway's Game of Life](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the console.
+This command starts a simulation of [**Conway's Game of Life**](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the console.
 
 <br>
 
@@ -299,7 +300,7 @@ This command will display an animated, random text character mess in your consol
 
 ### `pi`
 
-This command will calculate the value of the [Pi number](https://en.wikipedia.org/wiki/Pi) to a certain decimal place.<br>
+This command will calculate the value of the [**Pi number**](https://en.wikipedia.org/wiki/Pi) to a certain decimal place.<br>
 To specify up to how many decimal places should be calculated, run the command with an argument:
 ```shell
 pi 100

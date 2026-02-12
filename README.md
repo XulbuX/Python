@@ -1,30 +1,40 @@
-# Python Projects and Libraries
-This repository contains various Python projects, libraries, and experiments I've worked on. It serves as a collection of my Python-related work and learning experiences.
+# Python
+
+This repository contains a ton of useful CLI scripts and other Python related projects.
+
+*   <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>**
+*   <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** ⚡ *most useful*
+*   Projects/…
+    *   <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
+    *   <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
 
 
-## Repositories
-* <a href="#projects" title="scroll to Projects">Projects</a>
-  * <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./Projects/Commands" title="open Commands directory">open</a>** ⚡ *most useful*
-  * <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./Projects/x-convert" title="open x-convert directory">open</a>**
-* <a href="#experiments" title="scroll to Experiments">Experiments</a>
-  * <a href="#sendtofriend" title="scroll to SendToFriend">SendToFriend</a> | **<a href="./Experiments/SendToFriend" title="open SendToFriend directory">open</a>**
+## Apps
+
+In this folder I put my standalone Python scripts, run without opening the shell.<br>
+Each script is its own small app, that does something specific.
+
+
+## Commands
+
+This folder contains many Python scripts, that are supposed to be run as CLI commands.<br>
+To see what each command is used for, see the folder's [**`README.md`**](./commands/README.md).
 
 
 ## Projects
 
-### Commands
-Inside `Commands` are a lot of Python files, which can be added to the system paths to be run as commands. You can figure out what each command does in the [`README.md`](./Projects/Commands/README.md) of the corresponding repo.
+### Harmless Prank Viruses
 
-### x-convert
-Inside `x-convert` is a file, supposed to be run as a command, used for converting one type of code into another type of code. For more information, take a look at the [`README.md`](./Projects/x-convert/README.md) of the corresponding repo.
+These are **harmless** prank virus Python scripts (*also as <a href="./projects/harmless-prank-viruses/exe" title="open projects/harmless-prank-viruses directory">executables</a>*), that do all sorts of annoying things.<br>
+Every script/executable has an exact description of what it does in the [**`README.md`**](./projects/harmless-prank-viruses/README.md) of this project.
 
-
-## Experiments
-
-### SendToFriend
-These are **harmless** prank scripts (*also as <a href="./Experiments/SendToFriend/executables" title="open SendToFriend/executables directory">executables</a>*), that do all sorts of annoying things.
-Every script or executable has an exact description of what it does in the [`README.md`](./Experiments/SendToFriend/README.md) of the corresponding repo.
 > [!CAUTION]<br>
 > These scripts lead to actions on your PC that you might not want.<br>
 > However, it is important to note that
 > **none of these scripts will cause damage to your PC**.
+
+### x-convert
+
+This is a standalone Python script, supposed to be run as a command.<br>
+It's used for converting one type of code into another type of code.<br>
+For more information, take a look at the [**`README.md`**](./projects/x-convert/README.md).

@@ -34,7 +34,7 @@ The structure of the comment is similar to how the `**arg_parse_configs` kwargs 
 CONFIG: ScriptConfig = {
     "command_dir": FileSys.script_dir,
     "github_updates" : {
-        "github_repo_urls": ["https://github.com/xulbux/python/tree/main/Projects/Commands"],
+        "github_repo_urls": ["https://github.com/xulbux/python/tree/main/projects/commands"],
         "check_for_new_commands": True,
         "check_for_command_updates": True,
     },
