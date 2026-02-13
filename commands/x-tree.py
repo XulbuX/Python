@@ -185,7 +185,7 @@ class IGNORE:
 
     sep: str = r"[-_~x@\s]+"
     ext: str = r"(?:\.[-_a-zA-Z0-9]+)*?$"
-    pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:\w+{sep}\w*)*?"
+    pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:[a-zA-Z0-9]+{sep})*?"
     date = r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])"
     reoccurring: dict[str, str] = {
         "number": r"-?[a-fA-F0-9]{4,}",
