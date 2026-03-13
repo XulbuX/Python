@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Get detailed hardware information about your PC."""
 from xulbux import FormatCodes, Console, Data
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Any
 import subprocess
 import platform
 import re
@@ -11,13 +11,13 @@ if TYPE_CHECKING:
     import psutil
 
 # CHECK IF PSUTIL IS AVAILABLE (MAY FAIL ON PYTHON 3.14)
-PSUTIL_AVAILABLE = False
-PSUTIL_ERROR = None
 try:
     import psutil
-    PSUTIL_AVAILABLE = True
+    PSUTIL_AVAILABLE: bool = True
+    PSUTIL_ERROR: Optional[str] = None
 except (ImportError, ModuleNotFoundError) as e:
-    PSUTIL_ERROR = str(e)
+    PSUTIL_AVAILABLE: bool = False  # type: ignore[no-redef]
+    PSUTIL_ERROR: Optional[str] = str(e)  # type: ignore[no-redef]
 
 ARGS = Console.get_args({
     "detailed": {"-d", "--detailed"},
@@ -47,17 +47,17 @@ def print_help():
 class HardwareInfo:
 
     def __init__(self):
-        self.system: dict = {}
-        self.cpu: dict = {}
-        self.memory: dict = {}
-        self.disk: dict = {}
-        self.gpu: dict = {}
-        self.network: dict = {}
-        self.battery: dict = {}
+        self.system: dict[str, Any] = {}
+        self.cpu: dict[str, Any] = {}
+        self.memory: dict[str, Any] = {}
+        self.disk: dict[str, Any] = {}
+        self.gpu: dict[str, Any] = {}
+        self.network: dict[str, Any] = {}
+        self.battery: dict[str, Any] = {}
 
-    def _get_system_info(self) -> dict:
+    def _get_system_info(self) -> dict[str, Any]:
         """Get basic system information."""
-        info = {
+        info: dict[str, Any] = {
             "os": platform.system(),
             "os_version": platform.version(),
             "os_release": platform.release(),
@@ -67,9 +67,9 @@ class HardwareInfo:
         }
         return info
 
-    def _get_cpu_info(self, detailed: bool = False) -> dict:
+    def _get_cpu_info(self, detailed: bool = False) -> dict[str, Any]:
         """Get CPU information."""
-        info = {
+        info: dict[str, Any] = {
             "processor": platform.processor(),
             "physical_cores": None,
             "logical_cores": None,
@@ -94,9 +94,9 @@ class HardwareInfo:
 
         return info
 
-    def _get_memory_info(self, detailed: bool = False) -> dict:
+    def _get_memory_info(self, detailed: bool = False) -> dict[str, Any]:
         """Get memory information."""
-        info: dict[str, Optional[str]] = {
+        info: dict[str, Any] = {
             "total": None,
             "available": None,
             "used": None,
@@ -118,9 +118,9 @@ class HardwareInfo:
 
         return info
 
-    def _get_disk_info(self, detailed: bool = False) -> dict:
+    def _get_disk_info(self, detailed: bool = False) -> dict[str, Any]:
         """Get disk information."""
-        info = {
+        info: dict[str, Any] = {
             "partitions": [],
             "total_size": None,
             "total_used": None,
@@ -165,9 +165,9 @@ class HardwareInfo:
 
         return info
 
-    def _get_gpu_info(self) -> dict:
+    def _get_gpu_info(self) -> dict[str, Any]:
         """Get GPU information."""
-        info = {
+        info: dict[str, Any] = {
             "gpus": [],
         }
 
@@ -215,9 +215,9 @@ class HardwareInfo:
 
         return info
 
-    def _get_network_info(self) -> dict:
+    def _get_network_info(self) -> dict[str, Any]:
         """Get network adapter information."""
-        info = {
+        info: dict[str, Any] = {
             "adapters": [],
         }
 
@@ -235,7 +235,7 @@ class HardwareInfo:
 
                     # GET MAC ADDRESS
                     for addr in addrs[interface_name]:
-                        if addr.family.name == 'AF_LINK' or addr.family.name == 'AF_PACKET':
+                        if addr.family.name == 'AF_LINK' or addr.family.name == 'AF_PACKET':  # type: ignore[reportUnnecessaryComparison]
                             adapter_info["mac"] = addr.address
                             break
 
@@ -243,9 +243,9 @@ class HardwareInfo:
 
         return info
 
-    def _get_battery_info(self) -> dict:
+    def _get_battery_info(self) -> dict[str, Any]:
         """Get battery information (for laptops)."""
-        info = {
+        info: dict[str, Any] = {
             "has_battery": False,
             "percent": None,
             "power_plugged": None,
@@ -292,9 +292,9 @@ class HardwareInfo:
         self.network = self._get_network_info()
         self.battery = self._get_battery_info()
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, dict[str, Any]]:
         """Convert hardware info to dictionary."""
-        result = {}
+        result: dict[str, dict[str, Any]] = {}
         if self.system:
             result["system"] = self.system
         if self.cpu:
@@ -318,7 +318,7 @@ class HardwareInfo:
         # SYSTEM INFO
         if self.system:
             FormatCodes.print("\n[b|br:green](System Information)")
-            system_text = []
+            system_text: list[str] = []
             if self.system.get("os"):
                 system_text.append(f"          [b](OS) : [br:white]({self.system['os']} {self.system.get('os_release', '')})")
             if self.system.get("os_version"):
@@ -332,7 +332,7 @@ class HardwareInfo:
         # CPU INFO
         if self.cpu:
             FormatCodes.print("\n[b|br:cyan](CPU Information)")
-            cpu_text = []
+            cpu_text: list[str] = []
             if self.cpu.get("processor"):
                 cpu_text.append(f"{'     ' if PSUTIL_AVAILABLE else ''}[b](Processor) : [br:white]({self.cpu['processor']})")
             if self.cpu.get("physical_cores"):
@@ -348,7 +348,7 @@ class HardwareInfo:
             if self.cpu.get("per_core_usage"):
                 cpu_text.append("{hr}")
                 cores = self.cpu['per_core_usage']
-                formatted_cores = []
+                formatted_cores: list[str] = []
                 for i in range(0, len(cores), 10):
                     formatted_cores.append('[br:white]' + ', '.join(cores[i:i + 10]))
                 cpu_text.append(f"[b|br:cyan](Per-Core Usage)\n" + '\n'.join(formatted_cores) + "[_c]")
@@ -357,7 +357,7 @@ class HardwareInfo:
         # GPU INFO
         if self.gpu and self.gpu.get("gpus"):
             FormatCodes.print("\n[b|br:blue](GPU Information)")
-            gpu_text = []
+            gpu_text: list[str] = []
             for i, gpu in enumerate(self.gpu["gpus"]):
                 if i > 0:
                     gpu_text.append("{hr}")
@@ -367,7 +367,7 @@ class HardwareInfo:
         # MEMORY INFO
         if self.memory:
             FormatCodes.print("\n[b|magenta](Memory Information)")
-            mem_text = []
+            mem_text: list[str] = []
             if self.memory.get("total"):
                 mem_text.append(f"     [b](Total) : [br:white]({self.memory['total']})")
             if self.memory.get("available"):
@@ -387,7 +387,7 @@ class HardwareInfo:
         # DISK INFO
         if self.disk:
             FormatCodes.print("\n[b|br:magenta](Disk Information)")
-            disk_text = []
+            disk_text: list[str] = []
             if self.disk.get("total_size"):
                 disk_text.append(f"[b](Total Size) : [br:white]({self.disk['total_size']})")
             if self.disk.get("total_used"):
@@ -411,7 +411,7 @@ class HardwareInfo:
         # NETWORK INFO
         if self.network and self.network.get("adapters"):
             FormatCodes.print("\n[b|br:red](Network Adapters)")
-            net_text = []
+            net_text: list[str] = []
             for i, adapter in enumerate(self.network["adapters"]):
                 if i > 0:
                     net_text.append("{hr}")
@@ -426,7 +426,7 @@ class HardwareInfo:
         # BATTERY INFO
         if self.battery and self.battery.get("has_battery"):
             FormatCodes.print("\n[b|br:white](Battery Information)")
-            battery_text = []
+            battery_text: list[str] = []
             time_left = self.battery.get("time_left")
             if self.battery.get("percent"):
                 battery_text.append(f"{'        ' if time_left else ''}[b](Charge) : [br:white]({self.battery['percent']})")

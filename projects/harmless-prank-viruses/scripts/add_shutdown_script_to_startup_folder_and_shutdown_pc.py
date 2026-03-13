@@ -3,16 +3,16 @@ import sys
 import os
 
 # INITIALIZE VARIABLES
-SD_MESSAGE = "PC is shutting down in {time}."
-SD_MINUTES = 5
+SD_MESSAGE: str = "PC is shutting down in {time}."
+SD_MINUTES: int = 5
 
 
 def main():
     global SD_MESSAGE, SD_MINUTES
 
     # GET FINAL VARIABLE VALUES
-    minutes_str = f"{SD_MINUTES} minute" if SD_MINUTES == 1 else f"{SD_MINUTES} minutes"
-    SD_MESSAGE = SD_MESSAGE.format(time=minutes_str)
+    minutes_str = f"{SD_MINUTES} minute" if SD_MINUTES == 1 else f"{SD_MINUTES} minutes"  # type: ignore[reportUnnecessaryComparison]
+    SD_MESSAGE = SD_MESSAGE.format(time=minutes_str)  # type: ignore[reportConstantRedefinition]
     secs = SD_MINUTES * 60
 
     # SET PLATFORM-SPECIFIC VARIABLES

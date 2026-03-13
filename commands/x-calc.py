@@ -27,7 +27,7 @@ _COMPILED: dict[str, re.Pattern[str]] = {
     "thousands_seps": re.compile(r"(?<=\d)[_'](?=\d)"),
 }
 
-sanitize: Callable[[Any], sympy.Basic] = lambda a: sympy.sympify(a)  # type: ignore[return-type]
+sanitize: Callable[[Any], sympy.Expr] = lambda a: sympy.sympify(a)  # type: ignore[return-type]
 
 def clean_number(token: str) -> str:
     """Remove underscores from numeric tokens for proper parsing."""

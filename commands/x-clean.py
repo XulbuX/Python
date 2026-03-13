@@ -6,13 +6,11 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 from xulbux import FormatCodes, Console, System, FileSys
-from xulbux.console import Spinner
+from xulbux.console import Throbber
 import subprocess
 import winreg
 import json
-import sys
 import os
-import re
 
 try:
     from win32com.client import Dispatch as COMDispatch
@@ -1014,7 +1012,7 @@ def main():
     shortcut_issues: list[dict] = []
     temp_info: dict = {"dirs": []}
 
-    with Spinner().context("Scanning for issues...") as update_label:
+    with Throbber().context("Scanning for issues...") as update_label:
         if selected.get("registry"):
             update_label("Scanning registry uninstall entries...")
             reg_issues = scan_registry_uninstall()

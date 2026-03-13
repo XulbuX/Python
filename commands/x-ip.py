@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Get local and public IP addresses with optional geolocation information."""
 from xulbux import FormatCodes, Console, Data
-from typing import Optional
+from typing import Optional, Any
 import subprocess
 import socket
 import json
@@ -44,7 +44,7 @@ class IPInfo:
         self.public_ipv4: Optional[str] = None
         self.public_ipv6: Optional[str] = None
         self.all_interfaces: dict[str, dict[str, str]] = {}
-        self.geo_info: Optional[dict] = None
+        self.geo_info: Optional[dict[str, Any]] = None
 
     def _get_local_ip(self) -> Optional[str]:
         """Get primary local IPv4 address."""
@@ -72,7 +72,7 @@ class IPInfo:
 
     def _get_all_interfaces(self) -> dict[str, dict[str, str]]:
         """Get all network interfaces and their IPs."""
-        interfaces = {}
+        interfaces: dict[str, dict[str, str]] = {}
         try:
             import netifaces  # type: ignore[import]
 
@@ -111,7 +111,7 @@ class IPInfo:
 
     def _get_interfaces_fallback(self) -> dict[str, dict[str, str]]:
         """Fallback method to get interfaces using system commands."""
-        interfaces = {}
+        interfaces: dict[str, dict[str, str]] = {}
 
         try:
             result = subprocess.run(["ipconfig"], capture_output=True, text=True, timeout=5)
@@ -204,7 +204,7 @@ class IPInfo:
         except Exception:
             return None
 
-    def _get_geolocation(self, ip: str) -> Optional[dict]:
+    def _get_geolocation(self, ip: str) -> Optional[dict[str, Any]]:
         """Get geolocation information for an IP address."""
         try:
             import urllib.request
@@ -243,9 +243,9 @@ class IPInfo:
             Console.info("Fetching geolocation data...")
             self.geo_info = self._get_geolocation(self.public_ipv4)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, dict[str, Any]]:
         """Convert IP info to dictionary."""
-        result = {"local": {}, "public": {}}
+        result: dict[str, dict[str, Any]] = {"local": {}, "public": {}}
         if self.local_ipv4:
             result["local"]["ipv4"] = self.local_ipv4
         if self.local_ipv6:
@@ -265,7 +265,7 @@ class IPInfo:
         print()
 
         FormatCodes.print("\n[b|green](Local IP Addresses)")
-        local_ips_text = []
+        local_ips_text: list[str] = []
         if self.local_ipv4:
             local_ips_text.append(f"[b](IPv4) : [white]({self.local_ipv4})")
         else:
@@ -277,7 +277,7 @@ class IPInfo:
         Console.log_box_bordered(*local_ips_text, border_style=f"green")
 
         FormatCodes.print("\n[b|cyan](Public IP Addresses)")
-        public_ips_text = []
+        public_ips_text: list[str] = []
         if self.public_ipv4:
             public_ips_text.append(f"[b](IPv4) : [white]({self.public_ipv4})")
         else:
@@ -290,7 +290,8 @@ class IPInfo:
 
         if self.all_interfaces:
             FormatCodes.print("\n[b|blue](All Network Interfaces)")
-            interfaces_text, i = [], 0
+            interfaces_text: list[str] = []
+            i = 0
             for interface, addrs in self.all_interfaces.items():
                 status = (
                     f" [i|{'green' if addrs['status'].lower() == 'connected' else 'dim|white'}]({addrs['status']})"
@@ -316,7 +317,7 @@ class IPInfo:
         if self.geo_info:
             FormatCodes.print("\n[b|magenta](Geolocation Information)")
             geo = self.geo_info
-            geo_text = []
+            geo_text: list[str] = []
             has_coords = geo.get("lat") is not None and geo.get("lng") is not None
             p = "   " if has_coords else ""
             if geo.get("city") or geo.get("region"):
