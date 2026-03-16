@@ -92,37 +92,39 @@ def extract_path_from_value(value: str) -> Optional[Path]:
     Handles quoted paths, paths with args, MsiExec, rundll32, etc."""
     if not value:
         return None
-    val = value.strip()
-    if not val:
+    if not (stripped := value.strip()):
+        return None
+
+    # SKIP COMMANDS WITHOUT DIRECTORY SLASHES (E.G., "cmd.exe /c ...", "rundll32.exe", "msiexec")
+    if "\\" not in stripped and "/" not in stripped:
         return None
 
     # SKIP MSIEXEC AND RUNDLL32 ENTRIES - THEY DON'T POINT TO REAL UNINSTALLERS ON DISK
-    lower = val.lower()
-    if lower.startswith("msiexec") or lower.startswith("rundll32"):
+    if (lower := stripped.lower()).startswith("msiexec") or lower.startswith("rundll32"):
         return None
 
     # HANDLE QUOTED PATHS: "C:\path\to\file.exe" /args
-    if val.startswith('"'):
-        end = val.find('"', 1)
-        if end != -1:
-            return Path(val[1:end])
+    if stripped.startswith('"'):
+        if (end := stripped.find('"', 1)) != -1:
+            # ONLY ACCEPT ABSOLUTE PATHS OR ENV VAR PATHS
+            if looks_like_path(candidate := stripped[1:end]):
+                return Path(candidate)
 
     # HANDLE PATHS WITH ARGUMENTS: C:\path\file.exe /arg
     # LOOK FOR .EXE OR OTHER EXECUTABLE EXTENSIONS
     for ext in (".exe", ".msi", ".bat", ".cmd", ".com"):
-        idx = lower.find(ext)
-        if idx != -1:
-            return Path(val[:idx + len(ext)])
+        if (idx := lower.find(ext)) != -1:
+            if looks_like_path(candidate := stripped[:idx + len(ext)]):
+                return Path(candidate)
 
     # HANDLE DISPLAY ICON FORMAT: path.exe,0
-    if "," in val:
-        candidate = val.split(",")[0].strip().strip('"')
-        if candidate and (candidate[1:3] == ":\\" or candidate.startswith("\\\\")):
+    if "," in stripped:
+        if (candidate := stripped.split(",")[0].strip().strip('"')) and looks_like_path(candidate):
             return Path(candidate)
 
-    # IF IT LOOKS LIKE AN ABSOLUTE PATH, RETURN IT
-    if len(val) >= 3 and val[1:3] == ":\\" or val.startswith("\\\\"):
-        return Path(val)
+    # FINAL FALLBACK
+    if looks_like_path(stripped):
+        return Path(stripped)
 
     return None
 
@@ -132,12 +134,11 @@ def expand_env_in_path(value: str) -> str:
     return os.path.expandvars(value)
 
 
-def path_exists(p: Path) -> bool:
+def path_exists(path: Path) -> bool:
     """Check if a path exists, handling long paths and permission issues.<br>
     Also expands environment variable references like `%USERPROFILE%`."""
     try:
-        expanded = Path(expand_env_in_path(str(p)))
-        return expanded.exists()
+        return Path(expand_env_in_path(str(path))).exists()
     except (OSError, PermissionError, ValueError):
         return False
 
@@ -146,26 +147,25 @@ def looks_like_path(value: str) -> bool:
     """Check if a string value looks like it could be a filesystem path."""
     if not value:
         return False
-    v = value.strip().strip('"')
-    if not v:
+    if not (stripped := value.strip().strip('"')):
         return False
 
     # EXPAND ENVIRONMENT VARIABLES FIRST
-    expanded = os.path.expandvars(v)
+    expanded = os.path.expandvars(stripped)
 
-    # ABSOLUTE PATHS: C:\..., \\server\...
+    # ABSOLUTE PATHS: C:\…, \\server\…
     if len(expanded) >= 3 and expanded[1:3] == ":\\":
         return True
     if expanded.startswith("\\\\"):
         return True
 
-    # ENVIRONMENT VARIABLE REFERENCES THAT LOOK LIKE PATHS (E.G. %SYSTEMROOT%\...)
-    if "%" in v and ("\\" in v or "/" in v):
+    # ENVIRONMENT VARIABLE REFERENCES THAT LOOK LIKE PATHS (E.G. %SYSTEMROOT%\…)
+    if "%" in stripped and ("\\" in stripped or "/" in stripped):
         return True
 
     # PATHS WITH PATH SEPARATORS AND TYPICAL EXTENSIONS/DIRECTORIES
-    if "\\" in v or "/" in v:
-        return any(seg in v.lower() for seg in ("program files", "windows", "users", "appdata"))
+    if "\\" in stripped or "/" in stripped:
+        return any(seg in stripped.lower() for seg in ("program files", "windows", "users", "appdata"))
 
     return False
 
@@ -176,13 +176,8 @@ def resolve_shortcut(lnk_path: Path) -> Optional[Path]:
         return None
 
     try:
-        shell = COMDispatch("WScript.Shell")
-        shortcut = shell.CreateShortcut(str(lnk_path))
-
-        target = shortcut.TargetPath
-        if target:
+        if (target := COMDispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath):
             return Path(target)
-
         return None
 
     except Exception:
@@ -295,8 +290,8 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
                 try:
                     val_data, val_type = winreg.QueryValueEx(subkey, "")
                     if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
-                        p = Path(val_data.strip('"'))
-                        if not path_exists(p):
+                        path = extract_path_from_value(str(val_data))
+                        if path is not None and not path_exists(path):
                             issues.append({
                                 "hive": hive,
                                 "path": full_path,
@@ -313,7 +308,7 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
     return issues
 
 
-def scan_env_vars() -> dict[str, Any]:
+def scan_env_vars() -> dict[str, list[dict[str, Any]]]:
     """Scan environment variables for broken paths.\n
     ----------------------------------------------------------------------------------
     Returns dict with keys `user` and `system`, each containing a list of issues:<br>
@@ -363,6 +358,7 @@ def scan_env_vars() -> dict[str, Any]:
                             "broken_paths": [str_value],
                             "scope": scope,
                         })
+
         finally:
             winreg.CloseKey(key)
 
@@ -468,7 +464,7 @@ def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
 
 def create_backup_dir() -> Path:
     """Create a timestamped backup directory."""
-    backup_dir = BACKUPS_DIR / datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup_dir = BACKUPS_DIR / datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_dir.mkdir(parents=True, exist_ok=True)
     return backup_dir
 
@@ -533,7 +529,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
     backup_file = backup_dir / "env_vars_backup.json"
     try:
         backup_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        FormatCodes.print(f"  [green](✓) Saved env vars to [dim]({backup_file})")
+        FormatCodes.print(f"  [green](✓) Saved env vars [dim]({backup_file})")
         return True
     except Exception as e:
         FormatCodes.print(f"  [red](✗ Failed to save env vars backup:)\n    {e}")
@@ -548,7 +544,7 @@ def restore_env_vars(backup_path: Path) -> None:
         Console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n")
         return
 
-    FormatCodes.print(f"\n[b](Loading backup from [br:cyan]({backup_path})[b]...)")
+    FormatCodes.print(f"\n[b](Loading backup from [br:cyan]({backup_path})[b]…)")
 
     try:
         data = json.loads(backup_path.read_text(encoding="utf-8"))
@@ -861,31 +857,40 @@ def show_summary(
     selected: dict[str, bool],
 ) -> None:
     """Show a detailed summary of what will be cleaned."""
-    FormatCodes.print("\n[b|black|bg:br:magenta]( CLEANUP SUMMARY )\n")
+    total_reg_issues = len(reg_issues) + len(app_path_issues)
+    total_env_issues = len(env_issues.get("user", [])) + len(env_issues.get("system", []))
+    total_sc_issues = sum(len(loc["broken_shortcuts"]) for loc in shortcut_issues)
+    total_temp_issues = len(temp_info.get("dirs", []))
+    total_issues = total_reg_issues + total_env_issues + total_sc_issues + total_temp_issues
+
+    if total_issues == 0:
+        FormatCodes.print("\n[green](No issues found! Your system paths look clean. Nothing to do.)\n")
+        raise SystemExit(0)
+
+    FormatCodes.print(f"\n\n\n[b|red|bg:black]([in]( CLEANUP SUMMARY ) FOUND {total_issues} ISSUES )\n")
 
     if selected.get("registry") and (reg_issues or app_path_issues):
-        FormatCodes.print("[b](Registry entries to delete:)")
+        FormatCodes.print(f"\n[b](Registry entries to delete:) [dim]({total_reg_issues} total)\n")
 
         for issue in reg_issues:
             FormatCodes.print(
-                f"  [red](✗) [magenta]({issue['display_name']})"
-                f" [dim]({hive_name(issue['hive'])}\\...\\{issue['subkey']})"
+                f"  [red](✗) [b|magenta]({issue['display_name']}) [br:magenta]({hive_name(issue['hive'])}\\…\\{issue['subkey']})"
+                f" — {len(issue['broken_values'])} broken path{'' if len(issue['broken_values']) == 1 else 's'}:"
             )
             for val_name, val_data in issue["broken_values"]:
                 p = extract_path_from_value(val_data)
-                FormatCodes.print(f"      [dim]({val_name} → {p or val_data})")
+                FormatCodes.print(f"    [dim|br:magenta]{val_name}[_c] → {p or val_data}[_]")
 
         for issue in app_path_issues:
             FormatCodes.print(
-                f"  [red](✗) [magenta]({issue['subkey']})"
-                f" [dim]({hive_name(issue['hive'])}\\...\\App Paths)"
+                f"  [red](✗) [b|magenta]({issue['subkey']}) [br:magenta]({hive_name(issue['hive'])}\\…\\App Paths)"
             )
-            FormatCodes.print(f"      [dim](→ {issue['broken_path']})")
+            FormatCodes.print(f"    [dim]→ {issue['broken_path']}[_]")
 
         print()
 
     if selected.get("envvars") and (env_issues.get("user") or env_issues.get("system")):
-        FormatCodes.print("[b](Environment variables to clean:)")
+        FormatCodes.print(f"\n[b](Environment variables to clean:) [dim]({total_env_issues} total)\n")
 
         for scope in ("user", "system"):
             for issue in env_issues.get(scope, []):
@@ -894,33 +899,38 @@ def show_summary(
                 original = issue["original_value"]
 
                 if ";" in original:
-                    FormatCodes.print(f"  [cyan]({name}) [dim]({scope}) — remove [b]({len(broken)}) broken path(s):")
+                    FormatCodes.print(
+                        f"  [b|cyan]({name}) [br:cyan]({scope})"
+                        f" — remove {len(broken)} broken path{'' if len(broken) == 1 else 's'}:"
+                    )
                     for bp in broken:
-                        FormatCodes.print(f"      [red](✗) [dim]({bp})")
+                        FormatCodes.print(f"    [red](✗) [dim|br:cyan]{bp}[_]")
                 else:
-                    FormatCodes.print(f"  [cyan]({name}) [dim]({scope}) — [red](delete entire variable)")
-                    FormatCodes.print(f"      [dim](→ {original})")
+                    FormatCodes.print(f"  [b|cyan]({name}) [br:cyan]({scope}) — [red](delete entire variable)")
+                    FormatCodes.print(f"    [dim]→ {original}[_]")
 
         print()
 
     if selected.get("shortcuts") and shortcut_issues:
-        total_broken = sum(len(loc["broken_shortcuts"]) for loc in shortcut_issues)
-        FormatCodes.print(f"[b](Broken shortcuts to delete:) [dim]({total_broken} total)")
+        FormatCodes.print(f"\n[b](Broken shortcuts to delete:) [dim]({total_sc_issues} total)\n")
 
         for location in shortcut_issues:
-            FormatCodes.print(f"  [b]({location['label']}:)")
+            FormatCodes.print(
+                f"  [b|blue]({location['label']})"
+                f" — remove {len(location['broken_shortcuts'])} broken shortcut{'' if len(location['broken_shortcuts']) == 1 else 's'}:"
+            )
             for sc in location["broken_shortcuts"]:
-                FormatCodes.print(f"    [red](✗) [dim]({sc['lnk_path'].name}) → {sc['target']}")
+                FormatCodes.print(f"    [red](✗) [dim|br:blue]{sc['lnk_path'].name}[_c] → {sc['target']}[_]")
 
         print()
 
     if selected.get("temp") and temp_info.get("dirs"):
-        FormatCodes.print("[b](Temp directories to clean:)")
+        FormatCodes.print(f"\n[b](Temp directories to clean:) [dim]({total_temp_issues} total)\n")
 
         for d in temp_info["dirs"]:
             FormatCodes.print(
-                f"  [yellow](⟳) [b]({d['label']}) — "
-                f"[dim]({d['file_count']} files, {format_size(d['size_bytes'])})"
+                f"  [yellow](⟳ [b]({d['label']}))"
+                f"[dim]( — {d['file_count']} files, [b]{format_size(d['size_bytes'])})"
             )
 
         print()
@@ -957,8 +967,8 @@ def choose_options() -> dict[str, bool]:
     options = [
         ("registry", "Registry uninstall entries + App Paths"),
         ("envvars", "Environment variables"),
-        ("shortcuts", "Broken shortcut files [dim]((.lnk))"),
-        ("temp", "Temp files [dim]((User Temp, System Temp, Prefetch))"),
+        ("shortcuts", "Broken shortcut files (.lnk)"),
+        ("temp", "Temp files (User Temp, System Temp, Prefetch)"),
     ]
 
     if not HAS_WIN32COM:
@@ -1009,7 +1019,7 @@ def main():
         return
 
     # [2] ────────── CREATE BACKUPS ──────────
-    FormatCodes.print("\n[b|bg:black]( CREATING BACKUPS )\n")
+    FormatCodes.print("\n\n\n[b|in|green|bg:black]( CREATING BACKUPS )\n\n")
 
     backup_dir = create_backup_dir()
     backup_ok = True
@@ -1026,12 +1036,13 @@ def main():
 
     if not backup_ok:
         Console.fail(
-            f"Some backups failed! Aborting for safety.\n  Backup directory: [br:cyan]({backup_dir})",
+            f"[red](Some backups failed! Aborting for safety.)"
+            f"\n  [dim|br:red](Backup directory: {backup_dir})",
             start="\n", end="\n\n",
         )
         return
 
-    FormatCodes.print(f"\n[b|green](✓ Backups saved to:) [br:cyan]({backup_dir})")
+    FormatCodes.print(f"\n[b|green](✓ Backups saved to:) [br:green]({backup_dir})")
 
     # [3] ────────── SCAN FOR ISSUES ──────────
     reg_issues: list[dict[str, Any]] = []
@@ -1059,29 +1070,15 @@ def main():
             update_label("Scanning temp directories...")
             temp_info = scan_temp_files()
 
-    # CHECK IF ANYTHING WAS FOUND
-    total_issues = (
-        len(reg_issues) + len(app_path_issues)
-        + len(env_issues.get("user", [])) + len(env_issues.get("system", []))
-        + sum(len(loc["broken_shortcuts"]) for loc in shortcut_issues)
-        + len(temp_info.get("dirs", []))
-    )
-
-    if total_issues == 0:
-        Console.done("No issues found! Your system paths look clean.", start="\n", end="\n\n")
-        return
-
-    FormatCodes.print(f"\n[b](Found [br:yellow]({total_issues}) issue{'' if total_issues == 1 else 's'} to address.)")
-
     # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
     show_summary(reg_issues, app_path_issues, env_issues, shortcut_issues, temp_info, selected)
 
-    if not Console.confirm("[b](Proceed with cleanup?)", default_is_yes=False):
+    if not Console.confirm("\n[b|red](Proceed with cleanup?)", default_is_yes=False):
         Console.exit("Cleanup canceled.", start="\n", end="\n\n", exit_code=0)
         return
 
     # [5] ────────── EXECUTE CLEANUP ──────────
-    FormatCodes.print("\n[b|bg:black]( EXECUTING CLEANUP )")
+    FormatCodes.print("\n\n\n[b|bg:black]( EXECUTING CLEANUP )")
 
     all_failures: list[str] = []
 
