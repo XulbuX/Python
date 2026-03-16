@@ -28,7 +28,7 @@ REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 def sanitize(expression: Any, /) -> sympy.Expr:
     return sympy.sympify(expression)  # type: ignore[return-type]
 
-def clean_number(token: str, /) -> str:
+def clean_num(token: str, /) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
     if (no_seps_num := REGEX.thousands_seps.sub("", token)
         ).replace(".", "").replace("-", "").isdigit():
@@ -231,7 +231,7 @@ class FUNCTIONS:
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
         CEIL[0]: lambda a: sympy.ceiling(sanitize(a)),
-        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),
+        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # type: ignore[operator-unsupported]
         SIGN[0]: lambda a: sympy.sign(sanitize(a)),
         # LOGARITHMIC FUNCTIONS
         LN[0]: lambda a: sympy.log(sanitize(a)),
@@ -241,8 +241,8 @@ class FUNCTIONS:
         LOG10[0]: lambda a: sympy.log(sanitize(a), 10),
         EXP[0]: lambda a: sympy.exp(sanitize(a)),
         # TRIGONOMETRIC FUNCTIONS
-        RAD[0]: lambda a: sympy.rad(sanitize(a)),
-        DEG[0]: lambda a: sympy.deg(sanitize(a)),
+        RAD[0]: lambda a: sympy.rad(sanitize(a)),  # type: ignore[partially-unknown]
+        DEG[0]: lambda a: sympy.deg(sanitize(a)),  # type: ignore[partially-unknown]
         SIN[0]: lambda a: sympy.sin(sanitize(a)),
         ASIN[0]: lambda a: sympy.asin(sanitize(a)),
         COS[0]: lambda a: sympy.cos(sanitize(a)),
@@ -262,7 +262,7 @@ class FUNCTIONS:
         CSC[0]: lambda a: sympy.csc(sanitize(a)),
         # ADDITIONAL FUNCTIONS
         FAC[0]: lambda a: sympy.factorial(sanitize(a)),
-        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),
+        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # type: ignore[partially-unknown]
         CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
         POW[0]: lambda a, b=None: sympy.Pow(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
         # STATISTICAL FUNCTIONS
@@ -668,7 +668,7 @@ class Calc:
 
                 if should_be_negative:
                     # COMBINE MINUS WITH NEXT NUMBER AND CLEAN UNDERSCORES
-                    matches.append(clean_number(match + preliminary_matches[i + 1]))
+                    matches.append(clean_num(match + preliminary_matches[i + 1]))
                     i += 2  # SKIP THE NEXT TOKEN SINCE WE CONSUMED IT
                 else:
                     # KEEP AS SEPARATE SUBTRACTION OPERATOR
@@ -705,7 +705,7 @@ class Calc:
                     matches.append(FUNCTIONS.get_id(match))
                 else:
                     # CLEAN UNDERSCORES FROM NUMERIC TOKENS
-                    matches.append(clean_number(match))
+                    matches.append(clean_num(match))
 
                 i += 1
 
