@@ -5,6 +5,7 @@ Supports a wide range of mathematical operations, functions and constants.
 There's no number size limit - the only limit is your system's memory."""
 from typing import Callable, Optional, Any
 from xulbux import FormatCodes, Console
+from xulbux.regex import LazyRegex
 import sympy
 import numpy
 import sys
@@ -22,16 +23,14 @@ ARGS = Console.get_args({
     "help": {"-h", "--help"},
 })
 DEBUG = ARGS.debug.exists
+REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
-_COMPILED: dict[str, re.Pattern[str]] = {
-    "thousands_seps": re.compile(r"(?<=\d)[_'](?=\d)"),
-}
+def sanitize(expression: Any, /) -> sympy.Expr:
+    return sympy.sympify(expression)  # type: ignore[return-type]
 
-sanitize: Callable[[Any], sympy.Expr] = lambda a: sympy.sympify(a)  # type: ignore[return-type]
-
-def clean_number(token: str) -> str:
+def clean_number(token: str, /) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
-    if (no_seps_num := _COMPILED["thousands_seps"].sub("", token)
+    if (no_seps_num := REGEX.thousands_seps.sub("", token)
         ).replace(".", "").replace("-", "").isdigit():
         return no_seps_num
     return token
@@ -107,12 +106,12 @@ class OPERATORS:
     }
 
     @classmethod
-    def get(cls, operator_id: str):
+    def get(cls, operator_id: str, /):
         """Get the operator function by operator ID."""
         return cls.IMPLEMENT.get(operator_id)
 
     @classmethod
-    def get_id(cls, token: str) -> str | None:
+    def get_id(cls, token: str, /) -> str | None:
         """Get the operator ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for op_id, symbols in cls.ALL:
@@ -120,12 +119,12 @@ class OPERATORS:
         return None
 
     @classmethod
-    def is_operator(cls, token: str) -> bool:
+    def is_operator(cls, token: str, /) -> bool:
         """Check if a token is an operator by searching through the token lists."""
         return cls.get_id(token) is not None
 
     @classmethod
-    def get_precedence(cls, operator_id: str) -> int:
+    def get_precedence(cls, operator_id: str, /) -> int:
         """Get the operator precedence by operator ID."""
         for keys, val in cls.PRECEDENCE.items():
             if isinstance(keys, tuple):
@@ -158,12 +157,12 @@ class CONSTANTS:
     }
 
     @classmethod
-    def get(cls, constant_id: str):
+    def get(cls, constant_id: str, /):
         """Get the constant function by constant ID."""
         return cls.IMPLEMENT.get(constant_id)
 
     @classmethod
-    def get_id(cls, token: str) -> str | None:
+    def get_id(cls, token: str, /) -> str | None:
         """Get the constant ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for const_id, symbols in cls.ALL:
@@ -171,7 +170,7 @@ class CONSTANTS:
         return None
 
     @classmethod
-    def is_constant(cls, token: str) -> bool:
+    def is_constant(cls, token: str, /) -> bool:
         """Check if a token is a constant by searching through the token lists."""
         return cls.get_id(token) is not None
 
@@ -272,12 +271,12 @@ class FUNCTIONS:
     }
 
     @classmethod
-    def get(cls, function_id: str):
+    def get(cls, func_id: str, /):
         """Get the function lambda by function ID."""
-        return cls.IMPLEMENT.get(function_id)
+        return cls.IMPLEMENT.get(func_id)
 
     @classmethod
-    def get_id(cls, token: str) -> str | None:
+    def get_id(cls, token: str, /) -> str | None:
         """Get the function ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for func_id, symbols in cls.ALL:
@@ -285,7 +284,7 @@ class FUNCTIONS:
         return None
 
     @classmethod
-    def is_function(cls, token: str) -> bool:
+    def is_function(cls, token: str, /) -> bool:
         """Check if a token is a function by searching through the token lists."""
         return cls.get_id(token) is not None
 
@@ -337,7 +336,13 @@ def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
     FormatCodes.print(f"\033[2K\r{sep.join(str(val) for val in values)}", end=end)
 
 
-def print_line(title: Optional[str] = None, char: str = "═", width: int = Console.w, end: str = "\n") -> None:
+def print_line(
+    title: Optional[str] = None,
+    /, *,
+    char: str = "═",
+    width: int = Console.w,
+    end: str = "\n"
+) -> None:
     if not title:
         FormatCodes.print(f"[dim]{char * width}[_dim]", end=end)
         return
@@ -362,7 +367,13 @@ def clear_lines(num_lines: int = 1) -> None:
 
 class Calc:
 
-    def __init__(self, calc_str: str, last_ans: Optional[str] = None, precision: int = 110, max_num_len: int = 100):
+    def __init__(
+        self, /, *,
+        calc_str: str,
+        last_ans: Optional[str] = None,
+        precision: int = 110,
+        max_num_len: int = 100
+    ):
         self.calc_str = calc_str
         self.last_ans = last_ans
         self.precision = precision
@@ -398,7 +409,7 @@ class Calc:
         self.last_ans = self._perform_eval(norm_calc_str)
         return self.format_readability(self.last_ans)
 
-    def format_result(self, result: object) -> str:
+    def format_result(self, result: object, /) -> str:
         if DEBUG:
             print_line("FORMAT RESULT")
             FormatCodes.print(f"[dim](result:) {result}")
@@ -440,7 +451,7 @@ class Calc:
 
         return result_str
 
-    def format_readability(self, num_str: str) -> str:
+    def format_readability(self, num_str: str, /) -> str:
         if not DEBUG:
             print_overwrite("[dim|white](formatting...)", end="")
 
@@ -519,7 +530,7 @@ class Calc:
 
         return num_str
 
-    def _format_exponents(self, string: str) -> str:
+    def _format_exponents(self, string: str, /) -> str:
         pattern = re.compile(r"(\d*\.\d+|\d+)(?![\de])")
 
         def replace_match(match: re.Match[str]) -> str:
@@ -538,7 +549,7 @@ class Calc:
 
         return pattern.sub(replace_match, string)
 
-    def _is_recurring(self, string: str, max_check_loops: int = -1) -> list[bool] | bool:
+    def _is_recurring(self, string: str, /, *, max_check_loops: int = -1) -> list[bool] | bool:
         if not (repts := list(self._get_rept(string))):
             return False
 
@@ -585,11 +596,11 @@ class Calc:
         return False
 
     @staticmethod
-    def _get_rept(string: str):
+    def _get_rept(string: str, /):
         for match in re.finditer(r"(.+?)\1+", string):
             yield match.group(1)
 
-    def _convert_ids_to_symbols(self, tokens: list[str | object]) -> str:
+    def _convert_ids_to_symbols(self, tokens: list[str | object], /) -> str:
         """Convert operator/constant/function IDs back to symbols for sympy evaluation."""
         result: list[str] = []
 
@@ -629,7 +640,7 @@ class Calc:
 
         return "".join(result)
 
-    def _find_matches(self, text: str) -> list[str | object]:
+    def _find_matches(self, text: str, /) -> list[str | object]:
         preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
         matches: list[str | object] = []
         i = 0
@@ -640,7 +651,7 @@ class Calc:
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
             if (match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
-                and _COMPILED["thousands_seps"].sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
+                and REGEX.thousands_seps.sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
             ):
                 # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
                 should_be_negative = False
@@ -671,7 +682,7 @@ class Calc:
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
-                    if (_COMPILED["thousands_seps"].sub("", prev_match).replace(".", "").replace("-", "").isdigit()
+                    if (REGEX.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
                         or prev_match == ")"
                         or CONSTANTS.is_constant(prev_match)
                     ):
@@ -706,7 +717,7 @@ class Calc:
 
         return matches
 
-    def _perform_eval(self, calc_str: str) -> str:
+    def _perform_eval(self, calc_str: str, /) -> str:
         """Internal recursive calculation function that doesn't do preprocessing."""
         SAVE_CALC_STR = calc_str
 
@@ -751,7 +762,7 @@ class Calc:
         split = self._find_matches(calc_str)
 
         # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
-        def sympify(split_matches: list[str | object]) -> list[str | object]:
+        def sympify(split_matches: list[str | object], /) -> list[str | object]:
             split_sympy: list[str | object] = []
 
             for token in split_matches:
@@ -759,7 +770,7 @@ class Calc:
                     split_sympy.append(token)
                 else:
                     try:
-                        split_sympy.append(sympy.sympify(token))
+                        split_sympy.append(sanitize(token))
                     except:
                         split_sympy.append(token)
 
@@ -834,14 +845,14 @@ class Calc:
                                 arg1_value = split_sympy[arg1_sympy_idx]
                             else:
                                 arg1_str = self._convert_ids_to_symbols(arg1_tokens)
-                                arg1_value = sympy.sympify(arg1_str)
+                                arg1_value = sanitize(arg1_str)
 
                             if len(arg2_tokens) == 1:
                                 arg2_sympy_idx = idx + 2 + len(arg1_tokens) + 1
                                 arg2_value = split_sympy[arg2_sympy_idx]
                             else:
                                 arg2_str = self._convert_ids_to_symbols(arg2_tokens)
-                                arg2_value = sympy.sympify(arg2_str)
+                                arg2_value = sanitize(arg2_str)
 
                             function_impl = FUNCTIONS.get(f_id)
                             if function_impl is None:
@@ -859,7 +870,7 @@ class Calc:
                             arg_str = self._convert_ids_to_symbols(arg_tokens)
                             if DEBUG:
                                 FormatCodes.print(f"[dim](evaluating arg expression:) {arg_str}")
-                            arg_value = sympy.sympify(arg_str)
+                            arg_value = sanitize(arg_str)
                             function_impl = FUNCTIONS.get(f_id)
                             if function_impl is None:
                                 break
@@ -967,14 +978,14 @@ class Calc:
         else:
             calc_str = " ".join(str(s) for s in split)
             try:
-                result = sympy.sympify(calc_str)
+                result = sanitize(calc_str)
                 calc_str = self.format_result(result)
             except:
                 raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
 
         if calc_str == SAVE_CALC_STR:
             try:
-                sympy.sympify(calc_str)
+                sanitize(calc_str)
             except:
                 raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
         return calc_str
@@ -982,6 +993,7 @@ class Calc:
 
 def main():
     print()
+
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
         precision_value = int(ARGS.precision.values[0]) if ARGS.precision.values and ARGS.precision.values[0].lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
@@ -1002,6 +1014,7 @@ def main():
             max_num_len=max_num_len,
         )
         result = calculation.eval()
+
         if DEBUG:
             print_line("FINAL RESULT")
             FormatCodes.print(f"[dim](answer:) {result}")
@@ -1009,6 +1022,7 @@ def main():
             print()
         else:
             print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
+
     else:
         print_help()
 
