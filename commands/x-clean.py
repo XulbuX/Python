@@ -619,7 +619,7 @@ def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list
 
             try:
                 _delete_registry_tree(hive, reg_path)
-                FormatCodes.print(f"  [green](✓) Deleted [magenta]({display}) [dim]({hive_name(hive)}\\{reg_path})")
+                FormatCodes.print(f"  [green](✓) Deleted [magenta]{display} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
 
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
@@ -636,7 +636,7 @@ def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list
 
             try:
                 _delete_registry_tree(hive, reg_path)
-                FormatCodes.print(f"  [green](✓) Deleted [magenta]({subkey}) [dim]({hive_name(hive)}\\{reg_path})")
+                FormatCodes.print(f"  [green](✓) Deleted [magenta]{subkey} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
 
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
@@ -704,20 +704,20 @@ def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
                         key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE)
                         winreg.DeleteValue(key, name)
                         winreg.CloseKey(key)
-                        FormatCodes.print(f"  [green](✓) Deleted empty variable [cyan]({name}) [dim](from {scope})")
+                        FormatCodes.print(f"  [green](✓) Deleted empty variable [cyan]{name} [dim|br:cyan]from {scope}[_]")
                     else:
                         key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE)
                         winreg.SetValueEx(key, name, 0, val_type, new_value)
                         winreg.CloseKey(key)
                         removed_count = len(broken)
-                        FormatCodes.print(f"  [green](✓) Removed [b]({removed_count}) broken path(s) from [cyan]({name}) [dim](in {scope})")
+                        FormatCodes.print(f"  [green](✓) Removed [b]({removed_count}) broken path{'' if removed_count == 1 else 's'} from [cyan]{name} [dim|br:cyan]in {scope}[_]")
 
                 else:
                     # ENTIRE VALUE IS A BROKEN PATH - DELETE THE VARIABLE
                     key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE)
                     winreg.DeleteValue(key, name)
                     winreg.CloseKey(key)
-                    FormatCodes.print(f"  [green](✓) Deleted variable [cyan]({name}) [dim](from {scope})")
+                    FormatCodes.print(f"  [green](✓) Deleted variable [cyan]{name} [dim|br:cyan]from {scope}[_]")
 
             except Exception as e:
                 msg = f"Failed to clean {scope}/{name}: {e}"
@@ -746,7 +746,7 @@ def execute_shortcut_cleanup(shortcut_issues: list[dict[str, Any]]) -> list[str]
 
             try:
                 lnk_path.unlink()
-                FormatCodes.print(f"    [green](✓) Deleted [dim]({lnk_path.name}) [dim](→ {target})")
+                FormatCodes.print(f"    [green](✓) Deleted [blue]{lnk_path.name} [dim|br:blue]{target}[_]")
             except Exception as e:
                 msg = f"Failed to delete {lnk_path}: {e}"
                 failures.append(msg)
@@ -788,7 +788,7 @@ def _remove_empty_dirs(directory: Path, failures: list[str]) -> bool:
     if all_removed:
         try:
             directory.rmdir()
-            FormatCodes.print(f"    [green](✓) Removed empty folder [dim]({directory})")
+            FormatCodes.print(f"    [green](✓) Removed empty folder [dim|br:blue]{directory}[_]")
             return True
         except Exception as e:
             failures.append(f"Failed to remove empty dir {directory}: {e}")
@@ -806,7 +806,7 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
     for dir_info in temp_info["dirs"]:
         label = dir_info["label"]
         dir_path: Path = dir_info["path"]
-        FormatCodes.print(f"\n  [b]({label}:) [dim]({dir_path})")
+        FormatCodes.print(f"\n  [b]({label}:) [dim]{dir_path}[_]")
 
         deleted = 0
         failed = 0
@@ -829,9 +829,9 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
         except (PermissionError, OSError) as e:
             failures.append(f"Cannot access {dir_path}: {e}")
 
-        FormatCodes.print(f"    [green](✓) Deleted [b]({deleted}) item(s)")
+        FormatCodes.print(f"    [green](✓) Deleted [b]({deleted}) item{'' if deleted == 1 else 's'}")
         if failed:
-            FormatCodes.print(f"    [yellow](⚠ {failed} item(s) could not be deleted [dim]((locked/in use)))")
+            FormatCodes.print(f"    [yellow]⚠ {failed} item{'' if failed == 1 else 's'} could not be deleted [dim]((locked/in use))[_]")
 
     return failures
 
@@ -1073,12 +1073,12 @@ def main():
     # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
     show_summary(reg_issues, app_path_issues, env_issues, shortcut_issues, temp_info, selected)
 
-    if not Console.confirm("\n[b|red](Proceed with cleanup?)", default_is_yes=False):
-        Console.exit("Cleanup canceled.", start="\n", end="\n\n", exit_code=0)
-        return
+    if not Console.confirm("\nProceed with cleanup?", default_is_yes=False):
+        FormatCodes.print("\n[dim|br:magenta](✗ [i](Cleanup canceled.))\n")
+        raise SystemExit(0)
 
     # [5] ────────── EXECUTE CLEANUP ──────────
-    FormatCodes.print("\n\n\n[b|bg:black]( EXECUTING CLEANUP )")
+    FormatCodes.print("\n\n\n[b|in|br:blue|bg:black]( EXECUTING CLEANUP )\n")
 
     all_failures: list[str] = []
 
@@ -1097,23 +1097,23 @@ def main():
     # [6] ────────── FINAL REPORT ──────────
     print()
     if not all_failures:
-        Console.done("Cleanup completed successfully!", end="\n")
-        FormatCodes.print(f"  [dim](Backups are at: [br:cyan]({backup_dir}))\n")
-    else:
-        Console.warn(
-            f"Cleanup completed with [b|red]({len(all_failures)}) failure(s).",
-            end="\n",
+        FormatCodes.print(
+            "\n[b|green](✓ Cleanup completed successfully!)\n\n"
+            f"  [dim](Backups are at: [br:green]({backup_dir}))\n\n"
         )
-        FormatCodes.print("[b](Failed operations:)")
+    else:
+        FormatCodes.print(
+            f"\n[b]([red](✓) Cleanup completed with [red]({len(all_failures)}) failure{'' if len(all_failures) == 1 else 's'}:)\n"
+        )
         for msg in all_failures:
-            FormatCodes.print(f"  [red](✗) [dim]({msg})")
-        FormatCodes.print(f"\n  [dim](Backups are at: [br:cyan]({backup_dir}))\n")
+            FormatCodes.print(f"  [red](✗) [br:red]{msg}[_]")
+        FormatCodes.print(f"\n\n  [dim](Backups are at: [br:green]({backup_dir}))\n\n")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\n[b|red](✗ Canceled by user.)\n")
+        FormatCodes.print("\n[dim|br:red](✗ [i](Canceled by user.))\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")
