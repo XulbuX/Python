@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
-"""System Paths Cleaner — clean broken registry entries, env vars, shortcuts, and more."""
+"""System Paths Cleaner - clean broken registry entries, env vars, shortcuts, and more."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 from xulbux import FormatCodes, Console, System, FileSys
 from xulbux.console import Throbber
@@ -16,37 +16,32 @@ try:
     from win32com.client import Dispatch as COMDispatch
     HAS_WIN32COM = True
 except ImportError:
-    HAS_WIN32COM = False
+    COMDispatch = None
+    HAS_WIN32COM = False  # type: ignore[constant-reassignment]
 
 
 ########################################## CONSTANTS ##########################################
 
-SCRIPT_DIR = FileSys.script_dir
-BACKUPS_DIR = SCRIPT_DIR / "backups"
+BACKUPS_DIR = FileSys.script_dir / "backups"
 
-# REGISTRY UNINSTALL LOCATIONS
+# REGISTRY PATHS TO SCAN FOR BROKEN ENTRIES
 REGISTRY_UNINSTALL_PATHS: list[tuple[int, str]] = [
-    (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
-    (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-    (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
 ]
-
-# REGISTRY APP PATHS LOCATIONS (BONUS)
 REGISTRY_APP_PATHS: list[tuple[int, str]] = [
-    (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\App Paths"),
-    (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"),
+    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
 ]
 
 # VALUES IN UNINSTALL KEYS THAT INDICATE WHETHER THE SOFTWARE IS ACTUALLY INSTALLED
-# NOTE: InstallSource and DisplayIcon are intentionally excluded — they are informational
-# only (installer cache / icon path) and do NOT indicate the software is uninstalled.
-PATH_VALUE_NAMES = {
-    "UninstallString", "QuietUninstallString", "InstallLocation", "ModifyPath",
-}
+# NOTE: InstallSource AND DisplayIcon EXCLUDED BECAUSE THEY'RE INFORMATIONAL AND DON'T INDICATE THE SOFTWARE IS UNINSTALLED
+PATH_VALUE_NAMES = {"UninstallString", "QuietUninstallString", "InstallLocation", "ModifyPath"}
 
 # ENVIRONMENT VARIABLE REGISTRY LOCATIONS
-ENV_USER_KEY = (winreg.HKEY_CURRENT_USER, r"Environment")
-ENV_SYSTEM_KEY = (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment")
+ENV_USER_KEY = (winreg.HKEY_CURRENT_USER, "Environment")
+ENV_SYSTEM_KEY = (winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment")
 
 # SHORTCUT DIRECTORIES TO SCAN
 SHORTCUT_DIRS: list[tuple[str, Path]] = []
@@ -59,11 +54,11 @@ def _build_shortcut_dirs() -> list[tuple[str, Path]]:
     userprofile = os.environ.get("USERPROFILE", "")
     public = os.environ.get("PUBLIC", "")
     if appdata:
-        dirs.append(("User Startup", Path(appdata) / r"Microsoft\Windows\Start Menu\Programs\Startup"))
-        dirs.append(("User Start Menu", Path(appdata) / r"Microsoft\Windows\Start Menu\Programs"))
+        dirs.append(("User Startup", Path(appdata) / "Microsoft\\Windows\\Start Menu\\Programs\\Startup"))
+        dirs.append(("User Start Menu", Path(appdata) / "Microsoft\\Windows\\Start Menu\\Programs"))
     if programdata:
-        dirs.append(("Global Startup", Path(programdata) / r"Microsoft\Windows\Start Menu\Programs\Startup"))
-        dirs.append(("Global Start Menu", Path(programdata) / r"Microsoft\Windows\Start Menu\Programs"))
+        dirs.append(("Global Startup", Path(programdata) / "Microsoft\\Windows\\Start Menu\\Programs\\Startup"))
+        dirs.append(("Global Start Menu", Path(programdata) / "Microsoft\\Windows\\Start Menu\\Programs"))
     if userprofile:
         dirs.append(("User Desktop", Path(userprofile) / "Desktop"))
     if public:
@@ -74,6 +69,7 @@ HIVE_NAMES = {
     winreg.HKEY_CURRENT_USER: "HKCU",
     winreg.HKEY_LOCAL_MACHINE: "HKLM",
 }
+
 
 ########################################## CLI ARGS ##########################################
 
@@ -92,15 +88,15 @@ def hive_name(hive: int) -> str:
 
 
 def extract_path_from_value(value: str) -> Optional[Path]:
-    """Extract a file/directory path from a registry value string.
+    """Extract a file/directory path from a registry value string.<br>
     Handles quoted paths, paths with args, MsiExec, rundll32, etc."""
-    if not value or not isinstance(value, str):
+    if not value:
         return None
     val = value.strip()
     if not val:
         return None
 
-    # SKIP MSIEXEC AND RUNDLL32 ENTRIES — THEY DON'T POINT TO REAL UNINSTALLERS ON DISK
+    # SKIP MSIEXEC AND RUNDLL32 ENTRIES - THEY DON'T POINT TO REAL UNINSTALLERS ON DISK
     lower = val.lower()
     if lower.startswith("msiexec") or lower.startswith("rundll32"):
         return None
@@ -132,13 +128,13 @@ def extract_path_from_value(value: str) -> Optional[Path]:
 
 
 def expand_env_in_path(value: str) -> str:
-    """Expand environment variable references like %USERPROFILE% in a string."""
+    """Expand environment variable references like `%USERPROFILE%` in a string."""
     return os.path.expandvars(value)
 
 
 def path_exists(p: Path) -> bool:
-    """Check if a path exists, handling long paths and permission issues.
-    Also expands environment variable references like %USERPROFILE%."""
+    """Check if a path exists, handling long paths and permission issues.<br>
+    Also expands environment variable references like `%USERPROFILE%`."""
     try:
         expanded = Path(expand_env_in_path(str(p)))
         return expanded.exists()
@@ -148,48 +144,58 @@ def path_exists(p: Path) -> bool:
 
 def looks_like_path(value: str) -> bool:
     """Check if a string value looks like it could be a filesystem path."""
-    if not value or not isinstance(value, str):
+    if not value:
         return False
     v = value.strip().strip('"')
     if not v:
         return False
+
     # EXPAND ENVIRONMENT VARIABLES FIRST
     expanded = os.path.expandvars(v)
+
     # ABSOLUTE PATHS: C:\..., \\server\...
     if len(expanded) >= 3 and expanded[1:3] == ":\\":
         return True
     if expanded.startswith("\\\\"):
         return True
+
     # ENVIRONMENT VARIABLE REFERENCES THAT LOOK LIKE PATHS (E.G. %SYSTEMROOT%\...)
     if "%" in v and ("\\" in v or "/" in v):
         return True
+
     # PATHS WITH PATH SEPARATORS AND TYPICAL EXTENSIONS/DIRECTORIES
     if "\\" in v or "/" in v:
         return any(seg in v.lower() for seg in ("program files", "windows", "users", "appdata"))
+
     return False
 
 
 def resolve_shortcut(lnk_path: Path) -> Optional[Path]:
-    """Resolve a .lnk shortcut file to its target path."""
-    if not HAS_WIN32COM:
+    """Resolve a `.lnk` shortcut file to its target path."""
+    if not HAS_WIN32COM or COMDispatch is None:
         return None
+
     try:
         shell = COMDispatch("WScript.Shell")
         shortcut = shell.CreateShortcut(str(lnk_path))
+
         target = shortcut.TargetPath
         if target:
             return Path(target)
+
         return None
+
     except Exception:
         return None
 
 
 ########################################## SCANNING ##########################################
 
-def scan_registry_uninstall() -> list[dict]:
-    """Scan uninstall registry keys for entries with broken paths.
-    Returns list of dicts: {hive, path, subkey, display_name, broken_values}"""
-    issues: list[dict] = []
+def scan_registry_uninstall() -> list[dict[str, Any]]:
+    """Scan uninstall registry keys for entries with broken paths.\n
+    ------------------------------------------------------------------------------
+    Returns list of dicts: `{hive, path, subkey, display_name, broken_values}`"""
+    issues: list[dict[str, Any]] = []
 
     for hive, reg_path in REGISTRY_UNINSTALL_PATHS:
         try:
@@ -258,10 +264,11 @@ def scan_registry_uninstall() -> list[dict]:
     return issues
 
 
-def scan_registry_app_paths() -> list[dict]:
-    """Scan App Paths registry keys for entries with broken paths.
-    Returns list of dicts: {hive, path, subkey, broken_path}"""
-    issues: list[dict] = []
+def scan_registry_app_paths() -> list[dict[str, Any]]:
+    """Scan App Paths registry keys for entries with broken paths.\n
+    -----------------------------------------------------------------
+    Returns list of dicts: `{hive, path, subkey, broken_path}`"""
+    issues: list[dict[str, Any]] = []
 
     for hive, reg_path in REGISTRY_APP_PATHS:
         try:
@@ -306,11 +313,12 @@ def scan_registry_app_paths() -> list[dict]:
     return issues
 
 
-def scan_env_vars() -> dict:
-    """Scan environment variables for broken paths.
-    Returns dict with keys 'user' and 'system', each containing a list of issues:
-    {name, value_type, original_value, broken_paths, scope}"""
-    result: dict[str, list[dict]] = {"user": [], "system": []}
+def scan_env_vars() -> dict[str, Any]:
+    """Scan environment variables for broken paths.\n
+    ----------------------------------------------------------------------------------
+    Returns dict with keys `user` and `system`, each containing a list of issues:<br>
+    `{name, value_type, original_value, broken_paths, scope}`"""
+    result: dict[str, list[dict[str, Any]]] = {"user": [], "system": []}
 
     for scope, (hive, reg_path) in [("user", ENV_USER_KEY), ("system", ENV_SYSTEM_KEY)]:
         try:
@@ -361,21 +369,22 @@ def scan_env_vars() -> dict:
     return result
 
 
-def scan_shortcuts() -> list[dict]:
-    """Scan shortcut directories for broken .lnk files.
-    Returns list of dicts: {label, dir_path, broken_shortcuts}
-    where broken_shortcuts is list of {lnk_path, target}"""
+def scan_shortcuts() -> list[dict[str, Any]]:
+    """Scan shortcut directories for broken `.lnk` files.\n
+    -----------------------------------------------------------------
+    Returns list of dicts: `{label, dir_path, broken_shortcuts}`<br>
+    where broken_shortcuts is list of `{lnk_path, target}`"""
     if not HAS_WIN32COM:
         return []
 
-    issues: list[dict] = []
+    issues: list[dict[str, Any]] = []
     shortcut_dirs = _build_shortcut_dirs()
 
     for label, dir_path in shortcut_dirs:
         if not dir_path.exists():
             continue
 
-        broken_shortcuts: list[dict] = []
+        broken_shortcuts: list[dict[str, Any]] = []
         _scan_shortcuts_recursive(dir_path, broken_shortcuts)
 
         if broken_shortcuts:
@@ -388,7 +397,7 @@ def scan_shortcuts() -> list[dict]:
     return issues
 
 
-def _scan_shortcuts_recursive(directory: Path, broken_list: list[dict]) -> None:
+def _scan_shortcuts_recursive(directory: Path, broken_list: list[dict[str, Any]]) -> None:
     """Recursively scan a directory for broken shortcuts."""
     try:
         entries = list(directory.iterdir())
@@ -407,10 +416,12 @@ def _scan_shortcuts_recursive(directory: Path, broken_list: list[dict]) -> None:
                 })
 
 
-def scan_temp_files() -> dict:
-    """Scan temp directories for cleanable files.
-    Returns dict: {dirs: list of {path, file_count, size_bytes}}"""
-    temp_dirs_to_check = []
+def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
+    """Scan temp directories for cleanable files.\n
+    -----------------------------------------------------------
+    Returns dict with key `dirs` containing list of dicts:<br>
+    `{dirs: [{path, file_count, size_bytes}]}`"""
+    temp_dirs_to_check: list[tuple[str, Path]] = []
 
     # WINDOWS TEMP
     win_temp = Path(os.environ.get("TEMP", ""))
@@ -418,16 +429,16 @@ def scan_temp_files() -> dict:
         temp_dirs_to_check.append(("User Temp", win_temp))
 
     # SYSTEM TEMP
-    sys_temp = Path(r"C:\Windows\Temp")
+    sys_temp = Path("C:\\Windows\\Temp")
     if sys_temp.exists():
         temp_dirs_to_check.append(("System Temp", sys_temp))
 
     # PREFETCH
-    prefetch = Path(r"C:\Windows\Prefetch")
+    prefetch = Path("C:\\Windows\\Prefetch")
     if prefetch.exists():
         temp_dirs_to_check.append(("Prefetch", prefetch))
 
-    result: list[dict] = []
+    result: list[dict[str, Any]] = []
     for label, dir_path in temp_dirs_to_check:
         file_count = 0
         total_size = 0
@@ -457,14 +468,13 @@ def scan_temp_files() -> dict:
 
 def create_backup_dir() -> Path:
     """Create a timestamped backup directory."""
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    backup_dir = BACKUPS_DIR / timestamp
+    backup_dir = BACKUPS_DIR / datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_dir.mkdir(parents=True, exist_ok=True)
     return backup_dir
 
 
 def backup_registry(backup_dir: Path) -> bool:
-    """Export uninstall and app paths registry keys to .reg files."""
+    """Export uninstall and app paths registry keys to `.reg` files."""
     all_locations = REGISTRY_UNINSTALL_PATHS + REGISTRY_APP_PATHS
     success = True
 
@@ -481,11 +491,13 @@ def backup_registry(backup_dir: Path) -> bool:
                 text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW,
             )
+
             if result.returncode != 0:
                 FormatCodes.print(f"  [yellow](⚠ Failed to export [dim]({full_path})[yellow]:)\n    {result.stderr.strip()}")
                 success = False
             else:
                 FormatCodes.print(f"  [green](✓) Exported [dim]({full_path})")
+
         except Exception as e:
             FormatCodes.print(f"  [red](✗ Error exporting [dim]({full_path})[red]:)\n    {e}")
             success = False
@@ -495,7 +507,7 @@ def backup_registry(backup_dir: Path) -> bool:
 
 def backup_env_vars(backup_dir: Path) -> bool:
     """Backup all environment variables (user + system) to a JSON file."""
-    data: dict[str, dict[str, dict]] = {"user": {}, "system": {}}
+    data: dict[str, dict[str, dict[str, Any]]] = {"user": {}, "system": {}}
 
     for scope, (hive, reg_path) in [("user", ENV_USER_KEY), ("system", ENV_SYSTEM_KEY)]:
         try:
@@ -581,7 +593,7 @@ def restore_env_vars(backup_path: Path) -> None:
 
 
 def _broadcast_env_change() -> None:
-    """Broadcast WM_SETTINGCHANGE so other processes pick up env var changes."""
+    """Broadcast `WM_SETTINGCHANGE` so other processes pick up env var changes."""
     try:
         import ctypes
         HWND_BROADCAST = 0xFFFF
@@ -597,19 +609,22 @@ def _broadcast_env_change() -> None:
 
 ########################################## CLEANUP EXECUTION ##########################################
 
-def execute_registry_cleanup(issues: list[dict], app_path_issues: list[dict]) -> list[str]:
+def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list[dict[str, Any]]) -> list[str]:
     """Delete broken registry entries. Returns list of failure messages."""
     failures: list[str] = []
 
     if issues:
         FormatCodes.print("\n[b](Cleaning registry uninstall entries...)")
+
         for issue in issues:
             hive = issue["hive"]
             reg_path = issue["path"]
             display = issue["display_name"]
+
             try:
                 _delete_registry_tree(hive, reg_path)
                 FormatCodes.print(f"  [green](✓) Deleted [magenta]({display}) [dim]({hive_name(hive)}\\{reg_path})")
+
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
                 failures.append(msg)
@@ -617,13 +632,16 @@ def execute_registry_cleanup(issues: list[dict], app_path_issues: list[dict]) ->
 
     if app_path_issues:
         FormatCodes.print("\n[b](Cleaning registry App Paths entries...)")
+
         for issue in app_path_issues:
             hive = issue["hive"]
             reg_path = issue["path"]
             subkey = issue["subkey"]
+
             try:
                 _delete_registry_tree(hive, reg_path)
                 FormatCodes.print(f"  [green](✓) Deleted [magenta]({subkey}) [dim]({hive_name(hive)}\\{reg_path})")
+
             except Exception as e:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
                 failures.append(msg)
@@ -635,8 +653,7 @@ def execute_registry_cleanup(issues: list[dict], app_path_issues: list[dict]) ->
 def _delete_registry_tree(hive: int, key_path: str) -> None:
     """Recursively delete a registry key and all its subkeys."""
     try:
-        key = winreg.OpenKey(hive, key_path, 0,
-                             winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
+        key = winreg.OpenKey(hive, key_path, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
     except FileNotFoundError:
         return
 
@@ -655,15 +672,14 @@ def _delete_registry_tree(hive: int, key_path: str) -> None:
     parent_path = "\\".join(key_path.split("\\")[:-1])
     key_name = key_path.split("\\")[-1]
     try:
-        parent = winreg.OpenKey(hive, parent_path, 0,
-                                winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
+        parent = winreg.OpenKey(hive, parent_path, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
         winreg.DeleteKey(parent, key_name)
         winreg.CloseKey(parent)
     except OSError as e:
         raise OSError(f"Could not delete key {key_path}: {e}")
 
 
-def execute_env_cleanup(env_issues: dict) -> list[str]:
+def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
     """Remove broken paths from environment variables. Returns failure messages."""
     failures: list[str] = []
 
@@ -681,14 +697,14 @@ def execute_env_cleanup(env_issues: dict) -> list[str]:
             val_type = issue["value_type"]
 
             try:
-                # IF THE VARIABLE CONTAINS SEMICOLONS, IT'S A PATH LIST — REMOVE ONLY BROKEN PARTS
+                # IF THE VARIABLE CONTAINS SEMICOLONS, IT'S A PATH LIST - REMOVE ONLY BROKEN PARTS
                 if ";" in original:
                     paths = [p.strip() for p in original.split(";")]
                     cleaned = [p for p in paths if p and p not in broken]
                     new_value = ";".join(cleaned)
 
                     if not new_value:
-                        # ALL PATHS WERE BROKEN — DELETE THE ENTIRE VARIABLE
+                        # ALL PATHS WERE BROKEN - DELETE THE ENTIRE VARIABLE
                         key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE)
                         winreg.DeleteValue(key, name)
                         winreg.CloseKey(key)
@@ -699,8 +715,9 @@ def execute_env_cleanup(env_issues: dict) -> list[str]:
                         winreg.CloseKey(key)
                         removed_count = len(broken)
                         FormatCodes.print(f"  [green](✓) Removed [b]({removed_count}) broken path(s) from [cyan]({name}) [dim](in {scope})")
+
                 else:
-                    # ENTIRE VALUE IS A BROKEN PATH — DELETE THE VARIABLE
+                    # ENTIRE VALUE IS A BROKEN PATH - DELETE THE VARIABLE
                     key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE)
                     winreg.DeleteValue(key, name)
                     winreg.CloseKey(key)
@@ -717,7 +734,7 @@ def execute_env_cleanup(env_issues: dict) -> list[str]:
     return failures
 
 
-def execute_shortcut_cleanup(shortcut_issues: list[dict]) -> list[str]:
+def execute_shortcut_cleanup(shortcut_issues: list[dict[str, Any]]) -> list[str]:
     """Delete broken shortcuts and empty directories. Returns failure messages."""
     failures: list[str] = []
 
@@ -730,6 +747,7 @@ def execute_shortcut_cleanup(shortcut_issues: list[dict]) -> list[str]:
         for shortcut_info in location["broken_shortcuts"]:
             lnk_path: Path = shortcut_info["lnk_path"]
             target = shortcut_info["target"]
+
             try:
                 lnk_path.unlink()
                 FormatCodes.print(f"    [green](✓) Deleted [dim]({lnk_path.name}) [dim](→ {target})")
@@ -739,8 +757,7 @@ def execute_shortcut_cleanup(shortcut_issues: list[dict]) -> list[str]:
                 FormatCodes.print(f"    [red](✗) {msg}")
 
     # CLEAN UP EMPTY DIRECTORIES LEFT BEHIND
-    shortcut_dirs = _build_shortcut_dirs()
-    for _, dir_path in shortcut_dirs:
+    for _, dir_path in _build_shortcut_dirs():
         if dir_path.exists():
             _remove_empty_dirs(dir_path, failures)
 
@@ -784,7 +801,7 @@ def _remove_empty_dirs(directory: Path, failures: list[str]) -> bool:
     return False
 
 
-def execute_temp_cleanup(temp_info: dict) -> list[str]:
+def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
     """Clean temp directories. Returns failure messages."""
     failures: list[str] = []
 
@@ -812,6 +829,7 @@ def execute_temp_cleanup(temp_info: dict) -> list[str]:
                             failed += 1
                 except (PermissionError, OSError):
                     failed += 1
+
         except (PermissionError, OSError) as e:
             failures.append(f"Cannot access {dir_path}: {e}")
 
@@ -824,28 +842,30 @@ def execute_temp_cleanup(temp_info: dict) -> list[str]:
 
 ########################################## DISPLAY ##########################################
 
-def format_size(size_bytes: int) -> str:
+def format_size(size_bytes: int, /) -> str:
     """Format bytes as human-readable size."""
+    size: float = float(size_bytes)
     for unit in ("B", "KB", "MB", "GB"):
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}" if unit != "B" else f"{size_bytes} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} TB"
+        if size < 1024:
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} {unit}"
+        size /= 1024
+    return f"{size:.1f} TB"
 
 
 def show_summary(
-    reg_issues: list[dict],
-    app_path_issues: list[dict],
-    env_issues: dict,
-    shortcut_issues: list[dict],
-    temp_info: dict,
+    reg_issues: list[dict[str, Any]],
+    app_path_issues: list[dict[str, Any]],
+    env_issues: dict[str, Any],
+    shortcut_issues: list[dict[str, Any]],
+    temp_info: dict[str, Any],
     selected: dict[str, bool],
 ) -> None:
     """Show a detailed summary of what will be cleaned."""
-    FormatCodes.print("\n[b|bg:black]( CLEANUP SUMMARY )\n")
+    FormatCodes.print("\n[b|black|bg:br:magenta]( CLEANUP SUMMARY )\n")
 
     if selected.get("registry") and (reg_issues or app_path_issues):
         FormatCodes.print("[b](Registry entries to delete:)")
+
         for issue in reg_issues:
             FormatCodes.print(
                 f"  [red](✗) [magenta]({issue['display_name']})"
@@ -861,10 +881,12 @@ def show_summary(
                 f" [dim]({hive_name(issue['hive'])}\\...\\App Paths)"
             )
             FormatCodes.print(f"      [dim](→ {issue['broken_path']})")
+
         print()
 
     if selected.get("envvars") and (env_issues.get("user") or env_issues.get("system")):
         FormatCodes.print("[b](Environment variables to clean:)")
+
         for scope in ("user", "system"):
             for issue in env_issues.get(scope, []):
                 name = issue["name"]
@@ -878,24 +900,29 @@ def show_summary(
                 else:
                     FormatCodes.print(f"  [cyan]({name}) [dim]({scope}) — [red](delete entire variable)")
                     FormatCodes.print(f"      [dim](→ {original})")
+
         print()
 
     if selected.get("shortcuts") and shortcut_issues:
         total_broken = sum(len(loc["broken_shortcuts"]) for loc in shortcut_issues)
         FormatCodes.print(f"[b](Broken shortcuts to delete:) [dim]({total_broken} total)")
+
         for location in shortcut_issues:
             FormatCodes.print(f"  [b]({location['label']}:)")
             for sc in location["broken_shortcuts"]:
                 FormatCodes.print(f"    [red](✗) [dim]({sc['lnk_path'].name}) → {sc['target']}")
+
         print()
 
     if selected.get("temp") and temp_info.get("dirs"):
         FormatCodes.print("[b](Temp directories to clean:)")
+
         for d in temp_info["dirs"]:
             FormatCodes.print(
                 f"  [yellow](⟳) [b]({d['label']}) — "
                 f"[dim]({d['file_count']} files, {format_size(d['size_bytes'])})"
             )
+
         print()
 
 
@@ -930,8 +957,8 @@ def choose_options() -> dict[str, bool]:
     options = [
         ("registry", "Registry uninstall entries + App Paths"),
         ("envvars", "Environment variables"),
-        ("shortcuts", "Broken shortcut files (.lnk)"),
-        ("temp", "Temp files (User Temp, System Temp, Prefetch)"),
+        ("shortcuts", "Broken shortcut files [dim]((.lnk))"),
+        ("temp", "Temp files [dim]((User Temp, System Temp, Prefetch))"),
     ]
 
     if not HAS_WIN32COM:
@@ -965,7 +992,8 @@ def main():
     FormatCodes.print(f"\n[b|bg:black]( Windows [in]( SYSTEM PATHS CLEANER ))")
     Console.log_box_bordered(
         "[yellow](This tool scans for and removes broken system paths.)",
-        "[yellow](Backups are created before any modifications.)",
+        "[yellow]([dim](→) Backups are created before any modifications.)",
+        "[yellow]([dim](→) No actions are taken without confirmation.)",
         border_style="dim|yellow",
     )
 
@@ -973,14 +1001,14 @@ def main():
         FormatCodes.print("\n[yellow](⚠ Not running as Administrator. Some operations may fail.)")
         FormatCodes.print("[dim|yellow](  System-level registry and env var changes require elevation.)")
 
-    # ───────── STEP 1: CHOOSE CLEANUP OPTIONS ─────────
+    # [1] ────────── CHOOSE CLEANUP OPTIONS ──────────
     selected = choose_options()
 
     if not any(selected.values()):
         Console.exit("Nothing selected.", start="\n", end="\n\n", exit_code=0)
         return
 
-    # ───────── STEP 2: CREATE BACKUPS ─────────
+    # [2] ────────── CREATE BACKUPS ──────────
     FormatCodes.print("\n[b|bg:black]( CREATING BACKUPS )\n")
 
     backup_dir = create_backup_dir()
@@ -1005,12 +1033,12 @@ def main():
 
     FormatCodes.print(f"\n[b|green](✓ Backups saved to:) [br:cyan]({backup_dir})")
 
-    # ───────── STEP 3: SCAN FOR ISSUES ─────────
-    reg_issues: list[dict] = []
-    app_path_issues: list[dict] = []
-    env_issues: dict = {"user": [], "system": []}
-    shortcut_issues: list[dict] = []
-    temp_info: dict = {"dirs": []}
+    # [3] ────────── SCAN FOR ISSUES ──────────
+    reg_issues: list[dict[str, Any]] = []
+    app_path_issues: list[dict[str, Any]] = []
+    env_issues: dict[str, Any] = {"user": [], "system": []}
+    shortcut_issues: list[dict[str, Any]] = []
+    temp_info: dict[str, Any] = {"dirs": []}
 
     with Throbber().context("Scanning for issues...") as update_label:
         if selected.get("registry"):
@@ -1043,16 +1071,16 @@ def main():
         Console.done("No issues found! Your system paths look clean.", start="\n", end="\n\n")
         return
 
-    FormatCodes.print(f"\n[b](Found [br:yellow]({total_issues}) issue(s) to address.)")
+    FormatCodes.print(f"\n[b](Found [br:yellow]({total_issues}) issue{'' if total_issues == 1 else 's'} to address.)")
 
-    # ───────── STEP 4: SHOW SUMMARY & CONFIRM ─────────
+    # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
     show_summary(reg_issues, app_path_issues, env_issues, shortcut_issues, temp_info, selected)
 
     if not Console.confirm("[b](Proceed with cleanup?)", default_is_yes=False):
         Console.exit("Cleanup canceled.", start="\n", end="\n\n", exit_code=0)
         return
 
-    # ───────── STEP 5: EXECUTE CLEANUP ─────────
+    # [5] ────────── EXECUTE CLEANUP ──────────
     FormatCodes.print("\n[b|bg:black]( EXECUTING CLEANUP )")
 
     all_failures: list[str] = []
@@ -1069,7 +1097,7 @@ def main():
     if selected.get("temp") and temp_info.get("dirs"):
         all_failures.extend(execute_temp_cleanup(temp_info))
 
-    # ───────── STEP 6: FINAL REPORT ─────────
+    # [6] ────────── FINAL REPORT ──────────
     print()
     if not all_failures:
         Console.done("Cleanup completed successfully!", end="\n")
