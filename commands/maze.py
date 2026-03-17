@@ -52,11 +52,11 @@ class Maze:
             "stretch_w": 2,
         } if render_ascii else {
             "bg": " ",
-            "wall": "█",
-            "start": ("█", "[br:green]"),
-            "goal": ("█", "[br:red]"),
-            "player": ("█", "[br:yellow]"),
-            "solution": ("█", "[dim]"),
+            "wall": "░",
+            "start": ("█", "[red]"),
+            "goal": ("█", "[green]"),
+            "player": ("█", "[blue]"),
+            "solution": ("▒", "[dim|br:blue]"),
             "stretch_w": 2,
         })
         if render_opts is not None:
@@ -294,10 +294,10 @@ class Maze:
             maze_lines += (line, )
         if output_to_console:
             if self.render_ascii:
-                sys.stdout.write("\033c" + "\n".join(maze_lines))
+                sys.stdout.write("\033[H" + "\n".join(maze_lines))
                 sys.stdout.flush()
             else:
-                FormatCodes.print("\033c" + "\n".join(maze_lines), end="")
+                FormatCodes.print("\033[H" + "\n".join(maze_lines), end="")
         else:
             return "\n".join(maze_lines)
 
