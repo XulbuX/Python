@@ -45,14 +45,14 @@ Add more locations that the script can clean up if you find/know some that you t
 
 2.  The script makes backups of what the user decided to clean, saves them all to one place, and tells the user where they were saved. (If a backup fails, we alert that and don't allow the script to continue!)
 
-3.  The script searches through the registry, env vars, etc., and saves what it thinks can be removed (as paths in the registry, as env var names with value position if the var contains multiple paths, etc.).
-    ⭢ This step doesn't need to be very verbose.
+3.  The script searches through the registry, env vars, etc., and saves what it thinks can be removed (as paths in the registry, as env var names with value position if the var contains multiple paths, etc.).<br>
+    ⭢ This step doesn't need to be very verbose.
 
 4.  The script shows a summary to the user of exactly what it will modify/delete in the registry, env vars, etc., and only continues if the user confirms this (otherwise, exit).
 
-5.  If the user confirmed, we actually remove all the registry entries, entire env vars or just parts of the env var values, etc.
-    ⭢ If any operation fails, we save the failed operation somewhere to show at the end but continue to attempt executing the rest of the operations.
-    ⭢ This step should be pretty verbose.
+5.  If the user confirmed, we actually remove all the registry entries, entire env vars or just parts of the env var values, etc.<br>
+    ⭢ If any operation fails, we save the failed operation somewhere to show at the end but continue to attempt executing the rest of the operations.<br>
+    ⭢ This step should be pretty verbose.
 
 6.  We now show the user that the script is finished, and if there were any failures, we show those in a small summary.
 

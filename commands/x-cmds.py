@@ -177,7 +177,7 @@ def get_commands_str(python_files: set[str]) -> str:
     i, cmds = 0, ""
 
     for i, file in enumerate(sorted(python_files), 1):
-        print("\n\n")
+        #! print("\n\n")
         cmd_name = Path(file).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
@@ -191,7 +191,7 @@ def get_commands_str(python_files: set[str]) -> str:
             sys_argv_comments = PATTERNS.sys_argv.findall(content)
             get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
 
-            print(cmd_name, sys_argv_comments, PATTERNS.get_args.findall(content), sep="\n", end="\n\n")
+            #! print(cmd_name, sys_argv_comments, PATTERNS.get_args.findall(content), sep="\n", end="\n\n")
 
         arg_parse_configs: ArgParseConfigs = {}
 
@@ -208,7 +208,7 @@ def get_commands_str(python_files: set[str]) -> str:
 
                 # PARSE THE FUNCTION ARGUMENTS
                 for arg in PATTERNS.arg.finditer(func_args):
-                    print(arg.groups())
+                    #! print(arg.groups())
                     if (key := arg.group(2)) and (val := arg.group(3)):
                         arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
                 cmds += arguments_desc(arg_parse_configs)

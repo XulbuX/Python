@@ -26,7 +26,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in|bg:black]( QR Code Generator - Quickly generate QR codes directly within the terminal )
+[b|in|bg:black]( QR Code Generator — Quickly generate QR codes directly within the terminal )
 
 [b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
 
@@ -36,7 +36,7 @@ def print_help():
 [b](Options:)
   [br:blue](-i), [br:blue](--invert)         Invert colors [dim]((swap filled/empty blocks))
   [br:blue](-s), [br:blue](--scale N)        Scale factor for output size [dim]((default: 1))
-  [br:blue](-e), [br:blue](--error LEVEL)    Error correction level [dim]((L, M, Q, H - default: M))
+  [br:blue](-e), [br:blue](--error LEVEL)    Error correction level [dim]((L, M, Q, H — default: M))
   [br:blue](-c), [br:blue](--contact)        Generate contact QR code [dim]((vCard format))
   [br:blue](-w), [br:blue](--wifi)           Generate WiFi QR code [dim]((auto-detect or manual))
 

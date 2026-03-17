@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
-There's no number size limit - the only limit is your system's memory."""
+There's no number size limit — the only limit is your system's memory."""
 from typing import Callable, Optional, Any
 from xulbux import FormatCodes, Console
 from xulbux.regex import LazyRegex
@@ -302,7 +302,7 @@ def print_help():
     c_list = "\n".join(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL))
     f_list = "\n".join(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL))
     help_text = f"""\
-[b|in|bg:black]( Advanced Calculator - Perform complex calculations directly from the command line )
+[b|in|bg:black]( Advanced Calculator — Perform complex calculations directly from the command line )
 
 [b](Usage:) [br:green](x-calc) [br:cyan](<calculation>) [br:blue]([options])
 

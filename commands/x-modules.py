@@ -47,7 +47,7 @@ STDLIB_MODULES = {
 
 def print_help():
     help_text = """\
-[b|in|bg:black]( Modules - List all imported modules across scripts )
+[b|in|bg:black]( Modules — List all imported modules across scripts )
 
 [b](Usage:) [br:green](modules) [br:blue]([options])
 

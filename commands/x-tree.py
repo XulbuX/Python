@@ -32,7 +32,7 @@ DEFAULT: ScriptDefaults = {
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Tree Generator - Quickly generate advanced and good looking directory trees )
+[b|in|bg:black]( Tree Generator — Quickly generate advanced and good looking directory trees )
 
 [b](Usage:) [green](x-tree) [br:blue]([options])
 

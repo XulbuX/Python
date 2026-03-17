@@ -26,7 +26,7 @@ SKIP: set[str] = {item.lower() for item in str(ARGS.skip_type.values[0]).split()
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Directory Info - Get details about files in the current directory )
+[b|in|bg:black]( Directory Info — Get details about files in the current directory )
 
 [b](Usage:) [br:green](x-qr) [br:blue]([options])
 

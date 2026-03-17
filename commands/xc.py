@@ -22,7 +22,7 @@ except Exception as e:
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Execute & Copy - Run a command and copy its output to clipboard )
+[b|in|bg:black]( Execute & Copy — Run a command and copy its output to clipboard )
 
 [b|br:yellow]⚠ Commands that use dynamic progress bars and such
   may not render correctly using this tool.

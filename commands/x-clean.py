@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
-"""System Paths Cleaner - clean broken registry entries, env vars, shortcuts, and more."""
+"""Clean broken registry entries, environment variables, shortcuts and temp files."""
 
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Any
-from datetime import datetime
 from xulbux import FormatCodes, Console, System, FileSys
 from xulbux.console import Throbber
 import subprocess
@@ -938,23 +938,22 @@ def show_summary(
 
 def print_help():
     help_text = """
-[b|in|bg:black]( System Paths Cleaner — Clean broken registry entries, env vars, shortcuts & more )
+[b|in|bg:black]( System Cleaner — Clean broken registry entries, env vars, shortcuts & more )
 
-[b](Usage:) [green](x-clean) [blue]([options])
+[b](Usage:) [green](x-clean) [br:blue]([options])
 
 [b](Options:)
-  [blue](-h), [blue](--help)       Show this help message
-  [blue](-r), [blue](--restore)    Restore env vars from a backup JSON file
+  [br:blue](-h), [br:blue](--help)       Show this help message
+  [br:blue](-r), [br:blue](--restore)    Restore env vars from a backup JSON file
 
 [b](Restore example:)
-  [green](x-clean) [blue](--restore) [cyan]("path/to/env_vars_backup.json")
+  [green](x-clean) [br:blue](--restore) [br:cyan]("path/to/env_vars_backup.json")
 
 [b](What it cleans:)
-  [magenta](1.) Registry uninstall entries with broken paths
-  [magenta](2.) Registry App Paths entries pointing to missing executables
-  [magenta](3.) Environment variables containing non-existent paths
-  [magenta](4.) Broken shortcut (.lnk) files in Start Menu, Startup, Desktop
-  [magenta](5.) Temp files (User Temp, System Temp, Prefetch)
+  [magenta](1.) Registry [dim]((uninstall entries, app paths))
+  [magenta](2.) Environment variables containing non-existent paths
+  [magenta](3.) Broken shortcut (.lnk) files [dim]((start menu, startup, desktop))
+  [magenta](4.) Temp files [dim]((user temp, system temp, prefetch))
 """
     FormatCodes.print(help_text)
 
@@ -965,10 +964,10 @@ def choose_options() -> dict[str, bool]:
     """Let the user choose which cleanup options to run."""
     FormatCodes.print("\n[b](Choose what to clean:)\n")
     options = [
-        ("registry", "Registry uninstall entries + App Paths"),
-        ("envvars", "Environment variables"),
-        ("shortcuts", "Broken shortcut files (.lnk)"),
-        ("temp", "Temp files (User Temp, System Temp, Prefetch)"),
+        ("registry",  "Registry?             "),
+        ("envvars",   "Environment variables?"),
+        ("shortcuts", "Broken shortcut files?"),
+        ("temp",      "Temp files?           "),
     ]
 
     if not HAS_WIN32COM:
@@ -979,7 +978,7 @@ def choose_options() -> dict[str, bool]:
         if key == "shortcuts" and not HAS_WIN32COM:
             selected[key] = False
             continue
-        answer = Console.confirm(f"  [b]({label}?)", default_is_yes=True)
+        answer = Console.confirm(f"  {label} ", default_is_yes=True)
         selected[key] = answer
 
     return selected
@@ -994,7 +993,7 @@ def main():
     if ARGS.restore.exists:
         restore_path_str = "".join(ARGS.restore_path.values).strip()
         if not restore_path_str:
-            Console.fail("Please provide a path to the backup JSON file.\n  Usage: [green](x-clean) [blue](--restore) [cyan](path/to/backup.json)", start="\n", end="\n\n")
+            Console.fail("Please provide a path to the backup JSON file.\n  Usage: [green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)", start="\n", end="\n\n")
             return
         restore_env_vars(Path(restore_path_str))
         return
@@ -1051,23 +1050,23 @@ def main():
     shortcut_issues: list[dict[str, Any]] = []
     temp_info: dict[str, Any] = {"dirs": []}
 
-    with Throbber().context("Scanning for issues...") as update_label:
+    with Throbber().context("Scanning for issues") as update_label:
         if selected.get("registry"):
-            update_label("Scanning registry uninstall entries...")
+            update_label("Scanning registry uninstall entries")
             reg_issues = scan_registry_uninstall()
-            update_label("Scanning registry App Paths...")
+            update_label("Scanning registry App Paths")
             app_path_issues = scan_registry_app_paths()
 
         if selected.get("envvars"):
-            update_label("Scanning environment variables...")
+            update_label("Scanning environment variables")
             env_issues = scan_env_vars()
 
         if selected.get("shortcuts"):
-            update_label("Scanning shortcut files...")
+            update_label("Scanning shortcut files")
             shortcut_issues = scan_shortcuts()
 
         if selected.get("temp"):
-            update_label("Scanning temp directories...")
+            update_label("Scanning temp directories")
             temp_info = scan_temp_files()
 
     # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
@@ -1114,6 +1113,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\n[dim|br:red](✗ [i](Canceled by user.))\n")
+        FormatCodes.print("\n[dim|br:magenta](✗ [i](Canceled by user.))\n")
     except Exception as e:
         Console.fail(e, start="\n", end="\n\n")

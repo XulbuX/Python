@@ -15,15 +15,17 @@ import os
 ######################### CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED #########################
 
 PROTECTED_PROCESSES_WINDOWS = {
-    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "winlogon.exe", "dwm.exe", "explorer.exe",
-    "svchost.exe"
+    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe",
+    "lsass.exe", "winlogon.exe", "dwm.exe", "svchost.exe"
 }
 PROTECTED_PROCESSES_MACOS = {
-    "WindowServer", "Finder", "Dock", "SystemUIServer", "loginwindow", "kernel_task", "UserEventAgent", "coreaudiod", "configd"
+    "WindowServer", "Finder", "Dock", "SystemUIServer", "loginwindow",
+    "kernel_task", "UserEventAgent", "coreaudiod", "configd"
 }
 PROTECTED_PROCESSES_UNIX = {
-    "systemd", "init", "kthreadd", "rcu_sched", "migration", "watchdog", "systemd-journald", "systemd-udevd", "dbus-daemon",
-    "NetworkManager", "sshd", "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
+    "systemd", "init", "kthreadd", "rcu_sched", "migration", "watchdog",
+    "systemd-journald", "systemd-udevd", "dbus-daemon", "NetworkManager", "sshd",
+    "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
 }
 
 ARGS = Console.get_args({
@@ -35,19 +37,19 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Force Remove - Delete files/directories even if locked by processes )
+[b|in|bg:black]( Force Remove — Delete files/directories even if locked by processes )
 
-[b](Usage:) [green](x-rm) [cyan](<path>) [blue]([options])
+[b](Usage:) [green](x-rm) [br:cyan](<path>) [br:blue]([options])
 
 [b](Arguments:)
-  [cyan](path)             The path to the file or directory to delete
+  [br:cyan](path)             The path to the file or directory to delete
 
 [b](Options:)
-  [blue](-c), [blue](--confirm)    Skip confirmation prompt before deletion
+  [br:blue](-c), [br:blue](--confirm)    Skip confirmation prompt before deletion
 
 [b](Examples:)
-  [green](x-rm) [cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
-  [green](x-rm) [cyan]("/path/to/file.txt") [blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
+  [green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
+  [green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -403,7 +405,7 @@ def main():
         else:
             FormatCodes.print(
                 "\n[yellow](⚠ Not running as root. Some operations may fail.)\n"
-                "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [green](x-rm) [cyan](<path>)"
+                "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [green](x-rm) [br:cyan](<path>)"
             )
 
     if len(target_path := "".join(ARGS.rm_path.values)) == 0:

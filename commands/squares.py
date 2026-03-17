@@ -28,7 +28,7 @@ def wait_key_pressed_and_released(key: str) -> None:
 
 def main():
     FormatCodes.print(
-        "═══════════════════ [b](SQUARED NUMBERS - ALL OF THEM!) ═══════════════════\n"
+        "═══════════════════ [b](SQUARED NUMBERS — ALL OF THEM!) ═══════════════════\n"
         ">> hold SPACE to pause, while the program is writing down the numbers\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     )

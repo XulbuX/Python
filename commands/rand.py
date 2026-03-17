@@ -21,7 +21,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Random - Generate truly random numbers )
+[b|in|bg:black]( Random — Generate truly random numbers )
 
 [b](Usage:) [br:green](rand) [br:cyan](<num> <num_2>) [br:blue]([options])
 
