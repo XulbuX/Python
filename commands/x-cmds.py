@@ -34,7 +34,7 @@ The structure of the comment is similar to how the `**arg_parse_configs` kwargs 
 CONFIG: ScriptConfig = {
     "command_dir": FileSys.script_dir,
     "github_updates" : {
-        "github_repo_urls": ["https://github.com/xulbux/python/tree/main/projects/commands"],
+        "github_repo_urls": ["https://github.com/xulbux/python/tree/main/commands"],
         "check_for_new_commands": True,
         "check_for_command_updates": True,
     },
@@ -233,15 +233,23 @@ class GitHubDiffs(TypedDict):
     updated_commands: list[str]
     deleted_commands: list[str]
     download_urls: dict[str, str]
+    fetch_failed: bool
 
 
 def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     """Check for new files, updated files, and deleted files on GitHub compared to local command-directory."""
-    result: GitHubDiffs = {"new_commands": [], "updated_commands": [], "deleted_commands": [], "download_urls": {}}
+    result: GitHubDiffs = {
+        "new_commands": [],
+        "updated_commands": [],
+        "deleted_commands": [],
+        "download_urls": {},
+        "fetch_failed": False,
+    }
 
     try:
         # MERGE FILES FROM ALL GITHUB REPO URLS
         github_files: dict[str, dict[str, str]] = {}
+        successful_fetches = 0
 
         for repo_url in CONFIG["github_updates"]["github_repo_urls"]:
             try:
@@ -269,8 +277,15 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
                             "download_url": item["download_url"],
                             "sha": item["sha"],
                         }
+
+                successful_fetches += 1
+
             except Exception:
                 pass  # SKIP REPOS THAT CAN'T BE ACCESSED
+        
+        if successful_fetches == 0 and len(CONFIG["github_updates"]["github_repo_urls"]) > 0:
+            result["fetch_failed"] = True
+            return result  # BAIL OUT TO PREVENT FALSE DELETIONS WHEN GITHUB API REQUESTS FAIL
 
         # CREATE MAPPING FROM CMD NAME TO ACTUAL FILENAME FOR LOCAL FILES
         local_file_map = {Path(f).stem: f for f in local_files}
@@ -326,6 +341,12 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
 
 
 def github_diffs_str(github_diffs: GitHubDiffs) -> str:
+    if github_diffs.get("fetch_failed", False):
+        return (
+            "[br:red]✗ Failed to fetch command updates from GitHub.\n"
+            "  [dim]Check your internet connection or configuration.[_]\n\n"
+        )
+
     num_new_cmds = len(github_diffs["new_commands"])
     num_cmd_updates = len(github_diffs["updated_commands"])
     num_deleted_cmds = len(github_diffs["deleted_commands"])
@@ -343,6 +364,8 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
         title_parts.append(f"{num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}")
     if num_cmd_updates:
         title_parts.append(f"{num_cmd_updates} command update{'' if num_cmd_updates == 1 else 's'}")
+    if num_deleted_cmds:
+        title_parts.append(f"{num_deleted_cmds} command deletion{'' if num_deleted_cmds == 1 else 's'}")
 
     if len(title_parts) == 1:
         title = f"There {'is' if total_changes == 1 else 'are'} {title_parts[0]} available."

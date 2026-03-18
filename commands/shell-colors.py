@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+#[x-cmds]: UPDATE
+"""Show the foreground and background colors
+from the current shell color scheme."""
 from xulbux import FormatCodes
 
 
