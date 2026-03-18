@@ -530,9 +530,9 @@ x-modules --directory="./src"
 x-modules --directory="./src" -r
 ```
 
-To only get the list of modules without any additional info, use the `-nf` `--no-formatting` option:
+To only get the list of modules without any additional info, use the `-l` `--list` option:
 ```shell
-x-modules --no-formatting
+x-modules --list
 ```
 
 You can also output the info as a JSON object with the `-j` `--json` option:
