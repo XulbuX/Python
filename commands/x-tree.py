@@ -14,6 +14,7 @@ import re
 
 
 ARGS = Console.get_args({
+    "base_dir": "before",
     "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
     "no_progress": {"-n", "-np", "--no-progress"},
     "use_all_defaults": {"-d", "--default"},
@@ -34,10 +35,13 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Tree Generator — Quickly generate advanced and good looking directory trees )
 
-[b](Usage:) [br:green](x-tree) [br:blue]([options])
+[b](Usage:) [br:green](x-tree) [br:cyan](<base_dir>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](base_dir)             Base directory to generate tree from [dim]((default: CWD))
 
 [b](Options:)
-  [br:blue](-i), [br:blue](--ignore-dirs)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [cyan](|)))
+  [br:blue](-i), [br:blue](--ignore-dirs)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [br:cyan](|)))
   [br:blue](-n), [br:blue](--no-progress)    Disable progress display during tree generation
   [br:blue](-d), [br:blue](--default)        Use all default settings without prompts
 
@@ -836,7 +840,11 @@ def main():
         print_help()
         return
 
-    tree = Tree(Path.cwd())
+    tree = Tree(
+        Path(ARGS.base_dir.values[0]) \
+        if ARGS.base_dir.values
+        else Path.cwd()
+    )
 
     ignore_dirs = DEFAULT["ignore_dirs"]
     auto_ignore = DEFAULT["auto_ignore"]
