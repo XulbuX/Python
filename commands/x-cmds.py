@@ -7,7 +7,7 @@ from typing import TypedDict, Optional, Literal, cast
 from xulbux.base.types import ArgParseConfigs
 from xulbux.console import Throbber
 from xulbux.regex import LazyRegex
-from xulbux import FormatCodes, Console, FileSys, String, System, Regex
+from xulbux import FormatCodes, Console, FileSys, String, System
 import requests
 import hashlib
 import os
@@ -61,7 +61,7 @@ PATTERNS = LazyRegex(
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
-    get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?" + Regex.brackets("{", "}", is_group=True) + r"(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
+    get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
     arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
 )
 
@@ -177,7 +177,6 @@ def get_commands_str(python_files: set[str]) -> str:
     i, cmds = 0, ""
 
     for i, file in enumerate(sorted(python_files), 1):
-        #! print("\n\n")
         cmd_name = Path(file).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
@@ -190,8 +189,6 @@ def get_commands_str(python_files: set[str]) -> str:
 
             sys_argv_comments = PATTERNS.sys_argv.findall(content)
             get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
-
-            #! print(cmd_name, sys_argv_comments, PATTERNS.get_args.findall(content), sep="\n", end="\n\n")
 
         arg_parse_configs: ArgParseConfigs = {}
 
@@ -208,7 +205,6 @@ def get_commands_str(python_files: set[str]) -> str:
 
                 # PARSE THE FUNCTION ARGUMENTS
                 for arg in PATTERNS.arg.finditer(func_args):
-                    #! print(arg.groups())
                     if (key := arg.group(2)) and (val := arg.group(3)):
                         arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
                 cmds += arguments_desc(arg_parse_configs)
