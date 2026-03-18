@@ -400,7 +400,7 @@ def main():
 
                 with Throbber(
                     throbber_format=["[dim|br:blue]({a})", "[br:blue]({l})"],
-                    frames=("⣾", "⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽"),
+                    frames=("⠴", "⠦", "⠖", "⠲"),
                     interval=0.1,
                 ).context() as update_label:
                     update_label("Generating maze")

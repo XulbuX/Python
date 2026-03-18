@@ -1,12 +1,11 @@
-build
 colorspacious
 keyboard
 netifaces
 numpy
 psutil
 pyperclip
+pywin32; platform_system=="Windows"
 qrcode
 requests
 sympy
-twine
 xulbux

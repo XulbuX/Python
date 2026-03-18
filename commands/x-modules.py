@@ -21,29 +21,6 @@ ARGS = Console.get_args({
     "help": {"-h", "--help"},
 })
 
-# PYTHON STANDARD LIBRARY MODULES (Python 3.x)
-STDLIB_MODULES = {
-    "abc", "aifc", "argparse", "array", "ast", "asynchat", "asyncio", "asyncore", "atexit", "audioop", "base64", "bdb",
-    "binascii", "binhex", "bisect", "builtins", "bz2", "calendar", "cgi", "cgitb", "chunk", "cmath", "cmd", "code", "codecs",
-    "codeop", "collections", "colorsys", "compileall", "concurrent", "configparser", "contextlib", "contextvars", "copy",
-    "copyreg", "cProfile", "crypt", "csv", "ctypes", "curses", "dataclasses", "datetime", "dbm", "decimal", "difflib", "dis",
-    "distutils", "doctest", "email", "encodings", "enum", "errno", "faulthandler", "fcntl", "filecmp", "fileinput", "fnmatch",
-    "formatter", "fractions", "ftplib", "functools", "gc", "getopt", "getpass", "gettext", "glob", "graphlib", "grp", "gzip",
-    "hashlib", "heapq", "hmac", "html", "http", "imaplib", "imghdr", "imp", "importlib", "inspect", "io", "ipaddress",
-    "itertools", "json", "keyword", "lib2to3", "linecache", "locale", "logging", "lzma", "mailbox", "mailcap", "marshal",
-    "math", "mimetypes", "mmap", "modulefinder", "msilib", "msvcrt", "multiprocessing", "netrc", "nis", "nntplib", "numbers",
-    "operator", "optparse", "os", "ossaudiodev", "parser", "pathlib", "pdb", "pickle", "pickletools", "pipes", "pkgutil",
-    "platform", "plistlib", "poplib", "posix", "posixpath", "pprint", "profile", "pstats", "pty", "pwd", "py_compile",
-    "pyclbr", "pydoc", "queue", "quopri", "random", "re", "readline", "reprlib", "resource", "rlcompleter", "runpy", "sched",
-    "secrets", "select", "selectors", "shelve", "shlex", "shutil", "signal", "site", "smtpd", "smtplib", "sndhdr", "socket",
-    "socketserver", "spwd", "sqlite3", "ssl", "stat", "statistics", "string", "stringprep", "struct", "subprocess", "sunau",
-    "symbol", "symtable", "sys", "sysconfig", "syslog", "tabnanny", "tarfile", "telnetlib", "tempfile", "termios", "test",
-    "textwrap", "threading", "time", "timeit", "tkinter", "token", "tokenize", "tomllib", "trace", "traceback", "tracemalloc",
-    "tty", "turtle", "turtledemo", "types", "typing", "unicodedata", "unittest", "urllib", "uu", "uuid", "venv", "warnings",
-    "wave", "weakref", "webbrowser", "winreg", "winsound", "wsgiref", "xdrlib", "xml", "xmlrpc", "zipapp", "zipfile",
-    "zipimport", "zlib", "_thread"
-}
-
 
 def print_help():
     help_text = """\
@@ -116,7 +93,7 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
             for full_path in dir_path.iterdir():
                 if full_path.is_file() and full_path.suffix in (".py", ".pyw"):
                     for module in extract_imports(full_path):
-                        if external_only and module in STDLIB_MODULES:
+                        if external_only and module in set(sys.stdlib_module_names):
                             continue
                         if module not in module_usage:
                             module_usage[module] = []
@@ -178,7 +155,12 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     failed_modules: list[str] = []
 
     for module in sorted(modules):
-        with Throbber(label=f"Installing [b]({module})", throbber_format=["[br:cyan]({l} [b]({a})) "]).context():
+        with Throbber(
+            label=f"Installing [b]({module})",
+            throbber_format=["[dim|br:cyan]({a})", "[br:cyan]({l})"],
+            frames=("⠴", "⠦", "⠖", "⠲"),
+            interval=0.1,
+        ).context():
             try:
                 result = subprocess.run(
                     [sys.executable, "-m", "pip", "install", "--upgrade", module],
@@ -190,20 +172,20 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
                 if result.returncode == 0:
                     FormatCodes.print(f"[br:green](✓ Installed [b]({module}))")
                 else:
-                    FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[red]│ " + "\n[red]│ ".join(result.stderr.strip().splitlines()) + "[_]")
+                    FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in result.stderr.splitlines()) + "[_]")
                     failed_modules.append(module)
             except subprocess.TimeoutExpired:
                 FormatCodes.print(f"[br:red](✗ Timed out installing [b]({module}))")
                 failed_modules.append(module)
-            except Exception as e:
-                FormatCodes.print(f"[br:red](✗ Error installing [b]({module}):)\n[red]│ " + "\n[red]│ ".join(str(e).splitlines()) + "[_]")
+            except Exception as err:
+                FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in str(err).splitlines()) + "[_]")
                 failed_modules.append(module)
 
     print()
     if failed_modules:
-        FormatCodes.print(f"[b|br:yellow](Failed to install {len(failed_modules)} module{'s' if len(failed_modules) != 1 else ''}:)")
+        FormatCodes.print(f"[b|yellow](⚠ Failed to install {len(failed_modules)} module{'' if len(failed_modules) == 1 else 's'}:)")
         for module in failed_modules:
-            FormatCodes.print(f"[yellow]([dim]( • ){module})")
+            FormatCodes.print(f"[br:yellow]([dim](•) {module})")
         print()
     else:
         FormatCodes.print("[b|br:green](All modules installed successfully!)\n")

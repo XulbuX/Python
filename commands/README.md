@@ -60,7 +60,7 @@ Before the scripts can run, you need to install their required Python packages. 
    ```
 3. Install the dependencies using pip:
    ```shell
-   pip install --upgrade -r "requirements.txt"
+   py -m pip install --upgrade -r "requirements.txt"
    ```
 
 <br>
@@ -354,12 +354,7 @@ rand --help
 
 ### `shell-colors`
 
-This command will display all the standard shell colors in your console using a simple sample text.
-
-To use a custom sample text, use the `-t` `--text` option:
-```shell
-shell-colors --text="Hello, world!"
-```
+This command will show the foreground and background colors from the current shell color scheme.
 
 <br>
 
@@ -429,7 +424,16 @@ x-calc --help
 
 <br>
 
-<span id="x-cmds" /><span id="x-commands" />
+### `x-clean`
+
+This command lets you clean broken registry entries, environment variables, shortcuts and temp files.
+
+To restore a backup of the environment variables, created before every command run, use the `-r` `--restore` option:
+```shell
+x-clean --restore "path/to/env_vars_backup.json"
+```
+
+<br>
 
 ### `x-cmds`
 
