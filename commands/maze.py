@@ -5,6 +5,7 @@ Controls and options are shown on startup."""
 from collections import deque
 from pathlib import Path
 from typing import Optional, cast
+from xulbux.console import Throbber
 from xulbux import FormatCodes, Console, FileSys
 from heapq import heappush, heappop
 import keyboard
@@ -13,10 +14,6 @@ import array
 import math
 import time
 import sys
-
-
-class MazeTooLargeError(Exception):
-    ...
 
 
 class Maze:
@@ -327,9 +324,6 @@ class Maze:
                         self._play_finish_animation()
                     wait = 0.05
                     break
-                elif key in ("esc", "q"):
-                    print("\x1bc\x1b[0m", end="", flush=True)
-                    raise KeyboardInterrupt
                 elif key == "h":
                     self.show_solution = not self.show_solution
                     wait = 0.2
@@ -345,74 +339,108 @@ def main():
     def smart_split(s: str, char: str = " ") -> list[str]:
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())
 
-    Console.log_box_filled(
-        " [b](WASD ⏶⏴⏷⏵)  : move the player",
-        "     [b](H)      : toggle solution",
-        "     [b](F)      : finish maze",
-        "   [b](ESC Q)    : exit game",
-        "   [b](ENTER)    : start game normal",
-        "[b](SHIFT+ENTER) : start game ASCII",
-        "   [b](SPACE)    : generate to file",
+    Console.log_box_bordered(
+        "[br:blue] [b](WASD ⏶⏴⏷⏵)  [blue]:[br:blue] move the player",
+        "[br:blue]     [b](H)      [blue]:[br:blue] toggle solution",
+        "[br:blue]     [b](F)      [blue]:[br:blue] finish maze",
+        "[br:blue]   [b](CTRL+C)   [blue]:[br:blue] exit game",
+        "{hr}"
+        "[br:blue]   [b](ENTER)    [blue]:[br:blue] start game normal",
+        "[br:blue][b](SHIFT+ENTER) [blue]:[br:blue] start game ASCII",
+        "[br:blue]   [b](SPACE)    [blue]:[br:blue] generate to file",
+        border_style="dim|br:blue",
         start="\n",
         end="\n\n",
     )
 
     while True:
         event = keyboard.read_event()
+
         if event.event_type == "down":
+
             if event.name == "enter":
                 ascii_mode = keyboard.is_pressed("shift")
-                while True:
-                    Maze(
-                        Console.w // 2,
-                        Console.h,
-                        render_ascii=ascii_mode,
-                    ).play()
+
+                try:
+                    while True:
+                        Maze(
+                            Console.w // 2,
+                            Console.h,
+                            render_ascii=ascii_mode,
+                        ).play()
+                except KeyboardInterrupt:
+                    print("\x1bc\x1b[0m", end="", flush=True)
+                    raise SystemExit(0)
+
             elif event.name == "space":
                 w, h = (
-                    int(val.strip()) for val in smart_split(
-                        FormatCodes.input("[br:green]What dimensions should the maze be? [dim](([i](25x25)))[_]\n ⤷ ").strip()
-                        or "25x25",
+                    int(num.strip()) for num in smart_split(
+                        FormatCodes.input(
+                            "[br:cyan]What dimensions should the maze be? [dim](([i](25x25)))[_]\n"
+                            " [dim](⤷) "
+                        ).strip() or "25x25",
                         "x",
                     )
                 )
+                if w < 7 or h < 7:
+                    FormatCodes.print("\n [br:red]([dim](✗) Maze width/height can't be smaller than [b](7))\n")
+                    raise SystemExit(1)
+
                 dir_path = Path(input_path) if len(input_path := FormatCodes.input(
-                    "[br:green]In which directory should the maze files be saved? [dim](([i](script directory)))[_]\n ⤷ "
+                    "[br:cyan]In which directory should the maze files be saved? [dim](([i](script directory)))[_]\n"
+                    " [dim](⤷) "
                 ).strip()) > 0 else FileSys.script_dir
+
                 files = (
                     dir_path / f"maze_{w}x{h}.txt",
                     dir_path / f"maze_{w}x{h}_solution.txt",
                 )
-                FormatCodes.print("\n[dim](generating maze...       )", end="")
-                maze = Maze(w, h, render_ascii=True)
-                info = (
-                    f"═════ MAZE [{w}×{h}] TILES ═════\n" + f"│ START = {maze.rendered_tiles[maze.player_byte]}\n"
-                    + f"│ GOAL  = {maze.rendered_tiles[maze.goal_byte]}\n\n"
+
+                print()
+
+                with Throbber(
+                    throbber_format=["[dim|br:blue]({a})", "[br:blue]({l})"],
+                    frames=("⣾", "⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽"),
+                    interval=0.1,
+                ).context() as update_label:
+                    update_label("Generating maze")
+                    maze = Maze(w, h, render_ascii=True)
+                    info = (
+                        f"═════ MAZE [{w}×{h}] TILES ═════\n" + f"│ START = {maze.rendered_tiles[maze.player_byte]}\n"
+                        + f"│ GOAL  = {maze.rendered_tiles[maze.goal_byte]}\n\n"
+                    )
+
+                    update_label("Rendering maze")
+                    maze.show_solution = False
+                    content = info + (maze.render() or "")
+
+                    update_label("Writing maze file")
+                    with open(files[0], "w", encoding="utf-8") as f:
+                        f.write(content)
+
+                    update_label("Rendering solution")
+                    maze.show_solution = True
+                    content = info + (maze.render() or "")
+
+                    update_label("Writing solution file")
+                    with open(files[1], "w", encoding="utf-8") as f:
+                        f.write(content)
+
+                    update_label("Finalizing")
+                    sizes = [
+                        f"(" + next(
+                            f"{Path(f).stat().st_size/1024**i:.1f} {u}"
+                            for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
+                        ) + ")" for f in files
+                    ]
+                
+                Console.log_box_bordered(
+                    f"[br:blue]Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
+                    f"[br:blue]Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
+                    border_style="dim|br:blue",
+                    end="\n\n",
                 )
-                FormatCodes.print("\r[dim](rendering maze...        )", end="")
-                maze.show_solution = False
-                content = info + (maze.render() or "")
-                FormatCodes.print("\r[dim](writing maze file...     )", end="")
-                with open(files[0], "w", encoding="utf-8") as f:
-                    f.write(content)
-                FormatCodes.print("\r[dim](rendering solution...    )", end="")
-                maze.show_solution = True
-                content = info + (maze.render() or "")
-                FormatCodes.print("\r[dim](writing solution file... )", end="")
-                with open(files[1], "w", encoding="utf-8") as f:
-                    f.write(content)
-                FormatCodes.print("\r[dim](finalizing...            )", end="")
-                sizes = [
-                    f"(" + next(
-                        f"{Path(f).stat().st_size/1024**i:.1f} {u}"
-                        for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
-                    ) + ")" for f in files
-                ]
-                Console.log_box_filled(
-                    f"Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
-                    f"Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
-                    start="\r",
-                )
+
                 break
 
 
