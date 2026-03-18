@@ -114,12 +114,12 @@ def arguments_desc(arg_parse_configs: Optional[ArgParseConfigs]) -> str:
 
     for key, val in arg_parse_configs.items():
         if len(val) < 1:
-            arg_descs.append(f"non-flagged argument at position {keys.index(key) + 1}")
+            arg_descs.append(f"non-flagged argument at position [b]({keys.index(key) + 1})")
         elif isinstance(val, str):
             if val.lower() == "before":
-                arg_descs.append("all non flagged arguments before first flag")
+                arg_descs.append("all non flagged arguments [b](before) first flag")
             elif val.lower() == "after":
-                arg_descs.append("all non flagged arguments after last flag's value")
+                arg_descs.append("all non flagged arguments [b](after) last flag's value")
             else:
                 arg_descs.append(val)
         elif isinstance(val, dict) and "flags" in val.keys():
