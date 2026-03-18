@@ -34,7 +34,7 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Tree Generator — Quickly generate advanced and good looking directory trees )
 
-[b](Usage:) [green](x-tree) [br:blue]([options])
+[b](Usage:) [br:green](x-tree) [br:blue]([options])
 
 [b](Options:)
   [br:blue](-i), [br:blue](--ignore-dirs)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [cyan](|)))
@@ -42,9 +42,9 @@ def print_help():
   [br:blue](-d), [br:blue](--default)        Use all default settings without prompts
 
 [b](Examples:)
-  [green](x-tree) [br:blue](-i "/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
-  [green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
-  [green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
+  [br:green](x-tree) [br:blue](-i "/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
+  [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
+  [br:green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
 """
     FormatCodes.print(help_text)
 

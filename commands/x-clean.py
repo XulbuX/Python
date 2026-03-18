@@ -940,14 +940,14 @@ def print_help():
     help_text = """
 [b|in|bg:black]( System Cleaner — Clean broken registry entries, env vars, shortcuts & more )
 
-[b](Usage:) [green](x-clean) [br:blue]([options])
+[b](Usage:) [br:green](x-clean) [br:blue]([options])
 
 [b](Options:)
   [br:blue](-h), [br:blue](--help)       Show this help message
   [br:blue](-r), [br:blue](--restore)    Restore env vars from a backup JSON file
 
 [b](Restore example:)
-  [green](x-clean) [br:blue](--restore) [br:cyan]("path/to/env_vars_backup.json")
+  [br:green](x-clean) [br:blue](--restore) [br:cyan]("path/to/env_vars_backup.json")
 
 [b](What it cleans:)
   [magenta](1.) Registry [dim]((uninstall entries, app paths))
@@ -993,7 +993,7 @@ def main():
     if ARGS.restore.exists:
         restore_path_str = "".join(ARGS.restore_path.values).strip()
         if not restore_path_str:
-            Console.fail("Please provide a path to the backup JSON file.\n  Usage: [green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)", start="\n", end="\n\n")
+            Console.fail("Please provide a path to the backup JSON file.\n  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)", start="\n", end="\n\n")
             return
         restore_env_vars(Path(restore_path_str))
         return

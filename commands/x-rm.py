@@ -39,7 +39,7 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Force Remove — Delete files/directories even if locked by processes )
 
-[b](Usage:) [green](x-rm) [br:cyan](<path>) [br:blue]([options])
+[b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
 
 [b](Arguments:)
   [br:cyan](path)             The path to the file or directory to delete
@@ -48,8 +48,8 @@ def print_help():
   [br:blue](-c), [br:blue](--confirm)    Skip confirmation prompt before deletion
 
 [b](Examples:)
-  [green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
-  [green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
+  [br:green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
+  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -405,7 +405,7 @@ def main():
         else:
             FormatCodes.print(
                 "\n[yellow](⚠ Not running as root. Some operations may fail.)\n"
-                "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [green](x-rm) [br:cyan](<path>)"
+                "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
             )
 
     if len(target_path := "".join(ARGS.rm_path.values)) == 0:
