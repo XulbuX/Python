@@ -22,6 +22,7 @@ class Maze:
         self,
         width: int,
         height: int,
+        /, *,
         bg: str = "0",
         wall: str = "1",
         start: str = "2",
@@ -41,11 +42,11 @@ class Maze:
         # RENDER
         self.render_opts: dict[str, str | int | tuple[str, str]] = ({
             "bg": " ",
-            "wall": "█",
+            "wall": "░",
             "start": " ",
             "goal": "▞",
-            "player": "▒",
-            "solution": "░",
+            "player": "█",
+            "solution": "▒",
             "stretch_w": 2,
         } if render_ascii else {
             "bg": " ",
@@ -88,6 +89,7 @@ class Maze:
     def _find_start_pos(
         self,
         maze: list[bytearray],
+        /, *,
         center_y: int,
         center_x: int,
     ) -> tuple[int, int]:
@@ -96,20 +98,25 @@ class Maze:
         furthest_point = (center_y, center_x)
         max_dist = 0
         height, width = len(maze), len(maze[0])
+
         while queue:
             y, x, dist = queue.popleft()
+
             if dist > max_dist and maze[y][x] == self.bg_byte:
                 max_dist = dist
                 furthest_point = (y, x)
+
             for dy, dx in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 new_y, new_x = y + dy, x + dx
                 pos = (new_y, new_x)
+
                 if (pos not in visited and 0 <= new_y < height and 0 <= new_x < width and maze[new_y][new_x] == self.bg_byte):
                     visited.add(pos)
                     queue.append((new_y, new_x, dist + 1))
+
         return furthest_point
 
-    def _trim_borders(self, maze: list[bytearray]) -> list[bytearray]:
+    def _trim_borders(self, maze: list[bytearray], /) -> list[bytearray]:
         while True:
             if not any(change for change in (
                     all(row[0] == self.wall_byte for row in maze),
@@ -128,7 +135,7 @@ class Maze:
                 maze = maze[:-1]
         return maze
 
-    def _add_borders(self, maze: list[bytearray]) -> list[bytearray]:
+    def _add_borders(self, maze: list[bytearray], /) -> list[bytearray]:
         border = bytearray([self.wall_byte] * (len(maze[0]) + 2))
         return ([border] + [bytearray([self.wall_byte]) + row + bytearray([self.wall_byte]) for row in maze] + [border])
 
@@ -143,39 +150,47 @@ class Maze:
 
         stack = [(center_x, center_y)]
         maze[idx(center_x, center_y)] = self.bg_byte
+
         while stack:
             x, y = stack[-1]
             directions = [(0, 2), (2, 0), (0, -2), (-2, 0)]
             random.shuffle(directions)
             found_path = False
+
             for dx, dy in directions:
                 new_x, new_y = x + dx, y + dy
+
                 if (0 <= new_x < width and 0 <= new_y < height and maze[idx(new_x, new_y)] == self.wall_byte):
                     maze[idx(x + dx // 2, y + dy // 2)] = self.bg_byte
                     maze[idx(new_x, new_y)] = self.bg_byte
                     stack.append((new_x, new_y))
                     found_path = True
                     break
+
             if not found_path:
                 stack.pop()
+
         maze_2d: list[bytearray] = []
+
         for y in range(height):
             start_idx = y * width
             row = bytearray(maze[start_idx:start_idx + width])
             maze_2d.append(row)
-        start_pos = self._find_start_pos(maze_2d, center_y, center_x)
+
+        start_pos = self._find_start_pos(maze_2d, center_y=center_y, center_x=center_x)
         maze_2d[center_y][center_x] = self.goal_byte
         maze_2d[start_pos[0]][start_pos[1]] = self.start_byte
         final_maze = self._trim_borders(maze_2d)
+
         return self._add_borders(final_maze)
 
-    def _render_char(self, value: str | tuple[str, str]) -> str:
+    def _render_char(self, value: str | tuple[str, str], /) -> str:
         if isinstance(value, str):
             return value * cast(int, self.render_opts["stretch_w"])
         else:
             return f"{value[1]}({value[0] * cast(int, self.render_opts["stretch_w"])})"
 
-    def _get_pos(self, tile: int) -> list[int]:
+    def _get_pos(self, tile: int, /) -> list[int]:
         for y in range(self.height):
             try:
                 x = self.maze[y].index(tile)
@@ -184,7 +199,7 @@ class Maze:
                 continue
         return [0, 0]
 
-    def _move_player(self, dy: int, dx: int) -> None:
+    def _move_player(self, dy: int, dx: int, /) -> None:
         new_y = self.player_pos[0] + dy
         new_x = self.player_pos[1] + dx
         if self.maze[new_y][new_x] == self.wall_byte:
@@ -194,11 +209,7 @@ class Maze:
         self.under_player = self.maze[new_y][new_x]
         self.maze[new_y][new_x] = self.player_byte
 
-    def _find_path(
-        self,
-        start: int = ord("2"),
-        goal: int = ord("3"),
-    ) -> set[tuple[int, int]]:
+    def _find_path(self, start: int = ord("2"), goal: int = ord("3"), /) -> set[tuple[int, int]]:
         start_pos = goal_pos = None
         positions = [(y, x) for y, row in enumerate(self.maze) for x, cell in enumerate(row) if cell in (start, goal)]
         start_pos = next(pos for pos in positions if self.maze[pos[0]][pos[1]] == start)
@@ -206,16 +217,19 @@ class Maze:
         height, width = len(self.maze), len(self.maze[0])
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
-        def manhattan_distance(pos1: tuple[int, int]) -> int:
+        def manhattan_distance(pos1: tuple[int, int], /) -> int:
             return abs(pos1[0] - goal_pos[0]) + abs(pos1[1] - goal_pos[1])
 
         open_set: list[tuple[int, tuple[int, int]]] = []
         heappush(open_set, (0, start_pos))
+
         came_from: dict[tuple[int, int], tuple[int, int]] = {}
         g_score = {start_pos: 0}
         f_score = {start_pos: manhattan_distance(start_pos)}
+
         while open_set:
             current = heappop(open_set)[1]
+
             if current == goal_pos:
                 path: list[tuple[int, int]] = []
                 while current in came_from:
@@ -223,24 +237,30 @@ class Maze:
                     current = came_from[current]
                 path.append(start_pos)
                 return set(path)
+
             current_g = g_score[current]
             y, x = current
+
             for dy, dx in directions:
                 ny, nx = y + dy, x + dx
+
                 if not (0 <= ny < height and 0 <= nx < width and self.maze[ny][nx] != self.wall_byte):
                     continue
+
                 neighbor = (ny, nx)
                 tentative_g_score = current_g + 1
+
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
                     f_value = tentative_g_score + manhattan_distance(neighbor)
                     f_score[neighbor] = f_value
                     heappush(open_set, (f_value, neighbor))
+
         return set()
 
     def _play_finish_animation(
-        self,
+        self, /, *,
         duration: float = 4.0,
         noise: float = 30.0,
         fps: int = 24,
@@ -255,46 +275,59 @@ class Maze:
         min_noise, max_noise = 1 - noise_range, 1 + noise_range
         width, height = len(self.maze[0]), len(self.maze)
         max_distance = math.sqrt(height**2 + width**2)
+
         for y in range(height):
             for x in range(width):
                 noise_map[(y, x)] = random.uniform(min_noise, max_noise)
+
         frame_delay = 1.0 / fps
+
         while time.time() - start_time < duration:
             elapsed = time.time() - start_time
             progress = elapsed / duration
             current_radius = progress * max_distance * 1.2
+
             for y in range(height):
                 for x in range(width):
                     dist = math.sqrt((y - self.goal_pos[0])**2 + (x - self.goal_pos[1])**2)
                     if dist * noise_map.get((y, x), 1.0) < current_radius:
                         self.maze[y][x] = self.bg_byte
-            self.render(True)
+
+            self.render(output_to_console=True)
             time.sleep(frame_delay)
+
         for y in range(height):
             for x in range(width):
                 self.maze[y][x] = self.bg_byte
-        self.render(True)
 
-    def render(self, output_to_console: bool = False, show_solution: bool = False) -> Optional[str]:
+        self.render(output_to_console=True)
+
+    def render(self, /, *, output_to_console: bool = False, show_solution: bool = False) -> Optional[str]:
         if self.show_solution or show_solution:
             solution_path = self._find_path(self.player_byte, self.goal_byte)
         else:
             solution_path: set[tuple[int, int]] = set()
+
         maze_lines = ()
+
         for y, row in enumerate(self.maze):
             line = ""
+
             for x, c in enumerate(row):
                 if (self.show_solution or show_solution) and ((y, x) in solution_path and c == self.bg_byte):
                     line += self.rendered_tiles.get(self.solution_byte, "")
                 else:
                     line += self.rendered_tiles.get(c, self.rendered_tiles.get(self.bg_byte, ""))
+
             maze_lines += (line, )
+
         if output_to_console:
             if self.render_ascii:
                 sys.stdout.write("\033[H" + "\n".join(maze_lines))
                 sys.stdout.flush()
             else:
                 FormatCodes.print("\033[H" + "\n".join(maze_lines), end="")
+
         else:
             return "\n".join(maze_lines)
 
@@ -310,13 +343,16 @@ class Maze:
             "d": (0, 1),
         }
         wait = 0
+
         while not self.goal_reached:
-            self.render(True)
+            self.render(output_to_console=True)
             if wait > 0:
                 time.sleep(wait)
+
             while not self.goal_reached:
                 event = keyboard.read_event()
                 key = event.scan_code if event.scan_code in directions else event.name
+
                 if key in directions:
                     self._move_player(*directions[key])
                     if self.player_pos == self.goal_pos:
@@ -324,10 +360,12 @@ class Maze:
                         self._play_finish_animation()
                     wait = 0.05
                     break
+
                 elif key == "h":
                     self.show_solution = not self.show_solution
                     wait = 0.2
                     break
+
                 elif key == "f":
                     self.goal_reached, self.show_solution = True, False
                     self._play_finish_animation()
@@ -336,7 +374,7 @@ class Maze:
 
 def main():
 
-    def smart_split(s: str, char: str = " ") -> list[str]:
+    def smart_split(s: str, char: str = " ", /) -> list[str]:
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())
 
     Console.log_box_bordered(
@@ -346,7 +384,7 @@ def main():
         "[br:blue]   [b](CTRL+C)   [blue]:[br:blue] exit game",
         "{hr}"
         "[br:blue]   [b](ENTER)    [blue]:[br:blue] start game normal",
-        "[br:blue][b](SHIFT+ENTER) [blue]:[br:blue] start game ASCII",
+        "[br:blue] [b](CTRL+ENTER) [blue]:[br:blue] start game ASCII",
         "[br:blue]   [b](SPACE)    [blue]:[br:blue] generate to file",
         border_style="dim|br:blue",
         start="\n",
@@ -354,94 +392,92 @@ def main():
     )
 
     while True:
-        event = keyboard.read_event()
+        key = keyboard.read_key()
 
-        if event.event_type == "down":
+        if key == "enter":
+            ascii_mode = keyboard.is_pressed("ctrl")
 
-            if event.name == "enter":
-                ascii_mode = keyboard.is_pressed("shift")
+            try:
+                while True:
+                    Maze(
+                        Console.w // 2,
+                        Console.h,
+                        render_ascii=ascii_mode,
+                    ).play()
+            except KeyboardInterrupt:
+                print("\x1bc\x1b[0m", end="", flush=True)
+                raise SystemExit(0)
 
-                try:
-                    while True:
-                        Maze(
-                            Console.w // 2,
-                            Console.h,
-                            render_ascii=ascii_mode,
-                        ).play()
-                except KeyboardInterrupt:
-                    print("\x1bc\x1b[0m", end="", flush=True)
-                    raise SystemExit(0)
-
-            elif event.name == "space":
-                w, h = (
-                    int(num.strip()) for num in smart_split(
-                        FormatCodes.input(
-                            "[br:cyan]What dimensions should the maze be? [dim](([i](25x25)))[_]\n"
-                            " [dim](⤷) "
-                        ).strip() or "25x25",
-                        "x",
-                    )
+        elif key == "space":
+            w, h = (
+                int(num.strip()) for num in smart_split(
+                    FormatCodes.input(
+                        "[br:cyan]What dimensions should the maze be? [dim](([i](25x25)))[_]\n"
+                        " [dim](⤷) "
+                    ).strip() or "25x25",
+                    "x",
                 )
-                if w < 7 or h < 7:
-                    FormatCodes.print("\n [br:red]([dim](✗) Maze width/height can't be smaller than [b](7))\n")
-                    raise SystemExit(1)
+            )
+            if w < 7 or h < 7:
+                FormatCodes.print("\n [br:red]([dim](✗) Maze width/height can't be smaller than [b](7))\n")
+                raise SystemExit(1)
 
-                dir_path = Path(input_path) if len(input_path := FormatCodes.input(
-                    "[br:cyan]In which directory should the maze files be saved? [dim](([i](script directory)))[_]\n"
-                    " [dim](⤷) "
-                ).strip()) > 0 else FileSys.script_dir
+            dir_path = Path(input_path) if len(input_path := FormatCodes.input(
+                "[br:cyan]In which directory should the maze files be saved? [dim](([i](script directory)))[_]\n"
+                " [dim](⤷) "
+            ).strip()) > 0 else FileSys.script_dir
 
-                files = (
-                    dir_path / f"maze_{w}x{h}.txt",
-                    dir_path / f"maze_{w}x{h}_solution.txt",
-                )
+            files = (
+                dir_path / f"maze_{w}x{h}.txt",
+                dir_path / f"maze_{w}x{h}_solution.txt",
+            )
 
-                print()
+            print()
 
-                with Throbber(
-                    throbber_format=["[dim|br:blue]({a})", "[br:blue]({l})"],
-                    frames=("⠴", "⠦", "⠖", "⠲"),
-                    interval=0.1,
-                ).context() as update_label:
-                    update_label("Generating maze")
-                    maze = Maze(w, h, render_ascii=True)
-                    info = (
-                        f"═════ MAZE [{w}×{h}] TILES ═════\n" + f"│ START = {maze.rendered_tiles[maze.player_byte]}\n"
-                        + f"│ GOAL  = {maze.rendered_tiles[maze.goal_byte]}\n\n"
-                    )
-
-                    update_label("Rendering maze")
-                    maze.show_solution = False
-                    content = info + (maze.render() or "")
-
-                    update_label("Writing maze file")
-                    with open(files[0], "w", encoding="utf-8") as f:
-                        f.write(content)
-
-                    update_label("Rendering solution")
-                    maze.show_solution = True
-                    content = info + (maze.render() or "")
-
-                    update_label("Writing solution file")
-                    with open(files[1], "w", encoding="utf-8") as f:
-                        f.write(content)
-
-                    update_label("Finalizing")
-                    sizes = [
-                        f"(" + next(
-                            f"{Path(f).stat().st_size/1024**i:.1f} {u}"
-                            for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
-                        ) + ")" for f in files
-                    ]
-                
-                Console.log_box_bordered(
-                    f"[br:blue]Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
-                    f"[br:blue]Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
-                    border_style="dim|br:blue",
-                    end="\n\n",
+            with Throbber(
+                throbber_format=["[dim|br:blue]({a})", "[br:blue]({l})"],
+                frames=("⠴", "⠦", "⠖", "⠲"),
+                interval=0.1,
+            ).context() as update_label:
+                update_label("Generating maze")
+                maze = Maze(w, h, render_ascii=True)
+                info = (
+                    f"═════ MAZE [{w}×{h}] TILES ═════\n" + f"│ START = {maze.rendered_tiles[maze.player_byte]}\n"
+                    + f"│ GOAL  = {maze.rendered_tiles[maze.goal_byte]}\n\n"
                 )
 
-                break
+                update_label("Rendering maze")
+                maze.show_solution = False
+                content = info + (maze.render() or "")
+
+                update_label("Writing maze file")
+                with open(files[0], "w", encoding="utf-8") as f:
+                    f.write(content)
+
+                update_label("Rendering solution")
+                maze.show_solution = True
+                content = info + (maze.render() or "")
+
+                update_label("Writing solution file")
+                with open(files[1], "w", encoding="utf-8") as f:
+                    f.write(content)
+
+                update_label("Finalizing")
+                sizes = [
+                    f"(" + next(
+                        f"{Path(f).stat().st_size/1024**i:.1f} {u}"
+                        for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
+                    ) + ")" for f in files
+                ]
+            
+            Console.log_box_bordered(
+                f"[br:blue]Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
+                f"[br:blue]Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
+                border_style="dim|br:blue",
+                end="\n\n",
+            )
+
+            break
 
 
 if __name__ == "__main__":
