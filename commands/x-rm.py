@@ -37,7 +37,7 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Force Remove — Delete files/directories even if locked by processes )
+[b|in|bg:black]( Force Remove — Delete files/directories even they're if locked )
 
 [b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
 
