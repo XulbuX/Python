@@ -34,16 +34,16 @@ def print_help():
   [dim](no arrow)    Use shortest hue path [dim]((default))
 
 [b](Options:)
-  [br:blue](-s), [br:blue](--steps N)     Number of gradient steps [dim]((total across all color segments))
+  [br:blue](-s), [br:blue](--steps[dim](=)N)     Number of gradient steps [dim]((total across all color segments))
   [br:blue](-H), [br:blue](--hsv)         Use HSV interpolation with hue rotation
   [br:blue](-O), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
   [br:blue](-l), [br:blue](--list)        Show list of all gradient colors
-  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors [dim]/(implies[_dim] [br:blue](-l)[dim])[_dim]
+  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors [dim]((implies [br:blue](-l)))
 
 [b](Examples:)
   [br:green](gradient) [br:cyan](F00 00F)                [dim](# [i](Linear RGB interpolation))
   [br:green](gradient) [br:cyan](F00 00F 0F0)            [dim](# [i](Multicolor linear gradient))
-  [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s 5)           [dim](# [i](5 steps total across segments))
+  [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s=5)           [dim](# [i](5 steps total across segments))
   [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)         [dim](# [i](OKLCH with shortest hue path))
   [br:green](gradient) [br:cyan](F00 > 00F < 0F0) [br:blue](-H)     [dim](# [i](HSV, multiple colors with directions))
 """

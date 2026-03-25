@@ -32,14 +32,14 @@ def print_help():
 
 [b](Options:)
   [br:blue](-r), [br:blue](--recursive)    Also scan all subdirectories recursively
-  [br:blue](-e), [br:blue](--exclude S)    Exclude parts of the info [dim]((scope, size))
-  [br:blue](-s), [br:blue](--skip S)       Skip hidden and/or system items [dim]((hidden, system))
+  [br:blue](-e), [br:blue](--exclude[dim](=)S)    Exclude parts of the info [dim]((scope, size))
+  [br:blue](-s), [br:blue](--skip[dim](=)S)       Skip hidden and/or system items [dim]((hidden, system))
   [br:blue](-g), [br:blue](--gitignore)    Apply .gitignore rules when scanning files
 
 [b](Examples:)
   [br:green](dinfo)                         [dim](# [i](Get all directory info, not ignoring any items))
-  [br:green](dinfo) [br:blue](-e 'scope')              [dim](# [i](Exclude scope info))
-  [br:green](dinfo) [br:blue](-s 'hidden' 'system')    [dim](# [i](Skip hidden and system items))
+  [br:green](dinfo) [br:blue](-e='scope')              [dim](# [i](Exclude scope info))
+  [br:green](dinfo) [br:blue](-s="hidden system")      [dim](# [i](Skip hidden and system items))
   [br:green](dinfo) [br:blue](--gitignore)             [dim](# [i](Apply .gitignore rules when scanning files))
 """
     FormatCodes.print(help_text)
