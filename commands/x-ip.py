@@ -25,7 +25,7 @@ def print_help():
 
 [b](Options:)
   [br:blue](-g), [br:blue](--geo)              Show geolocation info for public IP
-  [br:blue](-p), [br:blue](--provider NAME)    Use specific IP provider [dim]((ipify, ipapi, icanhazip))
+  [br:blue](-p), [br:blue](--provider[dim](=)NAME)    Use specific IP provider [dim]((ipify, ipapi, icanhazip))
   [br:blue](-j), [br:blue](--json)             Output in JSON format
 
 [b](Examples:)

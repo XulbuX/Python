@@ -38,15 +38,15 @@ def print_help():
 [b](Usage:) [br:green](x-tree) [br:cyan](<base_dir>) [br:blue]([options])
 
 [b](Arguments:)
-  [br:cyan](base_dir)             Base directory to generate tree from [dim]((default: CWD))
+  [br:cyan](base_dir)               Base directory to generate tree from [dim]((default: CWD))
 
 [b](Options:)
-  [br:blue](-i), [br:blue](--ignore-dirs)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [br:cyan](|)))
-  [br:blue](-n), [br:blue](--no-progress)    Disable progress display during tree generation
-  [br:blue](-d), [br:blue](--default)        Use all default settings without prompts
+  [br:blue](-i), [br:blue](--ignore-dirs[dim](=)S)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [br:cyan](|)))
+  [br:blue](-n), [br:blue](--no-progress)      Disable progress display during tree generation
+  [br:blue](-d), [br:blue](--default)          Use all default settings without prompts
 
 [b](Examples:)
-  [br:green](x-tree) [br:blue](-i "/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
+  [br:green](x-tree) [br:blue](-i="/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
   [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
   [br:green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
 """
@@ -414,7 +414,8 @@ class Tree:
         Console.done(
             f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) "
             f"[br:cyan]({self.gen_stats.processed_dirs:,}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files:,}) files",
-            start="\033[F\033[K"
+            start="\033[F\033[K",
+            end="\n\n",
         )
 
         return result

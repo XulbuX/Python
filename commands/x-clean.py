@@ -943,11 +943,11 @@ def print_help():
 [b](Usage:) [br:green](x-clean) [br:blue]([options])
 
 [b](Options:)
-  [br:blue](-h), [br:blue](--help)       Show this help message
-  [br:blue](-r), [br:blue](--restore)    Restore env vars from a backup JSON file
+  [br:blue](-h), [br:blue](--help)            Show this help message
+  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup JSON file
 
 [b](Restore example:)
-  [br:green](x-clean) [br:blue](--restore) [br:cyan]("path/to/env_vars_backup.json")
+  [br:green](x-clean) [br:blue](--restore="path/to/env_vars_backup.json")
 
 [b](What it cleans:)
   [magenta](1.) Registry [dim]((uninstall entries, app paths))

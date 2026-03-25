@@ -35,14 +35,14 @@ def print_help():
 
 [b](Options:)
   [br:blue](-i), [br:blue](--invert)         Invert colors [dim]((swap filled/empty blocks))
-  [br:blue](-s), [br:blue](--scale N)        Scale factor for output size [dim]((default: 1))
-  [br:blue](-e), [br:blue](--error LEVEL)    Error correction level [dim]((L, M, Q, H — default: M))
+  [br:blue](-s), [br:blue](--scale[dim](=)N)        Scale factor for output size [dim]((default: 1))
+  [br:blue](-e), [br:blue](--error[dim](=)LEVEL)    Error correction level [dim]((L, M, Q, H — default: M))
   [br:blue](-c), [br:blue](--contact)        Generate contact QR code [dim]((vCard format))
   [br:blue](-w), [br:blue](--wifi)           Generate WiFi QR code [dim]((auto-detect or manual))
 
 [b](Examples:)
   [br:green](x-qr) [br:cyan]("Hello World")                      [dim](# [i](QR code which contains simple text))
-  [br:green](x-qr) [br:cyan]("https://example.com") [br:blue](--scale 2)    [dim](# [i](Larger QR code))
+  [br:green](x-qr) [br:cyan]("https://example.com") [br:blue](--scale=2)    [dim](# [i](Larger QR code))
   [br:green](x-qr) [br:cyan]("John Doe") [br:blue](--contact)               [dim](# [i](Contact QR code))
   [br:green](x-qr) [br:cyan]("MyNetwork") [br:blue](--wifi)                 [dim](# [i](WiFi QR code))
   [br:green](x-qr) [br:blue](--wifi)                             [dim](# [i](WiFi QR code for detected networks))
@@ -451,18 +451,18 @@ def main() -> None:
         wifi = WiFi(text)
         text = wifi.get_wifi_string()
 
-        print(f"\n{ascii_qr(text, ARGS)}\n")
+        print(f"\n\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]", end="\n\n")
 
     elif ARGS.contact.exists:
         vcard = VCard(text)
         text = vcard.get_vcard_str()
 
-        print(f"\n{ascii_qr(text, ARGS)}\n")
+        print(f"\n\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
 
     else:
-        print(f"\n{ascii_qr(text, ARGS)}\n")
+        print(f"\n\n{ascii_qr(text, ARGS)}\n")
         Console.info(f"[b](Encoded Text:)\n[white]{text}[_c]", end="\n\n")
 
 

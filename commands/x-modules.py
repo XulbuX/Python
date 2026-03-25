@@ -30,7 +30,7 @@ def print_help():
 
 [b](Options:)
   [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
-  [br:blue](-d), [br:blue](--directory PATH)    Specify directory to scan [dim]((default: script directory))
+  [br:blue](-d), [br:blue](--directory[dim](=)PATH)    Specify directory to scan [dim]((default: script directory))
   [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
   [br:blue](-l), [br:blue](--list)              Output only module names without extra info
   [br:blue](-j), [br:blue](--json)              Output as JSON format [dim]((ignored if [br:blue](-i) is used))
@@ -39,8 +39,8 @@ def print_help():
 [b](Examples:)
   [br:green](modules)                 [dim](# [i](List all imported modules))
   [br:green](modules) [br:blue](--external)      [dim](# [i](List only external/third-party modules))
-  [br:green](modules) [br:blue](-d "./src")      [dim](# [i](Scan specific directory))
-  [br:green](modules) [br:blue](-d "./src" -r)   [dim](# [i](Scan directory recursively))
+  [br:green](modules) [br:blue](-d="./src")      [dim](# [i](Scan specific directory))
+  [br:green](modules) [br:blue](-d="./src" -r)   [dim](# [i](Scan directory recursively))
   [br:green](modules) [br:blue](--list)          [dim](# [i](Output only the list of module names))
   [br:green](modules) [br:blue](--json)          [dim](# [i](Output as JSON format))
   [br:green](modules) [br:blue](--install)       [dim](# [i](Install all external modules))

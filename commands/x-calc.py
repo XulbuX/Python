@@ -310,15 +310,15 @@ def print_help():
   [br:cyan](calculation)          The calculation string to evaluate
 
 [b](Options:)
-  [br:blue](-a), [br:blue](--ans VALUE)      Value to use for 'ans' constant
-  [br:blue](-p), [br:blue](--precision N)    Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
+  [br:blue](-a), [br:blue](--ans[dim](=)VALUE)      Value to use for 'ans' constant
+  [br:blue](-p), [br:blue](--precision[dim](=)N)    Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
   [br:blue](-f), [br:blue](--format)         Format the output with thousands separators
   [br:blue](-d), [br:blue](--debug)          Show debug information during calculation
 
 [b](Examples:)
   [br:green](x-calc) [br:cyan]("2 + 2 * 2")                                [dim](# [i](Simple arithmetic))
-  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans 6)                          [dim](# [i](Using the 'ans' constant))
-  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p 1000)    [dim](# [i](High precision with functions and constants))   
+  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans=6)                          [dim](# [i](Using the 'ans' constant))
+  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p=1000)    [dim](# [i](High precision with functions and constants))   
 
 [b](Possible operators:)
 {o_list}
