@@ -26,12 +26,12 @@ def print_help():
 [b](Usage:) [br:green](gradient) [br:cyan](<color_1> [direction] <color_2> ...) [br:blue]([options])
 
 [b](Arguments:)
-  [br:cyan](color)       Hex colors to create gradient between [dim]((at least 2 required))
+  [br:cyan](color)             Hex colors to create gradient between [dim]((at least 2 required))
 
-[b](Direction:) [dim](only with --hsv or --oklch modes)
-  [br:cyan](>)           Rotate hue clockwise
-  [br:cyan](<)           Rotate hue counterclockwise
-  [dim](no arrow)    Use shortest hue path [dim]((default))
+[b](Direction:) [dim](only with [br:blue](--hsv) or [br:blue](--oklch) modes)
+  [br:cyan](>)                 Rotate hue clockwise
+  [br:cyan](<)                 Rotate hue counterclockwise
+  [dim](no arrow)          Use shortest hue path [dim]((default))
 
 [b](Options:)
   [br:blue](-s), [br:blue](--steps[dim](=)N)     Number of gradient steps [dim]((total across all color segments))
@@ -41,11 +41,11 @@ def print_help():
   [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors [dim]((implies [br:blue](-l)))
 
 [b](Examples:)
-  [br:green](gradient) [br:cyan](F00 00F)                [dim](# [i](Linear RGB interpolation))
-  [br:green](gradient) [br:cyan](F00 00F 0F0)            [dim](# [i](Multicolor linear gradient))
-  [br:green](gradient) [br:cyan](F00 00F) [br:blue](-s=5)           [dim](# [i](5 steps total across segments))
-  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)         [dim](# [i](OKLCH with shortest hue path))
-  [br:green](gradient) [br:cyan](F00 > 00F < 0F0) [br:blue](-H)     [dim](# [i](HSV, multiple colors with directions))
+  [br:green](gradient) [br:cyan](F00 00F)                 [dim](# [i](Linear RGB interpolation))
+  [br:green](gradient) [br:cyan](F00 00F 0F0)             [dim](# [i](Multicolor linear gradient))
+  [br:green](gradient) [br:cyan](F00 00F) [br:blue](--steps=5)       [dim](# [i](5 steps total across segments))
+  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)          [dim](# [i](OKLCH with shortest hue path))
+  [br:green](gradient) [br:cyan]("F00 > 00F < 0F0") [br:blue](-H)    [dim](# [i](HSV, multiple colors with directions))
 """
     FormatCodes.print(help_text)
 
