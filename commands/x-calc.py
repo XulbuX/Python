@@ -513,7 +513,7 @@ class Calc:
                 FormatCodes.print(f"[dim](decimal part:) {short_decimal_part}")
 
             if self._is_recurring(short_decimal_part):
-                num_str = f"{int_part}.{short_decimal_part}..."
+                num_str = f"{int_part}.{short_decimal_part}…"
             else:
                 num_str = f"{int_part}.{short_decimal_part}"
             if DEBUG:
