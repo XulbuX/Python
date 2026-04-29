@@ -278,7 +278,7 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
 
             except Exception:
                 pass  # SKIP REPOS THAT CAN'T BE ACCESSED
-        
+
         if successful_fetches == 0 and len(CONFIG["github_updates"]["github_repo_urls"]) > 0:
             result["fetch_failed"] = True
             return result  # BAIL OUT TO PREVENT FALSE DELETIONS WHEN GITHUB API REQUESTS FAIL

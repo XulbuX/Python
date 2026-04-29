@@ -469,7 +469,7 @@ def main():
                         for i, u in enumerate(["B", "KB", "MB", "GB", "TB"]) if Path(f).stat().st_size < 1024**(i + 1)
                     ) + ")" for f in files
                 ]
-            
+
             Console.log_box_bordered(
                 f"[br:blue]Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
                 f"[br:blue]Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
