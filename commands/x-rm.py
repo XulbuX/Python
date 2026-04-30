@@ -15,17 +15,14 @@ import os
 ######################### CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED #########################
 
 PROTECTED_PROCESSES_WINDOWS = {
-    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe",
-    "lsass.exe", "winlogon.exe", "dwm.exe", "svchost.exe"
+    "system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "winlogon.exe", "dwm.exe", "svchost.exe"
 }
 PROTECTED_PROCESSES_MACOS = {
-    "WindowServer", "Finder", "Dock", "SystemUIServer", "loginwindow",
-    "kernel_task", "UserEventAgent", "coreaudiod", "configd"
+    "WindowServer", "Finder", "Dock", "SystemUIServer", "loginwindow", "kernel_task", "UserEventAgent", "coreaudiod", "configd"
 }
 PROTECTED_PROCESSES_UNIX = {
-    "systemd", "init", "kthreadd", "rcu_sched", "migration", "watchdog",
-    "systemd-journald", "systemd-udevd", "dbus-daemon", "NetworkManager", "sshd",
-    "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
+    "systemd", "init", "kthreadd", "rcu_sched", "migration", "watchdog", "systemd-journald", "systemd-udevd", "dbus-daemon",
+    "NetworkManager", "sshd", "cron", "rsyslogd", "login", "bash", "sh", "zsh", "fish", "kernel", "launchd"
 }
 
 ARGS = Console.get_args({

@@ -19,7 +19,6 @@ except ImportError:
     COMDispatch = None
     HAS_WIN32COM = False  # type: ignore[constant-reassignment]
 
-
 ########################################## CONSTANTS ##########################################
 
 BACKUPS_DIR = FileSys.script_dir / "backups"
@@ -46,6 +45,7 @@ ENV_SYSTEM_KEY = (winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control
 # SHORTCUT DIRECTORIES TO SCAN
 SHORTCUT_DIRS: list[tuple[str, Path]] = []
 
+
 def _build_shortcut_dirs() -> list[tuple[str, Path]]:
     """Build list of shortcut directories to scan."""
     dirs: list[tuple[str, Path]] = []
@@ -65,11 +65,11 @@ def _build_shortcut_dirs() -> list[tuple[str, Path]]:
         dirs.append(("Public Desktop", Path(public) / "Desktop"))
     return dirs
 
+
 HIVE_NAMES = {
     winreg.HKEY_CURRENT_USER: "HKCU",
     winreg.HKEY_LOCAL_MACHINE: "HKLM",
 }
-
 
 ########################################## CLI ARGS ##########################################
 
@@ -79,8 +79,8 @@ ARGS = Console.get_args({
     "help": {"-h", "--help"},
 })
 
-
 ########################################## HELPERS ##########################################
+
 
 def hive_name(hive: int) -> str:
     """Get readable name for a registry hive."""
@@ -185,6 +185,7 @@ def resolve_shortcut(lnk_path: Path) -> Optional[Path]:
 
 
 ########################################## SCANNING ##########################################
+
 
 def scan_registry_uninstall() -> list[dict[str, Any]]:
     """Scan uninstall registry keys for entries with broken paths.\n
@@ -338,7 +339,9 @@ def scan_env_vars() -> dict[str, list[dict[str, Any]]]:
                 # CHECK IF THIS IS A PATH-LIST VARIABLE (LIKE PATH)
                 if ";" in str_value and any(looks_like_path(p) for p in str_value.split(";")):
                     paths = [p.strip() for p in str_value.split(";") if p.strip()]
-                    broken = [p for p in paths if looks_like_path(p) and not path_exists(Path(expand_env_in_path(p.strip('"'))))]
+                    broken = [
+                        p for p in paths if looks_like_path(p) and not path_exists(Path(expand_env_in_path(p.strip('"'))))
+                    ]
                     if broken:
                         result[scope].append({
                             "name": name,
@@ -462,6 +465,7 @@ def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
 
 ########################################## BACKUPS ##########################################
 
+
 def create_backup_dir() -> Path:
     """Create a timestamped backup directory."""
     backup_dir = BACKUPS_DIR / datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -538,6 +542,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
 
 ########################################## RESTORE ##########################################
 
+
 def restore_env_vars(backup_path: Path) -> None:
     """Restore environment variables from a JSON backup file."""
     if not backup_path.exists():
@@ -596,14 +601,14 @@ def _broadcast_env_change() -> None:
         WM_SETTINGCHANGE = 0x001A
         SMTO_ABORTIFHUNG = 0x0002
         ctypes.windll.user32.SendMessageTimeoutW(
-            HWND_BROADCAST, WM_SETTINGCHANGE, 0,
-            "Environment", SMTO_ABORTIFHUNG, 5000, None
+            HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 5000, None
         )
     except Exception:
         pass
 
 
 ########################################## CLEANUP EXECUTION ##########################################
+
 
 def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list[dict[str, Any]]) -> list[str]:
     """Delete broken registry entries. Returns list of failure messages."""
@@ -710,7 +715,9 @@ def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
                         winreg.SetValueEx(key, name, 0, val_type, new_value)
                         winreg.CloseKey(key)
                         removed_count = len(broken)
-                        FormatCodes.print(f"  [green](✓) Removed [b]({removed_count}) broken path{'' if removed_count == 1 else 's'} from [cyan]{name} [dim|br:cyan]in {scope}[_]")
+                        FormatCodes.print(
+                            f"  [green](✓) Removed [b]({removed_count}) broken path{'' if removed_count == 1 else 's'} from [cyan]{name} [dim|br:cyan]in {scope}[_]"
+                        )
 
                 else:
                     # ENTIRE VALUE IS A BROKEN PATH - DELETE THE VARIABLE
@@ -831,12 +838,15 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
 
         FormatCodes.print(f"    [green](✓) Deleted [b]({deleted}) item{'' if deleted == 1 else 's'}")
         if failed:
-            FormatCodes.print(f"    [yellow]⚠ {failed} item{'' if failed == 1 else 's'} could not be deleted [dim]((locked/in use))[_]")
+            FormatCodes.print(
+                f"    [yellow]⚠ {failed} item{'' if failed == 1 else 's'} could not be deleted [dim]((locked/in use))[_]"
+            )
 
     return failures
 
 
 ########################################## DISPLAY ##########################################
+
 
 def format_size(size_bytes: int, /) -> str:
     """Format bytes as human-readable size."""
@@ -960,14 +970,15 @@ def print_help():
 
 ########################################## MAIN ##########################################
 
+
 def choose_options() -> dict[str, bool]:
     """Let the user choose which cleanup options to run."""
     FormatCodes.print("\n[b](Choose what to clean:)\n")
     options = [
-        ("registry",  "Registry?             "),
-        ("envvars",   "Environment variables?"),
+        ("registry", "Registry?             "),
+        ("envvars", "Environment variables?"),
         ("shortcuts", "Broken shortcut files?"),
-        ("temp",      "Temp files?           "),
+        ("temp", "Temp files?           "),
     ]
 
     if not HAS_WIN32COM:
@@ -993,7 +1004,11 @@ def main():
     if ARGS.restore.exists:
         restore_path_str = "".join(ARGS.restore_path.values).strip()
         if not restore_path_str:
-            Console.fail("Please provide a path to the backup JSON file.\n  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)", start="\n", end="\n\n")
+            Console.fail(
+                "Please provide a path to the backup JSON file.\n  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)",
+                start="\n",
+                end="\n\n"
+            )
             return
         restore_env_vars(Path(restore_path_str))
         return
@@ -1037,7 +1052,8 @@ def main():
         Console.fail(
             f"[red](Some backups failed! Aborting for safety.)"
             f"\n  [dim|br:red](Backup directory: {backup_dir})",
-            start="\n", end="\n\n",
+            start="\n",
+            end="\n\n",
         )
         return
 

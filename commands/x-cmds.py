@@ -56,6 +56,7 @@ class ScriptConfig(TypedDict):
 ARGS = Console.get_args({
     "list": {"-l", "--list"},
     "update_check": {"-u", "--update"},
+    "help": {"-h", "--help"},
 })
 
 PATTERNS = LazyRegex(
@@ -67,6 +68,24 @@ PATTERNS = LazyRegex(
     get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
     arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
 )
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( CMDs — List and update Python command scripts )
+
+[b](Usage:) [br:green](x-cmds) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-l), [br:blue](--list)      List all commands in a compact one-line format
+  [br:blue](-u), [br:blue](--update)    Check GitHub for new/renamed and updated commands
+
+[b](Examples:)
+  [br:green](x-cmds)             [dim](# [i](Show all commands with descriptions and arguments))
+  [br:green](x-cmds) [br:blue](--list)      [dim](# [i](Show a compact command list))
+  [br:green](x-cmds) [br:blue](--update)    [dim](# [i](Check for and apply updates from GitHub))
+"""
+    FormatCodes.print(help_text)
 
 
 def is_python_file(filepath: str) -> bool:
@@ -226,28 +245,38 @@ def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
             except Exception:
                 arg_parse_configs = {}
 
-            hints: list[str] = []
+            before_hints: list[str] = []
+            flag_hints: list[str] = []
+            help_hints: list[str] = []
+            after_hints: list[str] = []
 
             for key, val in arg_parse_configs.items():
-                if isinstance(val, str) and val.lower() in {"before", "after"}:
-                    hints.append(f"[dim|br:cyan](<{key}>)")
+                if isinstance(val, str) and val.lower() == "before":
+                    before_hints.append(f"[dim|br:cyan](<{key}>)")
+                elif isinstance(val, str) and val.lower() == "after":
+                    after_hints.append(f"[dim|br:cyan](<{key}>)")
+                elif isinstance(val, dict) and "flags" in val and len(val["flags"]) > 0:
+                    flags = sort_flags(list(val["flags"]))
+                    hint = f"[dim|br:blue]({flags[0]})"
+                    (help_hints if flags[0] in {"-h", "--help"} else flag_hints).append(hint)
                 elif isinstance(val, (set, frozenset, list, tuple)) and len(val) > 0:
-                    hints.append(f"[dim|br:blue]({sort_flags(list(val))[0]})")
+                    flags = sort_flags(list(val))
+                    hint = f"[dim|br:blue]({flags[0]})"
+                    (help_hints if flags[0] in {"-h", "--help"} else flag_hints).append(hint)
                 else:
-                    hints.append(f"[dim|br:cyan](<{key}>)")
+                    before_hints.append(f"[dim|br:cyan](<{key}>)")
+
+            hints = before_hints + flag_hints + help_hints + after_hints
 
             cmd_info.append((cmd_name, f"[_]{' '.join(hints)}" if hints else ""))
 
         max_len = max((len(name) for name, _ in cmd_info), default=0)
-        lines = [
-            f"[b|br:white]({name:<{max_len}})  {hint}" if hint else f"[b|br:white]({name})"
-            for name, hint in cmd_info
-        ]
+        num_len = len(str(len(cmd_info)))
 
-        return (
-            f"\n[b|bg:black]([in]( FOUND ) {len(cmd_info)} [in]( COMMAND{'S' if len(cmd_info) != 1 else ''} ))"
-            f"\n\n" + "\n".join(lines) + "\n"
-        )
+        return "\n" + "\n".join(
+            f"[i|dim|br:white]( {i:>{num_len}} )[b|br:white]( {name:<{max_len}}  ){hint}"
+            for i, (name, hint) in enumerate(cmd_info, 1)
+        ) + "\n"
 
     cmds = ""
 
@@ -491,9 +520,16 @@ def download_files(github_diffs: GitHubDiffs) -> None:
 
 
 def main() -> None:
+    if ARGS.help.exists:
+        print_help()
+        return
+
     python_files = get_python_files()
 
-    FormatCodes.print(get_commands_str(python_files, list_mode=ARGS.list.exists))
+    if not ARGS.update_check.exists or ARGS.list.exists:
+        FormatCodes.print(get_commands_str(python_files, list_mode=ARGS.list.exists))
+    else:
+        print()
 
     if ARGS.update_check.exists:
         throbber = Throbber(label="⟳ Checking for updates")
