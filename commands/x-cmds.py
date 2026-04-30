@@ -53,7 +53,10 @@ class ScriptConfig(TypedDict):
     github_updates: GithubUpdatesConfig
 
 
-ARGS = Console.get_args({"update_check": {"-u", "--update"}})
+ARGS = Console.get_args({
+    "list": {"-l", "--list"},
+    "update_check": {"-u", "--update"},
+})
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
@@ -173,51 +176,93 @@ def parse_args_comment(comment_str: str) -> ArgParseConfigs:
     return result
 
 
-def get_commands_str(python_files: set[str]) -> str:
-    i, cmds = 0, ""
+def parse_file_args(content: str) -> Optional[ArgParseConfigs]:
+    """Parse arg configs from file content. Returns None if no args section is detected."""
+    sys_argv_comments = PATTERNS.sys_argv.findall(content)
+    get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
+
+    if not get_args_funcs and not sys_argv_comments:
+        return None
+
+    arg_parse_configs: ArgParseConfigs = {}
+
+    try:
+        if get_args_funcs:
+            func_args = ""
+
+            if len(get_args_funcs) > 1:
+                for fa in get_args_funcs:
+                    if (fa := fa.strip()):
+                        func_args = fa
+                        break
+
+            else:
+                func_args = get_args_funcs[0]
+            for arg in PATTERNS.arg.finditer(func_args):
+                if (key := arg.group(2)) and (val := arg.group(3)):
+                    arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
+
+        else:
+            for comment in sys_argv_comments:
+                if (comment := comment.strip()).startswith("["):
+                    arg_parse_configs.update(parse_args_comment(comment))
+
+    except Exception:
+        pass
+
+    return arg_parse_configs
+
+
+def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
+    if list_mode:
+        cmd_info: list[tuple[str, str]] = []
+
+        for file in sorted(python_files):
+            cmd_name = Path(file).stem
+
+            try:
+                content = (CONFIG["command_dir"] / file).read_text(encoding="utf-8")
+                arg_parse_configs = parse_file_args(content) or {}
+            except Exception:
+                arg_parse_configs = {}
+
+            hints: list[str] = []
+
+            for key, val in arg_parse_configs.items():
+                if isinstance(val, str) and val.lower() in {"before", "after"}:
+                    hints.append(f"[dim|br:cyan](<{key}>)")
+                elif isinstance(val, (set, frozenset, list, tuple)) and len(val) > 0:
+                    hints.append(f"[dim|br:blue]({sort_flags(list(val))[0]})")
+                else:
+                    hints.append(f"[dim|br:cyan](<{key}>)")
+
+            cmd_info.append((cmd_name, f"[_]{' '.join(hints)}" if hints else ""))
+
+        max_len = max((len(name) for name, _ in cmd_info), default=0)
+        lines = [
+            f"[b|br:white]({name:<{max_len}})  {hint}" if hint else f"[b|br:white]({name})"
+            for name, hint in cmd_info
+        ]
+
+        return (
+            f"\n[b|bg:black]([in]( FOUND ) {len(cmd_info)} [in]( COMMAND{'S' if len(cmd_info) != 1 else ''} ))"
+            f"\n\n" + "\n".join(lines) + "\n"
+        )
+
+    cmds = ""
 
     for i, file in enumerate(sorted(python_files), 1):
         cmd_name = Path(file).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
 
-        sys_argv_comments, get_args_funcs = [], []
-
         with open(CONFIG["command_dir"] / file, "r", encoding="utf-8") as f:
             if desc := PATTERNS.desc.match(content := f.read()):
                 cmds += f"\n\n[i]{desc.group(1).strip("\n\"'")}[_]"
 
-            sys_argv_comments = PATTERNS.sys_argv.findall(content)
-            get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
-
-        arg_parse_configs: ArgParseConfigs = {}
-
-        if len(get_args_funcs) > 0:
-            try:
-                # GET ARGUMENTS OF FIRST NON-EMPTY Console.get_args() CALL
-                func_args = ""
-                if len(get_args_funcs) > 1:
-                    for func_args in get_args_funcs:
-                        if (func_args := func_args.strip()):
-                            break
-                elif len(get_args_funcs) == 1:
-                    func_args = get_args_funcs[0]
-
-                # PARSE THE FUNCTION ARGUMENTS
-                for arg in PATTERNS.arg.finditer(func_args):
-                    if (key := arg.group(2)) and (val := arg.group(3)):
-                        arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
-                cmds += arguments_desc(arg_parse_configs)
-
-            except Exception:
-                pass
-
-        elif len(sys_argv_comments) > 0:
-            # PARSE FIRST NON-EMPTY ARGS-DESCRIBING COMMENT
-            for comment in sys_argv_comments:
-                if (comment := comment.strip()).startswith("["):
-                    arg_parse_configs.update(parse_args_comment(comment))
-            cmds += arguments_desc(arg_parse_configs)
+        parsed_args = parse_file_args(content)
+        if parsed_args is not None:
+            cmds += arguments_desc(parsed_args)
 
         cmds += "\n\n"
 
@@ -448,7 +493,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
 def main() -> None:
     python_files = get_python_files()
 
-    FormatCodes.print(get_commands_str(python_files))
+    FormatCodes.print(get_commands_str(python_files, list_mode=ARGS.list.exists))
 
     if ARGS.update_check.exists:
         throbber = Throbber(label="⟳ Checking for updates")
