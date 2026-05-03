@@ -2,11 +2,12 @@
 
 This repository contains a ton of useful CLI scripts and other Python related projects.
 
-*   <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>**
-*   <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** ⚡ *most useful*
-*   Projects/…
-    *   <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
-    *   <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
+* <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>**
+* <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** ⚡ *most useful*
+* Projects/…
+    * <a href="#film-credits-tagger" title="scroll to Film Credits Tagger">Film Credits Tagger</a> | **<a href="./projects/film-credits-tagger" title="open film-credits-tagger directory">open</a>**
+    * <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
+    * <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
 
 
 ## Apps
@@ -22,6 +23,11 @@ To see what each command is used for, see the folder's [**`README.md`**](./comma
 
 
 ## Projects
+
+### Film Credits Tagger
+
+A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).<br>
+Works on **Windows**, **macOS**, and **Linux**. For more information, take a look at the [**`README.md`**](./projects/film-credits-tagger/README.md).
 
 ### Harmless Prank Viruses
 
