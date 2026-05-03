@@ -15,12 +15,16 @@ import io
 import os
 import re
 
+# PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
+# (ONLY RELEVANT ON WINDOWS WHEN THE APP IS LAUNCHED WITHOUT A CONSOLE, E.G. VIA .pyw)
+_POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+
 from consts import APP_ICON_PNG, COLORS  # type: ignore[missing-import]
 from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
 from theme import resolve_mono_font, get_system_theme  # type: ignore[missing-import]
 
 
-DEBUG: bool = True
+DEBUG: bool = False
 
 
 def _normalize_multi(val: str) -> str:
@@ -497,7 +501,7 @@ class MetadataTaggerApp(ctk.CTk):
         ok = False
         if self.exiftool_path:
             try:
-                subprocess.run([self.exiftool_path, "-ver"], capture_output=True, timeout=5, check=True)
+                subprocess.run([self.exiftool_path, "-ver"], capture_output=True, timeout=5, check=True, **_POPEN_FLAGS)
                 ok = True
             except Exception:
                 ok = False
@@ -568,7 +572,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _worker() -> None:
             try:
-                result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True)
+                result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True, **_POPEN_FLAGS)
                 records: list[dict[str, object]] = json.loads(result.stdout)
             except subprocess.CalledProcessError as e:
                 err = f"Failed to read metadata:\n{e.stderr}"
@@ -594,7 +598,9 @@ class MetadataTaggerApp(ctk.CTk):
                 return
 
             meta: dict[str, object] = records[0]
-            cover_result = subprocess.run([exiftool, "-b", "-ItemList:CoverArt", filepath], capture_output=True)
+            cover_result = subprocess.run([exiftool, "-b", "-ItemList:CoverArt", filepath],
+                                          capture_output=True,
+                                          **_POPEN_FLAGS)
             cover_bytes: bytes = cover_result.stdout
             self.after(0, lambda: self._on_load_from_video_done(meta, cover_bytes, filepath))
 
@@ -739,7 +745,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _worker() -> None:
             try:
-                result = subprocess.run(command, capture_output=True, text=True, check=True)
+                result = subprocess.run(command, capture_output=True, text=True, check=True, **_POPEN_FLAGS)
                 print("[exiftool stdout]", result.stdout)
                 print("[exiftool stderr]", result.stderr)
                 self.after(0, _on_done)

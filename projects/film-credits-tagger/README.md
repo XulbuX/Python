@@ -4,7 +4,9 @@ A small desktop app for tagging film credits and metadata into video files – p
 Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark theme automatically.
 
 > <br>
-> ❯❯❯  Run the <code>app.pyw</code> script to launch the app.
+> Launch the app by running the <code>app.pyw</code> file:<br>
+> ❯  On <b>Windows</b> the <code>.pyw</code> extension launches it without a console window by default.<br>
+> ❯  On <b>macOS/Linux</b>, run it explicitly: <code>python3 app.pyw</code>
 > <br>
 > <br>
 
@@ -23,7 +25,7 @@ Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark th
 
 - Python 3.10+
 - [**ExifTool**](https://exiftool.org) installed and available on `PATH`
-- Python packages `CustomTkinter` and `Pillow`:
+- Python packages:
   ```shell
-  pip install customtkinter pillow
+  pip install customtkinter reportlab pymupdf pillow svglib
   ```
