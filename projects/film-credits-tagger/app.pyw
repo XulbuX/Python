@@ -1,10 +1,8 @@
-# type: ignore[reportUnknownMemberType]
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TypedDict, Optional
+from typing import Optional
 from PIL import Image, ImageTk
 import customtkinter as ctk  # type: ignore[no-stubs]
-import tkinter.font as tkfont
 import subprocess
 import webbrowser
 import tempfile
@@ -13,190 +11,8 @@ import json
 import sys
 import io
 
-
-COLORS: dict[str, dict[str, str]] = {
-    "dark": {
-        "background": "#09090B",
-        "foreground": "#FAFAFA",
-        "muted_foreground": "#A1A1AA",
-        "placeholder_foreground": "#52525B",
-        "border": "#27272A",
-        "primary": "#2563EB",
-        "primary_hover": "#1D4ED8",
-        "primary_foreground": "#FFFFFF",
-        "secondary": "#09090B",
-        "secondary_hover": "#27272A",
-        "secondary_border": "#3F3F46",
-        "secondary_foreground": "#FAFAFA",
-        "card": "#FAFAFA",
-        "card_hover": "#E4E4E7",
-        "card_foreground": "#09090B",
-        "destructive": "#290D0D",
-        "destructive_border": "#7F1D1D",
-        "destructive_foreground": "#FFDEDE",
-        "destructive_muted": "#FCA5A5",
-        "link": "#60A5FA",
-    },
-    "light": {
-        "background": "#FFFFFF",
-        "foreground": "#09090B",
-        "muted_foreground": "#71717A",
-        "placeholder_foreground": "#A1A1AA",
-        "border": "#F0F0F2",
-        "primary": "#2563EB",
-        "primary_hover": "#1D4ED8",
-        "primary_foreground": "#FFFFFF",
-        "secondary": "#FFFFFF",
-        "secondary_hover": "#F4F4F5",
-        "secondary_border": "#E0E0E3",
-        "secondary_foreground": "#18181B",
-        "card": "#18181B",
-        "card_hover": "#3F3F46",
-        "card_foreground": "#FAFAFA",
-        "destructive": "#FFEBEB",
-        "destructive_border": "#FCA5A5",
-        "destructive_foreground": "#7F1D1D",
-        "destructive_muted": "#B91C1C",
-        "link": "#2563EB",
-    },
-}
-
-
-def _resolve_mono_font(size: int) -> tuple[str, int]:
-    """Return the first available modern monospace font, falling back to Courier New."""
-    preferred = ["Cascadia Code", "Cascadia Mono", "Consolas", "JetBrains Mono", "Fira Code", "Source Code Pro", "Courier New"]
-    available = set(tkfont.families())
-
-    for name in preferred:
-        if name in available:
-            return (name, size)
-
-    return ("Courier New", size)
-
-
-def _get_system_theme() -> str:
-    try:
-        if sys.platform == "win32":
-            import winreg
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
-                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-            return "light" if value == 1 else "dark"
-
-        elif sys.platform == "darwin":
-            result = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"], capture_output=True, text=True)
-            return "dark" if result.stdout.strip().lower() == "dark" else "light"
-
-        else:
-            result = subprocess.run(
-                ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
-                capture_output=True,
-                text=True,
-            )
-            return "dark" if "dark" in result.stdout.lower() else "light"
-
-    except Exception:
-        return "dark"
-
-
-class MultilineEntry(ctk.CTkTextbox):
-    """Auto-resizing `CTkTextbox`: single-line height when content fits on one display line,
-    three-line height the moment it wraps. Pass `allow_newlines=True` for real line breaks."""
-
-    def __init__(self, master: object, allow_newlines: bool = False, **kwargs: object) -> None:
-        kwargs.pop("height", None)  # type: ignore[union-attr]
-        super().__init__(master, **kwargs)  # type: ignore[arg-type]
-        self._expanded: bool | None = None
-        # REMOVE tk.Text INTERNAL PADDING AND TRIM THE SCROLLBAR-ROW/COL MINSIZE SO THE
-        # COLLAPSED HEIGHT MATCHES CTkEntry (42px RENDERED AT 1.5x SCALING)
-        self._textbox.configure(pady=0)
-        self.grid_rowconfigure(1, minsize=7)
-        self.grid_columnconfigure(1, minsize=7)
-        if not allow_newlines:
-            self.bind("<Return>", lambda _e: "break")
-            self.bind("<Shift-Return>", lambda _e: "break")
-        self._textbox.bind("<<Modified>>", self._on_modified)
-        self.after_idle(self._update_height)
-
-    def _on_modified(self, _event: object = None) -> None:
-        # DEFER VIA after_idle SO RAPID-FIRE EVENTS (INCLUDING THE SPURIOUS RE-TRIGGER
-        # THAT TKINTER EMITS WHEN edit_modified(False) IS CALLED) ARE COLLAPSED
-        self.after_idle(self._do_modified)
-
-    def _do_modified(self) -> None:
-        # IF THE FLAG WAS ALREADY CLEARED BY A PREVIOUS IDLE CALLBACK, SKIP
-        if not self._textbox.edit_modified():
-            return
-        self._textbox.edit_modified(False)
-        self._update_height()
-
-    def _update_height(self) -> None:
-        result = self._textbox.count("1.0", "end", "displaylines")
-        expanded = (result[0] if result else 1) > 1
-        if expanded == self._expanded:
-            return  # STATE UNCHANGED, NO REDRAW NEEDED
-        self._expanded = expanded
-        if not expanded:
-            self.configure(height=28)
-        else:
-            info = self._textbox.dlineinfo("1.0")
-            if info:
-                scale: float = getattr(self, "_get_widget_scaling", lambda: 1.0)()
-                self.configure(height=round(2 * info[3] / scale + 28))
-            else:
-                self.configure(height=80)
-
-    def get(self) -> str:  # type: ignore[override]
-        return super().get("1.0", "end").rstrip("\n")
-
-    def delete(self, _start: object, _end: object = None) -> None:  # type: ignore[override]
-        super().delete("1.0", "end")
-
-    def insert(self, _index: object, value: str) -> None:  # type: ignore[override]
-        super().delete("1.0", "end")
-        super().insert("1.0", value)
-
-
-class _ToolTip:
-    """Minimal hover tooltip for any tkinter/CTk widget."""
-
-    def __init__(self, widget: object, text: str) -> None:
-        self._widget = widget
-        self._text = text
-        self._tip: object = None
-        widget.bind("<Enter>", self._show)  # type: ignore[union-attr]
-        widget.bind("<Leave>", self._hide)  # type: ignore[union-attr]
-
-    def _show(self, event: object = None) -> None:
-        import tkinter as tk
-        if self._tip:
-            return
-        x = self._widget.winfo_rootx() + 20  # type: ignore[union-attr]
-        y = self._widget.winfo_rooty() + self._widget.winfo_height() + 4  # type: ignore[union-attr]
-        self._tip = tk.Toplevel(self._widget)  # type: ignore[arg-type]
-        self._tip.wm_overrideredirect(True)  # type: ignore[union-attr]
-        self._tip.wm_geometry(f"+{x}+{y}")  # type: ignore[union-attr]
-        lbl = tk.Label(
-            self._tip,  # type: ignore[arg-type]
-            text=self._text,
-            justify="left",
-            relief="solid",
-            borderwidth=1,
-            padx=6,
-            pady=4,
-            wraplength=280,
-        )
-        lbl.pack()
-
-    def _hide(self, event: object = None) -> None:
-        if self._tip:
-            self._tip.destroy()  # type: ignore[union-attr]
-            self._tip = None
-
-
-class FieldEntry(TypedDict):
-    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
-    widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
+from theme import COLORS, get_system_theme, resolve_mono_font
+from widgets import FieldEntry, MultilineEntry, ToolTip
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -230,7 +46,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.cover_art_path: Optional[str] = None
         self.cover_art_embed_path: Optional[str] = None  # TEMP FILE WITH RESIZED VERSION
         self.cover_preview_image: Optional[ctk.CTkImage] = None
-        self._current_theme: str = _get_system_theme()
+        self._current_theme: str = get_system_theme()
 
         ################################################## UI LAYOUT ##################################################
         PAD: int = 16
@@ -338,7 +154,7 @@ class MetadataTaggerApp(ctk.CTk):
             )
             lbl_desc.pack(anchor="w", padx=10, pady=(4, 0))
             self._banner_labels.append((lbl_desc, "destructive_muted"))
-            lbl_cmd = ctk.CTkLabel(self._banner, text="exiftool.org", font=_resolve_mono_font(12), cursor="hand2")
+            lbl_cmd = ctk.CTkLabel(self._banner, text="exiftool.org", font=resolve_mono_font(12), cursor="hand2")
             lbl_cmd.pack(anchor="w", padx=10, pady=(4, 8))
             lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://exiftool.org"))  # type: ignore[misc]
             self._banner_labels.append((lbl_cmd, "link"))
@@ -350,7 +166,7 @@ class MetadataTaggerApp(ctk.CTk):
             self.sec3_header, text="Clear empty fields", width=0, command=self._on_clear_toggle
         )
         self.sw_clear_empty.pack(side="right", anchor="e", pady=(0, 5))
-        _ToolTip(
+        ToolTip(
             self.sw_clear_empty,
             "ON – empty fields and no cover art will delete those tags from the file when applying.\n"
             "OFF – only filled-in fields are written; existing tags in the file are left untouched.",
@@ -478,7 +294,7 @@ class MetadataTaggerApp(ctk.CTk):
         )
 
     def _apply_theme(self) -> None:
-        theme: str = _get_system_theme()
+        theme: str = get_system_theme()
         c: dict[str, str] = dict(COLORS[theme])
 
         ctk.set_appearance_mode(theme)
@@ -569,7 +385,7 @@ class MetadataTaggerApp(ctk.CTk):
         )
 
     def _poll_theme(self) -> None:
-        if _get_system_theme() != self._current_theme:
+        if get_system_theme() != self._current_theme:
             self._apply_theme()
         self.after(2000, self._poll_theme)
 
@@ -718,7 +534,7 @@ class MetadataTaggerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
-    ctk.set_appearance_mode(_get_system_theme())
+    ctk.set_appearance_mode(get_system_theme())
     ctk.set_default_color_theme("blue")
 
     # ON WINDOWS, SET THE APP USER MODEL ID BEFORE CREATING THE WINDOW SO THE
