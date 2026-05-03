@@ -1,9 +1,8 @@
-import tkinter as tk
+# type: ignore[reportUnknownMemberType]
 from tkinter import filedialog, messagebox
-import tkinter.font as tkfont
 from typing import TypedDict, Optional
-from PIL import Image, ImageDraw
 import customtkinter as ctk  # type: ignore[no-stubs]
+import tkinter.font as tkfont
 import subprocess
 import webbrowser
 import tempfile
@@ -12,7 +11,6 @@ import winreg
 import json
 import io
 import os
-import re
 
 
 COLORS: dict[str, dict[str, str]] = {
