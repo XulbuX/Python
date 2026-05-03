@@ -21,6 +21,27 @@ class FieldEntry(TypedDict):
     widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
 
 
+def bind_clean_paste(tk_widget: object) -> None:
+    """Bind a <<Paste>> handler that strips newlines (replacing them with spaces).
+    Works with both `tk.Entry` and `tk.Text` (and their CTk wrappers' internal widgets)."""
+
+    def _on_paste(_event: object) -> str:
+        w = tk_widget  # type: ignore[attr-defined]
+        try:
+            text: str = w.clipboard_get()
+        except tk.TclError:
+            return "break"
+        clean = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+        try:
+            w.delete("sel.first", "sel.last")
+        except tk.TclError:
+            pass
+        w.insert("insert", clean)
+        return "break"
+
+    tk_widget.bind("<<Paste>>", _on_paste)  # type: ignore[attr-defined]
+
+
 class MultilineEntry(ctk.CTkTextbox):
     """Auto-resizing `CTkTextbox`: single-line height when content fits on one display line,
     three-line height the moment it wraps. Pass `allow_newlines=True` for real line breaks."""
@@ -41,6 +62,7 @@ class MultilineEntry(ctk.CTkTextbox):
         if not allow_newlines:
             self.bind("<Return>", lambda _e: "break")
             self.bind("<Shift-Return>", lambda _e: "break")
+            bind_clean_paste(self._textbox)
 
         self._textbox.bind("<<Modified>>", self._on_modified)
         if always_expanded:

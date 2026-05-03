@@ -13,7 +13,7 @@ import sys
 import io
 
 from theme import COLORS, resolve_mono_font, get_system_theme
-from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip
+from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip, bind_clean_paste
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -182,9 +182,10 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_section3 = ctk.CTkLabel(self.sec3_header, text="Metadata", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section3.pack(side="left", anchor="w", pady=(0, 5))
 
-        self.sec3 = ctk.CTkScrollableFrame(self.right_panel, fg_color="transparent")
-        self.sec3.pack(fill="both", expand=True, padx=PAD, pady=(0, PAD))
+        self.sec3 = ctk.CTkScrollableFrame(self.right_panel, fg_color="transparent", corner_radius=0)
+        self.sec3.pack(fill="both", expand=True, padx=PAD)
         self.sec3.grid_columnconfigure(1, weight=1)
+        self.sec3._scrollbar.configure(width=14)
 
         # AUTO-HIDE SCROLLBAR WHEN CONTENT FITS
         _orig_set = self.sec3._scrollbar.set
@@ -234,8 +235,13 @@ class MetadataTaggerApp(ctk.CTk):
                 )
             else:
                 entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
+                bind_clean_paste(entry_widget._entry)  # type: ignore[attr-defined]
             entry_widget.grid(row=row_idx, column=1, padx=(10, 0), pady=(4, 4), sticky="ew")
             self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
+
+        # SPACER SO THE LAST FIELD HAS BREATHING ROOM WHEN SCROLLED TO THE BOTTOM
+        spacer = ctk.CTkFrame(self.sec3, fg_color="transparent", height=PAD)
+        spacer.grid(row=len(self.fields), column=0, columnspan=2, sticky="ew")
 
         self._apply_theme()
         self.after(2000, self._poll_theme)
