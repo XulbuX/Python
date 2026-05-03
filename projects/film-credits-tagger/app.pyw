@@ -5,14 +5,15 @@ from PIL import Image, ImageTk
 import customtkinter as ctk  # type: ignore[no-stubs]
 import subprocess
 import webbrowser
+import threading
 import tempfile
 import shutil
 import json
 import sys
 import io
 
-from theme import COLORS, get_system_theme, resolve_mono_font
-from widgets import FieldEntry, MultilineEntry, ToolTip
+from theme import COLORS, resolve_mono_font, get_system_theme
+from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -119,21 +120,21 @@ class MetadataTaggerApp(ctk.CTk):
         self.btn_save_template = ctk.CTkButton(self.sec2, text="Save JSON Template", command=self.save_template)
         self.btn_save_template.pack(fill="x", pady=(0, 6))
 
-        self.btn_load_from_video = ctk.CTkButton(
+        self.btn_load_from_video = SpinnerButton(
             self.sec2,
             text="Load from Video",
             command=self.load_from_video,
-            state="normal" if self.exiftool_path else "disabled",
+            state="disabled",  # ENABLED AFTER _verify_exiftool CONFIRMS
             border_width=1
         )
         self.btn_load_from_video.pack(fill="x")
 
         #################### APPLY BUTTON –OR– EXIFTOOL NOT FOUND BANNER ####################
         if self.exiftool_path:
-            self.btn_apply = ctk.CTkButton(self.left_panel, text="Apply Metadata", command=self.apply_metadata, height=40)
+            self.btn_apply = SpinnerButton(self.left_panel, text="Apply Metadata", command=self.apply_metadata, height=40)
             self.btn_apply.pack(fill="x", padx=PAD, pady=(0, PAD), side="bottom")
         else:
-            self.btn_apply = None  # type: ignore[assignment]
+            self.btn_apply = None
             self._banner_labels: list[tuple[ctk.CTkLabel, str]] = []  # (widget, color_key)
             self._banner = ctk.CTkFrame(self.left_panel, border_width=1, corner_radius=8)
             self._banner.pack(fill="x", padx=PAD, pady=(0, PAD), side="bottom")
@@ -162,14 +163,21 @@ class MetadataTaggerApp(ctk.CTk):
         #################### METADATA FIELDS SECTION ####################
         self.sec3_header = ctk.CTkFrame(self.right_panel, fg_color="transparent")
         self.sec3_header.pack(fill="x", padx=PAD, pady=(PAD - 6, 0))
-        self.sw_clear_empty = ctk.CTkSwitch(
-            self.sec3_header, text="Clear empty fields", width=0, command=self._on_clear_toggle
+        self.sw_clear_empty = ctk.CTkCheckBox(
+            self.sec3_header,
+            text="Clear empty fields",
+            width=0,
+            command=self._on_clear_toggle,
+            checkbox_width=18,
+            checkbox_height=18,
+            border_width=1,
+            corner_radius=5
         )
         self.sw_clear_empty.pack(side="right", anchor="e", pady=(0, 5))
         ToolTip(
             self.sw_clear_empty,
-            "ON – empty fields and no cover art will delete those tags from the file when applying.\n"
-            "OFF – only filled-in fields are written; existing tags in the file are left untouched.",
+            "ON – Empty fields and no cover art will delete those tags from the file when applying.\n"
+            "OFF – Only filled-in fields are written; existing tags in the file are left untouched.",
         )
         self.lbl_section3 = ctk.CTkLabel(self.sec3_header, text="Metadata", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section3.pack(side="left", anchor="w", pady=(0, 5))
@@ -194,48 +202,48 @@ class MetadataTaggerApp(ctk.CTk):
         # EACH FIELD LISTS ITS TAGS IN PRIORITY ORDER: CROSS-PLATFORM FIRST, OS-SPECIFIC APPENDED.
         # ItemList TAGS WRITE STANDARD iTunes/QuickTime ATOMS (©dir, ©wrt, ©prd, …) RECOGNIZED BY
         # macOS, VLC, MPV AND LINUX MEDIA PLAYERS. MICROSOFT TAGS COVER WINDOWS EXPLORER / WMP.
-        self.fields: dict[str, tuple[str, ...]] = {
-            "Title": ("-ItemList:Title", ),
-            "Subtitle": ("-ItemList:Description", "-Microsoft:Subtitle"),
-            "Subject": ("-Microsoft:Subject", ),
-            "Year": ("-ItemList:ContentCreateDate", ),
-            "Copyright": ("-ItemList:Copyright", ),
-            "Genre(s)": ("-ItemList:Genre", ),
-            "Director(s)": ("-ItemList:Director", "-Microsoft:Director"),
-            "Writer(s)": ("-ItemList:Composer", "-Microsoft:Writer"),
-            "Producer(s)": ("-ItemList:Producer", "-Microsoft:Producer"),
-            "Publisher(s)": ("-Microsoft:Publisher", ),
-            "Contributing Artist(s)": ("-ItemList:Artist", ),
-            "Long Description": ("-ItemList:LongDescription", ),
-            "Comment": ("-ItemList:Comment", ),
+        self.fields: dict[str, FieldDef] = {
+            "Title": {"tags": ("-ItemList:Title", ), "type": FieldType.SINGLE},
+            "Subtitle": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "type": FieldType.SINGLE},
+            "Subject": {"tags": ("-Microsoft:Subject", ), "type": FieldType.SINGLE},
+            "Year": {"tags": ("-ItemList:ContentCreateDate", ), "type": FieldType.SINGLE},
+            "Copyright": {"tags": ("-ItemList:Copyright", ), "type": FieldType.SINGLE},
+            "Genre(s)": {"tags": ("-ItemList:Genre", ), "type": FieldType.EXPANDING},
+            "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "type": FieldType.EXPANDING},
+            "Writer(s)": {"tags": ("-ItemList:Composer", "-Microsoft:Writer"), "type": FieldType.EXPANDING},
+            "Producer(s)": {"tags": ("-ItemList:Producer", "-Microsoft:Producer"), "type": FieldType.EXPANDING},
+            "Publisher(s)": {"tags": ("-Microsoft:Publisher", ), "type": FieldType.EXPANDING},
+            "Contributing Artist(s)": {"tags": ("-ItemList:Artist", ), "type": FieldType.EXPANDING},
+            "Long Description": {"tags": ("-ItemList:LongDescription", ), "type": FieldType.MULTILINE},
+            "Comment": {"tags": ("-ItemList:Comment", ), "type": FieldType.MULTILINE},
         }
 
         self.entries: dict[str, FieldEntry] = {}
         self._field_labels: list[ctk.CTkLabel] = []
 
-        MULTI_FIELDS: frozenset[str] = frozenset({
-            "Genre(s)", "Director(s)", "Writer(s)", "Producer(s)", "Contributing Artist(s)"
-        })
-        NEWLINE_FIELDS: frozenset[str] = frozenset({"Comment", "Long Description"})
-
-        for row_idx, (label_text, tags) in enumerate(self.fields.items(), start=0):
+        for row_idx, (label_text, field_def) in enumerate(self.fields.items()):
             lbl = ctk.CTkLabel(self.sec3, text=label_text)
             lbl.grid(row=row_idx, column=0, pady=(4, 4), sticky="nw")
             self._field_labels.append(lbl)
 
-            if label_text in MULTI_FIELDS:
+            if field_def["type"] == FieldType.EXPANDING:
                 entry_widget: ctk.CTkEntry = MultilineEntry(self.sec3, border_width=1, wrap="word")  # type: ignore[assignment]
-            elif label_text in NEWLINE_FIELDS:
+            elif field_def["type"] == FieldType.MULTILINE:
                 entry_widget = MultilineEntry(  # type: ignore[assignment]
-                    self.sec3, allow_newlines=True, border_width=1, wrap="word"
+                    self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
                 )
             else:
                 entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
             entry_widget.grid(row=row_idx, column=1, padx=(10, 0), pady=(4, 4), sticky="ew")
-            self.entries[label_text] = {"tags": tags, "widget": entry_widget}
+            self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
 
         self._apply_theme()
         self.after(2000, self._poll_theme)
+
+        # VERIFY EXIFTOOL IN THE BACKGROUND SO THE UI IS FULLY RENDERED FIRST
+        if self.exiftool_path and self.btn_apply:
+            self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
+            threading.Thread(target=self._verify_exiftool, daemon=True).start()
 
     def select_files(self) -> None:
         filenames = filedialog.askopenfilenames(
@@ -378,14 +386,33 @@ class MetadataTaggerApp(ctk.CTk):
     def _on_clear_toggle(self) -> None:
         c = COLORS[self._current_theme]
         active = bool(self.sw_clear_empty.get())
-        btn_color = c["foreground"]
+        checkmark_color = "#09090B" if self._current_theme == "light" else "#FFFFFF"
         self.sw_clear_empty.configure(
             fg_color=c["destructive_border"] if active else c["secondary_border"],
-            progress_color=c["primary"] if active else c["primary"],
-            button_color=btn_color,
-            button_hover_color=btn_color,
+            hover_color=c["destructive_border"] if active else c["secondary_hover"],
+            border_color=c["destructive_border"] if active else c["secondary_border"],
             text_color=c["destructive_muted"] if active else c["muted_foreground"],
+            checkmark_color=checkmark_color,
         )
+
+    def _verify_exiftool(self) -> None:
+        """Verify ExifTool actually runs (not just present in `PATH`); called in a background thread."""
+        ok = False
+        if self.exiftool_path:
+            try:
+                subprocess.run([self.exiftool_path, "-ver"], capture_output=True, timeout=5, check=True)
+                ok = True
+            except Exception:
+                ok = False
+
+        def _done() -> None:
+            if not ok:
+                self.exiftool_path = None
+            if self.btn_apply:
+                self.btn_apply.stop(state="normal" if ok else "disabled")
+            self.btn_load_from_video.configure(state="normal" if ok else "disabled")
+
+        self.after(0, _done)
 
     def _poll_theme(self) -> None:
         if get_system_theme() != self._current_theme:
@@ -426,46 +453,70 @@ class MetadataTaggerApp(ctk.CTk):
 
         assert self.exiftool_path is not None
 
-        # BUILD READ COMMAND: REQUEST ONLY THE PRIMARY (CROSS-PLATFORM) TAG PER FIELD
-        tag_args: list[str] = [tags[0].lstrip("-") for tags in self.fields.values()]
-        command: list[str] = [self.exiftool_path, "-json"] + [f"-{t}" for t in tag_args] + [filepath]
+        c = COLORS[self._current_theme]
+        self.btn_load_from_video.start(c["secondary_foreground"])
 
-        try:
-            result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True)
-            records: list[dict[str, object]] = json.loads(result.stdout)
+        exiftool = self.exiftool_path
+        tag_args: list[str] = [fd["tags"][0].lstrip("-") for fd in self.fields.values()]
+        command: list[str] = [exiftool, "-json"] + [f"-{t}" for t in tag_args] + [filepath]
+
+        def _worker() -> None:
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True)
+                records: list[dict[str, object]] = json.loads(result.stdout)
+            except subprocess.CalledProcessError as e:
+                err = f"Failed to read metadata:\n{e.stderr}"
+                self.after(
+                    0,
+                    lambda m=err: (self.btn_load_from_video.stop(state="normal"), messagebox.showerror("ExifTool Error", m))
+                )
+                return
+            except (json.JSONDecodeError, KeyError) as e:
+                err = f"Could not parse ExifTool output:\n{e}"
+                self.after(
+                    0, lambda m=err: (self.btn_load_from_video.stop(state="normal"), messagebox.showerror("Parse Error", m))
+                )
+                return
+
             if not records:
-                messagebox.showinfo("No Data", "ExifTool returned no metadata for this file.")
+                self.after(
+                    0, lambda: (
+                        self.btn_load_from_video.stop(state="normal"),
+                        messagebox.showinfo("No Data", "ExifTool returned no metadata for this file.")
+                    )
+                )
                 return
 
             meta: dict[str, object] = records[0]
+            cover_result = subprocess.run([exiftool, "-b", "-ItemList:CoverArt", filepath], capture_output=True)
+            cover_bytes: bytes = cover_result.stdout
+            self.after(0, lambda: self._on_load_from_video_done(meta, cover_bytes, filepath))
 
-            # MAP SHORT TAG NAME → LABEL, THEN POPULATE ENTRIES
-            short_key_to_label: dict[str, str] = {
-                tags[0].split(":", 1)[-1].lstrip("-"): label
-                for label, tags in self.fields.items()
-            }
-            for key, value in meta.items():
-                if key in short_key_to_label and value:
-                    label = short_key_to_label[key]
-                    widget = self.entries[label]["widget"]
-                    widget.delete(0, "end")
-                    # ADD SPACES AROUND ExifTool's "/" LIST SEPARATOR FOR READABILITY
-                    display_val = str(value).replace("/", " / ")
-                    widget.insert(0, display_val)
+        threading.Thread(target=_worker, daemon=True).start()
 
-            # EXTRACT EMBEDDED COVER ART, IF ANY
-            cover_result = subprocess.run([self.exiftool_path, "-b", "-ItemList:CoverArt", filepath], capture_output=True)
-            if cover_result.stdout:
-                try:
-                    self.cover_art_path = filepath
-                    self._set_cover_from_image(Image.open(io.BytesIO(cover_result.stdout)).convert("RGB"))
-                except Exception:
-                    pass  # MALFORMED COVER DATA; SILENTLY IGNORE
+    def _on_load_from_video_done(self, meta: dict[str, object], cover_bytes: bytes, filepath: str) -> None:
+        self.btn_load_from_video.stop(state="normal")
 
-        except subprocess.CalledProcessError as e:
-            messagebox.showerror("ExifTool Error", f"Failed to read metadata:\n{e.stderr}")
-        except (json.JSONDecodeError, KeyError) as e:
-            messagebox.showerror("Parse Error", f"Could not parse ExifTool output:\n{e}")
+        # MAP SHORT TAG NAME → LABEL, THEN POPULATE ENTRIES
+        short_key_to_label: dict[str, str] = {
+            fd["tags"][0].split(":", 1)[-1].lstrip("-"): label
+            for label, fd in self.fields.items()
+        }
+        for key, value in meta.items():
+            if key in short_key_to_label and value:
+                label = short_key_to_label[key]
+                widget = self.entries[label]["widget"]
+                widget.delete(0, "end")
+                display_val = str(value).replace("/", " / ")  # ADD SPACES AROUND SEP FOR READABILITY
+                widget.insert(0, display_val)
+
+        # EXTRACT EMBEDDED COVER ART, IF ANY
+        if cover_bytes:
+            try:
+                self.cover_art_path = filepath
+                self._set_cover_from_image(Image.open(io.BytesIO(cover_bytes)).convert("RGB"))
+            except Exception:
+                pass  # MALFORMED COVER DATA; SILENTLY IGNORE
 
     def load_template(self) -> None:
         filepath = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")], title="Load Metadata Template")
@@ -523,17 +574,27 @@ class MetadataTaggerApp(ctk.CTk):
         command.extend(self.selected_files)
 
         if self.btn_apply:
-            self.btn_apply.configure(text="Processing...", state="disabled")
-        self.update()
+            self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
 
-        try:
-            subprocess.run(command, capture_output=True, text=True, check=True)
-            messagebox.showinfo("Success", f"Successfully updated {len(self.selected_files)} file(s)!")
-        except subprocess.CalledProcessError as e:
-            messagebox.showerror("ExifTool Error", f"An error occurred:\n{e.stderr}")
-        finally:
+        n_files = len(self.selected_files)
+
+        def _on_done(err: Optional[str] = None) -> None:
             if self.btn_apply:
-                self.btn_apply.configure(text="Apply Metadata to Batch", state="normal")
+                self.btn_apply.stop(state="normal")
+            if err is None:
+                messagebox.showinfo("Success", f"Successfully updated {n_files} file{'' if n_files == 1 else 's'}!")
+            else:
+                messagebox.showerror("ExifTool Error", f"An error occurred:\n{err}")
+
+        def _worker() -> None:
+            try:
+                subprocess.run(command, capture_output=True, text=True, check=True)
+                self.after(0, _on_done)
+            except subprocess.CalledProcessError as e:
+                stderr = e.stderr
+                self.after(0, lambda s=stderr: _on_done(s))
+
+        threading.Thread(target=_worker, daemon=True).start()
 
 
 if __name__ == "__main__":

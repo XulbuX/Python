@@ -52,6 +52,7 @@ COLORS: dict[str, dict[str, str]] = {
 
 
 def get_system_theme() -> str:
+    """Get the system appearance as `"light"` or `"dark"`, falling back to dark."""
     try:
         if sys.platform == "win32":
             import winreg
