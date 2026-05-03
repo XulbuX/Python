@@ -24,6 +24,7 @@ COLORS: dict[str, dict[str, str]] = {
         "destructive_border": "#7F1D1D",
         "destructive_foreground": "#FFDEDE",
         "destructive_muted": "#FCA5A5",
+        "destructive_label": "#F87171",
         "link": "#60A5FA",
     },
     "light": {
@@ -46,6 +47,7 @@ COLORS: dict[str, dict[str, str]] = {
         "destructive_border": "#FCA5A5",
         "destructive_foreground": "#7F1D1D",
         "destructive_muted": "#B91C1C",
+        "destructive_label": "#C0392B",
         "link": "#2563EB",
     },
 }

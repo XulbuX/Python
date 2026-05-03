@@ -183,7 +183,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_section3.pack(side="left", anchor="w", pady=(0, 5))
 
         self.sec3 = ctk.CTkScrollableFrame(self.right_panel, fg_color="transparent", corner_radius=0)
-        self.sec3.pack(fill="both", expand=True, padx=PAD)
+        self.sec3.pack(fill="both", expand=True)  # PADDING WILL BE ADDED DEPENDING ON SCROLLBAR VISIBILITY
         self.sec3.grid_columnconfigure(1, weight=1)
         self.sec3._scrollbar.configure(width=14)
 
@@ -194,11 +194,12 @@ class MetadataTaggerApp(ctk.CTk):
             _orig_set(first, last)
             if float(first) <= 0.0 and float(last) >= 1.0:
                 self.sec3._scrollbar.grid_remove()
+                self.sec3._parent_frame.pack(padx=PAD)
             else:
                 self.sec3._scrollbar.grid()
+                self.sec3._parent_frame.pack(padx=(PAD, PAD - 14))
 
         self.sec3._parent_canvas.configure(yscrollcommand=_on_yscroll)
-        self.after_idle(lambda: _on_yscroll(*self.sec3._parent_canvas.yview()))
 
         # EACH FIELD LISTS ITS TAGS IN PRIORITY ORDER: CROSS-PLATFORM FIRST, OS-SPECIFIC APPENDED.
         # ItemList TAGS WRITE STANDARD iTunes/QuickTime ATOMS (©dir, ©wrt, ©prd, …) RECOGNIZED BY
@@ -397,7 +398,7 @@ class MetadataTaggerApp(ctk.CTk):
             fg_color=c["destructive_border"] if active else c["secondary_border"],
             hover_color=c["destructive_border"] if active else c["secondary_hover"],
             border_color=c["destructive_border"] if active else c["secondary_border"],
-            text_color=c["destructive_muted"] if active else c["muted_foreground"],
+            text_color=c["destructive_label"] if active else c["muted_foreground"],
             checkmark_color=checkmark_color,
         )
 
