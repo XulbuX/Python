@@ -12,7 +12,7 @@ Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark th
 
 - **Write metadata** into `.mp4`, `.mov`, `.m4v`, `.m4a`, `.3gp`, and `.3g2` files.
 - **Batch processing** – Select multiple files and apply the same tags to all at once.
-- **Editable fields:** Title, Subtitle, Subject, Year, Genre(s), Director(s), Writer(s), Producer(s), Contributing Artist(s) and Comment.
+- **Editable fields:** A variety of properties covering general info, credits, and descriptions.
 - **Cover art** – Select an image, preview it in-app, and embed it as front-cover art.
 - **JSON templates** – Save the current field values to a `.json` file and reload them later.
 - **Load from video** – Reads existing metadata and cover art back out of a file and populates the fields.

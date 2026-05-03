@@ -22,7 +22,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         self.title("Film Credits Tagger")
         self.resizable(False, False)
-        self.geometry("800x520")
+        self.geometry("820x520")
 
         # SET WINDOW/TASKBAR ICON
         _icon_path: Path = Path(__file__).resolve().parent / "assets" / "img" / "FilmCreditsTagger.png"
@@ -55,7 +55,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True)
 
-        self.left_panel = ctk.CTkFrame(self.main_frame, fg_color="transparent", width=350)
+        self.left_panel = ctk.CTkFrame(self.main_frame, fg_color="transparent", width=340)
         self.left_panel.pack(side="left", fill="y")
         self.left_panel.pack_propagate(False)
 
@@ -199,11 +199,14 @@ class MetadataTaggerApp(ctk.CTk):
             "Subtitle": ("-ItemList:Description", "-Microsoft:Subtitle"),
             "Subject": ("-Microsoft:Subject", ),
             "Year": ("-ItemList:ContentCreateDate", ),
+            "Copyright": ("-ItemList:Copyright", ),
             "Genre(s)": ("-ItemList:Genre", ),
             "Director(s)": ("-ItemList:Director", "-Microsoft:Director"),
             "Writer(s)": ("-ItemList:Composer", "-Microsoft:Writer"),
             "Producer(s)": ("-ItemList:Producer", "-Microsoft:Producer"),
+            "Publisher(s)": ("-Microsoft:Publisher", ),
             "Contributing Artist(s)": ("-ItemList:Artist", ),
+            "Long Description": ("-ItemList:LongDescription", ),
             "Comment": ("-ItemList:Comment", ),
         }
 
@@ -213,7 +216,7 @@ class MetadataTaggerApp(ctk.CTk):
         MULTI_FIELDS: frozenset[str] = frozenset({
             "Genre(s)", "Director(s)", "Writer(s)", "Producer(s)", "Contributing Artist(s)"
         })
-        NEWLINE_FIELDS: frozenset[str] = frozenset({"Comment"})
+        NEWLINE_FIELDS: frozenset[str] = frozenset({"Comment", "Long Description"})
 
         for row_idx, (label_text, tags) in enumerate(self.fields.items(), start=0):
             lbl = ctk.CTkLabel(self.sec3, text=label_text)
