@@ -1,8 +1,13 @@
+# pyright: basic
+from pathlib import Path
 from typing import Optional, TypedDict
 from enum import IntEnum
-from PIL import Image, ImageDraw
-import customtkinter as ctk  # type: ignore[no-stubs]
+from PIL import Image
+import customtkinter as ctk
 import tkinter as tk
+import io
+
+from consts import ICONS  # type: ignore[missing-import]
 
 
 class FieldType(IntEnum):
@@ -21,25 +26,61 @@ class FieldEntry(TypedDict):
     widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
 
 
-def bind_clean_paste(tk_widget: object) -> None:
-    """Bind a <<Paste>> handler that strips newlines (replacing them with spaces).
+def bind_clean_paste(tk_widget: tk.Misc) -> None:
+    """Bind a `<<Paste>>` handler that strips newlines (replacing them with spaces).<br>
     Works with both `tk.Entry` and `tk.Text` (and their CTk wrappers' internal widgets)."""
 
     def _on_paste(_event: object) -> str:
-        w = tk_widget  # type: ignore[attr-defined]
+        w = tk_widget
         try:
             text: str = w.clipboard_get()
         except tk.TclError:
             return "break"
         clean = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
         try:
-            w.delete("sel.first", "sel.last")
+            w.delete("sel.first", "sel.last")  # type: ignore[attr-defined]
         except tk.TclError:
             pass
-        w.insert("insert", clean)
+        w.insert("insert", clean)  # type: ignore[attr-defined]
         return "break"
 
-    tk_widget.bind("<<Paste>>", _on_paste)  # type: ignore[attr-defined]
+    tk_widget.bind("<<Paste>>", _on_paste)
+
+
+def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
+    """Render a single SVG file to a `PIL` RGBA image at `render_px × render_px`.\n
+    -------------------------------------------------------------------------------------
+    Replaces `currentColor` with `color` (CSS hex string) before rasterizing.<br>
+    Pipeline: `svglib` → `ReportLab PDF` (no native Cairo needed) → `PyMuPDF` → `PIL`"""
+    from reportlab.graphics.renderPDF import drawToString
+    from svglib.svglib import svg2rlg
+    import fitz  # PyMuPDF
+
+    svg_src = svg_path.read_text(encoding="utf-8").replace("currentColor", color)
+    drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # type: ignore[arg-type]
+
+    if drawing is None:
+        raise ValueError(f"Failed to parse SVG: {svg_path.name}")
+
+    scale = render_px / drawing.width
+
+    drawing.width = render_px
+    drawing.height = render_px
+    drawing.transform = (scale, 0, 0, scale, 0, 0)
+
+    doc = fitz.open(stream=drawToString(drawing), filetype="pdf")
+    pix = doc[0].get_pixmap(matrix=fitz.Matrix(1, 1), alpha=True)
+
+    return Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
+
+
+def render_svg_icon(name: str, size: int, color: str) -> ctk.CTkImage:
+    """Rasterize a named icon from `ICONS` to a `ctk.CTkImage`.\n
+    ---------------------------------------------------------------------------------------
+    `color` is a CSS hex string, e.g. `"#A1A1AA"`; it replaces `currentColor`.<br>
+    Renders at 4× logical size so `CTkImage` can downsample cleanly on any HiDPI scale."""
+    pil_img = _svg_to_pil(ICONS[name], size * 4, color)
+    return ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(size, size))
 
 
 class MultilineEntry(ctk.CTkTextbox):
@@ -101,13 +142,13 @@ class MultilineEntry(ctk.CTkTextbox):
             else:
                 self.configure(height=80)
 
-    def get(self) -> str:  # type: ignore[override]
+    def get(self) -> str:
         return super().get("1.0", "end").rstrip("\n")
 
-    def delete(self, _start: object, _end: object = None) -> None:  # type: ignore[override]
+    def delete(self, _start: object, _end: object = None) -> None:
         super().delete("1.0", "end")
 
-    def insert(self, _index: object, value: str) -> None:  # type: ignore[override]
+    def insert(self, _index: object, value: str) -> None:
         super().delete("1.0", "end")
         super().insert("1.0", value)
 
@@ -115,14 +156,17 @@ class MultilineEntry(ctk.CTkTextbox):
 class ToolTip:
     """Minimal hover tooltip for any tkinter/CTk widget."""
 
-    def __init__(self, widget: object, text: str, delay_ms: int = 1000) -> None:
+    def __init__(self, widget: tk.Misc, text: str, delay_ms: int = 1000) -> None:
         self._widget = widget
         self._text = text
-        self._tip: object = None
+        self._tip: Optional[tk.Toplevel] = None
         self._after_id: Optional[str] = None
         self._delay_ms = delay_ms
-        widget.bind("<Enter>", self._schedule)
-        widget.bind("<Leave>", self._hide)
+        # Use widget.bind() so that for CTkButton, all internal children (canvas, text
+        # label, image label) each receive the binding — CTkButton.bind() proxies to them.
+        # add="+" preserves any existing bindings on those children.
+        widget.bind("<Enter>", self._schedule, add="+")  # type: ignore[call-arg]
+        widget.bind("<Leave>", self._hide, add="+")  # type: ignore[call-arg]
 
     def _schedule(self, event: object = None) -> None:
         if self._after_id:
@@ -178,6 +222,8 @@ class ToolTip:
 
         cv = tk.Canvas(self._tip, width=tw, height=th, bg=self._TIP_TRANSPARENT, highlightthickness=0)
         cv.pack()
+        # DESTROY TOOLTIP WHEN MOUSE LEAVES IT
+        self._tip.bind("<Leave>", self._hide)
         # ROUNDED RECTANGLE VIA smooth=True POLYGON; BORDER DRAWN FIRST (1px LARGER), FILL ON TOP
         pts = [r, 0, tw - r, 0, tw, 0, tw, r, tw, th - r, tw, th, tw - r, th, r, th, 0, th, 0, th - r, 0, r, 0, 0]
         cv.create_polygon(pts, smooth=True, fill=tip_border, outline="")
@@ -202,6 +248,19 @@ class ToolTip:
             ty += ph + PARA_GAP
 
     def _hide(self, event: object = None) -> None:
+        # Moving between a CTkButton's internal sub-widgets (canvas → text label etc.) fires
+        # spurious Leave events. Ignore them if the pointer is still within the outer widget.
+        try:
+            wx = self._widget.winfo_rootx()
+            wy = self._widget.winfo_rooty()
+            ww = self._widget.winfo_width()
+            wh = self._widget.winfo_height()
+            px = self._widget.winfo_pointerx()
+            py = self._widget.winfo_pointery()
+            if wx <= px < wx + ww and wy <= py < wy + wh:
+                return  # pointer still inside — not a real Leave
+        except tk.TclError:
+            pass
         if self._after_id:
             self._widget.after_cancel(self._after_id)
             self._after_id = None
@@ -226,44 +285,16 @@ class SpinnerButton(ctk.CTkButton):
         self._saved_state: str = "normal"
 
     def _build_frames(self, color_hex: str, size: int = 18) -> None:
-        try:
-            r, g, b = int(color_hex[1:3], 16), int(color_hex[3:5], 16), int(color_hex[5:7], 16)
-        except (ValueError, IndexError):
-            r, g, b = 255, 255, 255
-
-        alpha = 160
-
-        # RENDER AT 3× FOR ANTI-ALIASING, THEN DOWNSAMPLE
+        # RENDER LOADER SVG AT 3× FOR ANTI-ALIASING, THEN GENERATE ONE ROTATED FRAME PER STEP
         HI = size * 3
-        sc = HI / 24.0
-        stroke_w = max(2, round(2 * sc / 3.0))
-        rad = stroke_w / 2.0
-        color = (r, g, b, alpha)
+        r, g, b, a = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
+        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # type: ignore[attr-defined]
 
-        # DRAW THE ICON ONCE AS A STATIC BASE IMAGE
-        base = Image.new("RGBA", (HI, HI), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(base)
-        for (x1, y1), (x2, y2) in [
-            ((12.0, 2.0), (12.0, 6.0)),
-            ((16.2, 7.8), (19.1, 4.9)),
-            ((18.0, 12.0), (22.0, 12.0)),
-            ((16.2, 16.2), (19.1, 19.1)),
-            ((12.0, 18.0), (12.0, 22.0)),
-            ((4.9, 19.1), (7.8, 16.2)),
-            ((2.0, 12.0), (6.0, 12.0)),
-            ((4.9, 4.9), (7.8, 7.8)),
-        ]:
-            x1s, y1s, x2s, y2s = x1 * sc, y1 * sc, x2 * sc, y2 * sc
-            draw.line([(x1s, y1s), (x2s, y2s)], fill=color, width=stroke_w)
-            for cx, cy in ((x1s, y1s), (x2s, y2s)):
-                draw.ellipse((cx - rad, cy - rad, cx + rad, cy + rad), fill=color)
-
-        # EACH FRAME PHYSICALLY ROTATES THE BASE IMAGE CLOCKWISE BY ONE STEP
         step = 360.0 / self._FRAME_COUNT
         self._spin_frames = []
         for i in range(self._FRAME_COUNT):
-            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)
-            lo = rotated.resize((size, size), Image.LANCZOS)
+            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # type: ignore[attr-defined]
+            lo = rotated.resize((size, size), Image.LANCZOS)  # type: ignore[attr-defined]
             self._spin_frames.append(ctk.CTkImage(light_image=lo, dark_image=lo, size=(size, size)))
 
     def start(self, color_hex: str = "#FFFFFF") -> None:

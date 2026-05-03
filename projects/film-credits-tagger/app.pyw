@@ -1,8 +1,9 @@
+# pyright: basic
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import Optional
 from PIL import Image, ImageTk
-import customtkinter as ctk  # type: ignore[no-stubs]
+import customtkinter as ctk
 import subprocess
 import webbrowser
 import threading
@@ -11,9 +12,36 @@ import shutil
 import json
 import sys
 import io
+import os
+import re
 
-from theme import COLORS, resolve_mono_font, get_system_theme
-from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip, bind_clean_paste
+from consts import APP_ICON_PNG, COLORS  # type: ignore[missing-import]
+from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from theme import resolve_mono_font, get_system_theme  # type: ignore[missing-import]
+
+
+DEBUG: bool = True
+
+
+def _normalize_multi(val: str) -> str:
+    """Normalize user-entered separators to `; ` for multi-value tags."""
+    parts = re.split(r"\s*[/;,]\s*", val)
+    return "; ".join(p for p in (p.strip() for p in parts) if p)
+
+
+def _parse_date(val: str) -> str:
+    """Parse a user-entered date (`DD/MM/YYYY`, flexible separators) into ExifTool format `YYYY:MM:DD 00:00:00`.<br>
+    Raises `ValueError` with a human-readable message if the input cannot be parsed."""
+    _fmt = "Expected format: DD/MM/YYYY (e.g. 25/12/2026)"
+    m = re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})[./\- ](\d{4})", val.strip())
+    if not m:
+        raise ValueError(f'Cannot parse "{val}" as a date.\n{_fmt}')
+    day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if not (1 <= month <= 12):
+        raise ValueError(f'Invalid month ({month}) in "{val}".\n{_fmt}')
+    if not (1 <= day <= 31):
+        raise ValueError(f'Invalid day ({day}) in "{val}".\n{_fmt}')
+    return f"{year}:{month:02d}:{day:02d} 00:00:00"
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -26,10 +54,9 @@ class MetadataTaggerApp(ctk.CTk):
         self.geometry("820x520")
 
         # SET WINDOW/TASKBAR ICON
-        _icon_path: Path = Path(__file__).resolve().parent / "assets" / "img" / "FilmCreditsTagger.png"
         self._icon_ico_path: Optional[Path] = None
-        if _icon_path.is_file():
-            _pil_icon: Image.Image = Image.open(str(_icon_path))
+        if APP_ICON_PNG.is_file():
+            _pil_icon: Image.Image = Image.open(str(APP_ICON_PNG))
             if sys.platform == "win32":
                 _ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)
                 _ico_tmp.close()
@@ -74,16 +101,23 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_section1 = ctk.CTkLabel(self.sec1, text="Select Media", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section1.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
-        self.btn_select_files = ctk.CTkButton(self.sec1, text="Select Video File(s)", command=self.select_files)
+        self.btn_select_files = SpinnerButton(self.sec1, text="Select Video File(s)", command=self.select_files)
         self.btn_select_files.grid(row=1, column=0, pady=5, sticky="w")
 
         self.lbl_files = ctk.CTkLabel(self.sec1, text="0 files selected")
         self.lbl_files.grid(row=1, column=1, padx=(10, 0), pady=5, sticky="w")
 
-        self.btn_select_cover = ctk.CTkButton(
+        self.btn_select_cover = SpinnerButton(
             self.sec1, text="Select Cover Art", command=self.select_cover_art, border_width=1
         )
         self.btn_select_cover.grid(row=2, column=0, pady=5, sticky="nw")
+
+        self.btn_remove_cover = ctk.CTkButton(
+            self.sec1, text="", width=28, height=28, corner_radius=6, border_width=0, command=self._remove_cover
+        )
+        self.btn_remove_cover.grid(row=2, column=1, padx=(4, 0), pady=5, sticky="w")
+        self.btn_remove_cover.grid_remove()  # HIDDEN UNTIL A COVER IS SELECTED
+        ToolTip(self.btn_remove_cover, "Remove cover art")
 
         self.frame_cover_preview = ctk.CTkFrame(self.sec1, fg_color="transparent")
         self.frame_cover_preview.grid(row=3, column=0, columnspan=2, pady=(5, 0), sticky="w")
@@ -114,10 +148,10 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_section2 = ctk.CTkLabel(self.sec2, text="Load/Save Data", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section2.pack(anchor="nw", pady=(0, 8))
 
-        self.btn_load_template = ctk.CTkButton(self.sec2, text="Load JSON Template", command=self.load_template)
+        self.btn_load_template = SpinnerButton(self.sec2, text="Load JSON Template", command=self.load_template)
         self.btn_load_template.pack(fill="x", pady=(0, 6))
 
-        self.btn_save_template = ctk.CTkButton(self.sec2, text="Save JSON Template", command=self.save_template)
+        self.btn_save_template = SpinnerButton(self.sec2, text="Save JSON Template", command=self.save_template)
         self.btn_save_template.pack(fill="x", pady=(0, 6))
 
         self.btn_load_from_video = SpinnerButton(
@@ -157,7 +191,7 @@ class MetadataTaggerApp(ctk.CTk):
             self._banner_labels.append((lbl_desc, "destructive_muted"))
             lbl_cmd = ctk.CTkLabel(self._banner, text="exiftool.org", font=resolve_mono_font(12), cursor="hand2")
             lbl_cmd.pack(anchor="w", padx=10, pady=(4, 8))
-            lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://exiftool.org"))  # type: ignore[misc]
+            lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://exiftool.org"))
             self._banner_labels.append((lbl_cmd, "link"))
 
         #################### METADATA FIELDS SECTION ####################
@@ -179,6 +213,11 @@ class MetadataTaggerApp(ctk.CTk):
             "ON – Empty fields and no cover art will delete those tags from the file when applying.\n"
             "OFF – Only filled-in fields are written; existing tags in the file are left untouched.",
         )
+        self.btn_reset_all = ctk.CTkButton(
+            self.sec3_header, text="", width=28, height=28, corner_radius=6, border_width=0, command=self.reset_all
+        )
+        self.btn_reset_all.pack(side="right", padx=(0, 12), pady=(0, 5))
+        ToolTip(self.btn_reset_all, "Reset all fields")
         self.lbl_section3 = ctk.CTkLabel(self.sec3_header, text="Metadata", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section3.pack(side="left", anchor="w", pady=(0, 5))
 
@@ -190,7 +229,7 @@ class MetadataTaggerApp(ctk.CTk):
         # AUTO-HIDE SCROLLBAR WHEN CONTENT FITS
         _orig_set = self.sec3._scrollbar.set
 
-        def _on_yscroll(first: str, last: str) -> None:
+        def _on_yscroll(first: float, last: float) -> None:
             _orig_set(first, last)
             if float(first) <= 0.0 and float(last) >= 1.0:
                 self.sec3._scrollbar.grid_remove()
@@ -207,8 +246,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.fields: dict[str, FieldDef] = {
             "Title": {"tags": ("-ItemList:Title", ), "type": FieldType.SINGLE},
             "Subtitle": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "type": FieldType.SINGLE},
-            "Subject": {"tags": ("-Microsoft:Subject", ), "type": FieldType.SINGLE},
-            "Year": {"tags": ("-ItemList:ContentCreateDate", ), "type": FieldType.SINGLE},
+            "Creation Date": {"tags": ("-ItemList:ContentCreateDate", ), "type": FieldType.SINGLE},
             "Copyright": {"tags": ("-ItemList:Copyright", ), "type": FieldType.SINGLE},
             "Genre(s)": {"tags": ("-ItemList:Genre", ), "type": FieldType.EXPANDING},
             "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "type": FieldType.EXPANDING},
@@ -236,7 +274,9 @@ class MetadataTaggerApp(ctk.CTk):
                 )
             else:
                 entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
-                bind_clean_paste(entry_widget._entry)  # type: ignore[attr-defined]
+                bind_clean_paste(entry_widget._entry)
+                if label_text == "Creation Date":
+                    entry_widget.configure(placeholder_text="DD/MM/YYYY")
             entry_widget.grid(row=row_idx, column=1, padx=(10, 0), pady=(4, 4), sticky="ew")
             self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
 
@@ -282,7 +322,7 @@ class MetadataTaggerApp(ctk.CTk):
             embed_h: int = max(1, int(orig_h * embed_ratio))
         else:
             embed_w, embed_h = orig_w, orig_h
-        embed_img: Image.Image = img.resize((embed_w, embed_h), Image.LANCZOS)
+        embed_img: Image.Image = img.resize((embed_w, embed_h), Image.LANCZOS)  # type: ignore[attr-defined]
 
         # MEASURE JPEG SIZE AFTER COMPRESSION
         buf: io.BytesIO = io.BytesIO()
@@ -302,7 +342,7 @@ class MetadataTaggerApp(ctk.CTk):
         fit_scale: float = min(THUMB / embed_w, THUMB / embed_h)
         fit_w: int = max(1, int(embed_w * fit_scale))
         fit_h: int = max(1, int(embed_h * fit_scale))
-        thumb_img: Image.Image = embed_img.resize((fit_w, fit_h), Image.LANCZOS)
+        thumb_img: Image.Image = embed_img.resize((fit_w, fit_h), Image.LANCZOS)  # type: ignore[attr-defined]
 
         self.cover_preview_image = ctk.CTkImage(light_image=thumb_img, dark_image=thumb_img, size=(fit_w, fit_h))
         self.lbl_cover_thumb.configure(image=self.cover_preview_image, text="")
@@ -310,12 +350,49 @@ class MetadataTaggerApp(ctk.CTk):
             text=f"image/jpeg\n{embed_w}\u00d7{embed_h}\n{embed_kb} KB\nFront Cover",
             text_color=COLORS[self._current_theme]["foreground"]
         )
+        self.btn_remove_cover.grid()  # SHOW THE REMOVE BUTTON NOW THAT A COVER IS LOADED
+
+    def _remove_cover(self) -> None:
+        """Clear the selected cover art and reset the cover preview."""
+        if self.cover_art_path is None and self.cover_preview_image is None:
+            self.btn_remove_cover.grid_remove()
+            return  # NOTHING TO CLEAR; ALSO PREVENTS stale-PhotoImage TclError ON REPEAT CALLS
+        self.cover_art_path = None
+        if self.cover_art_embed_path and Path(self.cover_art_embed_path).exists():
+            Path(self.cover_art_embed_path).unlink()
+        self.cover_art_embed_path = None
+        c = COLORS[self._current_theme]
+        # NULL OUT BOTH CTkLabel'S _image AND THE UNDERLYING tk.Label's image OPTION SO THAT
+        # NO STALE PhotoImage REFERENCE CAUSES TclError WHEN TKINTER VALIDATES OPTIONS ON REDRAW.
+        self.lbl_cover_thumb._image = None  # type: ignore[attr-defined]
+        try:
+            self.lbl_cover_thumb._label.configure(image="")  # type: ignore[attr-defined]
+        except Exception:
+            pass
+        self.lbl_cover_thumb.configure(text="No cover\nart selected", text_color=c["placeholder_foreground"])
+        self.lbl_cover_info.configure(text="", text_color=c["placeholder_foreground"])
+        self.cover_preview_image = None
+        self.btn_remove_cover.grid_remove()
+
+    def reset_all(self) -> None:
+        """Clear all metadata fields and remove the cover art."""
+        for data in self.entries.values():
+            widget = data["widget"]
+            if isinstance(widget, MultilineEntry):
+                widget.delete(0, "end")
+            elif not getattr(widget, "_placeholder_text_active", False):
+                # FIELD HAS REAL CONTENT: CLEAR IT, THEN IMMEDIATELY RESTORE THE PLACEHOLDER
+                # (WITHOUT THIS, PLACEHOLDER ONLY REAPPEARS ON THE NEXT FOCUS-OUT EVENT)
+                widget.delete(0, "end")
+                if hasattr(widget, "_activate_placeholder"):
+                    widget._activate_placeholder()
+        self._remove_cover()
 
     def _apply_theme(self) -> None:
-        theme: str = get_system_theme()
-        c: dict[str, str] = dict(COLORS[theme])
+        self._current_theme = get_system_theme()
+        c: dict[str, str] = dict(COLORS[self._current_theme])
 
-        ctk.set_appearance_mode(theme)
+        ctk.set_appearance_mode(self._current_theme)
         self.configure(fg_color=c["background"])
 
         self.main_frame.configure(fg_color=c["background"])
@@ -347,8 +424,13 @@ class MetadataTaggerApp(ctk.CTk):
         for lbl in self._field_labels:
             lbl.configure(text_color=c["muted_foreground"])
 
-        self._current_theme = theme
-        self._on_clear_toggle()  # APPLIES SWITCH COLORS BASED ON CURRENT STATE
+        self._on_clear_toggle()
+        self.sw_clear_empty.configure(
+            fg_color=c["background"],
+            hover_color=c["secondary_hover"],
+            border_color=c["secondary_border"],
+            checkmark_color=c["destructive_label"],
+        )
 
         self.btn_select_files.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
         self.btn_select_cover.configure(
@@ -357,6 +439,13 @@ class MetadataTaggerApp(ctk.CTk):
             border_color=c["secondary_border"],
             text_color=c["secondary_foreground"]
         )
+        self.btn_remove_cover.configure(
+            width=28,
+            height=28,
+            image=render_svg_icon("x", 16, c["muted_foreground"]),
+            fg_color="transparent",
+            hover_color=c["secondary_hover"],
+        )
         self.btn_load_template.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
         self.btn_save_template.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
         self.btn_load_from_video.configure(
@@ -364,6 +453,13 @@ class MetadataTaggerApp(ctk.CTk):
             hover_color=c["secondary_hover"],
             border_color=c["secondary_border"],
             text_color=c["secondary_foreground"]
+        )
+        self.btn_reset_all.configure(
+            width=28,
+            height=28,
+            image=render_svg_icon("refresh-ccw", 16, c["muted_foreground"]),
+            fg_color="transparent",
+            hover_color=c["secondary_hover"],
         )
 
         if self.btn_apply:
@@ -392,18 +488,12 @@ class MetadataTaggerApp(ctk.CTk):
 
     def _on_clear_toggle(self) -> None:
         c = COLORS[self._current_theme]
-        active = bool(self.sw_clear_empty.get())
-        checkmark_color = "#09090B" if self._current_theme == "light" else "#FFFFFF"
         self.sw_clear_empty.configure(
-            fg_color=c["destructive_border"] if active else c["secondary_border"],
-            hover_color=c["destructive_border"] if active else c["secondary_hover"],
-            border_color=c["destructive_border"] if active else c["secondary_border"],
-            text_color=c["destructive_label"] if active else c["muted_foreground"],
-            checkmark_color=checkmark_color,
+            text_color=c["destructive_label"] if bool(self.sw_clear_empty.get()) else c["muted_foreground"],
         )
 
     def _verify_exiftool(self) -> None:
-        """Verify ExifTool actually runs (not just present in `PATH`); called in a background thread."""
+        """Verify ExifTool runs; called in a background thread."""
         ok = False
         if self.exiftool_path:
             try:
@@ -432,7 +522,16 @@ class MetadataTaggerApp(ctk.CTk):
         for label, data in self.entries.items():
             val = data["widget"].get().strip()
             if val:
+                if label == "Creation Date":
+                    try:
+                        dmy = re.match(r"(\d{4}):(\d{2}):(\d{2})", _parse_date(val))
+                        val = f"{dmy.group(3)}/{dmy.group(2)}/{dmy.group(1)}" if dmy else val
+                    except ValueError:
+                        pass  # SAVE AS-IS; apply_metadata WILL CATCH THE ERROR LATER
                 template_data[label] = val
+
+        if self.cover_art_path:
+            template_data["__cover_art__"] = self.cover_art_path
 
         if not template_data:
             messagebox.showinfo("Empty", "No fields filled out to save.")
@@ -465,7 +564,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         exiftool = self.exiftool_path
         tag_args: list[str] = [fd["tags"][0].lstrip("-") for fd in self.fields.values()]
-        command: list[str] = [exiftool, "-json"] + [f"-{t}" for t in tag_args] + [filepath]
+        command: list[str] = [exiftool, "-json", "-charset", "utf8"] + [f"-{t}" for t in tag_args] + [filepath]
 
         def _worker() -> None:
             try:
@@ -514,7 +613,11 @@ class MetadataTaggerApp(ctk.CTk):
                 label = short_key_to_label[key]
                 widget = self.entries[label]["widget"]
                 widget.delete(0, "end")
-                display_val = str(value).replace("/", " / ")  # ADD SPACES AROUND SEP FOR READABILITY
+                if label == "Creation Date":
+                    dm = re.match(r"(\d{4}):(\d{2}):(\d{2})", str(value))
+                    display_val = f"{dm.group(3)}/{dm.group(2)}/{dm.group(1)}" if dm else str(value)
+                else:
+                    display_val = re.sub(r"\s*[/;,]\s*", ", ", str(value))  # NORMALIZE SEPARATORS FOR DISPLAY
                 widget.insert(0, display_val)
 
         # EXTRACT EMBEDDED COVER ART, IF ANY
@@ -538,6 +641,12 @@ class MetadataTaggerApp(ctk.CTk):
                     if label in template_data:
                         data["widget"].insert(0, template_data[label])
 
+                # RESTORE COVER ART IF PATH IS STILL VALID
+                cover_path = template_data.get("__cover_art__")
+                if cover_path and Path(cover_path).is_file():
+                    self.cover_art_path = cover_path
+                    self._set_cover_from_image(Image.open(cover_path).convert("RGB"))
+
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load template:\n{e}")
 
@@ -545,40 +654,72 @@ class MetadataTaggerApp(ctk.CTk):
         if not self.exiftool_path:
             return
         if not self.selected_files:
-            messagebox.showwarning("No Files", "Please select at least one MP4 file.")
+            messagebox.showwarning("No Files", "Please select at least one video file.")
             return
 
-        command: list[str] = [self.exiftool_path, "-overwrite_original"]
+        tag_lines: list[str] = []
+        val_tempfiles: list[Path] = []  # PER-VALUE TEMP FILES FOR MULTILINE CONTENT
         tags_added: int = 0
-
         clear_mode: bool = bool(self.sw_clear_empty.get())
 
-        # [1] ADD TEXT TAGS
-        for data in self.entries.values():
+        def _tag_line(tag: str, val: str) -> str:
+            """Return an argfile line for `tag=val`, using a temp file if val contains newlines."""
+            if "\n" in val:
+                vf = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8", delete=False, newline="\n")
+                vf.write(val)
+                vf.close()
+                val_tempfiles.append(Path(vf.name))
+                return f"{tag}<={vf.name}"
+            return f"{tag}={val}"
+
+        # [1] COLLECT TEXT TAG ASSIGNMENTS
+        for label, data in self.entries.items():
+            field_type = self.fields[label]["type"]
             val = data["widget"].get().strip()
             if val:
+                if field_type == FieldType.EXPANDING:
+                    val = _normalize_multi(val)
+                elif label == "Creation Date":
+                    try:
+                        val = _parse_date(val)
+                    except ValueError as exc:
+                        messagebox.showerror("Invalid Date", str(exc))
+                        return
                 for tag in data["tags"]:
-                    command.append(f"{tag}={val}")
+                    tag_lines.append(_tag_line(tag, val))
                 tags_added += 1
             elif clear_mode:
                 for tag in data["tags"]:
-                    command.append(f"{tag}=")  # EMPTY ASSIGNMENT DELETES THE TAG
+                    tag_lines.append(f"{tag}=")  # EMPTY ASSIGNMENT DELETES THE TAG
                 tags_added += 1
 
-        # [2] ADD COVER ART TAG
+        # [2] COVER ART TAG
         if self.cover_art_embed_path:
-            command.append(f"-ItemList:CoverArt<={self.cover_art_embed_path}")
+            tag_lines.append(f"-ItemList:CoverArt<={self.cover_art_embed_path}")
             tags_added += 1
         elif clear_mode:
-            command.append("-ItemList:CoverArt=")  # REMOVE EXISTING COVER ART
+            tag_lines.append("-ItemList:CoverArt=")  # REMOVE EXISTING COVER ART
             tags_added += 1
 
         if tags_added == 0:
             messagebox.showinfo("No Input", "No metadata or cover art provided.")
             return
 
-        # [3] APPEND ALL SELECTED FILES TO THE COMMAND
-        command.extend(self.selected_files)
+        # WRITE TAG ASSIGNMENTS TO A UTF-8 ARGFILE SO UNICODE VALUES ARE PASSED
+        # CORRECTLY ON WINDOWS (BYPASSES SYSTEM CODEPAGE FOR COMMAND-LINE ARGS)
+        argfile = tempfile.NamedTemporaryFile(mode="w", suffix=".args", encoding="utf-8", delete=False, newline="\n")
+        argfile.write("\n".join(tag_lines))
+        argfile.close()
+
+        command: list[str] = [self.exiftool_path, "-overwrite_original", "-@", argfile.name] + self.selected_files
+
+        print("[apply_metadata] tag_lines:")
+        for line in tag_lines:
+            print(" ", line)
+        print("[apply_metadata] argfile:", argfile.name)
+        print("[apply_metadata] argfile contents:")
+        print(Path(argfile.name).read_text(encoding="utf-8"))
+        print("[apply_metadata] command:", command)
 
         if self.btn_apply:
             self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
@@ -586,6 +727,9 @@ class MetadataTaggerApp(ctk.CTk):
         n_files = len(self.selected_files)
 
         def _on_done(err: Optional[str] = None) -> None:
+            Path(argfile.name).unlink(missing_ok=True)
+            for vf in val_tempfiles:
+                vf.unlink(missing_ok=True)
             if self.btn_apply:
                 self.btn_apply.stop(state="normal")
             if err is None:
@@ -595,9 +739,13 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _worker() -> None:
             try:
-                subprocess.run(command, capture_output=True, text=True, check=True)
+                result = subprocess.run(command, capture_output=True, text=True, check=True)
+                print("[exiftool stdout]", result.stdout)
+                print("[exiftool stderr]", result.stderr)
                 self.after(0, _on_done)
             except subprocess.CalledProcessError as e:
+                print("[exiftool ERROR stdout]", e.stdout)
+                print("[exiftool ERROR stderr]", e.stderr)
                 stderr = e.stderr
                 self.after(0, lambda s=stderr: _on_done(s))
 
@@ -605,6 +753,11 @@ class MetadataTaggerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
+    if not DEBUG:
+        _devnull = open(os.devnull, "w")
+        sys.stdout = _devnull
+        sys.stderr = _devnull
+
     ctk.set_appearance_mode(get_system_theme())
     ctk.set_default_color_theme("blue")
 
