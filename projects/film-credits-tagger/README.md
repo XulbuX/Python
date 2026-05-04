@@ -1,4 +1,4 @@
-# Film Credits Tagger • XulbuX <a href="#film-credits-tagger--xulbux-"><img src="./assets/img/FilmCreditsTagger.svg" width="36" align="right" /></a>
+# Film Credits Tagger • XulbuX <a href="#film-credits-tagger--xulbux-"><img src="./assets/img/FilmCreditsTagger.svg" height="36" align="right" /></a>
 
 A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).<br>
 Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark theme automatically.
