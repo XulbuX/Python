@@ -1,11 +1,49 @@
 # pyright: basic
 from pathlib import Path
+from typing import TypedDict
+from enum import IntEnum
+import customtkinter as ctk
+
+
+class FieldType(IntEnum):
+    SINGLE = 1  # SINGLE-LINE CTkEntry
+    EXPANDING = 2  # SINGLE-LINE THAT EXPANDS TO MULTI-LINE (NO HARD NEWLINES)
+    MULTILINE = 3  # FREE MULTI-LINE WITH NEWLINES ALLOWED
+
+
+class ValType(IntEnum):
+    Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (ExifTool format)
+    Lang = 2  # ISO 639-2 three-letter code, e.g. eng, fra, deu
+
+
+class _FieldDefRequired(TypedDict):
+    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
+    type: FieldType
+
+
+class FieldDef(_FieldDefRequired, total=False):
+    placeholder: str
+    val_type: ValType
+
+
+class FieldEntry(TypedDict):
+    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
+    widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
 
 
 _ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
 _ICON_DIR: Path = _ASSET_DIR / "icons"
 
 APP_ICON_PNG: Path = _ASSET_DIR / "img" / "FilmCreditsTagger.png"
+
+VIDEO_FILE_TYPES: list[tuple[str, str]] = [
+    ("Video Files", "*.mp4 *.mov *.m4v *.m4a *.3gp *.3g2"),
+    ("All Files", "*.*"),
+]
+
+COVER_ART_FILE_TYPES: list[tuple[str, str]] = [
+    ("Images", "*.jpg *.jpeg *.png *.webp *.tiff *.tif"),
+]
 
 ICONS: dict[str, Path] = {
     "loader": _ICON_DIR / "loader.svg",

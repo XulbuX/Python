@@ -15,37 +15,15 @@ import io
 import os
 import re
 
-# PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
-# (ONLY RELEVANT ON WINDOWS WHEN THE APP IS LAUNCHED WITHOUT A CONSOLE, E.G. VIA .pyw)
-_POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
-
-from consts import APP_ICON_PNG, COLORS  # type: ignore[missing-import]
-from widgets import MultilineEntry, SpinnerButton, FieldEntry, FieldDef, FieldType, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
-from theme import resolve_mono_font, get_system_theme  # type: ignore[missing-import]
-
 
 DEBUG: bool = False
 
+# PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
+_POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
-def _normalize_multi(val: str) -> str:
-    """Normalize user-entered separators to `; ` for multi-value tags."""
-    parts = re.split(r"\s*[/;,]\s*", val)
-    return "; ".join(p for p in (p.strip() for p in parts) if p)
-
-
-def _parse_date(val: str) -> str:
-    """Parse a user-entered date (`DD/MM/YYYY`, flexible separators) into ExifTool format `YYYY:MM:DD 00:00:00`.<br>
-    Raises `ValueError` with a human-readable message if the input cannot be parsed."""
-    _fmt = "Expected format: DD/MM/YYYY (e.g. 25/12/2026)"
-    m = re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})[./\- ](\d{4})", val.strip())
-    if not m:
-        raise ValueError(f'Cannot parse "{val}" as a date.\n{_fmt}')
-    day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    if not (1 <= month <= 12):
-        raise ValueError(f'Invalid month ({month}) in "{val}".\n{_fmt}')
-    if not (1 <= day <= 31):
-        raise ValueError(f'Invalid day ({day}) in "{val}".\n{_fmt}')
-    return f"{year}:{month:02d}:{day:02d} 00:00:00"
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FieldEntry, FieldType, FieldDef, ValType  # type: ignore[missing-import]
+from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date  # type: ignore[missing-import]
+from widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -169,8 +147,17 @@ class MetadataTaggerApp(ctk.CTk):
 
         #################### APPLY BUTTON –OR– EXIFTOOL NOT FOUND BANNER ####################
         if self.exiftool_path:
-            self.btn_apply = SpinnerButton(self.left_panel, text="Apply Metadata", command=self.apply_metadata, height=40)
-            self.btn_apply.pack(fill="x", padx=PAD, pady=(0, PAD), side="bottom")
+            self._apply_bottom = ctk.CTkFrame(self.left_panel, fg_color="transparent")
+            self._apply_bottom.pack(fill="x", side="bottom")
+            self._apply_bottom.grid_columnconfigure(0, weight=1)
+            self.btn_apply = SpinnerButton(self._apply_bottom, text="Apply Metadata", command=self.apply_metadata, height=40)
+            self.btn_apply.grid(row=1, column=0, padx=PAD, pady=(0, PAD), sticky="ew")
+            self.progress_bar = ctk.CTkProgressBar(self._apply_bottom, height=4, corner_radius=4)
+            self.progress_bar.grid(row=0, column=0, padx=PAD, pady=(PAD // 2, 10), sticky="ew")
+            self.progress_bar.set(0)
+            self.progress_bar.grid_remove()
+            self._progress_anim_id: Optional[str] = None
+            self._progress_anim_current: float = 0.0
         else:
             self.btn_apply = None
             self._banner_labels: list[tuple[ctk.CTkLabel, str]] = []  # (widget, color_key)
@@ -249,15 +236,21 @@ class MetadataTaggerApp(ctk.CTk):
         # macOS, VLC, MPV AND LINUX MEDIA PLAYERS. MICROSOFT TAGS COVER WINDOWS EXPLORER / WMP.
         self.fields: dict[str, FieldDef] = {
             "Title": {"tags": ("-ItemList:Title", ), "type": FieldType.SINGLE},
-            "Subtitle": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "type": FieldType.SINGLE},
-            "Creation Date": {"tags": ("-ItemList:ContentCreateDate", ), "type": FieldType.SINGLE},
+            "Short Description": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "type": FieldType.SINGLE},
+            "Release Date": {"tags": ("-ItemList:Year", ), "type": FieldType.SINGLE, "placeholder": "DD/MM/YYYY", "val_type": ValType.Date},
+            "Creation Date": {"tags": ("-ItemList:ContentCreateDate", ), "type": FieldType.SINGLE, "placeholder": "DD/MM/YYYY", "val_type": ValType.Date},
             "Copyright": {"tags": ("-ItemList:Copyright", ), "type": FieldType.SINGLE},
+            "Rating": {"tags": ("-ItemList:ContentRating", "-Microsoft:ParentalRating"), "type": FieldType.SINGLE, "placeholder": "G, PG, PG-13, R, NC-17…"},
+            "Media Type": {"tags": ("-ItemList:MediaType", ), "type": FieldType.SINGLE, "placeholder": "Movie, TV Show, Music Video…"},
+            "Language": {"tags": ("-ItemList:Language", ), "type": FieldType.SINGLE, "placeholder": "ISO 639-2 code: eng, fra, deu…", "val_type": ValType.Lang},
             "Genre(s)": {"tags": ("-ItemList:Genre", ), "type": FieldType.EXPANDING},
+            "Keywords": {"tags": ("-ItemList:Keywords", ), "type": FieldType.SINGLE, "placeholder": "action, adventure, thriller…"},
+            "Studio / Prod. Company": {"tags": ("-ItemList:Studio", ), "type": FieldType.SINGLE},
             "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "type": FieldType.EXPANDING},
             "Writer(s)": {"tags": ("-ItemList:Composer", "-Microsoft:Writer"), "type": FieldType.EXPANDING},
             "Producer(s)": {"tags": ("-ItemList:Producer", "-Microsoft:Producer"), "type": FieldType.EXPANDING},
             "Publisher(s)": {"tags": ("-Microsoft:Publisher", ), "type": FieldType.EXPANDING},
-            "Contributing Artist(s)": {"tags": ("-ItemList:Artist", ), "type": FieldType.EXPANDING},
+            "Cast / Actor(s)": {"tags": ("-ItemList:Artist", ), "type": FieldType.EXPANDING},
             "Long Description": {"tags": ("-ItemList:LongDescription", ), "type": FieldType.MULTILINE},
             "Comment": {"tags": ("-ItemList:Comment", ), "type": FieldType.MULTILINE},
         }
@@ -279,8 +272,8 @@ class MetadataTaggerApp(ctk.CTk):
             else:
                 entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
                 bind_clean_paste(entry_widget._entry)
-                if label_text == "Creation Date":
-                    entry_widget.configure(placeholder_text="DD/MM/YYYY")
+                if ph := field_def.get("placeholder"):
+                    entry_widget.configure(placeholder_text=ph)
             entry_widget.grid(row=row_idx, column=1, padx=(10, 0), pady=(4, 4), sticky="ew")
             self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
 
@@ -299,7 +292,7 @@ class MetadataTaggerApp(ctk.CTk):
     def select_files(self) -> None:
         filenames = filedialog.askopenfilenames(
             title="Select Video File(s)",
-            filetypes=[("Video Files", "*.mp4 *.mov *.m4v *.m4a *.3gp *.3g2"), ("All Files", "*.*")]
+            filetypes=VIDEO_FILE_TYPES
         )
         if filenames:
             self.selected_files = list(filenames)
@@ -309,7 +302,7 @@ class MetadataTaggerApp(ctk.CTk):
             )
 
     def select_cover_art(self) -> None:
-        filename = filedialog.askopenfilename(title="Select Cover Art", filetypes=[("Images", "*.jpg *.jpeg *.png")])
+        filename = filedialog.askopenfilename(title="Select Cover Art", filetypes=COVER_ART_FILE_TYPES)
         if not filename:
             return
         self.cover_art_path = filename
@@ -468,6 +461,8 @@ class MetadataTaggerApp(ctk.CTk):
 
         if self.btn_apply:
             self.btn_apply.configure(fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["primary_foreground"])
+        if hasattr(self, "progress_bar"):
+            self.progress_bar.configure(fg_color=c["secondary_hover"], progress_color=c["placeholder_foreground"])
 
         if hasattr(self, "_banner"):
             self._banner.configure(fg_color=c["destructive"], border_color=c["destructive_border"])
@@ -520,15 +515,40 @@ class MetadataTaggerApp(ctk.CTk):
             self._apply_theme()
         self.after(2000, self._poll_theme)
 
+    def _animate_progress_to(self, target: float) -> None:
+        """Ease-out animate the progress bar toward `target` at ~60 fps.<br>
+        Each frame closes 25% of the remaining distance, giving natural deceleration."""
+        if not hasattr(self, "progress_bar"):
+            return
+        if self._progress_anim_id:
+            self.after_cancel(self._progress_anim_id)
+            self._progress_anim_id = None
+        _STEP_MS: int = 16
+        _EASE: float = 0.25
+        _SNAP: float = 0.005
+
+        def _step() -> None:
+            remaining = target - self._progress_anim_current
+            if abs(remaining) < _SNAP:
+                self.progress_bar.set(target)
+                self._progress_anim_current = target
+                self._progress_anim_id = None
+                return
+            self._progress_anim_current += remaining * _EASE
+            self.progress_bar.set(self._progress_anim_current)
+            self._progress_anim_id = self.after(_STEP_MS, _step)
+
+        _step()
+
     def save_template(self) -> None:
         # EXTRACT CURRENT VALUES FROM UI
         template_data: dict[str, str] = {}
         for label, data in self.entries.items():
             val = data["widget"].get().strip()
             if val:
-                if label == "Creation Date":
+                if self.fields[label].get("val_type") == ValType.Date:
                     try:
-                        dmy = re.match(r"(\d{4}):(\d{2}):(\d{2})", _parse_date(val))
+                        dmy = re.match(r"(\d{4}):(\d{2}):(\d{2})", parse_date(val))
                         val = f"{dmy.group(3)}/{dmy.group(2)}/{dmy.group(1)}" if dmy else val
                     except ValueError:
                         pass  # SAVE AS-IS; apply_metadata WILL CATCH THE ERROR LATER
@@ -556,7 +576,7 @@ class MetadataTaggerApp(ctk.CTk):
     def load_from_video(self) -> None:
         filepath = filedialog.askopenfilename(
             title="Load Metadata from Video",
-            filetypes=[("Video Files", "*.mp4 *.mov *.m4v *.m4a *.3gp *.3g2"), ("All Files", "*.*")]
+            filetypes=VIDEO_FILE_TYPES
         )
         if not filepath:
             return
@@ -619,7 +639,7 @@ class MetadataTaggerApp(ctk.CTk):
                 label = short_key_to_label[key]
                 widget = self.entries[label]["widget"]
                 widget.delete(0, "end")
-                if label == "Creation Date":
+                if self.fields[label].get("val_type") == ValType.Date:
                     dm = re.match(r"(\d{4}):(\d{2}):(\d{2})", str(value))
                     display_val = f"{dm.group(3)}/{dm.group(2)}/{dm.group(1)}" if dm else str(value)
                 else:
@@ -684,13 +704,13 @@ class MetadataTaggerApp(ctk.CTk):
             val = data["widget"].get().strip()
             if val:
                 if field_type == FieldType.EXPANDING:
-                    val = _normalize_multi(val)
-                elif label == "Creation Date":
-                    try:
-                        val = _parse_date(val)
-                    except ValueError as exc:
-                        messagebox.showerror("Invalid Date", str(exc))
+                    val = normalize_multi(val)
+                elif vt := self.fields[label].get("val_type"):
+                    if err := validate_field(val, vt):
+                        messagebox.showerror("Invalid Value", err)
                         return
+                    if vt == ValType.Date:
+                        val = parse_date(val)
                 for tag in data["tags"]:
                     tag_lines.append(_tag_line(tag, val))
                 tags_added += 1
@@ -717,7 +737,9 @@ class MetadataTaggerApp(ctk.CTk):
         argfile.write("\n".join(tag_lines))
         argfile.close()
 
-        command: list[str] = [self.exiftool_path, "-overwrite_original", "-@", argfile.name] + self.selected_files
+        files: list[str] = list(self.selected_files)
+        n_files: int = len(files)
+        exiftool: str = self.exiftool_path
 
         print("[apply_metadata] tag_lines:")
         for line in tag_lines:
@@ -725,35 +747,51 @@ class MetadataTaggerApp(ctk.CTk):
         print("[apply_metadata] argfile:", argfile.name)
         print("[apply_metadata] argfile contents:")
         print(Path(argfile.name).read_text(encoding="utf-8"))
-        print("[apply_metadata] command:", command)
 
         if self.btn_apply:
             self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
+        if hasattr(self, "progress_bar"):
+            if self._progress_anim_id:
+                self.after_cancel(self._progress_anim_id)
+            self._progress_anim_id = None
+            self._progress_anim_current = 0.0
+            self.progress_bar.set(0)
+            self.progress_bar.grid()
 
-        n_files = len(self.selected_files)
+        errors: list[str] = []
 
-        def _on_done(err: Optional[str] = None) -> None:
+        def _on_done() -> None:
             Path(argfile.name).unlink(missing_ok=True)
             for vf in val_tempfiles:
                 vf.unlink(missing_ok=True)
             if self.btn_apply:
                 self.btn_apply.stop(state="normal")
-            if err is None:
+            if hasattr(self, "progress_bar"):
+                if self._progress_anim_id:
+                    self.after_cancel(self._progress_anim_id)
+                    self._progress_anim_id = None
+                self.progress_bar.grid_remove()
+            if not errors:
                 messagebox.showinfo("Success", f"Successfully updated {n_files} file{'' if n_files == 1 else 's'}!")
             else:
-                messagebox.showerror("ExifTool Error", f"An error occurred:\n{err}")
+                err_text = "\n\n".join(errors)
+                messagebox.showerror("ExifTool Error", f"Errors occurred:\n{err_text}")
 
         def _worker() -> None:
-            try:
-                result = subprocess.run(command, capture_output=True, text=True, check=True, **_POPEN_FLAGS)
-                print("[exiftool stdout]", result.stdout)
-                print("[exiftool stderr]", result.stderr)
-                self.after(0, _on_done)
-            except subprocess.CalledProcessError as e:
-                print("[exiftool ERROR stdout]", e.stdout)
-                print("[exiftool ERROR stderr]", e.stderr)
-                stderr = e.stderr
-                self.after(0, lambda s=stderr: _on_done(s))
+            for i, filepath in enumerate(files):
+                self.after(0, lambda p=(i + 0.3) / n_files: self._animate_progress_to(p))
+                cmd: list[str] = [exiftool, "-overwrite_original", "-@", argfile.name, filepath]
+                print("[apply_metadata] command:", cmd)
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True, check=True, **_POPEN_FLAGS)
+                    print("[exiftool stdout]", result.stdout)
+                    print("[exiftool stderr]", result.stderr)
+                except subprocess.CalledProcessError as e:
+                    print("[exiftool ERROR stdout]", e.stdout)
+                    print("[exiftool ERROR stderr]", e.stderr)
+                    errors.append(e.stderr or str(e))
+                self.after(0, lambda p=(i + 1) / n_files: self._animate_progress_to(p))
+            self.after(0, _on_done)
 
         threading.Thread(target=_worker, daemon=True).start()
 

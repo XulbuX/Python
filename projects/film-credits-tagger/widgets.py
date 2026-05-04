@@ -1,29 +1,12 @@
 # pyright: basic
 from pathlib import Path
-from typing import Optional, TypedDict
-from enum import IntEnum
+from typing import Optional
 from PIL import Image
 import customtkinter as ctk
 import tkinter as tk
 import io
 
 from consts import ICONS  # type: ignore[missing-import]
-
-
-class FieldType(IntEnum):
-    SINGLE = 1  # SINGLE-LINE CTkEntry
-    EXPANDING = 2  # SINGLE-LINE THAT EXPANDS TO MULTI-LINE (NO HARD NEWLINES)
-    MULTILINE = 3  # FREE MULTI-LINE WITH NEWLINES ALLOWED
-
-
-class FieldDef(TypedDict):
-    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
-    type: FieldType
-
-
-class FieldEntry(TypedDict):
-    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
-    widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
 
 
 def bind_clean_paste(tk_widget: tk.Misc) -> None:
