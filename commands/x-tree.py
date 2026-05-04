@@ -922,7 +922,7 @@ def main():
             else:
                 Console.exit()
         if file:
-            Console.done(f"[white|link:file:///{str(file).replace('\\', '/')}]({file.name}) successfully created.", start=cls_line, end="\n\n")
+            Console.done(f"[white|link:file://{str(file.resolve())}]({file.name}) successfully created.", start=cls_line, end="\n\n")
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
