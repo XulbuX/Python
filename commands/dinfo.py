@@ -52,7 +52,7 @@ def is_hidden(path: str) -> bool:
         return True
     if os.name == "nt":
         try:
-            attrs = os.stat(path).st_file_attributes
+            attrs = Path(path).stat().st_file_attributes
             return bool(attrs & stat.FILE_ATTRIBUTE_HIDDEN)
         except (AttributeError, OSError):
             pass
@@ -63,7 +63,7 @@ def is_system(path: str) -> bool:
     """Check if a file or directory is a system file."""
     if os.name == "nt":
         try:
-            attrs = os.stat(path).st_file_attributes
+            attrs = Path(path).stat().st_file_attributes
             return bool(attrs & stat.FILE_ATTRIBUTE_SYSTEM)
         except (AttributeError, OSError):
             pass
@@ -139,23 +139,23 @@ def get_dir_files(directory: str) -> list[str]:
     gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
 
     try:
-        for root, dirs, filenames in os.walk(directory):
-            if should_skip_path(root):
+        for root, dirs, filenames in Path(directory).walk():
+            if should_skip_path(str(root)):
                 dirs.clear()
                 continue
-            if ARGS.apply_gitignore.exists and is_gitignored(root, gitignore_patterns):
+            if ARGS.apply_gitignore.exists and is_gitignored(str(root), gitignore_patterns):
                 dirs.clear()
                 continue
 
             if not ARGS.recursive.exists:
                 dirs.clear()
             else:
-                dirs[:] = [d for d in dirs if not should_skip_path(str(Path(root) / d))]
+                dirs[:] = [d for d in dirs if not should_skip_path(str(root / d))]
                 if ARGS.apply_gitignore.exists:
-                    dirs[:] = [d for d in dirs if not is_gitignored(str(Path(root) / d), gitignore_patterns)]
+                    dirs[:] = [d for d in dirs if not is_gitignored(str(root / d), gitignore_patterns)]
 
             for filename in filenames:
-                file_path = str(Path(root) / filename)
+                file_path = str(root / filename)
                 if should_skip_path(file_path):
                     continue
                 if ARGS.apply_gitignore.exists and is_gitignored(file_path, gitignore_patterns):

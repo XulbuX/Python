@@ -14,17 +14,21 @@ def bind_clean_paste(tk_widget: tk.Misc) -> None:
     Works with both `tk.Entry` and `tk.Text` (and their CTk wrappers' internal widgets)."""
 
     def _on_paste(_event: object) -> str:
-        w = tk_widget
         try:
-            text: str = w.clipboard_get()
+            text: str = tk_widget.clipboard_get()
         except tk.TclError:
             return "break"
-        clean = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+
         try:
-            w.delete("sel.first", "sel.last")  # type: ignore[attr-defined]
+            tk_widget.delete("sel.first", "sel.last")  # type: ignore[attr-defined]
         except tk.TclError:
             pass
-        w.insert("insert", clean)  # type: ignore[attr-defined]
+
+        tk_widget.insert(  # type: ignore[attr-defined]
+            "insert",
+            text.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
+        )
+
         return "break"
 
     tk_widget.bind("<<Paste>>", _on_paste)
@@ -52,7 +56,7 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     drawing.transform = (scale, 0, 0, scale, 0, 0)
 
     doc = fitz.open(stream=drawToString(drawing), filetype="pdf")
-    pix = doc[0].get_pixmap(matrix=fitz.Matrix(1, 1), alpha=True)
+    pix = doc.load_page(0).get_pixmap(matrix=fitz.Matrix(1, 1), alpha=True)
 
     return Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
 
@@ -146,7 +150,7 @@ class ToolTip:
         self._after_id: Optional[str] = None
         self._delay_ms = delay_ms
         # Use widget.bind() so that for CTkButton, all internal children (canvas, text
-        # label, image label) each receive the binding — CTkButton.bind() proxies to them.
+        # label, image label) each receive the binding – CTkButton.bind() proxies to them.
         # add="+" preserves any existing bindings on those children.
         widget.bind("<Enter>", self._schedule, add="+")  # type: ignore[call-arg]
         widget.bind("<Leave>", self._hide, add="+")  # type: ignore[call-arg]
@@ -168,17 +172,27 @@ class ToolTip:
         self._after_id = None
         if self._tip:
             return
-        x = int(self._widget.winfo_rootx()) + 20
-        y = int(self._widget.winfo_rooty() + self._widget.winfo_height()) + 4
+        tip_x = int(self._widget.winfo_rootx()) + 20
+        tip_y = int(self._widget.winfo_rooty() + self._widget.winfo_height()) + 4
 
-        mode = ctk.get_appearance_mode()
+        mode = ctk.get_appearance_mode().lower()
         tip_bg = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["bg"]
         tip_fg = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["fg"]
         tip_border = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["border"]
 
+        # COMPUTE A DPI-AWARE FONT SIZE SO THE TOOLTIP LOOKS CONSISTENT ACROSS SCREEN SCALES.
+        # tk REPORTS PIXELS-PER-INCH; 96 PPI IS THE REFERENCE (100% SCALE ON MOST SYSTEMS).
+        _FONT_PT = 11
+        try:
+            ppi = self._widget.winfo_fpixels("1i")  # PIXELS PER LOGICAL INCH
+            _FONT_PT = max(8, round(_FONT_PT * ppi / 96))
+        except Exception:
+            pass
+        _FONT = ("TkDefaultFont", _FONT_PT)
+
         # MEASURE WIDTH FROM FULL TEXT, THEN EACH PARAGRAPH SEPARATELY FOR HEIGHT
         PARA_GAP = 6
-        probe = tk.Label(self._widget, text=self._text, font=("TkDefaultFont", 11), justify="left", wraplength=280)
+        probe = tk.Label(self._widget, text=self._text, font=_FONT, justify="left", wraplength=280, padx=0, pady=0, bd=0)
         probe.update_idletasks()
         tw = probe.winfo_reqwidth() + self._TIP_PX * 2
         probe.destroy()
@@ -187,16 +201,16 @@ class ToolTip:
         paragraphs = self._text.split("\n")
         para_heights: list[int] = []
         for para in paragraphs:
-            p = tk.Label(self._widget, text=para or " ", font=("TkDefaultFont", 11), justify="left", wraplength=text_w)
-            p.update_idletasks()
-            para_heights.append(p.winfo_reqheight())
-            p.destroy()
+            pl = tk.Label(self._widget, text=para or " ", font=_FONT, justify="left", wraplength=text_w, padx=0, pady=0, bd=0)
+            pl.update_idletasks()
+            para_heights.append(pl.winfo_reqheight())
+            pl.destroy()
         th = sum(para_heights) + PARA_GAP * (len(paragraphs) - 1) + self._TIP_PY * 2
 
-        r = self._TIP_R
+        cr = self._TIP_R
         self._tip = tk.Toplevel(self._widget)
         self._tip.wm_overrideredirect(True)
-        self._tip.wm_geometry(f"{tw}x{th}+{x}+{y}")
+        self._tip.wm_geometry(f"{tw}x{th}+{tip_x}+{tip_y}")
         self._tip.configure(bg=self._TIP_TRANSPARENT)
         try:
             self._tip.wm_attributes("-transparentcolor", self._TIP_TRANSPARENT)
@@ -208,26 +222,17 @@ class ToolTip:
         # DESTROY TOOLTIP WHEN MOUSE LEAVES IT
         self._tip.bind("<Leave>", self._hide)
         # ROUNDED RECTANGLE VIA smooth=True POLYGON; BORDER DRAWN FIRST (1px LARGER), FILL ON TOP
-        pts = [r, 0, tw - r, 0, tw, 0, tw, r, tw, th - r, tw, th, tw - r, th, r, th, 0, th, 0, th - r, 0, r, 0, 0]
+        pts = [cr, 0, tw - cr, 0, tw, 0, tw, cr, tw, th - cr, tw, th, tw - cr, th, cr, th, 0, th, 0, th - cr, 0, cr, 0, 0]
         cv.create_polygon(pts, smooth=True, fill=tip_border, outline="")
         inset = 1
         ipts = [
-            r, inset, tw - r, inset, tw, inset, tw, r, tw, th - r, tw, th - inset, tw - r, th - inset, r, th - inset, inset,
-            th - inset, inset, th - r, inset, r, inset, inset
+            cr, inset, tw - cr, inset, tw - inset, inset, tw - inset, cr, tw - inset, th - cr, tw - inset, th - inset, tw - cr,
+            th - inset, cr, th - inset, inset, th - inset, inset, th - cr, inset, cr, inset, inset
         ]
         cv.create_polygon(ipts, smooth=True, fill=tip_bg, outline="")
         ty = self._TIP_PY
         for para, ph in zip(paragraphs, para_heights):
-            cv.create_text(
-                self._TIP_PX,
-                ty,
-                text=para,
-                anchor="nw",
-                fill=tip_fg,
-                font=("TkDefaultFont", 11),
-                width=text_w,
-                justify="left"
-            )
+            cv.create_text(self._TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
             ty += ph + PARA_GAP
 
     def _hide(self, event: object = None) -> None:
@@ -241,7 +246,7 @@ class ToolTip:
             px = self._widget.winfo_pointerx()
             py = self._widget.winfo_pointery()
             if wx <= px < wx + ww and wy <= py < wy + wh:
-                return  # pointer still inside — not a real Leave
+                return  # pointer still inside – not a real Leave
         except tk.TclError:
             pass
         if self._after_id:

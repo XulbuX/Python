@@ -3,7 +3,6 @@ from typing import Optional, cast
 from xulbux import FormatCodes, EnvPath, FileSys, String, Regex, Code, Data, File, Json
 from xulbux.console import Console, ParsedArgs
 import regex as rx
-import os
 import re
 
 
@@ -798,7 +797,7 @@ def main(args: ParsedArgs):
     if args.filepath.values[0] in (None, ""):
         Console.fail("No filepath was provided.", pause=DEBUG, end="\n\n")
     args.filepath.values[0] = str(FileSys.extend_path(str(args.filepath.values[0]), raise_error=True, fuzzy_match=True))
-    if not os.path.isfile(args.filepath.values[0] or ""):
+    if not Path(args.filepath.values[0] or "").is_file():
         Console.fail(f"Path is not a file: [white]{args.filepath.values[0]}", pause=DEBUG)
 
     with open(args.filepath.values[0] or "", "r") as file:
@@ -808,14 +807,14 @@ def main(args: ParsedArgs):
 
     if converted_content:
         new_file_path = File.rename_extension(args.filepath.values[0] or "", ".vue", camel_case_filename=True)
-        if os.path.exists(new_file_path):
+        if Path(new_file_path).exists():
             with open(new_file_path, "r") as existing_file:
                 existing_content = existing_file.read()
             if existing_content == converted_content:
                 Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")
                 Console.pause_exit(exit=True, reset_ansi=True)
             Console.warn(f"File already exists: [white]{new_file_path}", exit=False, start="\n")
-            if Console.confirm(f"      \tDo you want to replace [+|b]{os.path.basename(new_file_path)}[*]?", start="\n", end=""):
+            if Console.confirm(f"      \tDo you want to replace [+|b]{Path(new_file_path).name}[*]?", start="\n", end=""):
                 pass
             else:
                 Console.exit(reset_ansi=True, start="\n", end="\n\n")

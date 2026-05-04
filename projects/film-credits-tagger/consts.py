@@ -5,25 +5,25 @@ from enum import IntEnum
 import customtkinter as ctk
 
 
+class ValueType(IntEnum):
+    Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (EXIFTOOL FORMAT)
+    Lang = 2  # ISO 639-2 CODE: eng, fra, deu…
+
+
 class FieldType(IntEnum):
     SINGLE = 1  # SINGLE-LINE CTkEntry
     EXPANDING = 2  # SINGLE-LINE THAT EXPANDS TO MULTI-LINE (NO HARD NEWLINES)
     MULTILINE = 3  # FREE MULTI-LINE WITH NEWLINES ALLOWED
 
 
-class ValType(IntEnum):
-    Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (ExifTool format)
-    Lang = 2  # ISO 639-2 three-letter code, e.g. eng, fra, deu
-
-
 class _FieldDefRequired(TypedDict):
     tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
-    type: FieldType
+    field_type: FieldType
 
 
 class FieldDef(_FieldDefRequired, total=False):
     placeholder: str
-    val_type: ValType
+    value_type: ValueType
 
 
 class FieldEntry(TypedDict):
@@ -49,6 +49,57 @@ ICONS: dict[str, Path] = {
     "loader": _ICON_DIR / "loader.svg",
     "refresh-ccw": _ICON_DIR / "refresh-ccw.svg",
     "x": _ICON_DIR / "x.svg",
+}
+
+# EACH FIELD LISTS ITS TAGS IN PRIORITY ORDER: CROSS-PLATFORM FIRST, OS-SPECIFIC APPENDED.
+# ItemList TAGS WRITE STANDARD iTunes/QuickTime ATOMS (©dir, ©wrt, ©prd, …) RECOGNIZED BY
+# macOS, VLC, MPV AND LINUX MEDIA PLAYERS. MICROSOFT TAGS COVER WINDOWS EXPLORER / WMP.
+FIELDS: dict[str, FieldDef] = {
+    "Title": {"tags": ("-ItemList:Title", ), "field_type": FieldType.SINGLE},
+    "Short Description": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "field_type": FieldType.SINGLE},
+    "Release Date": {
+        "tags": ("-ItemList:Year", ),
+        "placeholder": "DD/MM/YYYY",
+        "field_type": FieldType.SINGLE,
+        "value_type": ValueType.Date,
+    },
+    "Creation Date": {
+        "tags": ("-ItemList:ContentCreateDate", ),
+        "placeholder": "DD/MM/YYYY",
+        "field_type": FieldType.SINGLE,
+        "value_type": ValueType.Date,
+    },
+    "Copyright": {"tags": ("-ItemList:Copyright", ), "field_type": FieldType.SINGLE},
+    "Rating": {
+        "tags": ("-ItemList:ContentRating", "-Microsoft:ParentalRating"),
+        "placeholder": "G, PG, PG-13, R, NC-17\u2026",
+        "field_type": FieldType.SINGLE,
+    },
+    "Media Type": {
+        "tags": ("-ItemList:MediaType", ),
+        "placeholder": "Movie, TV Show, Music Video\u2026",
+        "field_type": FieldType.SINGLE,
+    },
+    "Language": {
+        "tags": ("-ItemList:Language", ),
+        "placeholder": "ISO 639-2 code: eng, fra, deu\u2026",
+        "field_type": FieldType.SINGLE,
+        "value_type": ValueType.Lang,
+    },
+    "Genre(s)": {"tags": ("-ItemList:Genre", ), "field_type": FieldType.EXPANDING},
+    "Keywords": {
+        "tags": ("-ItemList:Keywords", ),
+        "placeholder": "action, adventure, thriller\u2026",
+        "field_type": FieldType.SINGLE,
+    },
+    "Studio / Prod. Company": {"tags": ("-ItemList:Studio", ), "field_type": FieldType.SINGLE},
+    "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "field_type": FieldType.EXPANDING},
+    "Writer(s)": {"tags": ("-ItemList:Composer", "-Microsoft:Writer"), "field_type": FieldType.EXPANDING},
+    "Producer(s)": {"tags": ("-ItemList:Producer", "-Microsoft:Producer"), "field_type": FieldType.EXPANDING},
+    "Publisher(s)": {"tags": ("-Microsoft:Publisher", ), "field_type": FieldType.EXPANDING},
+    "Cast / Actor(s)": {"tags": ("-ItemList:Artist", ), "field_type": FieldType.EXPANDING},
+    "Long Description": {"tags": ("-ItemList:LongDescription", ), "field_type": FieldType.MULTILINE},
+    "Comment": {"tags": ("-ItemList:Comment", ), "field_type": FieldType.MULTILINE},
 }
 
 COLORS: dict[str, dict[str, str]] = {

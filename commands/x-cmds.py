@@ -10,7 +10,6 @@ from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console, FileSys, String, System
 import requests
 import hashlib
-import os
 import re
 
 """
@@ -487,7 +486,7 @@ def download_files(github_diffs: GitHubDiffs) -> None:
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
             if not System.is_win:
-                os.chmod(file_path, 0o755)
+                Path(file_path).chmod(0o755)
 
             action = "Added" if cmd_name in github_diffs["new_commands"] else "Updated"
             FormatCodes.print(f"[br:green](✓ {action} [b]({cmd_name}))")
