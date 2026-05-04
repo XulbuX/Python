@@ -415,7 +415,6 @@ class Tree:
             f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) "
             f"[br:cyan]({self.gen_stats.processed_dirs:,}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files:,}) files",
             start="\033[F\033[K",
-            end="\n\n",
         )
 
         return result
@@ -923,7 +922,7 @@ def main():
             else:
                 Console.exit()
         if file:
-            Console.done(f"[white]file:///{str(file).replace('\\', '/')}[_] successfully created.", start=cls_line, end="\n\n")
+            Console.done(f"[white|link:file:///{str(file).replace('\\', '/')}]({file.name}) successfully created.", start=cls_line, end="\n\n")
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
