@@ -232,24 +232,21 @@ class ToolTip:
         tip_fg = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["fg"]
         tip_border = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["border"]
 
-        # COMPUTE A DPI-AWARE FONT SIZE SO THE TOOLTIP LOOKS CONSISTENT ACROSS SCREEN SCALES.
-        # tk REPORTS PIXELS-PER-INCH; 96 PPI IS THE REFERENCE (100% SCALE ON MOST SYSTEMS).
-        _FONT_PT = 11
-        try:
-            ppi = self._widget.winfo_fpixels("1i")  # PIXELS PER LOGICAL INCH
-            _FONT_PT = max(8, round(_FONT_PT * ppi / 96))
-        except Exception:
-            pass
-        _FONT = ("TkDefaultFont", _FONT_PT)
+        s: float = getattr(self._widget, "_get_widget_scaling", lambda: 1.0)()
+        _FONT = ctk.CTkFont(size=24)
+        TIP_R = round(self._TIP_R * s)
+        TIP_PX = round(self._TIP_PX * s)
+        TIP_PY = round(self._TIP_PY * s)
+        PARA_GAP = round(6 * s)
+        WRAP = round(280 * s)
 
         # MEASURE WIDTH FROM FULL TEXT, THEN EACH PARAGRAPH SEPARATELY FOR HEIGHT
-        PARA_GAP = 6
-        probe = tk.Label(self._widget, text=self._text, font=_FONT, justify="left", wraplength=280, padx=0, pady=0, bd=0)
+        probe = tk.Label(self._widget, text=self._text, font=_FONT, justify="left", wraplength=WRAP, padx=0, pady=0, bd=0)
         probe.update_idletasks()
-        tw = probe.winfo_reqwidth() + self._TIP_PX * 2
+        tw = probe.winfo_reqwidth() + TIP_PX * 2
         probe.destroy()
 
-        text_w = tw - self._TIP_PX * 2
+        text_w = tw - TIP_PX * 2
         paragraphs = self._text.split("\n")
         para_heights: list[int] = []
         for para in paragraphs:
@@ -257,9 +254,9 @@ class ToolTip:
             pl.update_idletasks()
             para_heights.append(pl.winfo_reqheight())
             pl.destroy()
-        th = sum(para_heights) + PARA_GAP * (len(paragraphs) - 1) + self._TIP_PY * 2
+        th = sum(para_heights) + PARA_GAP * (len(paragraphs) - 1) + TIP_PY * 2
 
-        cr = self._TIP_R
+        cr = TIP_R
         self._tip = tk.Toplevel(self._widget)
         self._tip.wm_overrideredirect(True)
         self._tip.wm_geometry(f"{tw}x{th}+{tip_x}+{tip_y}")
@@ -282,9 +279,9 @@ class ToolTip:
             th - inset, cr, th - inset, inset, th - inset, inset, th - cr, inset, cr, inset, inset
         ]
         cv.create_polygon(ipts, smooth=True, fill=tip_bg, outline="")
-        ty = self._TIP_PY
+        ty = TIP_PY
         for para, ph in zip(paragraphs, para_heights):
-            cv.create_text(self._TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
+            cv.create_text(TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
             ty += ph + PARA_GAP
 
     def _hide(self, event: object = None) -> None:
