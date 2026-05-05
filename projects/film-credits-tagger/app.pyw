@@ -20,7 +20,7 @@ IS_PRODUCTION: bool = True
 # PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
 _POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FieldEntry, FieldType, FieldDef, ValueType  # type: ignore[missing-import]
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, FieldDef, ValueType  # type: ignore[missing-import]
 from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date, exiftool_date_to_display  # type: ignore[missing-import]
 from widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
 
@@ -238,29 +238,45 @@ class MetadataTaggerApp(ctk.CTk):
 
         self.entries: dict[str, FieldEntry] = {}
         self._field_labels: list[ctk.CTkLabel] = []
+        self._section_labels: list[ctk.CTkLabel] = []
+        self._section_seps: list[ctk.CTkFrame] = []
 
-        for row_idx, (label_text, field_def) in enumerate(FIELDS.items()):
-            lbl = ctk.CTkLabel(self.sec3, text=label_text)
-            lbl.grid(row=row_idx, column=0, pady=(4, 4), sticky="nw")
-            self._field_labels.append(lbl)
+        row_idx: int = 0
+        for section_idx, (section_title, section_fields) in enumerate(FIELDS.items()):
+            if section_idx > 0:
+                sep = ctk.CTkFrame(self.sec3, height=1)
+                sep.grid(row=row_idx, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+                self._section_seps.append(sep)
+                row_idx += 1
 
-            if field_def["field_type"] == FieldType.EXPANDING:
-                entry_widget: ctk.CTkEntry = MultilineEntry(self.sec3, border_width=1, wrap="word")  # type: ignore[assignment]
-            elif field_def["field_type"] == FieldType.MULTILINE:
-                entry_widget = MultilineEntry(  # type: ignore[assignment]
-                    self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
-                )
-            else:
-                entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
-                bind_clean_paste(entry_widget._entry)
-                if ph := field_def.get("placeholder"):
-                    entry_widget.configure(placeholder_text=ph)
-            entry_widget.grid(row=row_idx, column=1, padx=(10, 0), pady=(4, 4), sticky="ew")
-            self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
+            section_lbl = ctk.CTkLabel(self.sec3, text=section_title, font=ctk.CTkFont(size=12, weight="bold"))
+            section_lbl.grid(row=row_idx, column=0, columnspan=2, sticky="w", pady=(6, 2))
+            self._section_labels.append(section_lbl)
+            row_idx += 1
+
+            for label_text, field_def in section_fields.items():
+                lbl = ctk.CTkLabel(self.sec3, text=label_text)
+                lbl.grid(row=row_idx, column=0, pady=(4, 4), sticky="nw")
+                self._field_labels.append(lbl)
+
+                if field_def["field_type"] == FieldType.EXPANDING:
+                    entry_widget: ctk.CTkEntry = MultilineEntry(self.sec3, border_width=1, wrap="word", placeholder_text=field_def.get("placeholder", ""))  # type: ignore[assignment]
+                elif field_def["field_type"] == FieldType.MULTILINE:
+                    entry_widget = MultilineEntry(  # type: ignore[assignment]
+                        self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
+                    )
+                else:
+                    entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
+                    bind_clean_paste(entry_widget._entry)
+                    if ph := field_def.get("placeholder"):
+                        entry_widget.configure(placeholder_text=ph)
+                entry_widget.grid(row=row_idx, column=1, padx=(PAD, 0), pady=(4, 4), sticky="ew")
+                self.entries[label_text] = {"tags": field_def["tags"], "widget": entry_widget}
+                row_idx += 1
 
         # SPACER SO THE LAST FIELD HAS BREATHING ROOM WHEN SCROLLED TO THE BOTTOM
         spacer = ctk.CTkFrame(self.sec3, fg_color="transparent", height=PAD)
-        spacer.grid(row=len(FIELDS), column=0, columnspan=2, sticky="ew")
+        spacer.grid(row=row_idx, column=0, columnspan=2, sticky="ew")
 
         self._apply_theme()
         self.after(2000, self._poll_theme)
@@ -411,6 +427,10 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_files.configure(text_color=c["foreground"] if self.selected_files else c["placeholder_foreground"])
         self.frame_thumb_container.configure(fg_color=c["background"], border_color=c["border"])
 
+        for lbl in self._section_labels:
+            lbl.configure(text_color=c["foreground"])
+        for sep in self._section_seps:
+            sep.configure(fg_color=c["border"])
         for lbl in self._field_labels:
             lbl.configure(text_color=c["muted_foreground"])
 
@@ -469,6 +489,7 @@ class MetadataTaggerApp(ctk.CTk):
                     fg_color=c["background"],
                     border_color=c["secondary_border"],
                     text_color=c["foreground"],
+                    placeholder_text_color=c["placeholder_foreground"],
                 )
             else:
                 widget.configure(
@@ -540,7 +561,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         for label, data in self.entries.items():
             if val := data["widget"].get().strip():
-                if FIELDS[label].get("value_type") == ValueType.Date:
+                if FIELDS_FLAT[label].get("value_type") == ValueType.Date:
                     try:
                         val = exiftool_date_to_display(parse_date(val)) or val
                     except ValueError:
@@ -605,7 +626,7 @@ class MetadataTaggerApp(ctk.CTk):
         seen: set[str] = set()
         tag_args: list[str] = []
 
-        for fd in FIELDS.values():
+        for fd in FIELDS_FLAT.values():
             for tag in fd["tags"]:
                 if (key := tag.lstrip("-")) not in seen:
                     seen.add(key)
@@ -656,7 +677,7 @@ class MetadataTaggerApp(ctk.CTk):
         # AND TRACK WHICH LABELS HAVE ALREADY BEEN POPULATED (PRIMARY WINS)
         tag_key_to_label: dict[str, str] = {}
 
-        for label, fd in FIELDS.items():
+        for label, fd in FIELDS_FLAT.items():
             for tag in fd["tags"]:
                 # FIRST OCCURRENCE = HIGHEST PRIORITY
                 if (short := tag.split(":", 1)[-1].lstrip("-")) not in tag_key_to_label:
@@ -673,7 +694,7 @@ class MetadataTaggerApp(ctk.CTk):
                 widget = self.entries[label]["widget"]
                 widget.delete(0, "end")
 
-                if FIELDS[label].get("value_type") == ValueType.Date:
+                if FIELDS_FLAT[label].get("value_type") == ValueType.Date:
                     display_val = exiftool_date_to_display(str(value)) or str(value)
                 else:
                     display_val = re.sub(r"\s*[/;,]\s*", ", ", str(value))  # NORMALIZE SEPARATORS FOR DISPLAY
@@ -784,13 +805,13 @@ class MetadataTaggerApp(ctk.CTk):
 
         # [1] COLLECT TEXT TAG ASSIGNMENTS
         for label, data in self.entries.items():
-            field_type = FIELDS[label]["field_type"]
+            field_type = FIELDS_FLAT[label]["field_type"]
 
             if val := data["widget"].get().strip():
                 if field_type == FieldType.EXPANDING:
                     val = normalize_multi(val)
 
-                elif vt := FIELDS[label].get("value_type"):
+                elif vt := FIELDS_FLAT[label].get("value_type"):
                     if err := validate_field(val, vt):
                         messagebox.showerror("Invalid Value", err)
                         return

@@ -54,52 +54,72 @@ ICONS: dict[str, Path] = {
 # EACH FIELD LISTS ITS TAGS IN PRIORITY ORDER: CROSS-PLATFORM FIRST, OS-SPECIFIC APPENDED.
 # ItemList TAGS WRITE STANDARD iTunes/QuickTime ATOMS (©dir, ©wrt, ©prd, …) RECOGNIZED BY
 # macOS, VLC, MPV AND LINUX MEDIA PLAYERS. MICROSOFT TAGS COVER WINDOWS EXPLORER / WMP.
-FIELDS: dict[str, FieldDef] = {
-    "Title": {"tags": ("-ItemList:Title", ), "field_type": FieldType.SINGLE},
-    "Short Description": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "field_type": FieldType.SINGLE},
-    "Release Date": {
-        "tags": ("-ItemList:Year", ),
-        "placeholder": "DD/MM/YYYY",
-        "field_type": FieldType.SINGLE,
-        "value_type": ValueType.Date,
+FIELDS: dict[str, dict[str, FieldDef]] = {
+    "General": {
+        "Title": {"tags": ("-ItemList:Title", ), "field_type": FieldType.SINGLE},
+        "Short Description": {"tags": ("-ItemList:Description", "-Microsoft:Subtitle"), "field_type": FieldType.SINGLE},
     },
-    "Creation Date": {
-        "tags": ("-ItemList:ContentCreateDate", ),
-        "placeholder": "DD/MM/YYYY",
-        "field_type": FieldType.SINGLE,
-        "value_type": ValueType.Date,
+    "Details": {
+        "Release Date": {
+            "tags": ("-ItemList:Year", ),
+            "placeholder": "DD/MM/YYYY",
+            "field_type": FieldType.SINGLE,
+            "value_type": ValueType.Date,
+        },
+        "Creation Date": {
+            "tags": ("-ItemList:ContentCreateDate", ),
+            "placeholder": "DD/MM/YYYY",
+            "field_type": FieldType.SINGLE,
+            "value_type": ValueType.Date,
+        },
+        "Copyright": {"tags": ("-ItemList:Copyright", ), "field_type": FieldType.SINGLE},
+        "Rating": {
+            "tags": ("-ItemList:ContentRating", "-Microsoft:ParentalRating"),
+            "placeholder": "G, PG, PG-13, R, NC-17\u2026",
+            "field_type": FieldType.SINGLE,
+        },
+        "Media Type": {
+            "tags": ("-ItemList:MediaType", ),
+            "placeholder": "Movie, TV Show, Music Video\u2026",
+            "field_type": FieldType.SINGLE,
+        },
+        "Language": {
+            "tags": ("-ItemList:Language", ),
+            "placeholder": "ISO 639-2 code: eng, fra, deu\u2026",
+            "field_type": FieldType.SINGLE,
+            "value_type": ValueType.Lang,
+        },
     },
-    "Copyright": {"tags": ("-ItemList:Copyright", ), "field_type": FieldType.SINGLE},
-    "Rating": {
-        "tags": ("-ItemList:ContentRating", "-Microsoft:ParentalRating"),
-        "placeholder": "G, PG, PG-13, R, NC-17\u2026",
-        "field_type": FieldType.SINGLE,
+    "Categories": {
+        "Genre(s)": {
+            "tags": ("-ItemList:Genre", ),
+            "placeholder": "action, comedy, horror\u2026",
+            "field_type": FieldType.EXPANDING,
+        },
+        "Keywords": {
+            "tags": ("-ItemList:Keywords", ),
+            "placeholder": "heist, female-lead, cult-classic\u2026",
+            "field_type": FieldType.SINGLE,
+        },
     },
-    "Media Type": {
-        "tags": ("-ItemList:MediaType", ),
-        "placeholder": "Movie, TV Show, Music Video\u2026",
-        "field_type": FieldType.SINGLE,
+    "Credits": {
+        "Prod. Company": {"tags": ("-ItemList:Studio", ), "field_type": FieldType.SINGLE},
+        "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "field_type": FieldType.EXPANDING},
+        "Writer(s)": {"tags": ("-ItemList:Composer", "-Microsoft:Writer"), "field_type": FieldType.EXPANDING},
+        "Producer(s)": {"tags": ("-ItemList:Producer", "-Microsoft:Producer"), "field_type": FieldType.EXPANDING},
+        "Publisher(s)": {"tags": ("-Microsoft:Publisher", ), "field_type": FieldType.EXPANDING},
+        "Cast": {"tags": ("-ItemList:Artist", ), "field_type": FieldType.EXPANDING},
     },
-    "Language": {
-        "tags": ("-ItemList:Language", ),
-        "placeholder": "ISO 639-2 code: eng, fra, deu\u2026",
-        "field_type": FieldType.SINGLE,
-        "value_type": ValueType.Lang,
+    "Descriptions": {
+        "Long Description": {"tags": ("-ItemList:LongDescription", ), "field_type": FieldType.MULTILINE},
+        "Comment": {"tags": ("-ItemList:Comment", ), "field_type": FieldType.MULTILINE},
     },
-    "Genre(s)": {"tags": ("-ItemList:Genre", ), "field_type": FieldType.EXPANDING},
-    "Keywords": {
-        "tags": ("-ItemList:Keywords", ),
-        "placeholder": "action, adventure, thriller\u2026",
-        "field_type": FieldType.SINGLE,
-    },
-    "Studio / Prod. Company": {"tags": ("-ItemList:Studio", ), "field_type": FieldType.SINGLE},
-    "Director(s)": {"tags": ("-ItemList:Director", "-Microsoft:Director"), "field_type": FieldType.EXPANDING},
-    "Writer(s)": {"tags": ("-ItemList:Composer", "-Microsoft:Writer"), "field_type": FieldType.EXPANDING},
-    "Producer(s)": {"tags": ("-ItemList:Producer", "-Microsoft:Producer"), "field_type": FieldType.EXPANDING},
-    "Publisher(s)": {"tags": ("-Microsoft:Publisher", ), "field_type": FieldType.EXPANDING},
-    "Cast / Actor(s)": {"tags": ("-ItemList:Artist", ), "field_type": FieldType.EXPANDING},
-    "Long Description": {"tags": ("-ItemList:LongDescription", ), "field_type": FieldType.MULTILINE},
-    "Comment": {"tags": ("-ItemList:Comment", ), "field_type": FieldType.MULTILINE},
+}
+
+FIELDS_FLAT: dict[str, FieldDef] = {
+    label: fd
+    for section in FIELDS.values()
+    for label, fd in section.items()
 }
 
 COLORS: dict[str, dict[str, str]] = {

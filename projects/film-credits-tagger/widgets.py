@@ -75,6 +75,10 @@ class MultilineEntry(ctk.CTkTextbox):
     three-line height the moment it wraps. Pass `allow_newlines=True` for real line breaks."""
 
     def __init__(self, master: object, allow_newlines: bool = False, always_expanded: bool = False, **kwargs: object) -> None:
+        self._placeholder_text: str = str(kwargs.pop("placeholder_text", ""))
+        self._placeholder_text_color: str = str(kwargs.pop("placeholder_text_color", "#71717A"))
+        self._showing_placeholder: bool = False
+
         kwargs.pop("height", None)
         super().__init__(master, **kwargs)  # type: ignore[arg-type]
 
@@ -92,12 +96,46 @@ class MultilineEntry(ctk.CTkTextbox):
             self.bind("<Shift-Return>", lambda _e: "break")
             bind_clean_paste(self._textbox)
 
+        if self._placeholder_text:
+            self._textbox.tag_configure("placeholder", foreground=self._placeholder_text_color)
+            self._textbox.bind("<FocusIn>", self._on_placeholder_focus_in, add="+")
+            self._textbox.bind("<FocusOut>", self._on_placeholder_focus_out, add="+")
+
         self._textbox.bind("<<Modified>>", self._on_modified)
         if always_expanded:
             self._expanded = True
             self.configure(height=80)
         else:
             self.after_idle(self._update_height)
+
+        if self._placeholder_text:
+            self.after_idle(self._show_placeholder_if_empty)
+
+    def _show_placeholder_if_empty(self) -> None:
+        if not self._textbox.get("1.0", "end").strip():
+            self._show_placeholder()
+
+    def _show_placeholder(self) -> None:
+        if not self._placeholder_text or self._showing_placeholder:
+            return
+        self._textbox.insert("1.0", self._placeholder_text, "placeholder")
+        self._showing_placeholder = True
+        if not self._always_expanded:
+            self._expanded = False
+            self.configure(height=28)
+
+    def _hide_placeholder(self) -> None:
+        if not self._showing_placeholder:
+            return
+        self._textbox.delete("1.0", "end")
+        self._showing_placeholder = False
+
+    def _on_placeholder_focus_in(self, _event: object = None) -> None:
+        self._hide_placeholder()
+
+    def _on_placeholder_focus_out(self, _event: object = None) -> None:
+        if not self._textbox.get("1.0", "end").strip():
+            self._show_placeholder()
 
     def _on_modified(self, _event: object = None) -> None:
         # DEFER VIA after_idle SO RAPID-FIRE EVENTS (INCLUDING THE SPURIOUS RE-TRIGGER
@@ -109,7 +147,8 @@ class MultilineEntry(ctk.CTkTextbox):
         if not self._textbox.edit_modified():
             return
         self._textbox.edit_modified(False)
-        self._update_height()
+        if not self._showing_placeholder:
+            self._update_height()
 
     def _update_height(self) -> None:
         result = self._textbox.count("1.0", "end", "displaylines")
@@ -129,13 +168,26 @@ class MultilineEntry(ctk.CTkTextbox):
             else:
                 self.configure(height=80)
 
+    def configure(self, **kwargs: object) -> None:
+        if (color := kwargs.pop("placeholder_text_color", None)) is not None:
+            self._placeholder_text_color = str(color)
+            self._textbox.tag_configure("placeholder", foreground=self._placeholder_text_color)
+        if kwargs:
+            super().configure(**kwargs)  # type: ignore[arg-type]
+
     def get(self) -> str:
+        if self._showing_placeholder:
+            return ""
         return super().get("1.0", "end").rstrip("\n")
 
     def delete(self, _start: object, _end: object = None) -> None:
+        self._showing_placeholder = False
         super().delete("1.0", "end")
+        if self._placeholder_text:
+            self.after_idle(self._show_placeholder_if_empty)
 
     def insert(self, _index: object, value: str) -> None:
+        self._hide_placeholder()
         super().delete("1.0", "end")
         super().insert("1.0", value)
 
