@@ -8,6 +8,7 @@ import subprocess
 import webbrowser
 import threading
 import tempfile
+import ctypes
 import shutil
 import json
 import sys
@@ -931,7 +932,6 @@ if __name__ == "__main__":
     # TASKBAR GROUPS THE APP UNDER ITS OWN ICON RATHER THAN THE PYTHON INTERPRETER
     if sys.platform == "win32":
         try:
-            import ctypes
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FilmCreditsTagger.app")
         except Exception:
             pass
