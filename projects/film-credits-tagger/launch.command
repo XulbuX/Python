@@ -1,3 +1,4 @@
 #!/bin/bash
-cd "$(dirname "$0")"
-python3 src/app.pyw
+DIR="$(cd "$(dirname "$0")" && pwd)"
+python3 "$DIR/src/app.pyw" &
+disown

@@ -2,7 +2,7 @@
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import Optional
-from PIL import Image, ImageTk
+from PIL import Image
 import customtkinter as ctk
 import subprocess
 import webbrowser
@@ -19,7 +19,7 @@ import re
 _POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
 from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType  # type: ignore[missing-import]
-from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date, exiftool_date_to_display  # type: ignore[missing-import]
+from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date, exiftool_date_to_display, setup_window_icon  # type: ignore[missing-import]
 from widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
 
 
@@ -38,27 +38,18 @@ class MetadataTaggerApp(ctk.CTk):
         self.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
 
         # SET WINDOW/TASKBAR ICON
-        self._icon_ico_path: Optional[Path] = None
-        if APP_ICON_PNG.is_file():
-            _pil_icon: Image.Image = Image.open(str(APP_ICON_PNG))
-            if sys.platform == "win32":
-                _ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)
-                _ico_tmp.close()
-                _pil_icon.save(_ico_tmp.name, format="ICO", sizes=[(512, 512), (256, 256), (128, 128), (64, 64)])
-                self._icon_ico_path = Path(_ico_tmp.name)
-                self.after(201, lambda: self.iconbitmap(str(self._icon_ico_path)))
-            else:
-                self._icon_photo: ImageTk.PhotoImage = ImageTk.PhotoImage(_pil_icon)
-                self.after(201, lambda: self.wm_iconphoto(True, self._icon_photo))
+        self._temp_ico_path: Optional[Path] = setup_window_icon(self, APP_ICON_PNG)
 
         # CHECK FOR EXIFTOOL
         self.exiftool_path: Optional[str] = shutil.which("exiftool")
 
         self.selected_files: list[str] = []
+
         self.cover_art_path: Optional[str] = None
         self.cover_art_embed_path: Optional[str] = None  # TEMP FILE WITH RESIZED VERSION
         self.cover_preview_image: Optional[ctk.CTkImage] = None
         self._cover_video_source: Optional[str] = None  # SET WHEN COVER CAME FROM A VIDEO (NOT AN IMAGE FILE)
+
         self._current_theme: str = get_system_theme()
 
         ################################################## UI LAYOUT ##################################################
@@ -938,5 +929,5 @@ if __name__ == "__main__":
     # CLEAN UP TEMP FILES
     if app.cover_art_embed_path and Path(app.cover_art_embed_path).exists():
         Path(app.cover_art_embed_path).unlink()
-    if app._icon_ico_path and app._icon_ico_path.exists():
-        app._icon_ico_path.unlink()
+    if app._temp_ico_path and app._temp_ico_path.exists():
+        app._temp_ico_path.unlink()

@@ -4,9 +4,12 @@ A small desktop app for tagging film credits and metadata into video files – p
 Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark theme automatically.
 
 > <br>
-> Launch the app by running the <code>app.pyw</code> file:<br>
-> ❯  On <b>Windows</b> the <code>.pyw</code> extension launches it without a console window by default.<br>
-> ❯  On <b>macOS/Linux</b>, run it explicitly: <code>python3 app.pyw</code>
+> <b>Quick app launch:</b><br>
+> ❯  On <b>Windows:</b> double-click <code>launch.vbs</code><br>
+> ❯  On <b>macOS:</b> double-click <code>launch.command</code> (<i>right-click → Open on first run to bypass Gatekeeper</i>)<br>
+> ❯  On <b>Linux:</b> double-click <code>launch.command</code> and choose «Run in terminal»<br>
+> <br>
+> (<i>Or manually run</i> <code>src/app.pyw</code> <i>with Python.</i>)
 > <br>
 > <br>
 
