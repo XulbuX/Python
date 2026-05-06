@@ -5,7 +5,7 @@ Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark th
 
 > <br>
 > <b>Quick app launch:</b><br>
-> ❯  On <b>Windows:</b> double-click <code>launch.vbs</code><br>
+> ❯  On <b>Windows:</b> double-click <code>launch.vbs</code><br>
 > ❯  On <b>macOS:</b> double-click <code>launch.command</code> (<i>right-click → Open on first run to bypass Gatekeeper</i>)<br>
 > ❯  On <b>Linux:</b> double-click <code>launch.command</code> and choose «Run in terminal»<br>
 > <br>
