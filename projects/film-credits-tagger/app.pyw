@@ -15,13 +15,10 @@ import sys
 import io
 import re
 
-
-IS_PRODUCTION: bool = True
-
 # PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
 _POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, FieldDef, ValueType  # type: ignore[missing-import]
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType  # type: ignore[missing-import]
 from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date, exiftool_date_to_display  # type: ignore[missing-import]
 from widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
 
@@ -920,11 +917,6 @@ class MetadataTaggerApp(ctk.CTk):
 
 
 if __name__ == "__main__":
-    if IS_PRODUCTION:
-        _devnull = open("nul" if sys.platform == "win32" else "/dev/null", "w")
-        sys.stdout = _devnull
-        sys.stderr = _devnull
-
     ctk.set_appearance_mode(get_system_theme())
     ctk.set_default_color_theme("blue")
 
