@@ -1,4 +1,4 @@
-# Film Credits Tagger • XulbuX<a href="#film-credits-tagger--xulbux"><img src="./assets/img/FilmCreditsTagger.svg" height="36" align="right" /></a>
+# Film Credits Tagger<a href="#film-credits-tagger"><img src="./assets/img/FilmCreditsTagger.svg" height="36" align="right" /></a>
 
 A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).<br>
 Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark theme automatically.
@@ -6,8 +6,7 @@ Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark th
 > <br>
 > <b>Quick app launch:</b><br>
 > ❯  On <b>Windows:</b> double-click <code>launch.vbs</code><br>
-> ❯  On <b>macOS:</b> double-click <code>launch.command</code> (<i>right-click → Open on first run to bypass Gatekeeper</i>)<br>
-> ❯  On <b>Linux:</b> double-click <code>launch.command</code> and choose «Run in terminal»<br>
+> ❯  On <b>macOS/Linux:</b> right-click <code>launch.sh</code> and choose «Run in terminal»<br>
 > <br>
 > (<i>Or manually run</i> <code>src/app.pyw</code> <i>with Python.</i>)
 > <br>
@@ -32,3 +31,10 @@ Works on **Windows**, **macOS**, and **Linux**. Follows the system light/dark th
   ```shell
   pip install customtkinter reportlab pymupdf pillow svglib
   ```
+
+<br>
+<br>
+
+# Video Trimmer
+
+…

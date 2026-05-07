@@ -15,12 +15,15 @@ import sys
 import io
 import re
 
-# PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
-_POPEN_FLAGS: dict = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+# MAKE THE _shared PACKAGE (apps/src/_shared) IMPORTABLE WHEN RUNNING THIS SCRIPT DIRECTLY
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, COLORS, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType  # type: ignore[missing-import]
-from helpers import resolve_mono_font, get_system_theme, normalize_multi, validate_field, parse_date, exiftool_date_to_display, setup_window_icon  # type: ignore[missing-import]
-from widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
+from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
+from _shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType  # type: ignore[missing-import]
+from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display  # type: ignore[missing-import]
 
 
 class MetadataTaggerApp(ctk.CTk):

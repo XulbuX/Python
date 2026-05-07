@@ -6,7 +6,7 @@ import customtkinter as ctk
 import tkinter as tk
 import io
 
-from consts import ICONS  # type: ignore[missing-import]
+from _shared.consts import ICONS  # type: ignore[missing-import]
 
 
 def bind_clean_paste(tk_widget: tk.Misc) -> None:
