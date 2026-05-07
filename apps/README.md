@@ -20,6 +20,12 @@ This directory contains lots of small, useful desktop apps built with [**Python*
     ```
 - (*Other app-specific requirements noted in each app's section below.*)
 
+### Launching an app
+
+- On **Windows**, double-click the app's `.vbs` file (*e.g.* `film-credits-tagger.vbs`).
+- On **macOS/Linux**, right-click the app's `.sh` file (*e.g.* `film-credits-tagger.sh`) and choose «Run in terminal».
+- (*Or manually run the app's* `src/<app-name>/app.pyw` *with Python.*)
+
 <br>
 <br>
 <br>
@@ -27,15 +33,6 @@ This directory contains lots of small, useful desktop apps built with [**Python*
 # Film Credits Tagger<a href="#film-credits-tagger"><img src="./src/film_credits_tagger/assets/img/FilmCreditsTagger.svg" height="36" align="right" /></a>
 
 A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).
-
-> <br>
-> <b>Quick app launch:</b><br>
-> ❯  On <b>Windows</b>, double-click <code>film-credits-tagger.vbs</code><br>
-> ❯  On <b>macOS/Linux</b>, right-click <code>film-credits-tagger.sh</code> and choose «Run in terminal»<br>
-> <br>
-> (<i>Or manually run</i> <code>src/film_credits_tagger/app.pyw</code> <i>with Python.</i>)
-> <br>
-> <br>
 
 ### Features
 
@@ -53,11 +50,29 @@ A small desktop app for tagging film credits and metadata into video files – p
 ### Requires
 
 - [**ExifTool**](https://exiftool.org) installed and available on `PATH`
+    <!-- winget install -e --id OliverBetz.ExifTool -->
 
 <br>
 <br>
 <br>
 
-# Video Trimmer
+# Video Trimmer<a href="#video-trimmer"><img src="./src/video_trimmer/assets/img/VideoTrimmer.svg" height="36" align="right" /></a>
 
-…
+A small desktop app for trimming the start and/or end off a video file – powered by [**FFmpeg**](https://ffmpeg.org).
+
+
+### Features
+
+- **Lossless trimming** – Uses FFmpeg's stream-copy mode (`-c copy`), so trimming is fast<br>
+    and doesn't re-encode or recompress the video or audio.
+- **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g. `1:23.5`).
+- **Optional bounds** – Leave start blank to trim from the beginning; leave end blank to trim to the end of the file.
+- **Auto duration** – Reads the file's duration via FFprobe and shows it next to the file.
+- **Live progress bar** – Animated, eased progress bar driven by FFmpeg's `-progress` stream.
+- **Smart output path** – Defaults to the input file's folder with a `_trimmed` suffix; or pick your own.
+- **Overwrite protection** – Refuses to overwrite the input file and asks before overwriting any other existing file.
+
+### Requires
+
+- [**FFmpeg**](https://ffmpeg.org) (`ffmpeg` and `ffprobe`) installed and available on `PATH`
+    <!-- winget install -e --id Gyan.FFmpeg -->

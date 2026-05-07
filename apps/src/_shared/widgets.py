@@ -212,7 +212,7 @@ class ToolTip:
             self._widget.after_cancel(self._after_id)
         self._after_id = self._widget.after(self._delay_ms, self._show)
 
-    _TIP_R = 14
+    _TIP_R = 12
     _TIP_PX, _TIP_PY = 10, 7
     _TIP_COLORS = {
         "dark": {"bg": "#252525", "border": "#3F3F46", "fg": "#D4D4D4"},
