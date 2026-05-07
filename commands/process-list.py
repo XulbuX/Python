@@ -12,7 +12,7 @@ ARGS = Console.get_args({
 
 
 def main() -> None:
-    sep = ARGS.separator.values[0] if ARGS.separator.values else ""
+    sep = ARGS.separator.get(0, "")
 
     if sep != "":
         if not ARGS.list_items.exists:

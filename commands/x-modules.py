@@ -199,7 +199,7 @@ def main() -> None:
         return
 
     external_only = ARGS.external_only.exists or ARGS.install.exists
-    directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else FileSys.script_dir
+    directory = Path(v).expanduser().resolve() if (v := ARGS.directory.get(0)) else FileSys.script_dir
 
     with Throbber().context():
         modules = get_all_modules(

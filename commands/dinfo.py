@@ -20,8 +20,8 @@ ARGS = Console.get_args({
     "apply_gitignore": {"-g", "--gitignore"},
     "help": {"-h", "--help"},
 })
-EXCLUDE: set[str] = {item.lower() for item in str(ARGS.exclude_info.values[0]).split()} if ARGS.exclude_info.values else set()
-SKIP: set[str] = {item.lower() for item in str(ARGS.skip_type.values[0]).split()} if ARGS.skip_type.values else set()
+EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split()}
+SKIP: set[str] = {item.lower() for item in ARGS.skip_type.get(0, "").split()}
 
 
 def print_help():

@@ -374,7 +374,7 @@ class WiFi:
 def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
     """Generate and display QR code in terminal."""
     try:
-        scale = int(args.scale.values[0]) if args.scale.values and args.scale.values[0].replace("_", "").isdigit() else 1
+        scale = int(v) if (v := args.scale.get(0)) and v.replace("_", "").isdigit() else 1
         invert = args.invert.exists
         error_level = int({ \
             "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]

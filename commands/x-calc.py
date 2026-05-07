@@ -461,7 +461,7 @@ class Calc:
                 print_line("FORMATTING WITH SEPARATORS")
                 FormatCodes.print(f"[dim](should format:) {ARGS.format.exists}")
 
-            sep = ARGS.format.values[0] if ARGS.format.values else ","
+            sep = ARGS.format.get(0, ",")
 
             if DEBUG:
                 FormatCodes.print(f"[dim](separator:) {sep}")
@@ -995,7 +995,7 @@ def main():
     print()
 
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
-        precision_value = int(ARGS.precision.values[0]) if ARGS.precision.values and ARGS.precision.values[0].lstrip("-").isdigit() else 100
+        precision_value = int(v) if (v := ARGS.precision.get(0)) and v.lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
             Console.fail(f"[b](ValueError:) Precision must be positive or [br:cyan](-1) for infinite precision, got [br:cyan]({precision_value})", end="\n\n")
             return

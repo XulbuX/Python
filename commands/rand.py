@@ -69,8 +69,8 @@ def main():
     print()
 
     batch = (
-        int(ARGS.batch_gen.values[0]) \
-        if ARGS.batch_gen.values and ARGS.batch_gen.values[0].replace("_", "").isdigit()
+        int(v) \
+        if (v := ARGS.batch_gen.get(0)) and v.replace("_", "").isdigit()
         else 1
     )
 

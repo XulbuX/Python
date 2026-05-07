@@ -8,8 +8,8 @@ import keyboard
 
 ARGS = Console.get_args({"table_cols": {"-c", "--cols", "--columns"}})
 TABLE_COLS = (
-    int(ARGS.table_cols.values[0]) \
-    if ARGS.table_cols.values and ARGS.table_cols.values[0].replace("_", "").isdigit() \
+    int(v) \
+    if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() \
     else 4
 )
 

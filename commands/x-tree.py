@@ -841,8 +841,8 @@ def main():
         return
 
     tree = Tree(
-        Path(ARGS.base_dir.values[0]) \
-        if ARGS.base_dir.values
+        Path(v) \
+        if (v := ARGS.base_dir.get(0))
         else Path.cwd()
     )
 
