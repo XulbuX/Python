@@ -76,3 +76,7 @@ A small desktop app for trimming the start and/or end off a video file – power
 
 - [**FFmpeg**](https://ffmpeg.org) (`ffmpeg` and `ffprobe`) installed and available on `PATH`
     <!-- winget install -e --id Gyan.FFmpeg -->
+
+<br>
+<br>
+<br>
