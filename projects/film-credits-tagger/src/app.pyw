@@ -225,6 +225,14 @@ class MetadataTaggerApp(ctk.CTk):
 
         self.sec3._parent_canvas.configure(yscrollcommand=_on_yscroll)
 
+        # SPEED UP MOUSEWHEEL SCROLLING (3 UNITS PER NOTCH INSTEAD OF DEFAULT 1)
+        _sec3_canvas = self.sec3._parent_canvas
+
+        def _on_sec3_fast_scroll(event: object) -> None:
+            _sec3_canvas.yview_scroll(int(-48 * (event.delta / 120)), "units")  # type: ignore[attr-defined]
+
+        _sec3_canvas.bind("<Enter>", lambda _: _sec3_canvas.bind_all("<MouseWheel>", _on_sec3_fast_scroll), add=True)
+
         self.entries: dict[str, FieldEntry] = {}
         self._field_labels: list[ctk.CTkLabel] = []
         self._section_labels: list[ctk.CTkLabel] = []
