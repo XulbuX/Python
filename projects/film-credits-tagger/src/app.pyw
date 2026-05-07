@@ -225,7 +225,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         self.sec3._parent_canvas.configure(yscrollcommand=_on_yscroll)
 
-        # SPEED UP MOUSEWHEEL SCROLLING (3 UNITS PER NOTCH INSTEAD OF DEFAULT 1)
+        # SPEED UP MOUSEWHEEL SCROLLING
         _sec3_canvas = self.sec3._parent_canvas
 
         def _on_sec3_fast_scroll(event: object) -> None:
