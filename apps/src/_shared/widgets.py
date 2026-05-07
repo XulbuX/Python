@@ -6,7 +6,7 @@ import customtkinter as ctk
 import tkinter as tk
 import io
 
-from _shared.consts import ICONS  # type: ignore[missing-import]
+from _shared.consts import ICONS
 
 
 def bind_clean_paste(tk_widget: tk.Misc) -> None:
@@ -204,8 +204,8 @@ class ToolTip:
         # Use widget.bind() so that for CTkButton, all internal children (canvas, text
         # label, image label) each receive the binding – CTkButton.bind() proxies to them.
         # add="+" preserves any existing bindings on those children.
-        widget.bind("<Enter>", self._schedule, add="+")  # type: ignore[call-arg]
-        widget.bind("<Leave>", self._hide, add="+")  # type: ignore[call-arg]
+        widget.bind("<Enter>", self._schedule, add="+")
+        widget.bind("<Leave>", self._hide, add="+")
 
     def _schedule(self, event: object = None) -> None:
         if self._after_id:
@@ -233,7 +233,7 @@ class ToolTip:
         tip_border = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["border"]
 
         s: float = getattr(self._widget, "_get_widget_scaling", lambda: 1.0)()
-        _FONT = ctk.CTkFont(size=24)
+        _FONT = ctk.CTkFont(size=18)
         TIP_R = round(self._TIP_R * s)
         TIP_PX = round(self._TIP_PX * s)
         TIP_PY = round(self._TIP_PY * s)

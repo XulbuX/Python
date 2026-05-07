@@ -2,32 +2,26 @@
 
 This repository contains a ton of useful CLI scripts and other Python related projects.
 
-* <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>**
-* <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** ⚡ *most useful*
+* <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>** ⚡ *most useful*
+* <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** 🛠️ *practical & fun*
 * Projects/…
-    * <a href="#film-credits-tagger" title="scroll to Film Credits Tagger">Film Credits Tagger</a> | **<a href="./projects/film-credits-tagger" title="open film-credits-tagger directory">open</a>**
     * <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
     * <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
 
 
 ## Apps
 
-In this folder I put my standalone Python scripts, run without opening the shell.<br>
-Each script is its own small app, that does something specific.
+This directory contains lots of small, useful desktop apps built with [**Python**](https://www.python.org) and [**CustomTkinter**](https://customtkinter.tomschimansky.com).<br>
+To see what apps are in this collection and what they do, see the directory's [**`README.md`**](./apps/README.md).
 
 
 ## Commands
 
-This folder contains many Python scripts, that are supposed to be run as CLI commands.<br>
-To see what each command is used for, see the folder's [**`README.md`**](./commands/README.md).
+This directory contains many Python scripts, that are supposed to be run as CLI commands.<br>
+To see what each command is used for, see the directory's [**`README.md`**](./commands/README.md).
 
 
 ## Projects
-
-### Film Credits Tagger
-
-A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).<br>
-Works on **Windows**, **macOS**, and **Linux**. For more information, take a look at the [**`README.md`**](./projects/film-credits-tagger/README.md).
 
 ### Harmless Prank Viruses
 

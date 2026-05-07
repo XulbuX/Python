@@ -7,14 +7,14 @@ This repository contains **harmless** prank scripts (*also as [executables](./ex
 > However, it is important to note that **none of these scripts will cause any damage to your PC**.
 
 
-## add_shutdown_script_to_startup_folder_and_shutdown_pc | [view script](./scripts/add_shutdown_script_to_startup_folder_and_shutdown_pc.py)
+## add_shutdown_script_to_startup_directory_and_shutdown_pc | [view script](./scripts/add_shutdown_script_to_startup_directory_and_shutdown_pc.py)
 
 This script/EXE will first create a second file `notSUS` in the user's startup directory (`C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`).<br>
 After that, it will start PC shutdown in `{time}` minutes display a message: `PC is shutting down in {time} minutes.`<br>
 The `notSUS` file does the exact same thing (shutdown PC after `{time}` minutes and display message).<br>
-Per default, the **`{time}` before shutdown is set to `5 minutes`**, so there's enough time to delete the `notSUS` file from the startup folder, before shutdown happens again.
+Per default, the **`{time}` before shutdown is set to `5 minutes`**, so there's enough time to delete the `notSUS` file from the startup directory, before shutdown happens again.
 
-### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/add_shutdown_script_to_startup_folder_and_shutdown_pc.exe)
+### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/add_shutdown_script_to_startup_directory_and_shutdown_pc.exe)
 > [!NOTE]<br>
 > This script/EXE works on all OSes.
 

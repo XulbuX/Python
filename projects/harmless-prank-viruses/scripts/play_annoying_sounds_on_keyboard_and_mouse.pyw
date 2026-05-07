@@ -60,15 +60,15 @@ def add_self_to_startup() -> None:
         if not appdata_path:
             Console.fail("Could not retrieve APPDATA environment variable. Cannot manage startup.", exit=False)
             return
-        startup_folder = os.path.join(appdata_path, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
-        target_script_path_in_startup = os.path.join(startup_folder, script_filename)
+        startup_dir = os.path.join(appdata_path, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+        target_script_path_in_startup = os.path.join(startup_dir, script_filename)
         if os.path.normcase(os.path.abspath(current_script_path)
                             ) == os.path.normcase(os.path.abspath(target_script_path_in_startup)):
             Console.info("Script is running from startup directory. Won't copy itself to there.")
         else:
             Console.info(f"Copying script to startup directory: {target_script_path_in_startup}")
             try:
-                os.makedirs(startup_folder, exist_ok=True)
+                os.makedirs(startup_dir, exist_ok=True)
                 shutil.copy2(current_script_path, target_script_path_in_startup)
                 Console.done(f"Script successfully copied to startup.")
             except Exception as e:

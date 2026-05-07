@@ -795,7 +795,7 @@ def _remove_empty_dirs(directory: Path, failures: list[str]) -> bool:
     if all_removed:
         try:
             directory.rmdir()
-            FormatCodes.print(f"    [green](✓) Removed empty folder [dim|br:blue]{directory}[_]")
+            FormatCodes.print(f"    [green](✓) Removed empty directory [dim|br:blue]{directory}[_]")
             return True
         except Exception as e:
             failures.append(f"Failed to remove empty dir {directory}: {e}")

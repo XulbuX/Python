@@ -1,7 +1,7 @@
 from typing import Optional
 import re
 
-from consts import ValueType  # type: ignore[missing-import]
+from consts import ValueType
 
 
 def normalize_multi(val: str) -> str:

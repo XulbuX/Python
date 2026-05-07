@@ -1,7 +1,7 @@
 # pyright: basic
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from PIL import Image
 import customtkinter as ctk
 import subprocess
@@ -18,12 +18,17 @@ import re
 # MAKE THE _shared PACKAGE (apps/src/_shared) IMPORTABLE WHEN RUNNING THIS SCRIPT DIRECTLY
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# USE ABSOLUTE IMPORTS DURING RUNTIME AND RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
 from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
 from _shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+if TYPE_CHECKING:
+    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
+    from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
+    from .._shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon
 
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType  # type: ignore[missing-import]
-from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display  # type: ignore[missing-import]
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType
+from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display
 
 
 class MetadataTaggerApp(ctk.CTk):
@@ -260,7 +265,9 @@ class MetadataTaggerApp(ctk.CTk):
                 self._field_labels.append(lbl)
 
                 if field_def["field_type"] == FieldType.EXPANDING:
-                    entry_widget: ctk.CTkEntry = MultilineEntry(self.sec3, border_width=1, wrap="word", placeholder_text=field_def.get("placeholder", ""))  # type: ignore[assignment]
+                    entry_widget: ctk.CTkEntry = MultilineEntry(  # type: ignore[assignment]
+                        self.sec3, border_width=1, wrap="word", placeholder_text=field_def.get("placeholder", "")
+                    )
                 elif field_def["field_type"] == FieldType.MULTILINE:
                     entry_widget = MultilineEntry(  # type: ignore[assignment]
                         self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
@@ -366,10 +373,10 @@ class MetadataTaggerApp(ctk.CTk):
 
         # NULL OUT BOTH CTkLabel'S _image AND THE UNDERLYING tk.Label's image OPTION SO THAT
         # NO STALE PhotoImage REFERENCE CAUSES TclError WHEN TKINTER VALIDATES OPTIONS ON REDRAW.
-        self.lbl_cover_thumb._image = None  # type: ignore[attr-defined]
+        self.lbl_cover_thumb._image = None
 
         try:
-            self.lbl_cover_thumb._label.configure(image="")  # type: ignore[attr-defined]
+            self.lbl_cover_thumb._label.configure(image="")
         except Exception:
             pass
 
@@ -725,7 +732,7 @@ class MetadataTaggerApp(ctk.CTk):
         cover_path_raw = template_data.get("__cover_art__")
         if not cover_path_raw:
             return
-        # RESOLVE RELATIVE TO THE TEMPLATE FILE'S FOLDER; ALSO HANDLES LEGACY ABSOLUTE PATHS
+        # RESOLVE RELATIVE TO THE TEMPLATE FILE'S DIRECTORY; ALSO HANDLES LEGACY ABSOLUTE PATHS
         # (JOINING AN ABSOLUTE PATH DISCARDS THE BASE, SO BOTH FORMATS WORK TRANSPARENTLY)
         cover_path = str((Path(filepath).parent / cover_path_raw).resolve())
         if not Path(cover_path).is_file():
