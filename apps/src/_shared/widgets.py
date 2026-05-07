@@ -102,6 +102,7 @@ class MultilineEntry(ctk.CTkTextbox):
             self._textbox.bind("<FocusOut>", self._on_placeholder_focus_out, add="+")
 
         self._textbox.bind("<<Modified>>", self._on_modified)
+
         if always_expanded:
             self._expanded = True
             self.configure(height=80)
@@ -176,9 +177,7 @@ class MultilineEntry(ctk.CTkTextbox):
             super().configure(**kwargs)  # type: ignore[arg-type]
 
     def get(self) -> str:
-        if self._showing_placeholder:
-            return ""
-        return super().get("1.0", "end").rstrip("\n")
+        return "" if self._showing_placeholder else super().get("1.0", "end").rstrip("\n")
 
     def delete(self, _start: object, _end: object = None) -> None:
         self._showing_placeholder = False
@@ -200,6 +199,7 @@ class ToolTip:
         self._text = text
         self._tip: Optional[tk.Toplevel] = None
         self._after_id: Optional[str] = None
+        self._poll_id: Optional[str] = None
         self._delay_ms = delay_ms
         # Use widget.bind() so that for CTkButton, all internal children (canvas, text
         # label, image label) each receive the binding – CTkButton.bind() proxies to them.
@@ -214,6 +214,7 @@ class ToolTip:
 
     _TIP_R = 12
     _TIP_PX, _TIP_PY = 10, 7
+    _POLL_MS: int = 150
     _TIP_COLORS = {
         "dark": {"bg": "#252525", "border": "#3F3F46", "fg": "#D4D4D4"},
         "light": {"bg": "#FFFFFF", "border": "#E4E4E7", "fg": "#18181B"},
@@ -224,6 +225,7 @@ class ToolTip:
         self._after_id = None
         if self._tip:
             return
+
         tip_x = int(self._widget.winfo_rootx()) + 20
         tip_y = int(self._widget.winfo_rooty() + self._widget.winfo_height()) + 4
 
@@ -232,13 +234,13 @@ class ToolTip:
         tip_fg = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["fg"]
         tip_border = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["border"]
 
-        s: float = getattr(self._widget, "_get_widget_scaling", lambda: 1.0)()
+        scaling: float = getattr(self._widget, "_get_widget_scaling", lambda: 1.0)()
         _FONT = ctk.CTkFont(size=18)
-        TIP_R = round(self._TIP_R * s)
-        TIP_PX = round(self._TIP_PX * s)
-        TIP_PY = round(self._TIP_PY * s)
-        PARA_GAP = round(6 * s)
-        WRAP = round(280 * s)
+        TIP_R = round(self._TIP_R * scaling)
+        TIP_PX = round(self._TIP_PX * scaling)
+        TIP_PY = round(self._TIP_PY * scaling)
+        PARA_GAP = round(6 * scaling)
+        WRAP = round(280 * scaling)
 
         # MEASURE WIDTH FROM FULL TEXT, THEN EACH PARAGRAPH SEPARATELY FOR HEIGHT
         probe = tk.Label(self._widget, text=self._text, font=_FONT, justify="left", wraplength=WRAP, padx=0, pady=0, bd=0)
@@ -249,11 +251,13 @@ class ToolTip:
         text_w = tw - TIP_PX * 2
         paragraphs = self._text.split("\n")
         para_heights: list[int] = []
+
         for para in paragraphs:
             pl = tk.Label(self._widget, text=para or " ", font=_FONT, justify="left", wraplength=text_w, padx=0, pady=0, bd=0)
             pl.update_idletasks()
             para_heights.append(pl.winfo_reqheight())
             pl.destroy()
+
         th = sum(para_heights) + PARA_GAP * (len(paragraphs) - 1) + TIP_PY * 2
 
         cr = TIP_R
@@ -261,6 +265,7 @@ class ToolTip:
         self._tip.wm_overrideredirect(True)
         self._tip.wm_geometry(f"{tw}x{th}+{tip_x}+{tip_y}")
         self._tip.configure(bg=self._TIP_TRANSPARENT)
+
         try:
             self._tip.wm_attributes("-transparentcolor", self._TIP_TRANSPARENT)
         except tk.TclError:
@@ -268,25 +273,32 @@ class ToolTip:
 
         cv = tk.Canvas(self._tip, width=tw, height=th, bg=self._TIP_TRANSPARENT, highlightthickness=0)
         cv.pack()
+
         # DESTROY TOOLTIP WHEN MOUSE LEAVES IT
         self._tip.bind("<Leave>", self._hide)
+
         # ROUNDED RECTANGLE VIA smooth=True POLYGON; BORDER DRAWN FIRST (1px LARGER), FILL ON TOP
         pts = [cr, 0, tw - cr, 0, tw, 0, tw, cr, tw, th - cr, tw, th, tw - cr, th, cr, th, 0, th, 0, th - cr, 0, cr, 0, 0]
         cv.create_polygon(pts, smooth=True, fill=tip_border, outline="")
+
         inset = 1
         ipts = [
             cr, inset, tw - cr, inset, tw - inset, inset, tw - inset, cr, tw - inset, th - cr, tw - inset, th - inset, tw - cr,
             th - inset, cr, th - inset, inset, th - inset, inset, th - cr, inset, cr, inset, inset
         ]
+
         cv.create_polygon(ipts, smooth=True, fill=tip_bg, outline="")
         ty = TIP_PY
+
         for para, ph in zip(paragraphs, para_heights):
             cv.create_text(TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
             ty += ph + PARA_GAP
 
+        self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
+
     def _hide(self, event: object = None) -> None:
-        # Moving between a CTkButton's internal sub-widgets (canvas → text label etc.) fires
-        # spurious Leave events. Ignore them if the pointer is still within the outer widget.
+        """Moving between a CTkButton's internal sub-widgets (canvas → text label etc.) fires<br>
+        spurious Leave events. Ignore them if the pointer is still within the outer widget."""
         try:
             wx = self._widget.winfo_rootx()
             wy = self._widget.winfo_rooty()
@@ -294,15 +306,61 @@ class ToolTip:
             wh = self._widget.winfo_height()
             px = self._widget.winfo_pointerx()
             py = self._widget.winfo_pointery()
+
             if wx <= px < wx + ww and wy <= py < wy + wh:
-                return  # pointer still inside – not a real Leave
+                return  # POINTER STILL INSIDE – NOT A REAL LEAVE
+
         except tk.TclError:
             pass
+
         if self._after_id:
             self._widget.after_cancel(self._after_id)
             self._after_id = None
+        if self._poll_id:
+            self._widget.after_cancel(self._poll_id)
+            self._poll_id = None
         if self._tip:
             self._tip.destroy()
+            self._tip = None
+
+    def _visibility_poll(self) -> None:
+        """Periodic check while the tooltip is visible; hides it if the pointer has left<br>
+        both the anchor widget and the tooltip (guards against missed Leave events, e.g.<br>
+        when the mouse exits through the OS title-bar area without re-entering the window)."""
+        if not self._tip:
+            self._poll_id = None
+            return
+
+        try:
+            px, py = self._widget.winfo_pointerx(), self._widget.winfo_pointery()
+            wx = self._widget.winfo_rootx()
+            wy = self._widget.winfo_rooty()
+            ww = self._widget.winfo_width()
+            wh = self._widget.winfo_height()
+
+            if wx <= px < wx + ww and wy <= py < wy + wh:
+                self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
+                return
+
+            tx = self._tip.winfo_rootx()
+            ty = self._tip.winfo_rooty()
+            tw = self._tip.winfo_width()
+            th = self._tip.winfo_height()
+
+            if tx <= px < tx + tw and ty <= py < ty + th:
+                self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
+                return
+
+        except tk.TclError:
+            pass
+
+        self._poll_id = None
+
+        if self._tip:
+            try:
+                self._tip.destroy()
+            except tk.TclError:
+                pass
             self._tip = None
 
 

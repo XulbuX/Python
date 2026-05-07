@@ -712,6 +712,13 @@ class MetadataTaggerApp(ctk.CTk):
         if cover_bytes:
             self._apply_cover_from_video_bytes(cover_bytes, filepath)
 
+        # RESTORE PLACEHOLDERS ON ANY ENTRY FIELD THAT IS EMPTY BUT MISSING ITS PLACEHOLDER
+        # (CAN HAPPEN WHEN A PRIOR LOAD WIPED THE PLACEHOLDER TEXT WITHOUT REPOPULATING THE FIELD)
+        for _data in self.entries.values():
+            _w = _data["widget"]
+            if not isinstance(_w, MultilineEntry) and hasattr(_w, "_activate_placeholder"):
+                _w._activate_placeholder()
+
     def load_template(self) -> None:
         if not (filepath := filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")], title="Load Metadata Template")):
             return
@@ -725,17 +732,21 @@ class MetadataTaggerApp(ctk.CTk):
 
         # CLEAR EXISTING ENTRIES AND INSERT NEW ONES
         for label, data in self.entries.items():
-            data["widget"].delete(0, "end")
+            widget = data["widget"]
+            widget.delete(0, "end")
             if label in template_data:
-                data["widget"].insert(0, template_data[label])
+                widget.insert(0, template_data[label])
+            elif not isinstance(widget, MultilineEntry) and hasattr(widget, "_activate_placeholder"):
+                # CTkEntry._is_focused STARTS True SO delete() WON'T AUTO-RESTORE THE PLACEHOLDER;
+                # CALL IT DIRECTLY, MIRRORING THE SAME FIX IN reset_all()
+                widget._activate_placeholder()
 
-        cover_path_raw = template_data.get("__cover_art__")
-        if not cover_path_raw:
+        if not (cover_path_raw := template_data.get("__cover_art__")):
             return
+
         # RESOLVE RELATIVE TO THE TEMPLATE FILE'S DIRECTORY; ALSO HANDLES LEGACY ABSOLUTE PATHS
         # (JOINING AN ABSOLUTE PATH DISCARDS THE BASE, SO BOTH FORMATS WORK TRANSPARENTLY)
-        cover_path = str((Path(filepath).parent / cover_path_raw).resolve())
-        if not Path(cover_path).is_file():
+        if not Path(cover_path := str((Path(filepath).parent / cover_path_raw).resolve())).is_file():
             messagebox.showwarning(
                 "Cover Art Not Found", f"The cover image saved in this template could not be found:\n{cover_path}\n\n"
                 "The rest of the template was loaded successfully."
