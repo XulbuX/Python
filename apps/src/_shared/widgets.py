@@ -214,8 +214,13 @@ class ToolTip:
     _TIP_PX, _TIP_PY = 10, 7
     _POLL_MS: int = 150
     _TIP_COLORS = {
-        "dark": {"bg": COLORS["dark"]["secondary_hover"], "border": COLORS["dark"]["secondary_border"], "fg": COLORS["dark"]["foreground"]},
-        "light": {"bg": COLORS["light"]["background"], "border": COLORS["light"]["secondary_border"], "fg": COLORS["light"]["card"]},
+        "dark": {
+            "bg": COLORS["dark"]["secondary_hover"], "border": COLORS["dark"]["secondary_border"],
+            "fg": COLORS["dark"]["foreground"]
+        },
+        "light": {
+            "bg": COLORS["light"]["background"], "border": COLORS["light"]["secondary_border"], "fg": COLORS["light"]["card"]
+        },
     }
     _TIP_TRANSPARENT = "#010203"  # UNIQUE NEAR-BLACK USED AS TRANSPARENCY KEY ON WINDOWS
 
@@ -452,6 +457,7 @@ class SegmentedButton(ctk.CTkFrame):
         _c = COLORS.get(ctk.get_appearance_mode().lower(), COLORS["dark"])
         self._selected_color: str = _c["primary"]
         self._selected_hover: str = _c["primary_hover"]
+        self._selected_text_color: str = _c["primary_foreground"]
         self._unselected_color: str = _c["secondary"]
         self._unselected_hover: str = _c["secondary_hover"]
         self._text_color: str = _c["secondary_foreground"]
@@ -497,7 +503,7 @@ class SegmentedButton(ctk.CTkFrame):
             btn.configure(
                 fg_color=self._selected_color if active else self._unselected_color,
                 hover_color=self._selected_hover if active else self._unselected_hover,
-                text_color=self._text_color,
+                text_color=self._selected_text_color if active else self._text_color,
             )
 
     def set(self, value: str) -> None:
@@ -513,6 +519,8 @@ class SegmentedButton(ctk.CTkFrame):
             self._selected_color = str(v)
         if (v := kwargs.pop("selected_hover_color", None)) is not None:
             self._selected_hover = str(v)
+        if (v := kwargs.pop("selected_text_color", None)) is not None:
+            self._selected_text_color = str(v)
         if (v := kwargs.pop("unselected_color", None)) is not None:
             self._unselected_color = str(v)
         if (v := kwargs.pop("unselected_hover_color", None)) is not None:

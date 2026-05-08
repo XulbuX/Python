@@ -7,6 +7,7 @@ import customtkinter as ctk
 import subprocess
 import webbrowser
 import threading
+import tempfile
 import ctypes
 import shutil
 import json
@@ -35,6 +36,11 @@ _THUMB_W: int = 260
 _THUMB_H: int = 146  # 16:9 ASPECT RATIO
 _PREVIEW_DEBOUNCE_MS: int = 350
 _DEFAULT_FPS: float = 25.0
+
+# THUMBNAIL STRIP (LOW-RES IN-MEMORY CACHE FOR INSTANT SCRUB FEEDBACK)
+_STRIP_COUNT: int = 2048
+_STRIP_W: int = 320
+_STRIP_H: int = 180  # 16:9 ASPECT RATIO
 
 
 class VideoTrimmerApp(ctk.CTk):
@@ -73,10 +79,15 @@ class VideoTrimmerApp(ctk.CTk):
         self._preview_start_job: Optional[str] = None
         self._preview_end_job: Optional[str] = None
         self._preview_pending_sec: dict[str, Optional[float]] = {"start": None, "end": None}
+        self._preview_latest_sec: dict[str, Optional[float]] = {"start": None, "end": None}
         self._preview_last_fire_ms: dict[str, float] = {"start": 0.0, "end": 0.0}
         self._start_preview_image: Optional[ctk.CTkImage] = None
         self._end_preview_image: Optional[ctk.CTkImage] = None
         self._preview_generation: int = 0
+
+        # LOW-RES THUMBNAIL STRIP FOR SCRUB FEEDBACK
+        self._thumb_strip: list[Image.Image] = []
+        self._thumb_strip_generation: int = -1
 
         ################################################## UI LAYOUT ##################################################
         PAD: int = 16
@@ -126,6 +137,10 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.mode_toggle.set("Time")
         self.mode_toggle.pack(side="right")
+
+        # SCRUB-STRIP INDEXING STATUS (LEFT OF THE MODE TOGGLE)
+        self.lbl_strip_status = ctk.CTkLabel(self.trim_header, text="", font=ctk.CTkFont(size=11), justify="right")
+        self.lbl_strip_status.pack(side="right", padx=(0, 12))
 
         # -- PREVIEW THUMBNAILS: START ON LEFT, END ON RIGHT --
         self.sec_preview = ctk.CTkFrame(self.sec_trim, fg_color="transparent")
@@ -310,6 +325,7 @@ class VideoTrimmerApp(ctk.CTk):
         self._start_sec = 0.0
         self._end_sec = None
         self._preview_generation += 1
+        self._thumb_strip = []
 
         c = COLORS[self._current_theme]
         self.lbl_file.configure(text=Path(filename).name, text_color=c["foreground"])
@@ -319,6 +335,7 @@ class VideoTrimmerApp(ctk.CTk):
         self._cancel_preview_jobs()
         self._set_preview("start", None)
         self._set_preview("end", None)
+        self.lbl_strip_status.configure(text="")
         self.trim_timeline.set_range(0.0, 1.0)
         self.trim_timeline.set_enabled(False)
 
@@ -375,6 +392,9 @@ class VideoTrimmerApp(ctk.CTk):
                 self._update_hint()
                 self._schedule_preview("start", 0.0)
                 self._schedule_preview("end", duration)
+                # KICK OFF LOW-RES SCRUB STRIP IN BACKGROUND
+                gen = self._preview_generation
+                threading.Thread(target=self._build_thumb_strip, args=(filename, duration, gen), daemon=True).start()
             else:
                 self.lbl_file.configure(text_color=c["destructive_label"])
             self.btn_select_file.stop(state="normal")
@@ -389,9 +409,10 @@ class VideoTrimmerApp(ctk.CTk):
                 self.after_cancel(job)
                 setattr(self, attr, None)
         self._preview_pending_sec = {"start": None, "end": None}
+        self._preview_latest_sec = {"start": None, "end": None}
 
     def _schedule_preview(self, which: str, sec: float) -> None:
-        """Throttle (leading edge + trailing) frame extraction at `sec` seconds for `which` thumbnail."""
+        """Show instant low-res strip preview, then throttle high-quality extraction."""
         if not self.selected_file or not self.ffmpeg_path:
             return
 
@@ -399,8 +420,13 @@ class VideoTrimmerApp(ctk.CTk):
         if self.duration is not None:
             sec = min(sec, max(0.0, self.duration - 1.0 / (self.fps or _DEFAULT_FPS)))
 
-        # ALWAYS RECORD THE LATEST TARGET SO A PENDING JOB FIRES WITH THE FRESHEST VALUE
+        # 1) INSTANT FEEDBACK FROM IN-MEMORY STRIP (IF AVAILABLE)
+        if (strip_img := self._strip_image_at(sec)) is not None:
+            self._set_preview(which, strip_img)
+
+        # 2) ALWAYS RECORD THE LATEST TARGET SO STALE HD RESULTS CAN BE DISCARDED
         self._preview_pending_sec[which] = sec
+        self._preview_latest_sec[which] = sec
 
         # IF A JOB IS ALREADY SCHEDULED, IT WILL PICK UP THE UPDATED `sec` ON FIRE
         if getattr(self, f"_preview_{which}_job") is not None:
@@ -421,14 +447,18 @@ class VideoTrimmerApp(ctk.CTk):
         self._load_preview_async(which, sec, self.selected_file)
 
     def _load_preview_async(self, which: str, sec: float, video_path: str) -> None:
-        setattr(self, f"_preview_{which}_job", None)
         generation = self._preview_generation
 
         def _worker() -> None:
             img = self._extract_frame(video_path, sec)
 
             def _apply() -> None:
-                if self._preview_generation == generation:
+                # DISCARD IF FILE CHANGED OR USER HAS SCRUBBED TO A NEW POSITION SINCE
+                if self._preview_generation != generation:
+                    return
+                if self._preview_latest_sec.get(which) != sec:
+                    return
+                if img is not None:
                     self._set_preview(which, img)
 
             self.after(0, _apply)
@@ -439,32 +469,132 @@ class VideoTrimmerApp(ctk.CTk):
         """Extract a single video frame at `sec` seconds; returns PIL Image or None."""
         if not self.ffmpeg_path:
             return None
+
         cmd = [
-            self.ffmpeg_path,
-            "-ss",
-            f"{max(0.0, sec):.6f}",
-            "-i",
-            video_path,
-            "-frames:v",
-            "1",
-            "-vf",
+            self.ffmpeg_path, "-ss", f"{max(0.0, sec):.6f}", "-i", video_path, "-frames:v", "1", "-vf",
             (
                 f"scale={_THUMB_W}:{_THUMB_H}:force_original_aspect_ratio=decrease:flags=lanczos,"
                 f"pad={_THUMB_W}:{_THUMB_H}:({_THUMB_W}-iw)/2:({_THUMB_H}-ih)/2"
-            ),
-            "-f",
-            "image2pipe",
-            "-vcodec",
-            "mjpeg",
-            "pipe:1",
+            ), "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"
         ]
+
         try:
             res = subprocess.run(cmd, capture_output=True, timeout=10, **_POPEN_FLAGS)
             if res.returncode == 0 and res.stdout:
                 return Image.open(io.BytesIO(res.stdout)).copy()
         except Exception:
             pass
+
         return None
+
+    ########################################################## SCRUB STRIP ##########################################################
+
+    def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:
+        """Background: extract `_STRIP_COUNT` evenly-spaced low-res frames in a single ffmpeg pass."""
+        if not self.ffmpeg_path or duration <= 0:
+            return
+
+        count = max(2, _STRIP_COUNT)
+        rate = count / duration  # FRAMES PER SECOND TO SAMPLE
+
+        self.after(0, lambda: self._set_strip_status("indexing", 0.0, generation))
+
+        with tempfile.TemporaryDirectory(prefix="vt_strip_") as td:
+            cmd = [
+                self.ffmpeg_path, "-hide_banner", "-loglevel", "error", "-progress", "pipe:1", "-i", video_path, "-vf",
+                (
+                    f"fps={rate:.6f},"
+                    f"scale={_STRIP_W}:{_STRIP_H}:force_original_aspect_ratio=decrease:flags=fast_bilinear,"
+                    f"pad={_STRIP_W}:{_STRIP_H}:({_STRIP_W}-iw)/2:({_STRIP_H}-ih)/2"
+                ), "-vsync", "vfr", "-q:v", "6", "-frames:v",
+                str(count),
+                str(Path(td) / "f%05d.jpg")
+            ]
+
+            try:
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    **_POPEN_FLAGS,
+                )
+            except Exception:
+                self.after(0, lambda: self._set_strip_status("error", 0.0, generation))
+                return
+
+            assert proc.stdout is not None
+            for line in proc.stdout:
+                if self._preview_generation != generation:
+                    proc.kill()
+                    return
+                if "=" not in (line := line.strip()):
+                    continue
+                key, _, val = line.partition("=")
+                if key == "out_time_us" and val.lstrip("-").isdigit():
+                    elapsed = max(0, int(val)) / 1_000_000.0
+                    frac = max(0.0, min(0.99, elapsed / duration))
+                    self.after(0, lambda f=frac: self._set_strip_status("indexing", f, generation))
+
+            proc.wait()
+
+            # ABORT IF USER ALREADY SWITCHED FILES
+            if self._preview_generation != generation:
+                return
+
+            strip: list[Image.Image] = []
+            for f in sorted(Path(td).glob("f*.jpg")):
+                try:
+                    with Image.open(f) as im:
+                        strip.append(im.copy())
+                except Exception:
+                    pass
+
+        if not strip:
+            self.after(0, lambda: self._set_strip_status("error", 0.0, generation))
+            return
+
+        def _apply() -> None:
+            if self._preview_generation != generation:
+                return
+            self._thumb_strip = strip
+            self._thumb_strip_generation = generation
+            self._set_strip_status("ready", 1.0, generation)
+
+        self.after(0, _apply)
+
+    def _set_strip_status(self, state: str, frac: float, generation: int) -> None:
+        """Update the small indexing indicator. `state` is 'idle' | 'indexing' | 'ready' | 'error'."""
+        if generation != self._preview_generation:
+            return
+
+        c = COLORS[self._current_theme]
+        if state == "indexing":
+            self.lbl_strip_status.configure(
+                text=f"Indexing\u2026 {int(frac * 100)}%",
+                text_color=c["placeholder_foreground"],
+            )
+        elif state == "ready":
+            self.lbl_strip_status.configure(text="Ready", text_color=c["placeholder_foreground"])
+        elif state == "error":
+            self.lbl_strip_status.configure(text="Index failed", text_color=c["destructive_label"])
+        else:
+            self.lbl_strip_status.configure(text="", text_color=c["placeholder_foreground"])
+
+    def _strip_image_at(self, sec: float) -> Optional[Image.Image]:
+        """Return the nearest low-res strip thumbnail for `sec`, upscaled to display size."""
+        if not self._thumb_strip or self.duration is None or self.duration <= 0:
+            return None
+        if self._thumb_strip_generation != self._preview_generation:
+            return None
+
+        n = len(self._thumb_strip)
+        idx = int(sec / self.duration * n)
+        idx = max(0, min(n - 1, idx))
+
+        return self._thumb_strip[idx].resize((_THUMB_W, _THUMB_H), Image.Resampling.BILINEAR)
 
     def _set_preview(self, which: str, img: Optional[Image.Image]) -> None:
         """Update a thumbnail widget; `which` is 'start' or 'end'."""
@@ -682,10 +812,13 @@ class VideoTrimmerApp(ctk.CTk):
         self.output_path = None
 
         self._preview_generation += 1
+        self._thumb_strip = []
         self._cancel_preview_jobs()
 
         self.entry_start.delete(0, "end")
+        self.entry_start._activate_placeholder()
         self.entry_end.delete(0, "end")
+        self.entry_end._activate_placeholder()
 
         c = COLORS[self._current_theme]
         self.lbl_file.configure(text="No file selected", text_color=c["placeholder_foreground"])
@@ -694,6 +827,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         self._set_preview("start", None)
         self._set_preview("end", None)
+        self.lbl_strip_status.configure(text="")
         self.trim_timeline.set_range(0.0, 1.0)
         self.trim_timeline.set_enabled(False)
 
@@ -737,6 +871,7 @@ class VideoTrimmerApp(ctk.CTk):
             border_color=c["secondary_border"],
             selected_color=c["primary"],
             selected_hover_color=c["primary_hover"],
+            selected_text_color=c["primary_foreground"],
             unselected_color=c["background"],
             unselected_hover_color=c["secondary_hover"],
             text_color=c["foreground"],
