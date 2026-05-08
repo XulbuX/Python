@@ -114,7 +114,12 @@ class VideoTrimmerApp(ctk.CTk):
         self.btn_reset_all.grid(row=0, column=2, sticky="e", pady=(0, 8))
         ToolTip(self.btn_reset_all, "Reset all fields")
 
-        self.btn_select_file = SpinnerButton(self.sec_file, text="Select Video File", command=self.select_file)
+        self.btn_select_file = SpinnerButton(
+            self.sec_file,
+            text="Select Video File",
+            command=self.select_file,
+            state="disabled",  # ENABLED AFTER _verify_ffmpeg CONFIRMS
+        )
         self.btn_select_file.grid(row=1, column=0, sticky="w")
 
         self.lbl_file = ctk.CTkLabel(self.sec_file, text="No file selected", anchor="w")
@@ -257,7 +262,11 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_section_out.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         self.btn_select_out = ctk.CTkButton(
-            self.sec_out, text="Choose Output\u2026", command=self.select_output, border_width=1
+            self.sec_out,
+            text="Choose Output\u2026",
+            command=self.select_output,
+            border_width=1,
+            state="disabled",  # ENABLED AFTER _verify_ffmpeg CONFIRMS
         )
         self.btn_select_out.grid(row=1, column=0, sticky="w")
 
@@ -969,8 +978,13 @@ class VideoTrimmerApp(ctk.CTk):
             if not ok:
                 self.ffmpeg_path = None
                 self.ffprobe_path = None
+
+            state = "normal" if ok else "disabled"
+            self.btn_select_file.configure(state=state)
+            self.btn_select_out.configure(state=state)
+
             if self.btn_apply:
-                self.btn_apply.stop(state="normal" if ok else "disabled")
+                self.btn_apply.stop(state=state)
 
         self.after(0, _done)
 
