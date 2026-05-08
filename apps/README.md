@@ -38,7 +38,7 @@ A small desktop app for tagging film credits and metadata into video files – p
 
 - **Write metadata** into `.mp4`, `.mov`, `.m4v`, `.m4a`, `.3gp`, and `.3g2` files.
 - **Batch processing** – Select multiple files and apply the same tags to all at once.
-- **Editable fields:** A variety of properties covering general info, credits, and descriptions.
+- **Editable fields** – Edit a variety of properties covering general info, credits, and descriptions.
 - **Cover art** – Select an image, preview it in-app, and embed it as front-cover art.
 - **JSON templates** – Save the current field values to a `.json` file and reload them later.
 - **Load from video** – Reads existing metadata and cover art back out of a file and populates the fields.
@@ -66,11 +66,11 @@ A small desktop app for trimming the start and/or end off a video file – power
 - **Lossless trimming** – Uses FFmpeg's stream-copy mode (`-c copy`), so trimming is fast<br>
     and doesn't re-encode or recompress the video or audio.
 - **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g. `1:23.5`).
+- **Frame-number mode** – Toggle between time and frame-number input for precise, frame-accurate trim points.
 - **Optional bounds** – Leave start blank to trim from the beginning; leave end blank to trim to the end of the file.
-- **Auto duration** – Reads the file's duration via FFprobe and shows it next to the file.
-- **Live progress bar** – Animated, eased progress bar driven by FFmpeg's `-progress` stream.
-- **Smart output path** – Defaults to the input file's folder with a `_trimmed` suffix; or pick your own.
-- **Overwrite protection** – Refuses to overwrite the input file and asks before overwriting any other existing file.
+- **Interactive timeline** – Drag the start/end handles or use the stepper buttons to adjust trim points.
+- **Frame previews** – Live thumbnails show the exact start and end frames as you adjust the trim points.
+- **Smart output path** – Defaults to the input file's folder with a `_trim` suffix; or pick your own.
 
 ### Requires
 
