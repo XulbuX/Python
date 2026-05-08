@@ -10,18 +10,18 @@ def parse_time(val: str) -> Optional[float]:
     Returns `None` if the input cannot be parsed."""
     if not val.strip():
         return None
-    if not (m := _TIME_RE.match(val)):
+    if not (match := _TIME_RE.match(val)):
         return None
 
-    parts: list[str] = [p for p in (m.group(1), m.group(2), m.group(3)) if p is not None]
+    parts: list[str] = [part for part in (match.group(1), match.group(2), match.group(3)) if part is not None]
     try:
-        nums = [float(p) for p in parts]
+        nums = [float(part) for part in parts]
     except ValueError:
         return None
 
     seconds: float = 0.0
-    for n in nums:
-        seconds = seconds * 60.0 + n
+    for num in nums:
+        seconds = seconds * 60.0 + num
 
     return seconds
 
@@ -39,3 +39,13 @@ def format_time(seconds: float) -> str:
         return f"{h:02d}:{m:02d}:{s:06.3f}"
     else:
         return f"{m:02d}:{s:06.3f}"
+
+
+def frame_to_time(frame: int, fps: float) -> float:
+    """Convert a frame number to seconds."""
+    return frame / fps
+
+
+def time_to_frame(seconds: float, fps: float) -> int:
+    """Convert seconds to the nearest frame number."""
+    return round(seconds * fps)

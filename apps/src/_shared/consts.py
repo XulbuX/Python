@@ -9,6 +9,8 @@ POPEN_FLAGS: dict[str, Any] = {"creationflags": subprocess.CREATE_NO_WINDOW} if 
 _ICON_DIR: Path = Path(__file__).resolve().parent / "assets" / "icons"
 
 ICONS: dict[str, Path] = {
+    "chevron-left": _ICON_DIR / "chevron-left.svg",
+    "chevron-right": _ICON_DIR / "chevron-right.svg",
     "loader": _ICON_DIR / "loader.svg",
     "refresh-ccw": _ICON_DIR / "refresh-ccw.svg",
     "x": _ICON_DIR / "x.svg",

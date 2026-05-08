@@ -6,7 +6,7 @@ import customtkinter as ctk
 import tkinter as tk
 import io
 
-from _shared.consts import ICONS
+from _shared.consts import COLORS, ICONS
 
 
 def bind_clean_paste(tk_widget: tk.Misc) -> None:
@@ -201,11 +201,9 @@ class ToolTip:
         self._after_id: Optional[str] = None
         self._poll_id: Optional[str] = None
         self._delay_ms = delay_ms
-        # Use widget.bind() so that for CTkButton, all internal children (canvas, text
-        # label, image label) each receive the binding – CTkButton.bind() proxies to them.
-        # add="+" preserves any existing bindings on those children.
-        widget.bind("<Enter>", self._schedule, add="+")
-        widget.bind("<Leave>", self._hide, add="+")
+
+        tk.Misc.bind(widget, "<Enter>", self._schedule, add="+")
+        tk.Misc.bind(widget, "<Leave>", self._hide, add="+")
 
     def _schedule(self, event: object = None) -> None:
         if self._after_id:
@@ -216,8 +214,8 @@ class ToolTip:
     _TIP_PX, _TIP_PY = 10, 7
     _POLL_MS: int = 150
     _TIP_COLORS = {
-        "dark": {"bg": "#252525", "border": "#3F3F46", "fg": "#D4D4D4"},
-        "light": {"bg": "#FFFFFF", "border": "#E4E4E7", "fg": "#18181B"},
+        "dark": {"bg": COLORS["dark"]["secondary_hover"], "border": COLORS["dark"]["secondary_border"], "fg": COLORS["dark"]["foreground"]},
+        "light": {"bg": COLORS["light"]["background"], "border": COLORS["light"]["secondary_border"], "fg": COLORS["light"]["card"]},
     }
     _TIP_TRANSPARENT = "#010203"  # UNIQUE NEAR-BLACK USED AS TRANSPARENCY KEY ON WINDOWS
 
@@ -387,6 +385,7 @@ class SpinnerButton(ctk.CTkButton):
 
         step = 360.0 / self._FRAME_COUNT
         self._spin_frames = []
+
         for i in range(self._FRAME_COUNT):
             rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # type: ignore[attr-defined]
             lo = rotated.resize((size, size), Image.LANCZOS)  # type: ignore[attr-defined]
@@ -395,11 +394,14 @@ class SpinnerButton(ctk.CTkButton):
     def start(self, color_hex: str = "#FFFFFF") -> None:
         if self._spinning:
             return
+
         self._build_frames(color_hex)
+
         self._saved_text = str(self.cget("text"))
         self._saved_state = str(self.cget("state"))
         self._spinning = True
         self._spin_idx = 0
+
         self.configure(text="", image=self._spin_frames[0], state="disabled")
         self._tick()
 
@@ -407,14 +409,117 @@ class SpinnerButton(ctk.CTkButton):
         if not self._spinning:
             return
         self._spinning = False
+
         if self._spin_after_id is not None:
             self.after_cancel(self._spin_after_id)
             self._spin_after_id = None
+
         self.configure(text=self._saved_text, image=None, state=state if state is not None else self._saved_state)
 
     def _tick(self) -> None:
         if not self._spinning:
             return
+
         self._spin_idx = (self._spin_idx + 1) % len(self._spin_frames)
         self.configure(image=self._spin_frames[self._spin_idx])
         self._spin_after_id = self.after(self._INTERVAL_MS, self._tick)
+
+
+class SegmentedButton(ctk.CTkFrame):
+    """Bordered segmented-button built from plain CTkButtons.\n
+    -------------------------------------------------------------------------------------------
+    The frame itself provides the border and rounded corners – no CTk-internal artifacts.<br>
+    Buttons fill the interior with a 2 px gap on every side so the frame's rounded corners<br>
+    are always visible and filled by `fg_color`, not by an overlapping child widget."""
+
+    def __init__(
+        self,
+        master: object,
+        values: list[str],
+        command: Optional[object] = None,
+        width: int = 0,
+        height: int = 28,
+        font: Optional[ctk.CTkFont] = None,
+        tooltip: str = "",
+        **kwargs: object,
+    ) -> None:
+        super().__init__(master, border_width=1, corner_radius=6, **kwargs)  # type: ignore[arg-type]
+        self._values = list(values)
+        self._command = command
+        self._selected: str = self._values[0] if self._values else ""
+        self._buttons: dict[str, ctk.CTkButton] = {}
+
+        _c = COLORS.get(ctk.get_appearance_mode().lower(), COLORS["dark"])
+        self._selected_color: str = _c["primary"]
+        self._selected_hover: str = _c["primary_hover"]
+        self._unselected_color: str = _c["secondary"]
+        self._unselected_hover: str = _c["secondary_hover"]
+        self._text_color: str = _c["secondary_foreground"]
+
+        btn_w = (width // len(values)) if (width and values) else 0
+
+        for i, val in enumerate(values):
+            btn = ctk.CTkButton(
+                self,
+                text=val,
+                width=btn_w,
+                height=height,
+                corner_radius=4,
+                border_width=0,
+                font=font,
+                command=lambda v=val: self._select(v),
+            )
+
+            pad_l = 2 if i == 0 else 0
+            pad_r = 2 if i == len(values) - 1 else 0
+
+            btn.pack(side="left", padx=(pad_l, pad_r), pady=2)
+            self._buttons[val] = btn
+
+            if tooltip:
+                ToolTip(btn, tooltip)
+
+        self._refresh_buttons()
+
+    def _select(self, value: str) -> None:
+        if value == self._selected:
+            return
+
+        self._selected = value
+        self._refresh_buttons()
+
+        if self._command:
+            self._command(value)  # type: ignore[call-arg]
+
+    def _refresh_buttons(self) -> None:
+        for val, btn in self._buttons.items():
+            active = val == self._selected
+            btn.configure(
+                fg_color=self._selected_color if active else self._unselected_color,
+                hover_color=self._selected_hover if active else self._unselected_hover,
+                text_color=self._text_color,
+            )
+
+    def set(self, value: str) -> None:
+        if value in self._buttons:
+            self._selected = value
+            self._refresh_buttons()
+
+    def get(self) -> str:
+        return self._selected
+
+    def configure(self, **kwargs: object) -> None:
+        if (v := kwargs.pop("selected_color", None)) is not None:
+            self._selected_color = str(v)
+        if (v := kwargs.pop("selected_hover_color", None)) is not None:
+            self._selected_hover = str(v)
+        if (v := kwargs.pop("unselected_color", None)) is not None:
+            self._unselected_color = str(v)
+        if (v := kwargs.pop("unselected_hover_color", None)) is not None:
+            self._unselected_hover = str(v)
+        if (v := kwargs.pop("text_color", None)) is not None:
+            self._text_color = str(v)
+        if kwargs:
+            super().configure(**kwargs)  # type: ignore[arg-type]
+
+        self._refresh_buttons()
