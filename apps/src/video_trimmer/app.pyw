@@ -19,21 +19,22 @@ import io
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
-from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
 from _shared.widgets import SegmentedButton, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 if TYPE_CHECKING:
-    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
     from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
     from .._shared.widgets import SegmentedButton, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon
+    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
 
-from consts import VIDEO_FILE_TYPES, APP_ICON_PNG
+from exporter import TrimExporter
 from helpers import parse_time, format_time, frame_to_time, time_to_frame
 from widgets import TrimTimeline
+from consts import VIDEO_FILE_TYPES, APP_ICON_PNG
 
 # CONFIG FOR THE PREVIEW THUMBNAILS SHOWN ABOVE THE TIMELINE
-_THUMB_W: int = 260
-_THUMB_H: int = 146  # 16:9 ASPECT RATIO
+_THUMB_W: int = 266
+_THUMB_H: int = 150  # 16:9 ASPECT RATIO
 _PREVIEW_DEBOUNCE_MS: int = 350
 _DEFAULT_FPS: float = 25.0
 
@@ -91,6 +92,7 @@ class VideoTrimmerApp(ctk.CTk):
         # LOW-RES THUMBNAIL STRIP FOR SCRUB FEEDBACK
         self._thumb_strip: list[Image.Image] = []
         self._thumb_strip_generation: int = -1
+        self._strip_proc: Optional[subprocess.Popen] = None  # IN-FLIGHT FFMPEG INDEX PROCESS
 
         ################################################## UI LAYOUT ##################################################
         PAD: int = 16
@@ -316,6 +318,22 @@ class VideoTrimmerApp(ctk.CTk):
             self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
             threading.Thread(target=self._verify_ffmpeg, daemon=True).start()
 
+        # KILL ANY IN-FLIGHT INDEX PROCESS BEFORE TEARDOWN SO TEMP DIRS CAN CLEAN UP
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _on_close(self) -> None:
+        # BUMP GENERATION SO THE STRIP THREAD'S LOOP NOTICES AND BAILS
+        self._preview_generation += 1
+
+        if (proc := self._strip_proc) is not None and proc.poll() is None:
+            try:
+                proc.kill()
+                proc.wait(timeout=2)
+            except Exception:
+                pass
+
+        self.destroy()
+
     ########################################################## FILE SELECTION ##########################################################
 
     def select_file(self) -> None:
@@ -502,7 +520,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         self.after(0, lambda: self._set_strip_status("indexing", 0.0, generation))
 
-        with tempfile.TemporaryDirectory(prefix="vt_strip_") as td:
+        with tempfile.TemporaryDirectory(prefix="vt_strip_", ignore_cleanup_errors=True) as td:
             cmd = [
                 self.ffmpeg_path, "-hide_banner", "-loglevel", "error", "-progress", "pipe:1", "-i", video_path, "-vf",
                 (
@@ -524,6 +542,7 @@ class VideoTrimmerApp(ctk.CTk):
                     errors="replace",
                     **_POPEN_FLAGS,
                 )
+                self._strip_proc = proc
             except Exception:
                 self.after(0, lambda: self._set_strip_status("error", 0.0, generation))
                 return
@@ -532,6 +551,7 @@ class VideoTrimmerApp(ctk.CTk):
             for line in proc.stdout:
                 if self._preview_generation != generation:
                     proc.kill()
+                    self._strip_proc = None
                     return
                 if "=" not in (line := line.strip()):
                     continue
@@ -542,6 +562,7 @@ class VideoTrimmerApp(ctk.CTk):
                     self.after(0, lambda f=frac: self._set_strip_status("indexing", f, generation))
 
             proc.wait()
+            self._strip_proc = None
 
             # ABORT IF USER ALREADY SWITCHED FILES
             if self._preview_generation != generation:
@@ -1059,13 +1080,6 @@ class VideoTrimmerApp(ctk.CTk):
             ):
                 return
 
-        # BUILD FFMPEG COMMAND – STREAM COPY (FAST, LOSSLESS)
-        cmd: list[str] = [self.ffmpeg_path, "-y", "-hide_banner", "-loglevel", "error", "-progress", "pipe:1"]
-        cmd += ["-ss", format_time(start_s)]
-        if end_s is not None:
-            cmd += ["-to", format_time(end_s)]
-        cmd += ["-i", self.selected_file, "-c", "copy", "-map", "0", "-avoid_negative_ts", "make_zero", out_path]
-
         clip_total: Optional[float] = None
         if end_s is not None:
             clip_total = end_s - start_s
@@ -1085,67 +1099,36 @@ class VideoTrimmerApp(ctk.CTk):
             self.progress_bar.set(0)
             self.progress_bar.grid()
 
-        result_holder: dict[str, object] = {"err": None, "ok": False}
+        def _on_progress(frac: float) -> None:
+            self.after(0, lambda f=frac: self._animate_progress_to(f))
 
-        def _on_done() -> None:
-            self._trimming = False
+        def _on_done(ok: bool, err: Optional[str]) -> None:
 
-            if self.btn_apply:
-                self.btn_apply.stop(state="normal")
+            def _apply() -> None:
+                self._trimming = False
+                if self.btn_apply:
+                    self.btn_apply.stop(state="normal")
+                if hasattr(self, "progress_bar"):
+                    if self._progress_anim_id:
+                        self.after_cancel(self._progress_anim_id)
+                        self._progress_anim_id = None
+                    self.progress_bar.grid_remove()
+                if ok:
+                    messagebox.showinfo("Success", f"Saved trimmed video to:\n{out_path}")
+                else:
+                    messagebox.showerror("FFmpeg Error", f"Failed to trim video:\n{err or 'Unknown error'}")
 
-            if hasattr(self, "progress_bar"):
-                if self._progress_anim_id:
-                    self.after_cancel(self._progress_anim_id)
-                    self._progress_anim_id = None
-                self.progress_bar.grid_remove()
+            self.after(0, _apply)
 
-            if result_holder["ok"]:
-                messagebox.showinfo("Success", f"Saved trimmed video to:\n{out_path}")
-            else:
-                err = result_holder["err"] or "Unknown error"
-                messagebox.showerror("FFmpeg Error", f"Failed to trim video:\n{err}")
-
-        def _worker() -> None:
-            try:
-                proc = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    **_POPEN_FLAGS,
-                )
-            except Exception as err:
-                result_holder["err"] = str(err)
-                self.after(0, _on_done)
-                return
-
-            assert proc.stdout is not None
-
-            for line in proc.stdout:
-                if not (line := line.strip()) or "=" not in line:
-                    continue
-
-                key, _, val = line.partition("=")
-                if key == "out_time_ms" and clip_total and val.isdigit():
-                    elapsed = int(val) / 1_000_000.0
-                    frac = max(0.0, min(0.99, elapsed / clip_total))
-                    self.after(0, lambda f=frac: self._animate_progress_to(f))
-                elif key == "progress" and val == "end":
-                    self.after(0, lambda: self._animate_progress_to(1.0))
-
-            stderr_out: str = proc.stderr.read() if proc.stderr is not None else ""
-            rc = proc.wait()
-
-            if rc == 0:
-                result_holder["ok"] = True
-            else:
-                result_holder["err"] = stderr_out.strip() or f"FFmpeg exited with code {rc}"
-
-            self.after(0, _on_done)
-
-        threading.Thread(target=_worker, daemon=True).start()
+        TrimExporter(self.ffmpeg_path).export(
+            src=self.selected_file,
+            dst=out_path,
+            start_s=start_s,
+            end_s=end_s,
+            clip_total=clip_total,
+            on_progress=_on_progress,
+            on_done=_on_done,
+        )
 
 
 if __name__ == "__main__":

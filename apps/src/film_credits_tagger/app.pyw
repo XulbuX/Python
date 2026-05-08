@@ -19,16 +19,16 @@ import re
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
-from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
 from _shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 if TYPE_CHECKING:
-    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
     from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
     from .._shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon
+    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
 
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType
 from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display
+from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType
 
 
 class MetadataTaggerApp(ctk.CTk):
