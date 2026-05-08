@@ -1120,7 +1120,7 @@ class VideoTrimmerApp(ctk.CTk):
 
             self.after(0, _apply)
 
-        TrimExporter(self.ffmpeg_path).export(
+        TrimExporter(self.ffmpeg_path, self.ffprobe_path).export(
             src=self.selected_file,
             dst=out_path,
             start_s=start_s,

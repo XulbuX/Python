@@ -19,14 +19,16 @@ DoneCallback = Callable[[bool, Optional[str]], None]
 
 
 class TrimExporter:
-    """Run a frame-accurate, mathematically lossless trim using FFmpeg.\n
-    ----------------------------------------------------------------------
-    The output is re-encoded with `libx264 -qp 0` (bit-exact pixels),<br>
-    audio is stream-copied, subtitles are stream-copied. Output seek<br>
-    is used so the cut lands on the exact requested frame."""
+    """Frame-accurate video trim via FFmpeg.\n
+    ----------------------------------------------------------------------------
+    Input seek (`-ss before -i`) jumps cheaply to ~2 s before the target.<br>
+    Output seek (`-ss after -i`) then decodes to the exact requested frame.<br>
+    Re-encoding is required for frame accuracy; the source video bitrate<br>
+    is probed and matched so output size is proportional to clip length."""
 
-    def __init__(self, ffmpeg_path: str) -> None:
+    def __init__(self, ffmpeg_path: str, ffprobe_path: Optional[str] = None) -> None:
         self.ffmpeg_path = ffmpeg_path
+        self.ffprobe_path = ffprobe_path
         self._proc: Optional[subprocess.Popen[str]] = None
 
     def export(
@@ -60,8 +62,8 @@ class TrimExporter:
     ######################################## INTERNAL ########################################
 
     def _build_cmd(self, src: str, dst: str, start_s: float, end_s: Optional[float]) -> list[str]:
-        # FAST INPUT SEEK TO ~2s BEFORE THE TARGET CUTS DECODE COST FOR LONG INPUTS.
-        # OUTPUT SEEK (-ss/-to AFTER -i) IS FRAME-ACCURATE.
+        # INPUT SEEK TO ~2s BEFORE THE TARGET REDUCES DECODING COST FOR LONG INPUTS.
+        # OUTPUT SEEK (-ss AFTER -i) IS FRAME-ACCURATE BECAUSE RE-ENCODING IS USED.
         prelude = max(0.0, start_s - 2.0)
         rel_start = start_s - prelude
 
@@ -75,12 +77,60 @@ class TrimExporter:
         if end_s is not None:
             cmd += ["-to", format_time(end_s - prelude)]
 
-        cmd += [
-            "-map", "0", "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0", "-c:a", "copy", "-c:s", "copy",
-            "-avoid_negative_ts", "make_zero", dst
-        ]
+        # MATCH SOURCE BITRATE SO OUTPUT SIZE SCALES PROPORTIONALLY WITH CLIP LENGTH.
+        # FALL BACK TO CRF 23 (LIBX264 DEFAULT) IF PROBING FAILS.
+        video_bitrate = self._probe_video_bitrate(src)
+        video_flags = ["libx264", "-b:v", str(video_bitrate)] if video_bitrate else ["libx264", "-crf", "23"]
+        video_flags += ["-preset", "medium"]
+
+        cmd += ["-map", "0", "-c:v"] + video_flags + ["-c:a", "copy", "-c:s", "copy", "-avoid_negative_ts", "make_zero", dst]
 
         return cmd
+
+    def _probe_video_bitrate(self, src: str) -> Optional[int]:
+        """Return the video stream bitrate in bits/s, or None if unavailable."""
+        if not self.ffprobe_path:
+            return None
+
+        # TRY STREAM-LEVEL BITRATE FIRST
+        try:
+            res = subprocess.run(
+                [
+                    self.ffprobe_path, "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=bit_rate", "-of",
+                    "default=noprint_wrappers=1:nokey=1", src
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                **_POPEN_FLAGS,
+            )
+
+            if (val := res.stdout.strip()).isdigit() and int(val) > 0:
+                return int(val)
+
+        except Exception:
+            pass
+
+        # FALL BACK TO FORMAT (CONTAINER) BITRATE MINUS A TYPICAL AUDIO ESTIMATE
+        try:
+            res = subprocess.run(
+                [
+                    self.ffprobe_path, "-v", "error", "-show_entries", "format=bit_rate", "-of",
+                    "default=noprint_wrappers=1:nokey=1", src
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                **_POPEN_FLAGS,
+            )
+
+            if (val := res.stdout.strip()).isdigit() and int(val) > 0:
+                return max(1, int(val) - 192_000)  # SUBTRACT TYPICAL AUDIO BITRATE
+
+        except Exception:
+            pass
+
+        return None
 
     def _worker(
         self,
