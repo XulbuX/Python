@@ -31,7 +31,7 @@ from consts import VIDEO_FILE_TYPES, APP_ICON_PNG
 from helpers import parse_time, format_time, frame_to_time, time_to_frame
 from widgets import TrimTimeline
 
-
+# CONFIG FOR THE PREVIEW THUMBNAILS SHOWN ABOVE THE TIMELINE
 _THUMB_W: int = 260
 _THUMB_H: int = 146  # 16:9 ASPECT RATIO
 _PREVIEW_DEBOUNCE_MS: int = 350
@@ -41,6 +41,9 @@ _DEFAULT_FPS: float = 25.0
 _STRIP_COUNT: int = 2048
 _STRIP_W: int = 320
 _STRIP_H: int = 180  # 16:9 ASPECT RATIO
+
+# SUFFIX FOR AUTO-GENERATED FILENAMES WHEN THE USER DOESN'T SPECIFY AN OUTPUT PATH
+_TRIM_SUFFIX: str = "_trim"
 
 
 class VideoTrimmerApp(ctk.CTk):
@@ -256,7 +259,7 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_select_out.grid(row=1, column=0, sticky="w")
 
-        self.lbl_out = ctk.CTkLabel(self.sec_out, text="(auto: same folder, suffix \"_trimmed\")", anchor="w")
+        self.lbl_out = ctk.CTkLabel(self.sec_out, text=f"(auto: same folder, suffix \"{_TRIM_SUFFIX}\")", anchor="w")
         self.lbl_out.grid(row=1, column=1, padx=(10, 0), sticky="ew")
 
         #################### APPLY BUTTON –OR– FFMPEG NOT FOUND BANNER ####################
@@ -786,7 +789,7 @@ class VideoTrimmerApp(ctk.CTk):
         if self.selected_file:
             p = Path(self.selected_file)
             initial_dir = str(p.parent)
-            initial_file = f"{p.stem}_trimmed{p.suffix}"
+            initial_file = f"{p.stem}{_TRIM_SUFFIX}{p.suffix}"
 
         path = filedialog.asksaveasfilename(
             title="Save Trimmed Video As",
@@ -823,7 +826,7 @@ class VideoTrimmerApp(ctk.CTk):
         c = COLORS[self._current_theme]
         self.lbl_file.configure(text="No file selected", text_color=c["placeholder_foreground"])
         self.btn_select_file.stop(state="normal")
-        self.lbl_out.configure(text="(auto: same folder, suffix \"_trimmed\")", text_color=c["placeholder_foreground"])
+        self.lbl_out.configure(text=f"(auto: same folder, suffix \"{_TRIM_SUFFIX}\")", text_color=c["placeholder_foreground"])
 
         self._set_preview("start", None)
         self._set_preview("end", None)
@@ -1042,7 +1045,7 @@ class VideoTrimmerApp(ctk.CTk):
             out_path = self.output_path
         else:
             p = Path(self.selected_file)
-            out_path = str(p.with_name(f"{p.stem}_trimmed{p.suffix}"))
+            out_path = str(p.with_name(f"{p.stem}{_TRIM_SUFFIX}{p.suffix}"))
 
         if Path(out_path).resolve() == Path(self.selected_file).resolve():
             messagebox.showerror("Invalid Output", "Output path must differ from the input file.")
