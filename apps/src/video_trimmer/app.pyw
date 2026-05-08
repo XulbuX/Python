@@ -11,6 +11,7 @@ import ctypes
 import shutil
 import json
 import sys
+import time
 import io
 
 # MAKE THE _shared PACKAGE (apps/src/_shared) IMPORTABLE WHEN RUNNING THIS SCRIPT DIRECTLY
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 from consts import VIDEO_FILE_TYPES, APP_ICON_PNG
 from helpers import parse_time, format_time, frame_to_time, time_to_frame
 from widgets import TrimTimeline
+
 
 _THUMB_W: int = 260
 _THUMB_H: int = 146  # 16:9 ASPECT RATIO
@@ -70,6 +72,8 @@ class VideoTrimmerApp(ctk.CTk):
 
         self._preview_start_job: Optional[str] = None
         self._preview_end_job: Optional[str] = None
+        self._preview_pending_sec: dict[str, Optional[float]] = {"start": None, "end": None}
+        self._preview_last_fire_ms: dict[str, float] = {"start": 0.0, "end": 0.0}
         self._start_preview_image: Optional[ctk.CTkImage] = None
         self._end_preview_image: Optional[ctk.CTkImage] = None
         self._preview_generation: int = 0
@@ -108,9 +112,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.trim_header = ctk.CTkFrame(self.sec_trim, fg_color="transparent")
         self.trim_header.pack(fill="x", pady=(0, 8))
 
-        self.lbl_section_trim = ctk.CTkLabel(
-            self.trim_header, text="Trim Range", font=ctk.CTkFont(size=16, weight="bold")
-        )
+        self.lbl_section_trim = ctk.CTkLabel(self.trim_header, text="Trim Range", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_section_trim.pack(side="left")
 
         self.mode_toggle = SegmentedButton(
@@ -130,23 +132,19 @@ class VideoTrimmerApp(ctk.CTk):
         self.sec_preview.pack(fill="x", pady=(0, 6))
 
         self.frame_start_thumb = ctk.CTkFrame(
-            self.sec_preview, width=_THUMB_W + 2, height=_THUMB_H + 2, corner_radius=0, border_width=1
+            self.sec_preview, width=_THUMB_W + 6, height=_THUMB_H + 6, corner_radius=0, border_width=1
         )
         self.frame_start_thumb.pack(side="left")
         self.frame_start_thumb.pack_propagate(False)
-        self.lbl_start_thumb = ctk.CTkLabel(
-            self.frame_start_thumb, text="Start\nframe", font=ctk.CTkFont(size=11)
-        )
+        self.lbl_start_thumb = ctk.CTkLabel(self.frame_start_thumb, text="Start\nframe", font=ctk.CTkFont(size=11))
         self.lbl_start_thumb.place(relx=0.5, rely=0.5, anchor="center")
 
         self.frame_end_thumb = ctk.CTkFrame(
-            self.sec_preview, width=_THUMB_W + 2, height=_THUMB_H + 2, corner_radius=0, border_width=1
+            self.sec_preview, width=_THUMB_W + 6, height=_THUMB_H + 6, corner_radius=0, border_width=1
         )
         self.frame_end_thumb.pack(side="right")
         self.frame_end_thumb.pack_propagate(False)
-        self.lbl_end_thumb = ctk.CTkLabel(
-            self.frame_end_thumb, text="End\nframe", font=ctk.CTkFont(size=11)
-        )
+        self.lbl_end_thumb = ctk.CTkLabel(self.frame_end_thumb, text="End\nframe", font=ctk.CTkFont(size=11))
         self.lbl_end_thumb.place(relx=0.5, rely=0.5, anchor="center")
 
         # -- TIMELINE BAR --
@@ -167,7 +165,11 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_start.grid(row=0, column=0, sticky="w", padx=(0, 6))
 
         self.btn_start_left = ctk.CTkButton(
-            self.sec_inputs, text="", width=28, height=28, corner_radius=6,
+            self.sec_inputs,
+            text="",
+            width=28,
+            height=28,
+            corner_radius=6,
             border_width=1,
             command=lambda: self._step_time("start", -1),
         )
@@ -178,7 +180,11 @@ class VideoTrimmerApp(ctk.CTk):
         bind_clean_paste(self.entry_start._entry)
 
         self.btn_start_right = ctk.CTkButton(
-            self.sec_inputs, text="", width=28, height=28, corner_radius=6,
+            self.sec_inputs,
+            text="",
+            width=28,
+            height=28,
+            corner_radius=6,
             border_width=1,
             command=lambda: self._step_time("start", +1),
         )
@@ -189,7 +195,11 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_end.grid(row=0, column=4, sticky="w", padx=(PAD, 6))
 
         self.btn_end_left = ctk.CTkButton(
-            self.sec_inputs, text="", width=28, height=28, corner_radius=6,
+            self.sec_inputs,
+            text="",
+            width=28,
+            height=28,
+            corner_radius=6,
             border_width=1,
             command=lambda: self._step_time("end", -1),
         )
@@ -200,7 +210,11 @@ class VideoTrimmerApp(ctk.CTk):
         bind_clean_paste(self.entry_end._entry)
 
         self.btn_end_right = ctk.CTkButton(
-            self.sec_inputs, text="", width=28, height=28, corner_radius=6,
+            self.sec_inputs,
+            text="",
+            width=28,
+            height=28,
+            corner_radius=6,
             border_width=1,
             command=lambda: self._step_time("end", +1),
         )
@@ -308,7 +322,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.trim_timeline.set_range(0.0, 1.0)
         self.trim_timeline.set_enabled(False)
 
-        threading.Thread(target=self._probe_duration, args=(filename,), daemon=True).start()
+        threading.Thread(target=self._probe_duration, args=(filename, ), daemon=True).start()
 
     def _probe_duration(self, filename: str) -> None:
         """Probe the file's duration and FPS via FFprobe; called in a background thread."""
@@ -374,9 +388,10 @@ class VideoTrimmerApp(ctk.CTk):
             if job := getattr(self, attr):
                 self.after_cancel(job)
                 setattr(self, attr, None)
+        self._preview_pending_sec = {"start": None, "end": None}
 
     def _schedule_preview(self, which: str, sec: float) -> None:
-        """Debounce and then extract the frame at `sec` seconds for `which` thumbnail."""
+        """Throttle (leading edge + trailing) frame extraction at `sec` seconds for `which` thumbnail."""
         if not self.selected_file or not self.ffmpeg_path:
             return
 
@@ -384,16 +399,26 @@ class VideoTrimmerApp(ctk.CTk):
         if self.duration is not None:
             sec = min(sec, max(0.0, self.duration - 1.0 / (self.fps or _DEFAULT_FPS)))
 
+        # ALWAYS RECORD THE LATEST TARGET SO A PENDING JOB FIRES WITH THE FRESHEST VALUE
+        self._preview_pending_sec[which] = sec
 
-        if old := getattr(self, (job_attr := f"_preview_{which}_job")):
-            self.after_cancel(old)
+        # IF A JOB IS ALREADY SCHEDULED, IT WILL PICK UP THE UPDATED `sec` ON FIRE
+        if getattr(self, f"_preview_{which}_job") is not None:
+            return
 
-        video_path = self.selected_file
+        elapsed_ms = (time.monotonic() * 1000.0) - self._preview_last_fire_ms[which]
+        delay = 0 if elapsed_ms >= _PREVIEW_DEBOUNCE_MS else int(_PREVIEW_DEBOUNCE_MS - elapsed_ms)
 
-        setattr(self, job_attr, self.after(
-            _PREVIEW_DEBOUNCE_MS,
-            lambda: self._load_preview_async(which, sec, video_path),
-        ))
+        setattr(self, f"_preview_{which}_job", self.after(delay, lambda: self._fire_preview(which)))
+
+    def _fire_preview(self, which: str) -> None:
+        setattr(self, f"_preview_{which}_job", None)
+        sec = self._preview_pending_sec.get(which)
+        if sec is None or not self.selected_file or not self.ffmpeg_path:
+            return
+        self._preview_pending_sec[which] = None
+        self._preview_last_fire_ms[which] = time.monotonic() * 1000.0
+        self._load_preview_async(which, sec, self.selected_file)
 
     def _load_preview_async(self, which: str, sec: float, video_path: str) -> None:
         setattr(self, f"_preview_{which}_job", None)
@@ -416,15 +441,21 @@ class VideoTrimmerApp(ctk.CTk):
             return None
         cmd = [
             self.ffmpeg_path,
-            "-ss", f"{max(0.0, sec):.6f}",
-            "-i", video_path,
-            "-frames:v", "1",
-            "-vf", (
+            "-ss",
+            f"{max(0.0, sec):.6f}",
+            "-i",
+            video_path,
+            "-frames:v",
+            "1",
+            "-vf",
+            (
                 f"scale={_THUMB_W}:{_THUMB_H}:force_original_aspect_ratio=decrease:flags=lanczos,"
                 f"pad={_THUMB_W}:{_THUMB_H}:({_THUMB_W}-iw)/2:({_THUMB_H}-ih)/2"
             ),
-            "-f", "image2pipe",
-            "-vcodec", "mjpeg",
+            "-f",
+            "image2pipe",
+            "-vcodec",
+            "mjpeg",
             "pipe:1",
         ]
         try:
@@ -447,8 +478,9 @@ class VideoTrimmerApp(ctk.CTk):
                 lbl._label.configure(image="")
             except Exception:
                 pass
-            lbl.configure(image=None, text="Start\nframe" if which == "start" else "End\nframe",
-                          text_color=c["placeholder_foreground"])
+            lbl.configure(
+                image=None, text="Start\nframe" if which == "start" else "End\nframe", text_color=c["placeholder_foreground"]
+            )
             return
 
         ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(img.width, img.height))
@@ -463,11 +495,21 @@ class VideoTrimmerApp(ctk.CTk):
         if self.duration is None:
             return
 
+        prev_start = self._start_sec
+        prev_end = self._end_sec if self._end_sec is not None else self.duration
+
         self._start_sec = start_frac * self.duration
         new_end = end_frac * self.duration
         self._end_sec = new_end if new_end < self.duration - 0.05 else None
 
         self._sync_entries()
+
+        # LIVE-UPDATE PREVIEWS WHILE DRAGGING (DEBOUNCED IN `_schedule_preview`)
+        cur_end = self._end_sec if self._end_sec is not None else self.duration
+        if self._start_sec != prev_start:
+            self._schedule_preview("start", self._start_sec)
+        if cur_end != prev_end:
+            self._schedule_preview("end", cur_end)
 
     def _on_timeline_commit(self, start_frac: float, end_frac: float) -> None:
         """Called once when the timeline handle is released."""
@@ -744,13 +786,9 @@ class VideoTrimmerApp(ctk.CTk):
             )
 
         if self.btn_apply:
-            self.btn_apply.configure(
-                fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["primary_foreground"]
-            )
+            self.btn_apply.configure(fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["primary_foreground"])
         if hasattr(self, "progress_bar"):
-            self.progress_bar.configure(
-                fg_color=c["secondary_hover"], progress_color=c["placeholder_foreground"]
-            )
+            self.progress_bar.configure(fg_color=c["secondary_hover"], progress_color=c["placeholder_foreground"])
 
         if hasattr(self, "_banner"):
             self._banner.configure(fg_color=c["destructive"], border_color=c["destructive_border"])

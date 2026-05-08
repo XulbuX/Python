@@ -148,14 +148,14 @@ class TrimTimeline(tk.Canvas):
         ty1 = cy - self._TRACK_H // 2
         ty2 = cy + self._TRACK_H // 2
         tr = self._TRACK_H // 2
-        p = self._pad()
+        pad = self._pad()
 
         tc = self._c_track if self._enabled else self._c_range_dim
         rc = self._c_range if self._enabled else self._c_range_dim
         hc = self._c_handle if self._enabled else self._c_range_dim
 
         # BACKGROUND TRACK
-        self._rrect(p, ty1, w - p, ty2, tr, tc)
+        self._rrect(pad, ty1, w - pad, ty2, tr, tc)
 
         sx = self._frac_to_x(self._start_frac)
         ex = self._frac_to_x(self._end_frac)
@@ -181,12 +181,8 @@ class TrimTimeline(tk.Canvas):
             return
 
         pts: list[float] = [
-            x1 + rr, y1,      x2 - rr, y1,
-            x2,      y1,      x2,      y1 + rr,
-            x2,      y2 - rr, x2,      y2,
-            x2 - rr, y2,      x1 + rr, y2,
-            x1,      y2,      x1,      y2 - rr,
-            x1,      y1 + rr, x1,      y1,
+            x1 + rr, y1, x2 - rr, y1, x2, y1, x2, y1 + rr, x2, y2 - rr, x2, y2, x2 - rr, y2, x1 + rr, y2, x1, y2, x1, y2 - rr,
+            x1, y1 + rr, x1, y1
         ]
 
         self.create_polygon(pts, smooth=True, fill=fill, outline="")
