@@ -546,7 +546,7 @@ class VideoTrimmerApp(ctk.CTk):
             if self._end_sec is not None and self._start_sec >= self._end_sec:
                 self._start_sec = max(0.0, self._end_sec - step)
         else:
-            self._end_sec = new_sec if (self.duration is None or new_sec < self.duration - 0.05) else None
+            self._end_sec = new_sec if (self.duration is None or new_sec < self.duration - step * 0.5) else None
             if self._end_sec is not None and self._end_sec <= self._start_sec:
                 self._end_sec = self._start_sec + step
 
