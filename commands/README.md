@@ -1,16 +1,16 @@
 # Commands
 
 This directory contains quite a few Python files, which are supposed<br>
-to be run as commands in the console and do some useful stuff.
+to be run as commands in the terminal and do some useful stuff.
 
 **[Figure out what each script (*command*) does.](#what-each-cmd-does)**
 
 <br>
 <br>
 
-## Run the files as console commands
+## Run the files as terminal commands
 
-To run these Python scripts as native commands in your console, follow these steps.
+To run these Python scripts as native commands in your terminal, follow these steps.
 
 <br>
 
@@ -22,10 +22,10 @@ To run these Python scripts as native commands in your console, follow these ste
 > 
 >  * **Windows:** make sure to check the box `Add Python to PATH`<br>
 >    and if possible `Install for all users` during the installation of Python.<br>
->    Verify Python is in your PATH by typing `python --version` or `py --version` in your console.
+>    Verify Python is in your PATH by typing `python --version` or `py --version` in your terminal.
 > 
 >  * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
->    it's in your PATH by typing `python3 --version` in your console.
+>    it's in your PATH by typing `python3 --version` in your terminal.
 
 <br>
 
@@ -53,7 +53,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 
 Before the scripts can run, you need to install their required Python packages. 📦
 
-1. Open your console.
+1. Open your terminal.
 2. Navigate to your *commands-directory* using the `cd` command.
    ```shell
    cd "/path/to/your/commands-directory"
@@ -67,7 +67,7 @@ Before the scripts can run, you need to install their required Python packages. 
 
 ### Step 3: Make Scripts Executable as Commands
 
-This makes your commands available from any location in your console. ⚙️
+This makes your commands available from any location in your terminal. ⚙️
 
 #### Windows:
 
@@ -89,11 +89,11 @@ This makes your commands available from any location in your console. ⚙️
 
 * **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
   (*Note: This is already done for you in all the repository's files.*)
-* **Make the files executable:** Open your console and run the following command, replacing the path with your own:
+* **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
   ```shell
   chmod +x "/path/to/your/commands-directory/*"
   ```
-* **Add the directory to your console's PATH:**
+* **Add the directory to your terminal's PATH:**
    1. For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
    2. For most **Linux** distributions, edit `~/.bashrc`.
    3. Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
@@ -104,9 +104,9 @@ This makes your commands available from any location in your console. ⚙️
 
 <br>
 
-### Step 4: Restart your Console
+### Step 4: Restart your Terminal
 
-Close and reopen your console.<br>
+Close and reopen your terminal.<br>
 The changes are now active, and you can run the files by typing their names (*e.g.* [`x-cmds`](#x-cmds)). ✅
 
 <br>
@@ -128,9 +128,9 @@ Here's a brief overview of what each script does and how to use it.<br>
 
 ### `_`
 
-This is a better version of the `cls` or `clear` command to clear your console for a few reasons:<br>
+This is a better version of the `cls` or `clear` command to clear your terminal for a few reasons:<br>
  * the command `_` is faster to type
- * the command actually **clears** the console and doesn't just scroll the content up
+ * the command actually **clears** the terminal and doesn't just scroll the content up
  * the command also resets all the color and style formats
 
 <br>
@@ -269,21 +269,21 @@ hex-percent 'FF'
 
 ### `life`
 
-This command starts a simulation of [**Conway's Game of Life**](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the console.
+This command starts a simulation of [**Conway's Game of Life**](https://wikipedia.org/wiki/Conway's_Game_of_Life) inside the terminal.
 
 <br>
 
 ### `maze`
 
-This command starts a small maze game inside the console. The game controls and options are first shown at game start.
+This command starts a small maze game inside the terminal. The game controls and options are first shown at game start.
 
-The maze will adjust itself to the dimensions of your console after each new maze generation.
+The maze will adjust itself to the dimensions of your terminal after each new maze generation.
 
 <br>
 
 ### `mess`
 
-This command will display an animated, random text character mess in your console with a few options for customizing:
+This command will display an animated, random text character mess in your terminal with a few options for customizing:
 1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
    ```shell
    mess --color
@@ -352,15 +352,9 @@ rand --help
 
 <br>
 
-### `shell-colors`
-
-This command will show the foreground and background colors from the current shell color scheme.
-
-<br>
-
 ### `sine`
 
-This command will just display a moving sine wave inside your console.
+This command will just display a moving sine wave inside your terminal.
 
 The rendering of the sine wave can also be inverted with the option `-i` `--invert` `--inverse`:
 ```shell
@@ -380,6 +374,12 @@ squares --cols=6
 
 <br>
 
+### `terminal-colors`
+
+This command will show the foreground and background colors from the current shell color scheme.
+
+<br>
+
 ### `vscode-ext`
 
 This command will output info about all installed Visual Studio Code extensions:
@@ -395,7 +395,7 @@ code-extensions --json
 
 ### `x-calc`
 
-This command lets you do advanced calculations directly in the console. It supports a wide range of mathematical operations, functions and constants.
+This command lets you do advanced calculations directly in the terminal. It supports a wide range of mathematical operations, functions and constants.
 
 You can directly give the calculation as an argument:
 ```shell
@@ -554,7 +554,7 @@ x-modules --help
 
 ### `x-qr`
 
-This command lets you quickly generate QR codes directly within the console. You also have options for generating different special QR codes:
+This command lets you quickly generate QR codes directly within the terminal. You also have options for generating different special QR codes:
  * Wi-Fi QR codes
  * Contact QR codes
 
@@ -601,7 +601,7 @@ This command generates an advanced directory tree. You have the following option
  * display the contents of the files (*utf-8*) directly included in the tree
  * choose between different tree styles
  * set the tree's indentation size
- * output the tree into a file (*if it's too large to fit inside the console history*)
+ * output the tree into a file (*if it's too large to fit inside the terminal history*)
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names, separated by* `|`):
 ```shell

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
-"""Show a sine wave animation inside the console."""
+"""Show a sine wave animation inside the terminal."""
 from typing import Generator, Any
 from xulbux import Console
 import math
