@@ -139,7 +139,7 @@ if __name__ == "__main__":
         FormatCodes.print("\x1b[2K\r[b|br:red](✗)\n")
     except MemoryError:
         Console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
-    except OverflowError as e:
-        Console.fail(f"[b](OverflowError:) {e}", start="\x1b[2K\r", end="\n\n")
-    except Exception as e:
-        Console.fail(e, start="\x1b[2K\r", end="\n\n")
+    except OverflowError as exc:
+        Console.fail(f"[b](OverflowError:) {exc}", start="\x1b[2K\r", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\x1b[2K\r", end="\n\n")

@@ -29,11 +29,11 @@ if __name__ == "__main__":
     try:
         print()
         show_wave(
-            width=(Console.w // 2) - 1,
+            width=(Console.width // 2) - 1,
             speed=(5, 1),
             chars=["██", "  "] if ARGS.invert.exists else ["  ", "██"],
         )
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

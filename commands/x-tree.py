@@ -637,7 +637,7 @@ class Tree:
             rel_path = Path(current_dir).name
 
         formatted_dirs, formatted_files = format(self.gen_stats.processed_dirs, ","), format(self.gen_stats.processed_files, ",")
-        max_rel_path_len = Console.w - (
+        max_rel_path_len = Console.width - (
             30 + len(f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} | {formatted_dirs} dirs | {formatted_files} files | ")
         )
 
@@ -828,9 +828,9 @@ class Tree:
                                     .encode()
                                 )
 
-        except Exception as e:
+        except Exception as exc:
             error_prefix = (_prefix + self.corners[0] + (self.line_hor * (self.indent - 1)))
-            result.extend(f"{error_prefix}[b|in|red] {self.error} {str(e)} [_b|_in|white]\n".encode())
+            result.extend(f"{error_prefix}[b|in|red] {self.error} {str(exc)} [_b|_in|white]\n".encode())
 
         return bytes(result).decode() if result else ""
 
@@ -922,11 +922,11 @@ def main():
             else:
                 Console.exit()
         if file:
-            Console.done(f"[white|link:file://{str(file.resolve())}]({file.name}) successfully created.", start=cls_line, end="\n\n")
+            Console.done(f"[white|link:file:///{str(file.resolve())}]({file.name}) successfully created.", start=cls_line, end="\n\n")
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
-        FormatCodes.print(f"[white]{result}[_]", flush=True)
+        FormatCodes.print(f"\n[white]{result}[_]", flush=True)
 
 
 if __name__ == "__main__":
@@ -936,5 +936,5 @@ if __name__ == "__main__":
         print()
     except PermissionError:
         Console.fail("Permission to create file was denied.", start="\n", end="\n\n")
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

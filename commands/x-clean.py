@@ -39,8 +39,9 @@ REGISTRY_APP_PATHS: list[tuple[int, str]] = [
 PATH_VALUE_NAMES = {"UninstallString", "QuietUninstallString", "InstallLocation", "ModifyPath"}
 
 # ENVIRONMENT VARIABLE REGISTRY LOCATIONS
-ENV_USER_KEY = (winreg.HKEY_CURRENT_USER, "Environment")
-ENV_SYSTEM_KEY = (winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment")
+ENV_USER_KEY: tuple[int, str] = (winreg.HKEY_CURRENT_USER, "Environment")
+ENV_SYSTEM_KEY: tuple[int,
+                      str] = (winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment")
 
 # SHORTCUT DIRECTORIES TO SCAN
 SHORTCUT_DIRS: list[tuple[str, Path]] = []
@@ -498,8 +499,8 @@ def backup_registry(backup_dir: Path) -> bool:
             else:
                 FormatCodes.print(f"  [green](✓) Exported [dim]({full_path})")
 
-        except Exception as e:
-            FormatCodes.print(f"  [red](✗ Error exporting [dim]({full_path})[red]:)\n    {e}")
+        except Exception as exc:
+            FormatCodes.print(f"  [red](✗ Error exporting [dim]({full_path})[red]:)\n    {exc}")
             success = False
 
     return success
@@ -535,8 +536,8 @@ def backup_env_vars(backup_dir: Path) -> bool:
         backup_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         FormatCodes.print(f"  [green](✓) Saved env vars [dim]({backup_file})")
         return True
-    except Exception as e:
-        FormatCodes.print(f"  [red](✗ Failed to save env vars backup:)\n    {e}")
+    except Exception as exc:
+        FormatCodes.print(f"  [red](✗ Failed to save env vars backup:)\n    {exc}")
         return False
 
 
@@ -553,8 +554,8 @@ def restore_env_vars(backup_path: Path) -> None:
 
     try:
         data = json.loads(backup_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        Console.fail(f"Failed to read backup file: {e}", start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(f"Failed to read backup file: {exc}", start="\n", end="\n\n")
         return
 
     # SHOW WHAT WILL BE RESTORED
@@ -580,8 +581,8 @@ def restore_env_vars(backup_path: Path) -> None:
                 winreg.CloseKey(key)
                 FormatCodes.print(f"  [green](✓) Restored [b]({scope})[green](/) [cyan]({name})")
                 restored += 1
-            except Exception as e:
-                msg = f"Failed to restore {scope}/{name}: {e}"
+            except Exception as exc:
+                msg = f"Failed to restore {scope}/{name}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"  [red](✗) {msg}")
 
@@ -626,8 +627,8 @@ def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list
                 _delete_registry_tree(hive, reg_path)
                 FormatCodes.print(f"  [green](✓) Deleted [magenta]{display} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
 
-            except Exception as e:
-                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
+            except Exception as exc:
+                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"  [red](✗) {msg}")
 
@@ -643,8 +644,8 @@ def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list
                 _delete_registry_tree(hive, reg_path)
                 FormatCodes.print(f"  [green](✓) Deleted [magenta]{subkey} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
 
-            except Exception as e:
-                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {e}"
+            except Exception as exc:
+                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"  [red](✗) {msg}")
 
@@ -726,8 +727,8 @@ def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
                     winreg.CloseKey(key)
                     FormatCodes.print(f"  [green](✓) Deleted variable [cyan]{name} [dim|br:cyan]from {scope}[_]")
 
-            except Exception as e:
-                msg = f"Failed to clean {scope}/{name}: {e}"
+            except Exception as exc:
+                msg = f"Failed to clean {scope}/{name}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"  [red](✗) {msg}")
 
@@ -754,8 +755,8 @@ def execute_shortcut_cleanup(shortcut_issues: list[dict[str, Any]]) -> list[str]
             try:
                 lnk_path.unlink()
                 FormatCodes.print(f"    [green](✓) Deleted [blue]{lnk_path.name} [dim|br:blue]{target}[_]")
-            except Exception as e:
-                msg = f"Failed to delete {lnk_path}: {e}"
+            except Exception as exc:
+                msg = f"Failed to delete {lnk_path}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"    [red](✗) {msg}")
 
@@ -797,8 +798,8 @@ def _remove_empty_dirs(directory: Path, failures: list[str]) -> bool:
             directory.rmdir()
             FormatCodes.print(f"    [green](✓) Removed empty directory [dim|br:blue]{directory}[_]")
             return True
-        except Exception as e:
-            failures.append(f"Failed to remove empty dir {directory}: {e}")
+        except Exception as exc:
+            failures.append(f"Failed to remove empty dir {directory}: {exc}")
             return False
 
     return False
@@ -1130,5 +1131,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         FormatCodes.print("\n[dim|br:magenta](✗ [i](Canceled by user.))\n")
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

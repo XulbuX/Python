@@ -58,10 +58,10 @@ def interpolate_oklch(
 ) -> rgba:
     """Interpolate between two colors using OKLCH color space for perceptual uniformity.\n
     ---------------------------------------------------------------------------------------
-    - `color_1` -⠀starting rgba color
-    - `color_2` -⠀ending rgba color
-    - `t` -⠀interpolation factor (0.0 to 1.0)
-    - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise"
+    - `color_1` – starting rgba color
+    - `color_2` – ending rgba color
+    - `t` – interpolation factor (0.0 to 1.0)
+    - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
     try:
         from colorspacious import cspace_convert  # type: ignore[no-stubs]
@@ -130,10 +130,10 @@ def interpolate_hsv(
 ) -> rgba:
     """Interpolate between two colors using HSV color space with directional hue rotation.\n
     ---------------------------------------------------------------------------------------
-    - `color_1` -⠀starting rgba color
-    - `color_2` -⠀ending rgba color
-    - `t` -⠀interpolation factor (0.0 to 1.0)
-    - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise"
+    - `color_1` – starting rgba color
+    - `color_2` – ending rgba color
+    - `t` – interpolation factor (0.0 to 1.0)
+    - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
     # CONVERT RGB TO HSV (HUE 0-1, SATURATION 0-1, VALUE 0-1)
     h1, s1, v1 = colorsys.rgb_to_hsv(color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0)
@@ -185,10 +185,10 @@ def generate_multi_gradient(
 ) -> tuple[hexa, ...]:
     """Generate a multi-color gradient with optional directional hue rotation.\n
     ------------------------------------------------------------------------------------------------
-    - `colors` -⠀list of rgba colors to interpolate between
-    - `directions` -⠀list of hue directions for each segment (length = len(colors) - 1)
-    - `steps` -⠀total number of gradient steps across all segments
-    - `mode` -⠀"linear" (RGB), "oklch", or "hsv" interpolation
+    - `colors` – list of rgba colors to interpolate between
+    - `directions` – list of hue directions for each segment (length = len(colors) - 1)
+    - `steps` – total number of gradient steps across all segments
+    - `mode` – "linear" (RGB), "oklch", or "hsv" interpolation
     """
     if len(colors) < 2:
         raise ValueError("Need at least 2 colors for a gradient")
@@ -239,11 +239,11 @@ def generate_gradient(
 ) -> tuple[hexa, ...]:
     """Generate and display a color gradient.\n
     ------------------------------------------------------------------------------------------------
-    - `color_1` -⠀starting hex color
-    - `color_2` -⠀ending hex color
-    - `steps` -⠀number of gradient steps
-    - `mode` -⠀"linear" (RGB), "oklch", or "hsv" interpolation
-    - `hue_direction` -⠀"shortest", "clockwise", or "counterclockwise" (only for oklch/hsv)
+    - `color_1` – starting hex color
+    - `color_2` – ending hex color
+    - `steps` – number of gradient steps
+    - `mode` – "linear" (RGB), "oklch", or "hsv" interpolation
+    - `hue_direction` – "shortest", "clockwise", or "counterclockwise" (only for oklch/hsv)
     """
     gradient: list[hexa] = []
 
@@ -280,11 +280,11 @@ def display_gradient(
 ) -> None:
     """Display gradient using half-block char to fit 2 colors per character position.\n
     ---------------------------------------------------------------------------------------
-    - `gradient` -⠀tuple of gradient colors to display
-    - `width` -⠀terminal width for display
-    - `list_colors` -⠀whether to show the color list
-    - `numerate` -⠀whether to show step numbers
-    - `source_colors` -⠀original input colors (for multi-color gradient summary)
+    - `gradient` – tuple of gradient colors to display
+    - `width` – terminal width for display
+    - `list_colors` – whether to show the color list
+    - `numerate` – whether to show step numbers
+    - `source_colors` – original input colors (for multi-color gradient summary)
     """
     # EACH ▌ SHOWS 2 COLORS (FG + BG), SO WE FILL total_width POSITIONS
     # WE NEED TO MAP total_colors ACROSS total_width * 2 HALF-POSITIONS
@@ -408,7 +408,7 @@ def main() -> None:
     if (sv := ARGS.steps.get(0)) and int(sv) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else Console.w * 2
+    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else Console.width * 2
 
     gradient = generate_multi_gradient(
         colors=colors,
@@ -419,7 +419,7 @@ def main() -> None:
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],
-        width=Console.w,
+        width=Console.width,
         list_colors=ARGS.list.exists or ARGS.numerate.exists,
         numerate=ARGS.numerate.exists,
     )
@@ -432,5 +432,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

@@ -340,7 +340,7 @@ def print_line(
     title: Optional[str] = None,
     /, *,
     char: str = "═",
-    width: int = Console.w,
+    width: int = Console.width,
     end: str = "\n"
 ) -> None:
     if not title:
@@ -863,7 +863,7 @@ class Calc:
                                 FormatCodes.print(f"[dim](arg1:) {arg1_value}")
                                 FormatCodes.print(f"[dim](arg2:) {arg2_value}")
 
-                            result = function_impl(arg1_value, arg2_value)
+                            result = function_impl(arg1_value, arg2_value)  # type: ignore[assignment]
 
                         # SINGLE COMPLEX ARGUMENT
                         else:
@@ -878,7 +878,7 @@ class Calc:
 
                     if DEBUG:
                         FormatCodes.print(f"[dim](result:) {result}")
-                    formatted_result = self.format_result(result)
+                    formatted_result = self.format_result(result)  # type: ignore[arg-type]
                     new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
                     split = new_split
                     split_sympy = sympify(split)
@@ -1036,7 +1036,7 @@ if __name__ == "__main__":
         Console.fail("[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))", start="\n\n", end="\n\n")
     except MemoryError:
         Console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
-    except OverflowError as e:
-        Console.fail(f"[b](OverflowError:) {e}", start="\n\n", end="\n\n")
-    except Exception as e:
-        Console.fail(e, start="\n\n", end="\n\n")
+    except OverflowError as exc:
+        Console.fail(f"[b](OverflowError:) {exc}", start="\n\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n\n", end="\n\n")

@@ -14,8 +14,8 @@ import sys
 
 try:
     import pyperclip
-except Exception as e:
-    fmt_error = "\n  ".join(str(e).splitlines())
+except Exception as exc:
+    fmt_error = "\n  ".join(str(exc).splitlines())
     FormatCodes.print(f"\n[red]([b]([ERROR]) 'pyperclip' module failed to initialize:)\n  [br:red]{fmt_error}[_c]\n")
     sys.exit(1)
 
@@ -185,8 +185,8 @@ def main() -> None:
         sys.stdout.flush()
         exit_code = 127  # COMMAND NOT FOUND
 
-    except Exception as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
+    except Exception as exc:
+        fmt_error = "\n  ".join(str(exc).splitlines())
         error_msg = FormatCodes.to_ansi(f"[red]([b]([ERROR]) Command execution failed:)[br:red]\n  {fmt_error}\n[_c]")
         captured_output.append(FormatCodes.remove_ansi(error_msg))
         sys.stdout.write(error_msg)
@@ -215,7 +215,7 @@ def main() -> None:
 
     if not exclude_meta:
         clipboard_parts.append(
-            f"\n{'─' * Console.w}\n"
+            f"\n{'─' * Console.width}\n"
             f"[{time.ctime(start_time)}]\n"
             f"Took : {duration_str}\n"
             f"Exit : {exit_code}\n"
@@ -226,8 +226,8 @@ def main() -> None:
     ############################### COPY TO CLIPBOARD & EXIT ################################
     try:
         pyperclip.copy(clipboard_content)
-    except Exception as e:
-        fmt_error = "\n  ".join(str(e).splitlines())
+    except Exception as exc:
+        fmt_error = "\n  ".join(str(exc).splitlines())
         FormatCodes.print(f"\n[br:red]([b]([ERROR]) Failed to copy to clipboard:)[br:red]\n  {fmt_error}\n[_c]")
         sys.exit(1)
 
@@ -248,5 +248,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

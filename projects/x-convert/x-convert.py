@@ -843,5 +843,5 @@ if __name__ == "__main__":
             Console.fail(f"File not found: [white]{ARGS.filepath.values[0]}", pause=DEBUG, start="\n", end="\n\n")
         except KeyboardInterrupt:
             Console.exit(start="\n\n", end="\n\n")
-        except Exception as e:
-            Console.fail(e, pause=DEBUG, start="\n", end="\n\n")
+        except Exception as exc:
+            Console.fail(exc, pause=DEBUG, start="\n", end="\n\n")

@@ -155,8 +155,8 @@ class TrimExporter:
                 **_POPEN_FLAGS,
             )
             self._proc = proc
-        except Exception as err:
-            on_done(False, str(err))
+        except Exception as exc:
+            on_done(False, str(exc))
             return
 
         assert proc.stdout is not None

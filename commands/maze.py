@@ -400,8 +400,8 @@ def main():
             try:
                 while True:
                     Maze(
-                        Console.w // 2,
-                        Console.h,
+                        Console.width // 2,
+                        Console.height,
                         render_ascii=ascii_mode,
                     ).play()
             except KeyboardInterrupt:

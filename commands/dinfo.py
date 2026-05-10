@@ -296,5 +296,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         FormatCodes.print("\033[2K\r[b|br:red](✗)\n")
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

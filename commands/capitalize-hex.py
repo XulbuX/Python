@@ -48,17 +48,18 @@ def process_file(file_path: Path, root_dir: str) -> None:
         dim = "[dim]" if modified < 1 else ""
         Console.done(
             f"{'[b](Updated)' if modified > 0 else '[dim](Checked)'} [br:cyan]({log_path})"
-            + f" [dim]({((Console.w - 50) - len(log_path)) * '.'})" + f" {dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
+            + f" [dim]({((Console.width - 50) - len(log_path)) * '.'})"
+            + f" {dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
             start="",
             end="\n",
         )
-    except Exception as e:
-        Console.fail(f"Error processing [red]({file_path})\n         \t[b|br:red]{e}[_]", start="", end="\n", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error processing [red]({file_path})\n         \t[b|br:red]{exc}[_]", start="", end="\n", exit=False)
 
 
 def path_validator(path: str) -> Optional[str]:
     if not Path(path).exists():
-        max_w = Console.w - 23
+        max_w = Console.width - 23
         str_p = path if (l := len(path)) <= max_w else f"...{path[l - (max_w - 3):]}"
         return f"Path [i]({str_p}) doesn't exist."
 
@@ -91,5 +92,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

@@ -25,7 +25,7 @@ def main() -> None:
 
     if len(lst) >= 1 and lst[0].strip() not in {"", None}:
         FormatCodes.print(f"\n[b|bg:black]([in]( PROCESSED ) {len(lst)} [in]( LIST ENTRIES ))\n")
-        FormatCodes.print(f"[bright:cyan]{'\n'.join(lst)}[_]\n")
+        FormatCodes.print(f"[br:cyan]{'\n'.join(lst)}[_]\n")
         if all(e.isnumeric() for e in lst):
             lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]
             average: Callable[[list[int | float]], float] = lambda nums: sum(nums) / len(nums)
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

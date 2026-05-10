@@ -349,8 +349,8 @@ def main() -> None:
 
     try:
         ip_info.gather_info(provider=(ARGS.provider.values or [None])[0], get_geo=ARGS.get_geo.exists)
-    except Exception as e:
-        Console.fail(f"Error gathering IP information: {e}", end="\n\n")
+    except Exception as exc:
+        Console.fail(f"Error gathering IP information: {exc}", end="\n\n")
         return
 
     if ARGS.json_output.exists:
@@ -366,5 +366,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

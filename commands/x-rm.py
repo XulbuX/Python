@@ -93,8 +93,8 @@ def take_ownership_windows(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully took ownership)")
         return True
 
-    except Exception as e:
-        FormatCodes.print(f"[red][b](✗ Error taking ownership:)\n  {str(e).replace('\n', '\n  ')}[_]")
+    except Exception as exc:
+        FormatCodes.print(f"[red][b](✗ Error taking ownership:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -117,8 +117,8 @@ def remove_attributes_windows(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully removed attributes)")
         return True
 
-    except Exception as e:
-        FormatCodes.print(f"[red][b](✗ Error removing attributes:)\n  {str(e).replace('\n', '\n  ')}[_]")
+    except Exception as exc:
+        FormatCodes.print(f"[red][b](✗ Error removing attributes:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -141,8 +141,8 @@ def change_permissions_unix(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully changed permissions)")
         return True
 
-    except Exception as e:
-        FormatCodes.print(f"[red][b](✗ Error changing permissions:)\n  {str(e).replace('\n', '\n  ')}[_]")
+    except Exception as exc:
+        FormatCodes.print(f"[red][b](✗ Error changing permissions:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -166,8 +166,8 @@ def unlock_file_macos(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully unlocked file)")
         return True
 
-    except Exception as e:
-        FormatCodes.print(f"[red][b](✗ Error unlocking file:)\n  {str(e).replace('\n', '\n  ')}[_]")
+    except Exception as exc:
+        FormatCodes.print(f"[red][b](✗ Error unlocking file:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
 
 
@@ -293,14 +293,14 @@ def attempt_deletion(path: Path) -> bool:
             shutil.rmtree(path)
     except PermissionError:
         FormatCodes.print("[b|yellow](⚠ Permission denied!)")
-    except OSError as e:
+    except OSError as exc:
         # ON UNIX SYSTEMS, WE MIGHT GET DIFFERENT ERRORS
         if platform.system() != "Windows":
-            FormatCodes.print(f"[yellow][b](⚠ Deletion blocked:)\n  {str(e).replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[yellow][b](⚠ Deletion blocked:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         else:
-            FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
-    except Exception as e:
-        FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(e).replace('\n', '\n  ')}[_]")
+            FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(exc).replace('\n', '\n  ')}[_]")
+    except Exception as exc:
+        FormatCodes.print(f"[red][b](✗ Error during deletion:)\n  {str(exc).replace('\n', '\n  ')}[_]")
     return not path.exists()
 
 
@@ -379,7 +379,7 @@ def force_delete(path: Path) -> bool:
 
 def path_validator(path: str) -> Optional[str]:
     if not Path(path).exists():
-        max_w = Console.w - 23
+        max_w = Console.width - 23
         str_p = path if (l := len(path)) <= max_w else f"...{path[l - (max_w - 3):]}"
         return f"Path [i]({str_p}) doesn't exist."
 
@@ -425,5 +425,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         FormatCodes.print("[b|red](✗ Canceled by user.)\n")
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

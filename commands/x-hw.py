@@ -2,7 +2,7 @@
 #[x-cmds]: UPDATE
 """Get detailed hardware information about your PC."""
 from xulbux import FormatCodes, Console, Data
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, TypedDict, Optional, Any
 import subprocess
 import platform
 import re
@@ -15,9 +15,9 @@ try:
     import psutil
     PSUTIL_AVAILABLE: bool = True
     PSUTIL_ERROR: Optional[str] = None
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError) as exc:
     PSUTIL_AVAILABLE: bool = False  # type: ignore[no-redef]
-    PSUTIL_ERROR: Optional[str] = str(e)  # type: ignore[no-redef]
+    PSUTIL_ERROR: Optional[str] = str(exc)  # type: ignore[no-redef]
 
 ARGS = Console.get_args({
     "detailed": {"-d", "--detailed"},
@@ -42,6 +42,13 @@ def print_help():
   [br:green](x-hw) [br:blue](--json)            [dim](# [i](Output as JSON))
 """
     FormatCodes.print(help_text)
+
+
+class AdapterInfo(TypedDict):
+    name: str
+    is_up: bool
+    speed: Optional[str]
+    mac: Optional[str]
 
 
 class HardwareInfo:
@@ -227,15 +234,16 @@ class HardwareInfo:
 
             for interface_name in stats:
                 if interface_name in addrs:
-                    adapter_info = {
+                    adapter_info: AdapterInfo = {
                         "name": interface_name,
                         "is_up": stats[interface_name].isup,
                         "speed": f"{stats[interface_name].speed} Mbps" if stats[interface_name].speed > 0 else "Unknown",
+                        "mac": None,
                     }
 
                     # GET MAC ADDRESS
                     for addr in addrs[interface_name]:
-                        if addr.family.name == 'AF_LINK' or addr.family.name == 'AF_PACKET':  # type: ignore[reportUnnecessaryComparison]
+                        if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # type: ignore[reportUnnecessaryComparison]
                             adapter_info["mac"] = addr.address
                             break
 
@@ -449,8 +457,8 @@ def main() -> None:
 
     try:
         hw_info.gather_info(detailed=ARGS.detailed.exists)
-    except Exception as e:
-        Console.fail(f"Error gathering hardware information: {e}", end="\n\n")
+    except Exception as exc:
+        Console.fail(f"Error gathering hardware information: {exc}", end="\n\n")
         return
 
     if ARGS.json_output.exists:
@@ -466,5 +474,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

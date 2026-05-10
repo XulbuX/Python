@@ -282,7 +282,7 @@ def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
     for i, file in enumerate(sorted(python_files), 1):
         cmd_name = Path(file).stem
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
-        cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.w - cmd_title_len)}))"
+        cmds += f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]( {cmd_name} [bg:black]{'━' * (Console.width - cmd_title_len)}))"
 
         with open(CONFIG["command_dir"] / file, "r", encoding="utf-8") as f:
             if desc := PATTERNS.desc.match(content := f.read()):
@@ -444,7 +444,7 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
         title = f"There are {title_parts[0]}, {title_parts[1]}, and {title_parts[2]} available."
 
     diffs_title_len = len(title) + 5
-    diffs = f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( {title} [bg:black]{'━' * (Console.w - diffs_title_len)}))"
+    diffs = f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( {title} [bg:black]{'━' * (Console.width - diffs_title_len)}))"
 
     if num_new_cmds:
         diffs += f"\n\n[b](New Commands:)\n  " + "\n  ".join(f"[br:green]{cmd}[_]" for cmd in sorted(github_diffs["new_commands"]))
@@ -491,8 +491,8 @@ def download_files(github_diffs: GitHubDiffs) -> None:
             action = "Added" if cmd_name in github_diffs["new_commands"] else "Updated"
             FormatCodes.print(f"[br:green](✓ {action} [b]({cmd_name}))")
             success_count += 1
-        except Exception as e:
-            FormatCodes.print(f"[br:red](✗ Failed to download [b]({filename}) [dim]/({e})[_])")
+        except Exception as exc:
+            FormatCodes.print(f"[br:red](✗ Failed to download [b]({filename}) [dim]/({exc})[_])")
 
     # DELETE REMOVED FILES
     for cmd_name in deletions:
@@ -511,8 +511,8 @@ def download_files(github_diffs: GitHubDiffs) -> None:
                 success_count += 1
             else:
                 FormatCodes.print(f"[dim|br:yellow](⚠ Could not find [b]({cmd_name}) to delete)")
-        except Exception as e:
-            FormatCodes.print(f"[br:red](✗ Failed to delete [b]({cmd_name}) [dim]/({e})[_])")
+        except Exception as exc:
+            FormatCodes.print(f"[br:red](✗ Failed to delete [b]({cmd_name}) [dim]/({exc})[_])")
 
     color = 'br:green' if success_count == total_operations else 'br:red' if success_count == 0 else 'br:yellow'
     FormatCodes.print(f"\nSuccessfully completed [{color}]([b]({success_count})/{total_operations}) operation{'s' if total_operations > 1 else ''}!\n\n")
@@ -547,5 +547,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

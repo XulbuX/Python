@@ -71,10 +71,10 @@ def add_self_to_startup() -> None:
                 os.makedirs(startup_dir, exist_ok=True)
                 shutil.copy2(current_script_path, target_script_path_in_startup)
                 Console.done(f"Script successfully copied to startup.")
-            except Exception as e:
-                Console.fail(f"Failed to copy script to startup: {e}", exit=False)
-    except Exception as e:
-        Console.fail(f"Error while trying to copy script to startup directory: {e}", exit=False)
+            except Exception as exc:
+                Console.fail(f"Failed to copy script to startup: {exc}", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error while trying to copy script to startup directory: {exc}", exit=False)
 
 
 def init_sounds() -> None:
@@ -105,8 +105,8 @@ def init_sounds() -> None:
                 sound_object = pygame.mixer.Sound(absolute_path)
                 temp_loaded_sounds[name] = sound_object
                 Console.debug(f"Successfully loaded sound for '{name}' from {absolute_path}", active=DEBUG)
-            except pygame.error as e:
-                Console.warn(f"Failed to load sound for '{name}' from {absolute_path} with pygame: {e}")
+            except pygame.error as exc:
+                Console.warn(f"Failed to load sound for '{name}' from {absolute_path} with pygame: {exc}")
                 temp_loaded_sounds[name] = None
                 all_sounds_loaded_successfully = False
         LOADED_SOUNDS.clear()
@@ -115,8 +115,8 @@ def init_sounds() -> None:
             Console.warn(
                 "One or more sound files could not be loaded by pygame or are missing.\n ⮡ Some sounds might not play."
             )
-    except Exception as e:
-        Console.fail(f"Error while initializing the sound files with pygame: {e}", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error while initializing the sound files with pygame: {exc}", exit=False)
 
 
 def ensure_min_system_volume() -> None:
@@ -125,8 +125,8 @@ def ensure_min_system_volume() -> None:
         try:
             comtypes.CoInitialize()
             needs_uninitialize = True
-        except comtypes.COMError as e:
-            if e.hresult == 0x80010106:  # RPC_E_CHANGED_MODE
+        except comtypes.COMError as exc:
+            if exc.hresult == 0x80010106:  # RPC_E_CHANGED_MODE
                 Console.info(
                     "COM already initialized on this thread, possibly with a different mode (RPC_E_CHANGED_MODE).\n"
                     " ⮡ Proceeding with existing COM state for pycaw."
@@ -134,13 +134,13 @@ def ensure_min_system_volume() -> None:
                 needs_uninitialize = False
             else:
                 Console.fail(
-                    f"COM Initialization (CoInitialize) failed: HRESULT={e.hresult}, Text='{e.text}'.\n ⮡ Cannot manage volume.",
+                    f"COM Initialization (CoInitialize) failed: HRESULT={exc.hresult}, Text='{exc.text}'.\n ⮡ Cannot manage volume.",
                     exit=False
                 )
                 return
-        except Exception as e_generic_init:
+        except Exception as exc_generic_init:
             Console.fail(
-                f"Unexpected error during COM Initialization (CoInitialize): {e_generic_init}.\n ⮡ Cannot manage volume.",
+                f"Unexpected error during COM Initialization (CoInitialize): {exc_generic_init}.\n ⮡ Cannot manage volume.",
                 exit=False
             )
             return
@@ -182,8 +182,8 @@ def ensure_min_system_volume() -> None:
                 "RPC_E_WRONG_THREAD: pycaw COM object accessed from wrong apartment.\n"
                 "This is common if pynput threads are MTA and CoInitialize failed to set STA."
             )
-    except Exception as e_audio_generic:
-        Console.fail(f"Unexpected error during pycaw audio device interaction: {e_audio_generic}", exit=False)
+    except Exception as exc_audio_generic:
+        Console.fail(f"Unexpected error during pycaw audio device interaction: {exc_audio_generic}", exit=False)
     finally:
         if needs_uninitialize:
             comtypes.CoUninitialize()
@@ -195,10 +195,10 @@ def _play_sound_task(sound_object: pygame.mixer.Sound) -> None:
     if sound_object:
         try:
             sound_object.play()
-        except pygame.error as e:
-            Console.fail(f"Pygame error during sound playback: {e}", exit=False)
-        except Exception as e:
-            Console.fail(f"Unexpected error during pygame sound playback: {e}", exit=False)
+        except pygame.error as exc:
+            Console.fail(f"Pygame error during sound playback: {exc}", exit=False)
+        except Exception as exc:
+            Console.fail(f"Unexpected error during pygame sound playback: {exc}", exit=False)
     else:
         Console.debug("Attempted to play a non-loaded sound object.", active=DEBUG)
 
@@ -261,8 +261,8 @@ def on_press(key) -> None:
     except AttributeError:
         Console.debug(f"AttributeError for key: {key}", active=DEBUG)
         pass
-    except Exception as e:
-        Console.fail(f"Error in 'on_press()': {e}", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error in 'on_press()': {exc}", exit=False)
 
 
 def on_release(key) -> None:
@@ -272,8 +272,8 @@ def on_release(key) -> None:
             PRESSED_KEYS.remove(key)
     except KeyError:
         pass
-    except Exception as e:
-        Console.fail(f"Error in 'on_release()': {e}", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error in 'on_release()': {exc}", exit=False)
 
 
 def main() -> None:
@@ -285,12 +285,12 @@ def main() -> None:
         pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
         PYGAME_INITIALIZED = True
         Console.info("Pygame initialized successfully for audio playback.")
-    except pygame.error as e:
-        Console.fail(f"Failed to initialize pygame or pygame.mixer: {e}\n ⮡ Sound playback will be disabled.", exit=False)
+    except pygame.error as exc:
+        Console.fail(f"Failed to initialize pygame or pygame.mixer: {exc}\n ⮡ Sound playback will be disabled.", exit=False)
         PYGAME_INITIALIZED = False
-    except Exception as e_init:
+    except Exception as exc_init:
         Console.fail(
-            f"An unexpected error occurred during pygame initialization: {e_init}\n ⮡ Sound playback will be disabled.",
+            f"An unexpected error occurred during pygame initialization: {exc_init}\n ⮡ Sound playback will be disabled.",
             exit=False
         )
         PYGAME_INITIALIZED = False
@@ -306,16 +306,16 @@ def main() -> None:
         mouse_listener.start()
         keyboard_listener.start()
         Console.info("Global mouse and keyboard listeners started. Script running in background.")
-    except Exception as e:
-        Console.fail(f"Error starting listeners: {e}\n ⮡ Global sound triggers might not work.", exit=False)
+    except Exception as exc:
+        Console.fail(f"Error starting listeners: {exc}\n ⮡ Global sound triggers might not work.", exit=False)
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         Console.exit("Script terminated by user. [dim]((Ctrl+C detected in console))")
-    except Exception as e:
-        Console.fail(f"An unexpected error occurred in the main background loop: {e}")
+    except Exception as exc:
+        Console.fail(f"An unexpected error occurred in the main background loop: {exc}")
     finally:
         if PYGAME_INITIALIZED:
             pygame.quit()

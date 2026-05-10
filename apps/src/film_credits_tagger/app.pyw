@@ -309,8 +309,8 @@ class MetadataTaggerApp(ctk.CTk):
 
         try:
             img = Image.open(filename).convert("RGB")
-        except Exception as err:
-            messagebox.showerror("Invalid Image", f"Could not open image file:\n{err}")
+        except Exception as exc:
+            messagebox.showerror("Invalid Image", f"Could not open image file:\n{exc}")
             return
 
         self.cover_art_path = filename
@@ -594,8 +594,8 @@ class MetadataTaggerApp(ctk.CTk):
                 with open(filepath, "w", encoding="utf-8") as file:
                     json.dump(template_data, file, indent=4)
                 messagebox.showinfo("Saved", "Template saved successfully!")
-            except Exception as err:
-                messagebox.showerror("Error", f"Failed to save template:\n{err}")
+            except Exception as exc:
+                messagebox.showerror("Error", f"Failed to save template:\n{exc}")
 
     def _extract_cover_bytes_from_video(self, video_path: str) -> bytes:
         """Run ExifTool to extract embedded cover art bytes from a video file.<br>
@@ -726,8 +726,8 @@ class MetadataTaggerApp(ctk.CTk):
         try:
             with open(filepath, "r", encoding="utf-8") as file:
                 template_data: dict[str, str] = json.load(file)
-        except Exception as err:
-            messagebox.showerror("Error", f"Failed to load template:\n{err}")
+        except Exception as exc:
+            messagebox.showerror("Error", f"Failed to load template:\n{exc}")
             return
 
         # CLEAR EXISTING ENTRIES AND INSERT NEW ONES
@@ -926,8 +926,8 @@ class MetadataTaggerApp(ctk.CTk):
                     else:
                         errors.append(result.stderr or f"ExifTool exited with code {result.returncode}")
 
-                except Exception as err:
-                    errors.append(str(err))
+                except Exception as exc:
+                    errors.append(str(exc))
 
                 self.after(0, lambda p=(i + 1) / n_files: self._animate_progress_to(p))
 

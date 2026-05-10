@@ -117,7 +117,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     if ARGS.list.exists:
         output += f"\n[b|br:cyan]{'\n'.join(sorted(modules.keys()))}[_]"
     else:
-        console_w = Console.w
+        console_w = Console.width
         num_width = len(str(len(modules)))
         for i, (module, files) in enumerate(sorted(modules.items()), 1):
             usage_count = len(files)
@@ -177,8 +177,8 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
             except subprocess.TimeoutExpired:
                 FormatCodes.print(f"[br:red](✗ Timed out installing [b]({module}))")
                 failed_modules.append(module)
-            except Exception as err:
-                FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in str(err).splitlines()) + "[_]")
+            except Exception as exc:
+                FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in str(exc).splitlines()) + "[_]")
                 failed_modules.append(module)
 
     print()
@@ -236,5 +236,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         FormatCodes.print("\n[i|dim](Cancelled by user.)\n")
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")

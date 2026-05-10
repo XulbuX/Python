@@ -12,8 +12,8 @@ import sys
 class GameOfLife:
 
     def __init__(self):
-        self.width = Console.w
-        self.height = Console.h * 2
+        self.width = Console.width
+        self.height = Console.height * 2
         self.grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.next_grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         # PRE-COMPUTE UTF-8 BYTE SEQUENCES FOR MAXIMUM EFFICIENCY
@@ -89,8 +89,8 @@ class GameOfLife:
         try:
             gen = 0
             while gens is None or gen < gens:
-                new_width = Console.w
-                new_height = Console.h * 2
+                new_width = Console.width
+                new_height = Console.height * 2
 
                 if new_width != self.width or new_height != self.height:
                     old_grid = self.grid
@@ -161,5 +161,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print()
-    except Exception as e:
-        Console.fail(e, start="\n", end="\n\n")
+    except Exception as exc:
+        Console.fail(exc, start="\n", end="\n\n")
