@@ -70,6 +70,56 @@ def render_svg_icon(name: str, size: int, color: str) -> ctk.CTkImage:
     return ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(size, size))
 
 
+class SingleLineEntry(ctk.CTkEntry):
+    """Drop-in replacement for `ctk.CTkEntry` with reliable placeholder management."""
+
+    def __init__(self, master: object, **kwargs: object) -> None:
+        super().__init__(master, **kwargs)  # type: ignore[arg-type]
+
+        bind_clean_paste(self._entry)
+
+        # add=True PREVENTS APP CODE'S _entry.bind() CALLS FROM CLOBBERING THESE HANDLERS
+        self._entry.bind("<FocusIn>", self._sle_focus_in, add=True)
+        self._entry.bind("<FocusOut>", self._sle_focus_out, add=True)
+
+    def _sle_focus_in(self, _event: object = None) -> None:
+        if self._placeholder_text_active:
+            self._deactivate_placeholder()
+        # UNCONDITIONAL – CTkEntry'S OWN FocusIn CLEARS _placeholder_text_active FIRST,
+        # SO A GUARDED RESET WOULD NEVER RUN; _deactivate_placeholder() NEVER RESETS IT
+        self._entry.configure(insertbackground=self._apply_appearance_mode(self._text_color))
+
+    def _sle_focus_out(self, _event: object = None) -> None:
+        if not self._placeholder_text_active and not self._entry.get():
+            self._activate_placeholder()
+
+    def delete(self, first_index: object, last_index: object = None) -> None:
+        # DEACTIVATE FIRST – super().delete() CLEARS THE TEXT BUT LEAVES _placeholder_text_active = True
+        if self._placeholder_text_active:
+            self._deactivate_placeholder()
+
+        super().delete(first_index, last_index)
+
+        # _is_focused STARTS True AND IS NEVER RELIABLE; DEFER THE RESTORE CHECK INSTEAD
+        if not self._placeholder_text_active and not self._entry.get():
+            self.after_idle(self._restore_placeholder_if_empty)
+
+    def _restore_placeholder_if_empty(self) -> None:
+        if self._entry.focus_get() is not self._entry and not self._placeholder_text_active and not self._entry.get():
+            self._activate_placeholder()
+
+    def configure(self, **kwargs: object) -> None:
+        if "placeholder_text" in kwargs and not self._placeholder_text_active:
+            # CTkEntry.configure() WOULD ACTIVATE THE PLACEHOLDER EVEN IN A FOCUSED FIELD
+            self._placeholder_text = kwargs.pop("placeholder_text")
+            if self._entry.focus_get() is not self._entry:
+                self._activate_placeholder()
+            if kwargs:
+                super().configure(**kwargs)  # type: ignore[arg-type]
+        else:
+            super().configure(**kwargs)  # type: ignore[arg-type]
+
+
 class MultilineEntry(ctk.CTkTextbox):
     """Auto-resizing `CTkTextbox`: single-line height when content fits on one display line,
     three-line height the moment it wraps. Pass `allow_newlines=True` for real line breaks."""
@@ -113,7 +163,7 @@ class MultilineEntry(ctk.CTkTextbox):
             self.after_idle(self._show_placeholder_if_empty)
 
     def _show_placeholder_if_empty(self) -> None:
-        if not self._textbox.get("1.0", "end").strip():
+        if self._textbox.focus_get() is not self._textbox and not self._textbox.get("1.0", "end").strip():
             self._show_placeholder()
 
     def _show_placeholder(self) -> None:
@@ -133,6 +183,8 @@ class MultilineEntry(ctk.CTkTextbox):
 
     def _on_placeholder_focus_in(self, _event: object = None) -> None:
         self._hide_placeholder()
+        # ENSURE CURSOR COLOR MATCHES TEXT COLOR, NOT THE PLACEHOLDER TAG COLOR
+        self._textbox.configure(insertbackground=self._apply_appearance_mode(self._text_color))
 
     def _on_placeholder_focus_out(self, _event: object = None) -> None:
         if not self._textbox.get("1.0", "end").strip():

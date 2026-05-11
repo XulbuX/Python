@@ -20,11 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
 from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
-from _shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from _shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon  # type: ignore[missing-import]
 from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 if TYPE_CHECKING:
     from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
-    from .._shared.widgets import MultilineEntry, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon
+    from .._shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
     from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
 
 from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display
@@ -273,8 +273,7 @@ class MetadataTaggerApp(ctk.CTk):
                         self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
                     )
                 else:
-                    entry_widget = ctk.CTkEntry(self.sec3, border_width=1)
-                    bind_clean_paste(entry_widget._entry)
+                    entry_widget = SingleLineEntry(self.sec3, border_width=1)
                     if ph := field_def.get("placeholder"):
                         entry_widget.configure(placeholder_text=ph)
                 entry_widget.grid(row=row_idx, column=1, padx=(PAD, 0), pady=(4, 4), sticky="ew")
@@ -388,16 +387,7 @@ class MetadataTaggerApp(ctk.CTk):
     def reset_all(self) -> None:
         """Clear all metadata fields and remove the cover art."""
         for data in self.entries.values():
-            widget = data["widget"]
-
-            if isinstance(widget, MultilineEntry):
-                widget.delete(0, "end")
-            elif not getattr(widget, "_placeholder_text_active", False):
-                # FIELD HAS REAL CONTENT: CLEAR IT, THEN IMMEDIATELY RESTORE THE PLACEHOLDER
-                # (WITHOUT THIS, PLACEHOLDER ONLY REAPPEARS ON THE NEXT FOCUS-OUT EVENT)
-                widget.delete(0, "end")
-                if hasattr(widget, "_activate_placeholder"):
-                    widget._activate_placeholder()
+            data["widget"].delete(0, "end")
 
         self._remove_cover()
 
@@ -712,13 +702,6 @@ class MetadataTaggerApp(ctk.CTk):
         if cover_bytes:
             self._apply_cover_from_video_bytes(cover_bytes, filepath)
 
-        # RESTORE PLACEHOLDERS ON ANY ENTRY FIELD THAT IS EMPTY BUT MISSING ITS PLACEHOLDER
-        # (CAN HAPPEN WHEN A PRIOR LOAD WIPED THE PLACEHOLDER TEXT WITHOUT REPOPULATING THE FIELD)
-        for _data in self.entries.values():
-            _w = _data["widget"]
-            if not isinstance(_w, MultilineEntry) and hasattr(_w, "_activate_placeholder"):
-                _w._activate_placeholder()
-
     def load_template(self) -> None:
         if not (filepath := filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")], title="Load Metadata Template")):
             return
@@ -736,10 +719,6 @@ class MetadataTaggerApp(ctk.CTk):
             widget.delete(0, "end")
             if label in template_data:
                 widget.insert(0, template_data[label])
-            elif not isinstance(widget, MultilineEntry) and hasattr(widget, "_activate_placeholder"):
-                # CTkEntry._is_focused STARTS True SO delete() WON'T AUTO-RESTORE THE PLACEHOLDER;
-                # CALL IT DIRECTLY, MIRRORING THE SAME FIX IN reset_all()
-                widget._activate_placeholder()
 
         if not (cover_path_raw := template_data.get("__cover_art__")):
             return

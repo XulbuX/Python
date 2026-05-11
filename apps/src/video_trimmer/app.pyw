@@ -20,11 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
 from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
-from _shared.widgets import SegmentedButton, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon  # type: ignore[missing-import]
+from _shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon  # type: ignore[missing-import]
 from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
 if TYPE_CHECKING:
     from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
-    from .._shared.widgets import SegmentedButton, SpinnerButton, ToolTip, bind_clean_paste, render_svg_icon
+    from .._shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
     from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
 
 from exporter import TrimExporter
@@ -200,9 +200,8 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_start_left.grid(row=0, column=1, padx=(0, 2))
 
-        self.entry_start = ctk.CTkEntry(self.sec_inputs, border_width=1, placeholder_text="00:00")
+        self.entry_start = SingleLineEntry(self.sec_inputs, border_width=1, placeholder_text="00:00")
         self.entry_start.grid(row=0, column=2, sticky="ew")
-        bind_clean_paste(self.entry_start._entry)
 
         self.btn_start_right = ctk.CTkButton(
             self.sec_inputs,
@@ -230,9 +229,8 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_end_left.grid(row=0, column=5, padx=(0, 2))
 
-        self.entry_end = ctk.CTkEntry(self.sec_inputs, border_width=1, placeholder_text="end of file")
+        self.entry_end = SingleLineEntry(self.sec_inputs, border_width=1, placeholder_text="end of file")
         self.entry_end.grid(row=0, column=6, sticky="ew")
-        bind_clean_paste(self.entry_end._entry)
 
         self.btn_end_right = ctk.CTkButton(
             self.sec_inputs,
@@ -315,9 +313,9 @@ class VideoTrimmerApp(ctk.CTk):
 
         # BIND ENTRY COMMIT EVENTS
         for entry, which in ((self.entry_start, "start"), (self.entry_end, "end")):
-            entry._entry.bind("<FocusOut>", lambda e, w=which: self._on_entry_commit(w))
-            entry._entry.bind("<Return>", lambda e, w=which: self._on_entry_commit(w))
-            entry._entry.bind("<KP_Enter>", lambda e, w=which: self._on_entry_commit(w))
+            entry.bind("<FocusOut>", lambda e, w=which: self._on_entry_commit(w))
+            entry.bind("<Return>", lambda e, w=which: self._on_entry_commit(w))
+            entry.bind("<KP_Enter>", lambda e, w=which: self._on_entry_commit(w))
 
         self._apply_theme()
         self.after(2000, self._poll_theme)
@@ -849,9 +847,7 @@ class VideoTrimmerApp(ctk.CTk):
         self._cancel_preview_jobs()
 
         self.entry_start.delete(0, "end")
-        self.entry_start._activate_placeholder()
         self.entry_end.delete(0, "end")
-        self.entry_end._activate_placeholder()
 
         c = COLORS[self._current_theme]
         self.lbl_file.configure(text="No file selected", text_color=c["placeholder_foreground"])
