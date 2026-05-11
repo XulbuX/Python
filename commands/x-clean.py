@@ -24,14 +24,22 @@ except ImportError:
 BACKUPS_DIR = FileSys.script_dir / "backups"
 
 # REGISTRY PATHS TO SCAN FOR BROKEN ENTRIES
-REGISTRY_UNINSTALL_PATHS: list[tuple[int, str]] = [
+REGISTRY_APP_PATHS: list[tuple[int, str]] = [
+    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
+]
+REGISTRY_UNINS_PATHS: list[tuple[int, str]] = [
     (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
     (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
     (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
 ]
-REGISTRY_APP_PATHS: list[tuple[int, str]] = [
-    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
-    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths"),
+REGISTRY_STARTUP_PATHS: list[tuple[int, str]] = [
+    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
+    (winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run"),
+    (winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce"),
 ]
 
 # VALUES IN UNINSTALL KEYS THAT INDICATE WHETHER THE SOFTWARE IS ACTUALLY INSTALLED
@@ -188,13 +196,62 @@ def resolve_shortcut(lnk_path: Path) -> Optional[Path]:
 ########################################## SCANNING ##########################################
 
 
-def scan_registry_uninstall() -> list[dict[str, Any]]:
+def scan_registry_app_paths() -> list[dict[str, Any]]:
+    """Scan App Paths registry keys for entries with broken paths.\n
+    -----------------------------------------------------------------
+    Returns list of dicts: `{hive, path, subkey, broken_path}`"""
+    issues: list[dict[str, Any]] = []
+
+    for hive, reg_path in REGISTRY_APP_PATHS:
+        try:
+            root_key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+        except OSError:
+            continue
+
+        try:
+            i = 0
+            while True:
+                try:
+                    subkey_name = winreg.EnumKey(root_key, i)
+                except OSError:
+                    break
+                i += 1
+
+                full_path = f"{reg_path}\\{subkey_name}"
+                try:
+                    subkey = winreg.OpenKey(hive, full_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+                except OSError:
+                    continue
+
+                # CHECK DEFAULT VALUE (THE APP PATH)
+                try:
+                    val_data, val_type = winreg.QueryValueEx(subkey, "")
+                    if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
+                        path = extract_path_from_value(str(val_data))
+                        if path is not None and not path_exists(path):
+                            issues.append({
+                                "hive": hive,
+                                "path": full_path,
+                                "subkey": subkey_name,
+                                "broken_path": str(val_data),
+                            })
+                except OSError:
+                    pass
+
+                winreg.CloseKey(subkey)
+        finally:
+            winreg.CloseKey(root_key)
+
+    return issues
+
+
+def scan_registry_unins_paths() -> list[dict[str, Any]]:
     """Scan uninstall registry keys for entries with broken paths.\n
     ------------------------------------------------------------------------------
     Returns list of dicts: `{hive, path, subkey, display_name, broken_values}`"""
     issues: list[dict[str, Any]] = []
 
-    for hive, reg_path in REGISTRY_UNINSTALL_PATHS:
+    for hive, reg_path in REGISTRY_UNINS_PATHS:
         try:
             root_key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
         except OSError:
@@ -261,15 +318,15 @@ def scan_registry_uninstall() -> list[dict[str, Any]]:
     return issues
 
 
-def scan_registry_app_paths() -> list[dict[str, Any]]:
-    """Scan App Paths registry keys for entries with broken paths.\n
-    -----------------------------------------------------------------
-    Returns list of dicts: `{hive, path, subkey, broken_path}`"""
+def scan_registry_startup_paths() -> list[dict[str, Any]]:
+    """Scan `Run`/`RunOnce` registry keys for values pointing to non-existent paths.\n
+    -----------------------------------------------------------------------------------
+    Returns list of dicts: `{hive, path, value_name, value_data, value_type}`"""
     issues: list[dict[str, Any]] = []
 
-    for hive, reg_path in REGISTRY_APP_PATHS:
+    for hive, reg_path in REGISTRY_STARTUP_PATHS:
         try:
-            root_key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+            key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
         except OSError:
             continue
 
@@ -277,35 +334,28 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
             i = 0
             while True:
                 try:
-                    subkey_name = winreg.EnumKey(root_key, i)
+                    name, value, val_type = winreg.EnumValue(key, i)
                 except OSError:
                     break
                 i += 1
 
-                full_path = f"{reg_path}\\{subkey_name}"
-                try:
-                    subkey = winreg.OpenKey(hive, full_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
-                except OSError:
+                if val_type not in (winreg.REG_SZ, winreg.REG_EXPAND_SZ):
                     continue
 
-                # CHECK DEFAULT VALUE (THE APP PATH)
-                try:
-                    val_data, val_type = winreg.QueryValueEx(subkey, "")
-                    if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
-                        path = extract_path_from_value(str(val_data))
-                        if path is not None and not path_exists(path):
-                            issues.append({
-                                "hive": hive,
-                                "path": full_path,
-                                "subkey": subkey_name,
-                                "broken_path": str(val_data),
-                            })
-                except OSError:
-                    pass
+                p = extract_path_from_value(str(value))
+                if p is None:
+                    continue
 
-                winreg.CloseKey(subkey)
+                if not path_exists(p):
+                    issues.append({
+                        "hive": hive,
+                        "path": reg_path,
+                        "value_name": name,
+                        "value_data": str(value),
+                        "value_type": val_type,
+                    })
         finally:
-            winreg.CloseKey(root_key)
+            winreg.CloseKey(key)
 
     return issues
 
@@ -476,7 +526,7 @@ def create_backup_dir() -> Path:
 
 def backup_registry(backup_dir: Path) -> bool:
     """Export uninstall and app paths registry keys to `.reg` files."""
-    all_locations = REGISTRY_UNINSTALL_PATHS + REGISTRY_APP_PATHS
+    all_locations = REGISTRY_APP_PATHS + REGISTRY_UNINS_PATHS + REGISTRY_STARTUP_PATHS
     success = True
 
     for hive, reg_path in all_locations:
@@ -484,6 +534,14 @@ def backup_registry(backup_dir: Path) -> bool:
         safe_name = reg_path.replace("\\", "_")
         filename = f"{hive_name(hive)}_{safe_name}.reg"
         export_path = backup_dir / filename
+
+        # SKIP NON-EXISTENT KEYS (RunOnce OFTEN MISSING)
+        try:
+            test_key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+            winreg.CloseKey(test_key)
+        except OSError:
+            FormatCodes.print(f"  [dim](· Skipped missing key [dim]({full_path}))")
+            continue
 
         try:
             result = subprocess.run(
@@ -611,26 +669,13 @@ def _broadcast_env_change() -> None:
 ########################################## CLEANUP EXECUTION ##########################################
 
 
-def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list[dict[str, Any]]) -> list[str]:
+def execute_registry_cleanup(
+    app_path_issues: list[dict[str, Any]],
+    unins_issues: list[dict[str, Any]],
+    startup_issues: list[dict[str, Any]],
+) -> list[str]:
     """Delete broken registry entries. Returns list of failure messages."""
     failures: list[str] = []
-
-    if issues:
-        FormatCodes.print("\n[b](Cleaning registry uninstall entries...)")
-
-        for issue in issues:
-            hive = issue["hive"]
-            reg_path = issue["path"]
-            display = issue["display_name"]
-
-            try:
-                _delete_registry_tree(hive, reg_path)
-                FormatCodes.print(f"  [green](✓) Deleted [magenta]{display} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
-
-            except Exception as exc:
-                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {exc}"
-                failures.append(msg)
-                FormatCodes.print(f"  [red](✗) {msg}")
 
     if app_path_issues:
         FormatCodes.print("\n[b](Cleaning registry App Paths entries...)")
@@ -646,6 +691,44 @@ def execute_registry_cleanup(issues: list[dict[str, Any]], app_path_issues: list
 
             except Exception as exc:
                 msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {exc}"
+                failures.append(msg)
+                FormatCodes.print(f"  [red](✗) {msg}")
+
+    if unins_issues:
+        FormatCodes.print("\n[b](Cleaning registry uninstall entries...)")
+
+        for issue in unins_issues:
+            hive = issue["hive"]
+            reg_path = issue["path"]
+            display = issue["display_name"]
+
+            try:
+                _delete_registry_tree(hive, reg_path)
+                FormatCodes.print(f"  [green](✓) Deleted [magenta]{display} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]")
+
+            except Exception as exc:
+                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}: {exc}"
+                failures.append(msg)
+                FormatCodes.print(f"  [red](✗) {msg}")
+
+    if startup_issues:
+        FormatCodes.print("\n[b](Cleaning registry Run/RunOnce entries...)")
+
+        for issue in startup_issues:
+            hive = issue["hive"]
+            reg_path = issue["path"]
+            value_name = issue["value_name"]
+
+            try:
+                key = winreg.OpenKey(hive, reg_path, 0, winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY)
+                winreg.DeleteValue(key, value_name)
+                winreg.CloseKey(key)
+                FormatCodes.print(
+                    f"  [green](✓) Deleted [magenta]{value_name} [dim|br:magenta]{hive_name(hive)}\\{reg_path}[_]"
+                )
+
+            except Exception as exc:
+                msg = f"Failed to delete {hive_name(hive)}\\{reg_path}\\{value_name}: {exc}"
                 failures.append(msg)
                 FormatCodes.print(f"  [red](✗) {msg}")
 
@@ -860,15 +943,16 @@ def format_size(size_bytes: int, /) -> str:
 
 
 def show_summary(
-    reg_issues: list[dict[str, Any]],
-    app_path_issues: list[dict[str, Any]],
+    reg_app_path_issues: list[dict[str, Any]],
+    reg_unins_issues: list[dict[str, Any]],
+    reg_startup_issues: list[dict[str, Any]],
     env_issues: dict[str, Any],
     shortcut_issues: list[dict[str, Any]],
     temp_info: dict[str, Any],
     selected: dict[str, bool],
 ) -> None:
     """Show a detailed summary of what will be cleaned."""
-    total_reg_issues = len(reg_issues) + len(app_path_issues)
+    total_reg_issues = len(reg_app_path_issues) + len(reg_unins_issues) + len(reg_startup_issues)
     total_env_issues = len(env_issues.get("user", [])) + len(env_issues.get("system", []))
     total_sc_issues = sum(len(loc["broken_shortcuts"]) for loc in shortcut_issues)
     total_temp_issues = len(temp_info.get("dirs", []))
@@ -880,10 +964,16 @@ def show_summary(
 
     FormatCodes.print(f"\n\n\n[b|red|bg:black]([in]( CLEANUP SUMMARY ) FOUND {total_issues} ISSUES )\n")
 
-    if selected.get("registry") and (reg_issues or app_path_issues):
+    if selected.get("registry") and (reg_unins_issues or reg_app_path_issues or reg_startup_issues):
         FormatCodes.print(f"\n[b](Registry entries to delete:) [dim]({total_reg_issues} total)\n")
 
-        for issue in reg_issues:
+        for issue in reg_app_path_issues:
+            FormatCodes.print(
+                f"  [red](✗) [b|magenta]({issue['subkey']}) [br:magenta]({hive_name(issue['hive'])}\\…\\App Paths)"
+            )
+            FormatCodes.print(f"    [dim]→ {issue['broken_path']}[_]")
+
+        for issue in reg_unins_issues:
             FormatCodes.print(
                 f"  [red](✗) [b|magenta]({issue['display_name']}) [br:magenta]({hive_name(issue['hive'])}\\…\\{issue['subkey']})"
                 f" — {len(issue['broken_values'])} broken path{'' if len(issue['broken_values']) == 1 else 's'}:"
@@ -892,11 +982,12 @@ def show_summary(
                 p = extract_path_from_value(val_data)
                 FormatCodes.print(f"    [dim|br:magenta]{val_name}[_c] → {p or val_data}[_]")
 
-        for issue in app_path_issues:
+        for issue in reg_startup_issues:
+            tail = issue["path"].rsplit("\\", 1)[-1]
             FormatCodes.print(
-                f"  [red](✗) [b|magenta]({issue['subkey']}) [br:magenta]({hive_name(issue['hive'])}\\…\\App Paths)"
+                f"  [red](✗) [b|magenta]({issue['value_name']}) [br:magenta]({hive_name(issue['hive'])}\\…\\{tail})"
             )
-            FormatCodes.print(f"    [dim]→ {issue['broken_path']}[_]")
+            FormatCodes.print(f"    [dim]→ {issue['value_data']}[_]")
 
         print()
 
@@ -961,7 +1052,7 @@ def print_help():
   [br:green](x-clean) [br:blue](--restore="path/to/env_vars_backup.json")
 
 [b](What it cleans:)
-  [magenta](1.) Registry [dim]((uninstall entries, app paths))
+  [magenta](1.) Registry [dim]((app paths, uninstall entries, startup entries))
   [magenta](2.) Environment variables containing non-existent paths
   [magenta](3.) Broken shortcut (.lnk) files [dim]((start menu, startup, desktop))
   [magenta](4.) Temp files [dim]((user temp, system temp, prefetch))
@@ -1061,18 +1152,21 @@ def main():
     FormatCodes.print(f"\n[b|green](✓ Backups saved to:) [br:green]({backup_dir})")
 
     # [3] ────────── SCAN FOR ISSUES ──────────
-    reg_issues: list[dict[str, Any]] = []
-    app_path_issues: list[dict[str, Any]] = []
+    reg_app_path_issues: list[dict[str, Any]] = []
+    reg_unins_issues: list[dict[str, Any]] = []
+    reg_startup_issues: list[dict[str, Any]] = []
     env_issues: dict[str, Any] = {"user": [], "system": []}
     shortcut_issues: list[dict[str, Any]] = []
     temp_info: dict[str, Any] = {"dirs": []}
 
     with Throbber().context("Scanning for issues") as update_label:
         if selected.get("registry"):
-            update_label("Scanning registry uninstall entries")
-            reg_issues = scan_registry_uninstall()
             update_label("Scanning registry App Paths")
-            app_path_issues = scan_registry_app_paths()
+            reg_app_path_issues = scan_registry_app_paths()
+            update_label("Scanning registry uninstall entries")
+            reg_unins_issues = scan_registry_unins_paths()
+            update_label("Scanning registry Run/RunOnce")
+            reg_startup_issues = scan_registry_startup_paths()
 
         if selected.get("envvars"):
             update_label("Scanning environment variables")
@@ -1087,7 +1181,7 @@ def main():
             temp_info = scan_temp_files()
 
     # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
-    show_summary(reg_issues, app_path_issues, env_issues, shortcut_issues, temp_info, selected)
+    show_summary(reg_app_path_issues, reg_unins_issues, reg_startup_issues, env_issues, shortcut_issues, temp_info, selected)
 
     if not Console.confirm("\nProceed with cleanup?", default_is_yes=False):
         FormatCodes.print("\n[dim|br:magenta](✗ [i](Cleanup canceled.))\n")
@@ -1098,8 +1192,8 @@ def main():
 
     all_failures: list[str] = []
 
-    if selected.get("registry") and (reg_issues or app_path_issues):
-        all_failures.extend(execute_registry_cleanup(reg_issues, app_path_issues))
+    if selected.get("registry") and (reg_unins_issues or reg_app_path_issues or reg_startup_issues):
+        all_failures.extend(execute_registry_cleanup(reg_app_path_issues, reg_unins_issues, reg_startup_issues))
 
     if selected.get("envvars") and (env_issues.get("user") or env_issues.get("system")):
         all_failures.extend(execute_env_cleanup(env_issues))
