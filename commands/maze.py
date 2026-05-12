@@ -16,6 +16,30 @@ import time
 import sys
 
 
+ARGS = Console.get_args({"help": {"-h", "--help"}})
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Maze — Play a maze game or generate mazes in the terminal )
+
+[b](Usage:) [br:green](maze)
+
+[b](Controls:)
+  [br:red](ENTER)           Start game in normal mode
+  [br:red](CTRL+ENTER)      Start game in ASCII mode
+  [br:red](SPACE)           Generate maze to a file
+  [br:red](WASD / ⏶⏴⏷⏵)     Move the player
+  [br:red](H)               Toggle solution path
+  [br:red](F)               Finish maze
+  [br:red](CTRL+C)          Exit game
+
+[b](Examples:)
+  [br:green](maze)            [dim](# [i](Start the interactive maze game))
+"""
+    FormatCodes.print(help_text)
+
+
 class Maze:
 
     def __init__(
@@ -373,6 +397,9 @@ class Maze:
 
 
 def main():
+    if ARGS.help.exists:
+        print_help()
+        return
 
     def smart_split(s: str, char: str = " ", /) -> list[str]:
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())

@@ -1047,7 +1047,7 @@ def print_help():
 [b](Usage:) [br:green](x-clean) [br:blue]([options])
 
 [b](Options:)
-  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup json file at [br:blue](PATH)
+  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup JSON file at [br:blue](PATH)
 
 [b](Example:)
   [br:green](x-clean) [br:blue](--restore[dim](=)"path/to/env_vars_backup.json")

@@ -10,7 +10,28 @@ import time
 ARGS = Console.get_args({
     "fast_mode": {"-f", "--fast"},
     "color_mode": {"-c", "--color"},
+    "help": {"-h", "--help"},
 })
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Mess — Display an animated random text character mess )
+
+[b](Usage:) [br:green](mess) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-f), [br:blue](--fast)      Display the mess at maximum speed
+  [br:blue](-c), [br:blue](--color)     Color the mess in random colors
+
+[b](Examples:)
+  [br:green](mess)            [dim](# [i](Show binary mess at normal speed))
+  [br:green](mess) [br:blue](--fast)     [dim](# [i](Show binary mess at maximum speed))
+  [br:green](mess) [br:blue](--color)    [dim](# [i](Show colorful binary mess))
+  [br:green](mess) [br:blue](-f -c)      [dim](# [i](Show colorful binary mess at maximum speed))
+"""
+    FormatCodes.print(help_text)
+
 
 x = ["0", "1"]
 f = ["dim", "bold", "inverse", "underline", "strikethrough", "double-underline"]
@@ -32,10 +53,18 @@ def replace_special(text: str) -> str:
 
 
 def main() -> None:
+    if ARGS.help.exists:
+        print_help()
+        return
+
     while True:
-        line = "".join((f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "")
-                       + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.width))
+        line = "".join(
+            (f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "") \
+            + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.width)
+        )
+
         FormatCodes.print(line)
+
         if not ARGS.fast_mode.exists:
             time.sleep(0.025)
 

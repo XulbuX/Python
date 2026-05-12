@@ -2,7 +2,19 @@
 #[x-cmds]: UPDATE
 """Show the foreground and background colors
 from the current terminal color scheme."""
-from xulbux import FormatCodes
+from xulbux import FormatCodes, Console
+
+
+ARGS = Console.get_args({"help": {"-h", "--help"}})
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Terminal Colors — Show all foreground and background terminal colors )
+
+[b](Usage:) [br:green](terminal-colors)
+"""
+    FormatCodes.print(help_text)
 
 
 SHELL_COLORS = {
@@ -36,4 +48,7 @@ def show_shell_colors():
 
 
 if __name__ == "__main__":
-    show_shell_colors()
+    if ARGS.help.exists:
+        print_help()
+    else:
+        show_shell_colors()

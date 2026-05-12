@@ -4,7 +4,27 @@
 from xulbux import FormatCodes, Console
 
 
-ARGS = Console.get_args({"hex_value": "before"})
+ARGS = Console.get_args({
+    "hex_value": "before",
+    "help": {"-h", "--help"},
+})
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Hex → Percent — Quickly convert a 2-digit HEX value to a percentage )
+
+[b](Usage:) [br:green](hex-percent) [br:cyan](<hex>)
+
+[b](Arguments:)
+  [br:cyan](hex)               2-digit HEX value to convert
+
+[b](Examples:)
+  [br:green](hex-percent) [br:cyan](FF)    [dim](# [i](100% opacity))
+  [br:green](hex-percent) [br:cyan](80)    [dim](# [i](~50% opacity))
+  [br:green](hex-percent) [br:cyan](00)    [dim](# [i](0% opacity))
+"""
+    FormatCodes.print(help_text)
 
 
 def hex_to_percent(hex_val: str) -> float:
@@ -12,15 +32,11 @@ def hex_to_percent(hex_val: str) -> float:
 
 
 def main():
-    hex_val = (
-        ARGS.hex_value.values[0] if ARGS.hex_value.values else Console.input(
-            "\n[b](Enter 2 digit HEX value) (e.g. [br:cyan](FF)) [b](>) ",
-            min_len=2,
-            max_len=2,
-            allowed_chars="0123456789abcdefABCDEF",
-        ).strip().upper()
-    )
-    percent = hex_to_percent(hex_val)
+    if ARGS.help.exists or not ARGS.hex_value.values:
+        print_help()
+        return
+
+    percent = hex_to_percent(ARGS.hex_value.values[0])
     FormatCodes.print(f"\n  [dim|br:white](=)  [white][b]({percent})%[_]\n")
 
 

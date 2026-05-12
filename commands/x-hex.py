@@ -3,7 +3,6 @@
 """Transform all hex color codes in a file or directory:
 uppercase, lowercase, grayscale, hue rotation, inversion, and more."""
 from pathlib import Path
-from typing import Optional
 from xulbux.color import hexa
 from xulbux.regex import LazyRegex
 from xulbux import FormatCodes, Console
@@ -27,8 +26,8 @@ ARGS = Console.get_args({
     "grayscale": {"-g", "--grayscale"},
     "rotate": {"-r", "--rotate"},
     "invert": {"-i", "--invert"},
-    "apply_gitignore": {"--gitignore"},
-    "check": {"--check"},
+    "apply_gitignore": {"-G", "--gitignore"},
+    "check": {"-d", "--dry"},
     "help": {"-h", "--help"},
 })
 
@@ -51,8 +50,8 @@ def print_help():
   [br:blue](-r), [br:blue](--rotate[dim](=)DEG)    Rotate the hue of all hex colors by [br:blue](DEG) degrees [dim]((0–360))
   [br:blue](-i), [br:blue](--invert)        Invert all hex colors
 [b](Options:)
-  [br:blue](--gitignore)         Apply .gitignore rules when scanning directories
-  [br:blue](--check)             Dry-run: show what would change without modifying any files
+  [br:blue](-G), [br:blue](--gitignore)     Apply .gitignore rules when scanning directories
+  [br:blue](-d), [br:blue](--dry)           Dry-run: show what would change without modifying any files
 
 [b](Examples:)
   [br:green](x-hex) [br:cyan]("./styles.css")                 [dim](# [i](Uppercase hex colors in a single file))
@@ -210,13 +209,6 @@ def process_file(
             end="\n",
             exit=False,
         )
-
-
-def path_validator(path: str) -> Optional[str]:
-    if not Path(path).exists():
-        max_w = Console.width - 23
-        str_p = path if (l := len(path)) <= max_w else f"...{path[l - (max_w - 3):]}"
-        return f"Path [i]({str_p}) doesn't exist."
 
 
 def main() -> None:

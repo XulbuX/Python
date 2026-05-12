@@ -9,6 +9,24 @@ import time
 import sys
 
 
+ARGS = Console.get_args({"help": {"-h", "--help"}})
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( Game of Life — Conway's cellular automaton in the terminal )
+
+[b](Usage:) [br:green](life)
+
+[b](Controls:)
+  [br:red](CTRL+C)    Exit the simulation
+
+[b](Examples:)
+  [br:green](life)      [dim](# [i](Start Game of Life with interactive setup))
+"""
+    FormatCodes.print(help_text)
+
+
 class GameOfLife:
 
     def __init__(self):
@@ -112,6 +130,10 @@ class GameOfLife:
 
 
 def main():
+    if ARGS.help.exists:
+        print_help()
+        return
+
     game = GameOfLife()
 
     FormatCodes.print("[b](Choose Initialization)\n"

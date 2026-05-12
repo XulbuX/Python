@@ -7,11 +7,36 @@ from xulbux import FormatCodes, Console
 
 ARGS = Console.get_args({
     "list_items": "before",
-    "separator": {"-s", "--sep", "--separator"},
+    "separator": {"-s", "--sep"},
+    "help": {"-h", "--help"},
 })
 
 
+def print_help():
+    help_text = """
+[b|in|bg:black]( Process List — Process a list of items and display statistics )
+
+[b](Usage:) [br:green](process-list) [br:cyan](<item_1> <item_2> ...) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](items)          List items to process [dim]((space-separated or custom separator using [br:blue](-s)))
+
+[b](Options:)
+  [br:blue](-s), [br:blue](--sep[dim](=)S)    Separator character to split a single input string
+
+[b](Examples:)
+  [br:green](process-list) [br:cyan](1 2 3 4 5)         [dim](# [i](Process a list of numbers))
+  [br:green](process-list) [br:cyan](a b c)             [dim](# [i](Process a list of strings))
+  [br:green](process-list) [br:cyan]("1,2,3") [br:blue](-s[dim](=)',')    [dim](# [i](Process comma-separated values))
+"""
+    FormatCodes.print(help_text)
+
+
 def main() -> None:
+    if ARGS.help.exists:
+        print_help()
+        return
+
     sep = ARGS.separator.get(0, "")
 
     if sep != "":

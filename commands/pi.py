@@ -9,7 +9,11 @@ import time
 import sys
 
 
-ARGS = Console.get_args({"decimal_places": "before"})
+ARGS = Console.get_args({
+    "decimal_places": "before",
+    "help": {"-h", "--help"},
+})
+
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
     5000: 0.175,  # 5K DIGITS
@@ -175,7 +179,27 @@ def pi(decimals: int = 10) -> str:
     return "3." + "".join(str(next(_p)) for _ in range(decimals + 1))[1:]
 
 
+def print_help():
+    help_text = """
+[b|in|bg:black]( Pi — Calculate the value of π to a specified number of decimal places )
+
+[b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](decimals)     Number of decimal places [dim]((default: 10))
+
+[b](Examples:)
+  [br:green](pi)           [dim](# [i](Calculate π to 10 decimal places))
+  [br:green](pi) [br:cyan](10_000)    [dim](# [i](Calculate π to 10,000 decimal places))
+"""
+    FormatCodes.print(help_text)
+
+
 def main() -> None:
+    if ARGS.help.exists:
+        print_help()
+        return
+
     global CALC_DONE
     input_k = (
         int(v) \

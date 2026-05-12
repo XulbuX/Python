@@ -791,7 +791,7 @@ class blade_to_vue:
 def main(args: ParsedArgs):
     get_json(args)
     if DEBUG and not Data.is_equal(_JSON, DEFAULT_JSON, ignore_paths="is_in_env_vars"):
-        Console.debug(f"{JSON_FILE} does not match the default json.")
+        Console.debug(f"{JSON_FILE} does not match the default JSON.")
     add_to_env_vars()
     args = get_missing_args(args)
     if args.filepath.values[0] in (None, ""):

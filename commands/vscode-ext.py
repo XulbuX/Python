@@ -10,7 +10,10 @@ import platform
 import os
 
 
-ARGS = Console.get_args({"as_json": {"-j", "--json"}})
+ARGS = Console.get_args({
+    "as_json": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 def get_common_vscode_locations() -> list[tuple[str, str]]:
@@ -106,7 +109,27 @@ def get_vscode_extensions(executable: str) -> Optional[list[str]]:
         Console.fail(f"Failed to get extensions: {e.stderr}")
 
 
+def print_help():
+    help_text = """
+[b|in|bg:black]( VS Code Extensions — List all installed Visual Studio Code extensions )
+
+[b](Usage:) [br:green](vscode-ext) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-j), [br:blue](--json)    Output as a JSON list
+
+[b](Examples:)
+  [br:green](vscode-ext)           [dim](# [i](List all installed extensions))
+  [br:green](vscode-ext) [br:blue](--json)    [dim](# [i](Output all extension as a JSON list))
+"""
+    FormatCodes.print(help_text)
+
+
 def main() -> None:
+    if ARGS.help.exists:
+        print_help()
+        return
+
     if (vscode_info := find_vscode_executable()) is None:
         FormatCodes.print("[br:red](Visual Studio Code is not installed or could not be found.)")
         raise SystemExit(1)

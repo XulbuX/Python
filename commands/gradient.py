@@ -28,7 +28,7 @@ def print_help():
 [b](Arguments:)
   [br:cyan](color)             Hex colors to create gradient between [dim]((at least 2 required))
 
-[b](Direction:) [dim](only with [br:blue](--hsv) or [br:blue](--oklch) modes)
+[b](Direction:) [dim]((only with [br:blue](--hsv) or [br:blue](--oklch) modes))
   [br:cyan](>)                 Rotate hue clockwise
   [br:cyan](<)                 Rotate hue counterclockwise
   [dim](no arrow)          Use shortest hue path [dim]((default))
@@ -44,8 +44,9 @@ def print_help():
   [br:green](gradient) [br:cyan](F00 00F)                 [dim](# [i](Linear RGB interpolation))
   [br:green](gradient) [br:cyan](F00 00F 0F0)             [dim](# [i](Multicolor linear gradient))
   [br:green](gradient) [br:cyan](F00 00F) [br:blue](--steps[dim](=)5)       [dim](# [i](5 steps total across segments))
-  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)          [dim](# [i](OKLCH with shortest hue path))
-  [br:green](gradient) [br:cyan]("F00 > 00F < 0F0") [br:blue](-H)    [dim](# [i](HSV, multiple colors with directions))
+  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)          [dim](# [i](OKLCH, shortest hue path))
+  [br:green](gradient) [br:cyan]("F00 > 00F") [br:blue](-H)          [dim](# [i](HSV, clockwise hue rotation))
+  [br:green](gradient) [br:cyan]("F00 > 00F < 0F0") [br:blue](-H)    [dim](# [i](HSV, mixed hue directions))
 """
     FormatCodes.print(help_text)
 

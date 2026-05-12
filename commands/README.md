@@ -31,7 +31,7 @@ To run these Python scripts as native commands in your terminal, follow these st
 
 ### Step 1: Download the Files
 
-Download the Python files you want to use, along with the [**`requirements.txt`**](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt) file.<br>
+Download the Python files you want to use, along with the <a title="Click to download" href="https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt">**`requirements.txt`**</a> file.<br>
 Place them all in a single, permanent directory on your computer. We'll call this your *commands-directory*.
 
 > [!IMPORTANT]<br>
@@ -116,13 +116,13 @@ The changes are now active, and you can run the files by typing their names (*e.
 
 ## What each script (*command*) does
 
-Here's a brief overview of what each script does and how to use it.<br>
+Run any command with `-h` or `--help` to see its full usage information.<br>
 **⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
 
 > [!NOTE]<br>
 > If any of the scripts doesn't work (*especially after you updated them to their latest versions*),<br>
 > make sure you have updated all the required dependencies to their latest versions.<br>
-> For that download the latest [**`requirements.txt`**](https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt) file and then follow the [**dependencies installing steps**](#install-dependencies) again.
+> For that download the latest <a title="Click to download" href="https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt">**`requirements.txt`**</a> file and then follow the [**Install Dependencies**](#install-dependencies) steps again.
 
 <br>
 
@@ -426,10 +426,6 @@ x-clean --restore "path/to/env_vars_backup.json"
 This command outputs a list of all custom Python commands in the current directory,<br>
 with a short description (*if provided*) and their params (*if found*).
 
-To check new commands / command-updates and optionally directly download and install them, use the `-u` `--update` option:
-```shell
-x-cmds --update
-```
 ⇾ To adjust some update-checking-options, you can edit the `CONFIG` variable, inside the script file.
 
 #### How the Update System Works

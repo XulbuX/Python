@@ -17,7 +17,7 @@ ARGS = Console.get_args({
     "recursive": {"-r", "--recursive"},
     "exclude_info": {"-e", "--exclude"},
     "skip_type": {"-s", "--skip"},
-    "apply_gitignore": {"-g", "--gitignore"},
+    "apply_gitignore": {"-G", "--gitignore"},
     "help": {"-h", "--help"},
 })
 EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split()}
@@ -28,13 +28,13 @@ def print_help():
     help_text = """
 [b|in|bg:black]( Directory Info — Get details about files in the current directory )
 
-[b](Usage:) [br:green](x-qr) [br:blue]([options])
+[b](Usage:) [br:green](dinfo) [br:blue]([options])
 
 [b](Options:)
   [br:blue](-r), [br:blue](--recursive)    Also scan all subdirectories recursively
   [br:blue](-e), [br:blue](--exclude[dim](=)S)    Exclude parts of the info [dim]((scope, size))
   [br:blue](-s), [br:blue](--skip[dim](=)S)       Skip hidden and/or system items [dim]((hidden, system))
-  [br:blue](-g), [br:blue](--gitignore)    Apply .gitignore rules when scanning files
+  [br:blue](-G), [br:blue](--gitignore)    Apply .gitignore rules when scanning files
 
 [b](Examples:)
   [br:green](dinfo)                         [dim](# [i](Get all directory info, not ignoring any items))

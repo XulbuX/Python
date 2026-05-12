@@ -6,7 +6,10 @@ from xulbux import FormatCodes, Console
 import keyboard
 
 
-ARGS = Console.get_args({"table_cols": {"-c", "--cols", "--columns"}})
+ARGS = Console.get_args({
+    "table_cols": {"-c", "--cols", "--columns"},
+    "help": {"-h", "--help"},
+})
 TABLE_COLS = (
     int(v) \
     if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() \
@@ -26,7 +29,27 @@ def wait_key_pressed_and_released(key: str) -> None:
         pass
 
 
+def print_help():
+    help_text = """
+[b|in|bg:black]( Squares — Calculate the squares of all numbers up to a given number )
+
+[b](Usage:) [br:green](squares) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-c), [br:blue](--cols[dim](=)N)    Number of table columns [dim]((default: 4))
+
+[b](Examples:)
+  [br:green](squares)             [dim](# [i](Calculate squares with 4 columns))
+  [br:green](squares) [br:blue](--cols[dim](=)6)    [dim](# [i](Calculate squares with 6 columns))
+"""
+    FormatCodes.print(help_text)
+
+
 def main():
+    if ARGS.help.exists:
+        print_help()
+        return
+
     FormatCodes.print(
         "═══════════════════ [b](SQUARED NUMBERS — ALL OF THEM!) ═══════════════════\n"
         ">> hold SPACE to pause, while the program is writing down the numbers\n"
