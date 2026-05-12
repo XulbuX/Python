@@ -27,7 +27,7 @@ PROTECTED_PROCESSES_UNIX = {
 
 ARGS = Console.get_args({
     "rm_path": "before",
-    "confirm": {"-c", "--confirm"},
+    "confirmed": {"-y", "--yes"},
     "help": {"-h", "--help"},
 })
 
@@ -39,14 +39,14 @@ def print_help():
 [b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
 
 [b](Arguments:)
-  [br:cyan](path)             The path to the file or directory to delete
+  [br:cyan](path)              The path to the file/directory to delete
 
 [b](Options:)
-  [br:blue](-c), [br:blue](--confirm)    Skip confirmation prompt before deletion
+  [br:blue](-y), [br:blue](--yes[dim](=)PATH)    Skip confirmation prompt for [br:blue](PATH) deletion
 
 [b](Examples:)
-  [br:green](x-rm) [br:cyan]("/path/to/directory")             [dim](# [i](Delete a directory))
-  [br:green](x-rm) [br:cyan]("/path/to/file.txt") [br:blue](--confirm)    [dim](# [i](Delete a file, skipping confirmation))
+  [br:green](x-rm) [br:cyan]("/path/to/directory")      [dim](# [i](Delete a directory))
+  [br:green](x-rm) [br:blue](-y[dim](=)"/path/to/file.txt")    [dim](# [i](Delete a file, skipping confirmation))
 """
     FormatCodes.print(help_text)
 
@@ -63,7 +63,7 @@ def get_protected_processes() -> set[str]:
 
 def take_ownership_windows(path: Path) -> bool:
     """Take ownership of a file/directory on Windows."""
-    FormatCodes.print(f"[b](Taking ownership of [br:cyan]({path})...)")
+    FormatCodes.print(f"[b](Taking ownership of [br:cyan]({path.name})...)")
 
     try:
         # TAKE OWNERSHIP USING 'takeown'
@@ -100,7 +100,7 @@ def take_ownership_windows(path: Path) -> bool:
 
 def remove_attributes_windows(path: Path) -> bool:
     """Remove file attributes on Windows (readonly, system, hidden)."""
-    FormatCodes.print(f"[b](Removing file attributes from [br:cyan]({path})...)")
+    FormatCodes.print(f"[b](Removing file attributes from [br:cyan]({path.name})...)")
 
     try:
         result = subprocess.run(
@@ -124,7 +124,7 @@ def remove_attributes_windows(path: Path) -> bool:
 
 def change_permissions_unix(path: Path) -> bool:
     """Change permissions on Unix systems."""
-    FormatCodes.print(f"[b](Changing permissions for [br:cyan]({path})...)")
+    FormatCodes.print(f"[b](Changing permissions for [br:cyan]({path.name})...)")
 
     try:
         # TRY TO MAKE EVERYTHING WRITABLE
@@ -148,7 +148,7 @@ def change_permissions_unix(path: Path) -> bool:
 
 def unlock_file_macos(path: Path) -> bool:
     """Unlock files on macOS using chflags."""
-    FormatCodes.print(f"[b](Unlocking [br:cyan]({path}) on macOS...)")
+    FormatCodes.print(f"[b](Unlocking [br:cyan]({path.name}) on macOS...)")
 
     try:
         # REMOVE ALL FLAGS INCLUDING USER IMMUTABLE AND SYSTEM IMMUTABLE
@@ -285,7 +285,7 @@ def terminate_process(proc: psutil.Process) -> bool:
 
 def attempt_deletion(path: Path) -> bool:
     """Attempt to delete a path."""
-    FormatCodes.print(f"[b](Deleting [br:cyan]({path})...)")
+    FormatCodes.print(f"[b]Deleting [br:cyan]({path.name})...[_b]")
     try:
         if path.is_file():
             path.unlink()
@@ -310,7 +310,7 @@ def force_delete(path: Path) -> bool:
 
     # TRY TO DELETE WITHOUT TERMINATING PROCESSES
     if attempt_deletion(path):
-        FormatCodes.print(f"[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
+        FormatCodes.print(f"[b|green](✓ Successfully deleted:) [br:cyan|link:file:///{path.resolve()}]({path.name})\n")
         return True
 
     # FIRST TRY ADVANCED DELETION TECHNIQUES
@@ -319,7 +319,7 @@ def force_delete(path: Path) -> bool:
     if try_advanced_deletion_techniques(path):
         time.sleep(0.5)
         if attempt_deletion(path):
-            FormatCodes.print(f"\n[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
+            FormatCodes.print(f"\n[b|green](✓ Successfully deleted:) [br:cyan|link:file:///{path.resolve()}]({path.name})\n")
             return True
 
     # NOW TRY TO FIND PROCESSES USING THE PATH
@@ -358,7 +358,9 @@ def force_delete(path: Path) -> bool:
         else:
             time.sleep(1)
             if attempt_deletion(path):
-                FormatCodes.print(f"\n[b|green](✓ Successfully deleted:) [br:cyan]({path})\n")
+                FormatCodes.print(
+                    f"\n[b|green](✓ Successfully deleted:) [br:cyan|link:file:///{path.resolve()}]({path.name})\n"
+                )
                 return True
 
     # STILL FAILED - GIVE UP :(
@@ -405,14 +407,14 @@ def main():
                 "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
             )
 
-    if len(target_path := "".join(ARGS.rm_path.values)) == 0:
+    if len(target_path := "".join(ARGS.rm_path.values) or ARGS.confirmed.get(0, "")) == 0:
         target_path = Console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
 
     if not (target_path := Path(target_path)).exists():
         Console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
 
-    if not ARGS.confirm.exists and not Console.confirm(
-            f"\n[b](Are you sure you want to delete) [br:cyan]({target_path})[b](?)",
+    if not ARGS.confirmed.exists and not Console.confirm(
+            f"\n[b](Are you sure you want to delete [br:cyan|bg:black]({target_path.name})?)",
             default_is_yes=False,
     ):
         Console.exit("Deletion aborted.", start="\n", end="\n\n", exit_code=0)

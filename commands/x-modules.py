@@ -12,8 +12,8 @@ import re
 
 
 ARGS = Console.get_args({
+    "directory": "before",
     "external_only": {"-e", "--external"},
-    "directory": {"-d", "--dir", "--directory"},
     "recursive": {"-r", "--recursive"},
     "list": {"-l", "--list"},
     "as_json": {"-j", "--json"},
@@ -26,24 +26,26 @@ def print_help():
     help_text = """\
 [b|in|bg:black]( Modules — List all imported modules across scripts )
 
-[b](Usage:) [br:green](modules) [br:blue]([options])
+[b](Usage:) [br:green](x-modules) [br:cyan](<path>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](path)               Directory to scan [dim]((default: script directory))
 
 [b](Options:)
-  [br:blue](-e), [br:blue](--external)          Show only non-standard library modules
-  [br:blue](-d), [br:blue](--directory[dim](=)PATH)    Specify directory to scan [dim]((default: script directory))
-  [br:blue](-r), [br:blue](--recursive)         Scan subdirectories recursively
-  [br:blue](-l), [br:blue](--list)              Output only module names without extra info
-  [br:blue](-j), [br:blue](--json)              Output as JSON format [dim]((ignored if [br:blue](-i) is used))
-  [br:blue](-i), [br:blue](--install)           Install all external modules using pip
+  [br:blue](-e), [br:blue](--external)     Show only non-standard library modules
+  [br:blue](-r), [br:blue](--recursive)    Scan subdirectories recursively
+  [br:blue](-l), [br:blue](--list)         Output only module names without extra info
+  [br:blue](-j), [br:blue](--json)         Output as json format [dim]((ignored if [br:blue](-i) is used))
+  [br:blue](-i), [br:blue](--install)      Install all external modules using pip
 
 [b](Examples:)
-  [br:green](modules)                 [dim](# [i](List all imported modules))
-  [br:green](modules) [br:blue](--external)      [dim](# [i](List only external/third-party modules))
-  [br:green](modules) [br:blue](-d="./src")      [dim](# [i](Scan specific directory))
-  [br:green](modules) [br:blue](-d="./src" -r)   [dim](# [i](Scan directory recursively))
-  [br:green](modules) [br:blue](--list)          [dim](# [i](Output only the list of module names))
-  [br:green](modules) [br:blue](--json)          [dim](# [i](Output as JSON format))
-  [br:green](modules) [br:blue](--install)       [dim](# [i](Install all external modules))
+  [br:green](x-modules)               [dim](# [i](List all imported modules in script directory))
+  [br:green](x-modules) [br:cyan]("./src")       [dim](# [i](Scan specific directory))
+  [br:green](x-modules) [br:cyan]("./src") [br:blue](-r)    [dim](# [i](Scan directory recursively))
+  [br:green](x-modules) [br:blue](--external)    [dim](# [i](List only external/third-party modules))
+  [br:green](x-modules) [br:blue](--list)        [dim](# [i](Output only the list of module names))
+  [br:green](x-modules) [br:blue](--json)        [dim](# [i](Output as JSON format))
+  [br:green](x-modules) [br:blue](--install)     [dim](# [i](Install all external modules))
 """
     FormatCodes.print(help_text)
 
@@ -199,7 +201,7 @@ def main() -> None:
         return
 
     external_only = ARGS.external_only.exists or ARGS.install.exists
-    directory = Path(v).expanduser().resolve() if (v := ARGS.directory.get(0)) else FileSys.script_dir
+    directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else FileSys.script_dir
 
     with Throbber().context():
         modules = get_all_modules(

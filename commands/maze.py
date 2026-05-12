@@ -471,8 +471,8 @@ def main():
                 ]
 
             Console.log_box_bordered(
-                f"[br:blue]Saved maze to [b]{files[0]}[_b] [[i]{sizes[0]}[_i]]",
-                f"[br:blue]Saved solution to [b]{files[1]}[_b] [[i]{sizes[1]}[_i]]",
+                f"[br:blue]Saved maze to [b|link:file:///{files[0].resolve()}]({files[0].name}) [[i]({sizes[0]})]",
+                f"[br:blue]Saved solution to [b|link:file:///{files[1].resolve()}]({files[1].name}) [[i]({sizes[1]})]",
                 border_style="dim|br:blue",
                 end="\n\n",
             )

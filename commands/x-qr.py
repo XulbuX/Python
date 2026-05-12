@@ -42,7 +42,7 @@ def print_help():
 
 [b](Examples:)
   [br:green](x-qr) [br:cyan]("Hello World")                      [dim](# [i](QR code which contains simple text))
-  [br:green](x-qr) [br:cyan]("https://example.com") [br:blue](--scale=2)    [dim](# [i](Larger QR code))
+  [br:green](x-qr) [br:cyan]("https://example.com") [br:blue](--scale[dim](=)2)    [dim](# [i](Larger QR code))
   [br:green](x-qr) [br:cyan]("John Doe") [br:blue](--contact)               [dim](# [i](Contact QR code))
   [br:green](x-qr) [br:cyan]("MyNetwork") [br:blue](--wifi)                 [dim](# [i](WiFi QR code))
   [br:green](x-qr) [br:blue](--wifi)                             [dim](# [i](WiFi QR code for detected networks))

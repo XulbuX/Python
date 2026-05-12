@@ -41,12 +41,12 @@ def print_help():
   [br:cyan](base_dir)               Base directory to generate tree from [dim]((default: CWD))
 
 [b](Options:)
-  [br:blue](-i), [br:blue](--ignore-dirs[dim](=)S)    Directories to ignore [dim]((abs paths / rel paths / dir names, separated by [br:cyan](|)))
+  [br:blue](-i), [br:blue](--ignore-dirs[dim](=)S)    Directories to ignore [dim]((directory paths/names, separated by [br:cyan](|)))
   [br:blue](-n), [br:blue](--no-progress)      Disable progress display during tree generation
   [br:blue](-d), [br:blue](--default)          Use all default settings without prompts
 
 [b](Examples:)
-  [br:green](x-tree) [br:blue](-i="/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
+  [br:green](x-tree) [br:blue](-i[dim](=)"/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
   [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
   [br:green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
 """
@@ -922,7 +922,7 @@ def main():
             else:
                 Console.exit()
         if file:
-            Console.done(f"[white|link:file:///{str(file.resolve())}]({file.name}) successfully created.", start=cls_line, end="\n\n")
+            Console.done(f"[white|link:file:///{file.resolve()}]({file.name}) successfully created.", start=cls_line, end="\n\n")
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:

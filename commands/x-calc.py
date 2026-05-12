@@ -317,8 +317,8 @@ def print_help():
 
 [b](Examples:)
   [br:green](x-calc) [br:cyan]("2 + 2 * 2")                                [dim](# [i](Simple arithmetic))
-  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans=6)                          [dim](# [i](Using the 'ans' constant))
-  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p=1000)    [dim](# [i](High precision with functions and constants))   
+  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans[dim](=)6)                          [dim](# [i](Using the 'ans' constant))
+  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p[dim](=)1000)    [dim](# [i](High precision with functions and constants))   
 
 [b](Possible operators:)
 {o_list}

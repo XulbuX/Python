@@ -20,12 +20,12 @@ To run these Python scripts as native commands in your terminal, follow these st
 > Before you begin, ensure you have Python installed and **added to your system's PATH**.<br>
 > This is crucial for the commands to be recognized and executed.
 > 
->  * **Windows:** make sure to check the box `Add Python to PATH`<br>
->    and if possible `Install for all users` during the installation of Python.<br>
->    Verify Python is in your PATH by typing `python --version` or `py --version` in your terminal.
+> *   **Windows:** make sure to check the box `Add Python to PATH`<br>
+>     and if possible `Install for all users` during the installation of Python.<br>
+>     Verify Python is in your PATH by typing `python --version` or `py --version` in your terminal.
 > 
->  * **macOS and Linux:** Python is often pre-installed, but you should verify<br>
->    it's in your PATH by typing `python3 --version` in your terminal.
+> *   **macOS and Linux:** Python is often pre-installed, but you should verify<br>
+>     it's in your PATH by typing `python3 --version` in your terminal.
 
 <br>
 
@@ -37,13 +37,13 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 > [!IMPORTANT]<br>
 > The way you prepare the files depends on your operating system:
 >
->  * **Windows:** You can leave the `.py` or `.pyw` extension on the files.<br>
->    As long as both `PY` and `PYW` are in your system's `PATHEXT` environment variable<br>
->    (*which is the default*), you can run the commands without typing `.py`.
+> *   **Windows:** You can leave the `.py` or `.pyw` extension on the files.<br>
+>     As long as both `PY` and `PYW` are in your system's `PATHEXT` environment variable<br>
+>     (*which is the default*), you can run the commands without typing `.py`.
 >
->  * **macOS and Linux:** You **must remove the `.py` or `.pyw` extension** from the script files.<br>
->    For example, rename `x-cmds.py` to `x-cmds`.<br>
->    This allows the operating system to execute them as native commands.
+> *   **macOS and Linux:** You **must remove the `.py` or `.pyw` extension** from the script files.<br>
+>     For example, rename `x-cmds.py` to `x-cmds`.<br>
+>     This allows the operating system to execute them as native commands.
 
 <br>
 
@@ -53,15 +53,15 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 
 Before the scripts can run, you need to install their required Python packages. 📦
 
-1. Open your terminal.
-2. Navigate to your *commands-directory* using the `cd` command.
-   ```shell
-   cd "/path/to/your/commands-directory"
-   ```
-3. Install the dependencies using pip:
-   ```shell
-   py -m pip install --upgrade -r "requirements.txt"
-   ```
+1.  Open your terminal.
+2.  Navigate to your *commands-directory* using the `cd` command.
+    ```shell
+    cd "/path/to/your/commands-directory"
+    ```
+3.  Install the dependencies using pip:
+    ```shell
+    py -m pip install --upgrade -r "requirements.txt"
+    ```
 
 <br>
 
@@ -71,36 +71,36 @@ This makes your commands available from any location in your terminal. ⚙️
 
 #### Windows:
 
-* **Add the *commands-directory* to your system's `Path` environment variable:**
-  1. Open the Start Menu, search for "Environment Variables", and select `Edit the system environment variables`.
-  2. In the `System Properties` window, click `Environment Variables...`.
-  3. Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
-  4. Click `New` and paste in the absolute path to your *commands-directory*.
-  5. Click `OK` to close all dialogs.
-* **Assure correct file associations for `.py` and `.pyw` files:**
-   1. In the File Explorer, right-click on any `.py` file and select `Open with` > `Choose another app`.
-   2. Scroll all the way down and click `Choose an app on your PC`.
-   3. Navigate to your Python installation directory (*e.g.* `C:\Program Files\Python\`), select `python.exe`, and click `Open`.
-   4. Now click on `Always` to set Python as the default app for `.py` files.
-   5. Lastly, repeat the same steps for a <code>.py**w**</code> file, but select <code>python**w**.exe</code> instead of `python.exe` under step 3.
+*   **Add the *commands-directory* to your system's `Path` environment variable:**
+    1.  Open the Start Menu, search for "Environment Variables", and select `Edit the system environment variables`.
+    2.  In the `System Properties` window, click `Environment Variables...`.
+    3.  Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
+    4.  Click `New` and paste in the absolute path to your *commands-directory*.
+    5.  Click `OK` to close all dialogs.
+*   **Assure correct file associations for `.py` and `.pyw` files:**
+    1.  In the File Explorer, right-click on any `.py` file and select `Open with` > `Choose another app`.
+    2.  Scroll all the way down and click `Choose an app on your PC`.
+    3.  Navigate to your Python installation directory (*e.g.* `C:\Program Files\Python\`), select `python.exe`, and click `Open`.
+    4.  Now click on `Always` to set Python as the default app for `.py` files.
+    5.  Lastly, repeat the same steps for a <code>.py**w**</code> file, but select <code>python**w**.exe</code> instead of `python.exe` under step 3.
 
 
 #### macOS and Linux:
 
-* **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
-  (*Note: This is already done for you in all the repository's files.*)
-* **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
-  ```shell
-  chmod +x "/path/to/your/commands-directory/*"
-  ```
-* **Add the directory to your terminal's PATH:**
-   1. For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
-   2. For most **Linux** distributions, edit `~/.bashrc`.
-   3. Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
-      ```shell
-      export PATH="$PATH:/path/to/your/commands-directory"
-      ```
-   4. Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
+*   **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
+    (*Note: This is already done for you in all the repository's files.*)
+*   **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
+    ```shell
+    chmod +x "/path/to/your/commands-directory/*"
+    ```
+*   **Add the directory to your terminal's PATH:**
+    1.  For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
+    2.  For most **Linux** distributions, edit `~/.bashrc`.
+    3.  Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
+        ```shell
+        export PATH="$PATH:/path/to/your/commands-directory"
+        ```
+    4.  Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
 
 <br>
 
@@ -129,32 +129,18 @@ Here's a brief overview of what each script does and how to use it.<br>
 ### `_`
 
 This is a better version of the `cls` or `clear` command to clear your terminal for a few reasons:<br>
- * the command `_` is faster to type
- * the command actually **clears** the terminal and doesn't just scroll the content up
- * the command also resets all the color and style formats
-
-<br>
-
-### `capitalize-hex`
-
-This command will capitalize all found HEX colors in the given file or directory.
-
-The path to the file or directory containing files can be directly given as an argument:
-```shell
-capitalize-hex "/path/to/file"
-```
-```shell
-capitalize-hex "/path/to/directory"
-```
+*   the command `_` is faster to type
+*   the command actually **clears** the terminal and doesn't just scroll the content up
+*   the command also resets all the color and style formats
 
 <br>
 
 ### `dinfo`
 
 This command will give you the following info about the files in your current working directory (`cwd`):
- * the files count
- * the total files scope (*lines count from all the files with text in them*)
- * the total size of the files
+*   the files count
+*   the total files scope (*lines count from all the files with text in them*)
+*   the total size of the files
 
 To also scan all subdirectories recursively, use the `-r` `--recursive` option:
 ```shell
@@ -284,18 +270,18 @@ The maze will adjust itself to the dimensions of your terminal after each new ma
 ### `mess`
 
 This command will display an animated, random text character mess in your terminal with a few options for customizing:
-1. By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
-   ```shell
-   mess --color
-   ```
-3. Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
-   ```shell
-   mess --fast
-   ```
-3. You can also make the matrix in color and move fast, by applying both options:
-   ```shell
-   mess -c -f
-   ```
+1.  By standard, the matrix symbols are not colored. With the option `-c` `--color` you can make them in random colors:
+    ```shell
+    mess --color
+    ```
+3.  Normally, the matrix moves rather slowly, but with the option `-s` `--speed` or `-f` `--fast`, it will move very fast:
+    ```shell
+    mess --fast
+    ```
+3.  You can also make the matrix in color and move fast, by applying both options:
+    ```shell
+    mess -c -f
+    ```
 
 <br>
 
@@ -450,19 +436,40 @@ x-cmds --update
 
 The update system is designed to keep managed commands up-to-date while protecting your custom files:
 
- * **Managed Commands:** Only files with the comment `#[x-cmds]: UPDATE` at the top (*after the shebang*) are checked for updates.<br>
-   These commands can be automatically updated or deleted if they're removed from the repository.
+*   **Managed Commands:** Only files with the comment `#[x-cmds]: UPDATE` at the top (*after the shebang*) are checked for updates.<br>
+    These commands can be automatically updated or deleted if they're removed from the repository.
 
- * **User Commands:** Files **without** the `#[x-cmds]: UPDATE` marker are considered user-created and<br>
-   will **never** be modified or deleted by the update system, keeping your custom commands safe.
+*   **User Commands:** Files **without** the `#[x-cmds]: UPDATE` marker are considered user-created and<br>
+    will **never** be modified or deleted by the update system, keeping your custom commands safe.
 
- * **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>
-   merges all available commands, and detects three types of changes:
-   - **New commands** - available in the repository but not locally
-   - **Updated commands** - local managed commands with content changes
-   - **Deleted commands** - local managed commands no longer in any repository
+*   **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>
+    merges all available commands, and detects three types of changes:
+    -   **New commands** - available in the repository but not locally
+    -   **Updated commands** - local managed commands with content changes
+    -   **Deleted commands** - local managed commands no longer in any repository
 
 This approach allows you to safely add your own commands to the directory while still benefiting from automatic updates.
+
+<br>
+
+### `x-hex`
+
+This command transforms all found HEX color codes in a file or directory.<br>
+The path to the file or directory is given directly as an argument, followed by one of the operation flags:
+*   `-u` `--upper` – uppercase all hex colors
+*   `-l` `--lower` – lowercase all hex colors
+*   `-g` `--grayscale` – convert all hex colors to grayscale
+*   `-r` `--rotate=DEG` – rotate the hue of all hex colors by DEG degrees *(0–360)*
+*   `-i` `--invert` – invert all hex colors
+
+```shell
+x-hex "/path/to/file-or-directory" --grayscale
+```
+
+To show help for the command, use the `-h` `--help` option:
+```shell
+x-hex --help
+```
 
 <br>
 
@@ -555,8 +562,8 @@ x-modules --help
 ### `x-qr`
 
 This command lets you quickly generate QR codes directly within the terminal. You also have options for generating different special QR codes:
- * Wi-Fi QR codes
- * Contact QR codes
+*   Wi-Fi QR codes
+*   Contact QR codes
 
 These special QR codes can be generated with the options `-w` `--wifi` and `-c` `--contact`:
 ```shell
@@ -597,11 +604,11 @@ x-rm --help
 ### `x-tree`
 
 This command generates an advanced directory tree. You have the following options when running the command:
- * directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
- * display the contents of the files (*utf-8*) directly included in the tree
- * choose between different tree styles
- * set the tree's indentation size
- * output the tree into a file (*if it's too large to fit inside the terminal history*)
+*   directories to ignore in the tree (*just writes `...` instead of that directory's contents*)
+*   display the contents of the files (*utf-8*) directly included in the tree
+*   choose between different tree styles
+*   set the tree's indentation size
+*   output the tree into a file (*if it's too large to fit inside the terminal history*)
 
 The directories to ignore can also be given directly via the option `-i` `--ignore` (*absolute paths, relative paths or directory names, separated by* `|`):
 ```shell

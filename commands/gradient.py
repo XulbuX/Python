@@ -43,7 +43,7 @@ def print_help():
 [b](Examples:)
   [br:green](gradient) [br:cyan](F00 00F)                 [dim](# [i](Linear RGB interpolation))
   [br:green](gradient) [br:cyan](F00 00F 0F0)             [dim](# [i](Multicolor linear gradient))
-  [br:green](gradient) [br:cyan](F00 00F) [br:blue](--steps=5)       [dim](# [i](5 steps total across segments))
+  [br:green](gradient) [br:cyan](F00 00F) [br:blue](--steps[dim](=)5)       [dim](# [i](5 steps total across segments))
   [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)          [dim](# [i](OKLCH with shortest hue path))
   [br:green](gradient) [br:cyan]("F00 > 00F < 0F0") [br:blue](-H)    [dim](# [i](HSV, multiple colors with directions))
 """

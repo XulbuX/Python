@@ -592,7 +592,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
     backup_file = backup_dir / "env_vars_backup.json"
     try:
         backup_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        FormatCodes.print(f"  [green](✓) Saved env vars [dim]({backup_file})")
+        FormatCodes.print(f"  [green](✓) Saved env vars [dim|link:file:///{backup_file.resolve()}]({backup_file.name})")
         return True
     except Exception as exc:
         FormatCodes.print(f"  [red](✗ Failed to save env vars backup:)\n    {exc}")
@@ -608,7 +608,7 @@ def restore_env_vars(backup_path: Path) -> None:
         Console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n")
         return
 
-    FormatCodes.print(f"\n[b](Loading backup from [br:cyan]({backup_path})[b]…)")
+    FormatCodes.print(f"\n[b](Loading backup from [br:cyan|link:file:///{backup_path.resolve()}]({backup_path.name})[b]…)")
 
     try:
         data = json.loads(backup_path.read_text(encoding="utf-8"))
@@ -897,7 +897,9 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
     for dir_info in temp_info["dirs"]:
         label = dir_info["label"]
         dir_path: Path = dir_info["path"]
-        FormatCodes.print(f"\n  [b]({label}:) [dim]{dir_path}[_]")
+        FormatCodes.print(
+            f"\n  [b]({label}:) [dim|link:file:///{dir_path.resolve()}]({dir_path.parent.name}/{dir_path.name})[_]"
+        )
 
         deleted = 0
         failed = 0
@@ -1045,11 +1047,10 @@ def print_help():
 [b](Usage:) [br:green](x-clean) [br:blue]([options])
 
 [b](Options:)
-  [br:blue](-h), [br:blue](--help)            Show this help message
-  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup JSON file
+  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup json file at [br:blue](PATH)
 
-[b](Restore example:)
-  [br:green](x-clean) [br:blue](--restore="path/to/env_vars_backup.json")
+[b](Example:)
+  [br:green](x-clean) [br:blue](--restore[dim](=)"path/to/env_vars_backup.json")
 
 [b](What it cleans:)
   [magenta](1.) Registry [dim]((app paths, uninstall entries, startup entries))
@@ -1143,13 +1144,15 @@ def main():
     if not backup_ok:
         Console.fail(
             f"[red](Some backups failed! Aborting for safety.)"
-            f"\n  [dim|br:red](Backup directory: {backup_dir})",
+            f"\n  [dim|br:red](Backup directory: [link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name}))",
             start="\n",
             end="\n\n",
         )
         return
 
-    FormatCodes.print(f"\n[b|green](✓ Backups saved to:) [br:green]({backup_dir})")
+    FormatCodes.print(
+        f"\n[b|green](✓ Backups saved to:) [br:green|link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name})"
+    )
 
     # [3] ────────── SCAN FOR ISSUES ──────────
     reg_app_path_issues: list[dict[str, Any]] = []
@@ -1209,7 +1212,7 @@ def main():
     if not all_failures:
         FormatCodes.print(
             "\n[b|green](✓ Cleanup completed successfully!)\n\n"
-            f"  [dim](Backups are at: [br:green]({backup_dir}))\n\n"
+            f"  [dim](Backups are at: [br:green|link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name}))\n\n"
         )
     else:
         FormatCodes.print(
@@ -1217,7 +1220,9 @@ def main():
         )
         for msg in all_failures:
             FormatCodes.print(f"  [red](✗) [br:red]{msg}[_]")
-        FormatCodes.print(f"\n\n  [dim](Backups are at: [br:green]({backup_dir}))\n\n")
+        FormatCodes.print(
+            f"\n\n  [dim](Backups are at: [br:green|link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name}))\n\n"
+        )
 
 
 if __name__ == "__main__":

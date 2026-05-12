@@ -36,7 +36,7 @@ def print_help():
 [b](Examples:)
   [br:green](rand) [br:cyan](10)                 [dim](# [i](Generate a random number with 10 digits))
   [br:green](rand) [br:cyan](-100 100)           [dim](# [i](Generate a random number between -100 and 100))
-  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen=3)    [dim](# [i](Generate 3 random numbers with 5 digits))
+  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen[dim](=)3)    [dim](# [i](Generate 3 random numbers with 5 digits))
   [br:green](rand) [br:cyan](10) [br:blue](--format)        [dim](# [i](Generate a comma-formatted random number with 10 digits))
 """
     FormatCodes.print(help_text)

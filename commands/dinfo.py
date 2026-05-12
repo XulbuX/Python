@@ -38,8 +38,8 @@ def print_help():
 
 [b](Examples:)
   [br:green](dinfo)                         [dim](# [i](Get all directory info, not ignoring any items))
-  [br:green](dinfo) [br:blue](-e='scope')              [dim](# [i](Exclude scope info))
-  [br:green](dinfo) [br:blue](-s="hidden system")      [dim](# [i](Skip hidden and system items))
+  [br:green](dinfo) [br:blue](-e[dim](=)'scope')              [dim](# [i](Exclude scope info))
+  [br:green](dinfo) [br:blue](-s[dim](=)"hidden system")      [dim](# [i](Skip hidden and system items))
   [br:green](dinfo) [br:blue](--gitignore)             [dim](# [i](Apply .gitignore rules when scanning files))
 """
     FormatCodes.print(help_text)

@@ -31,6 +31,7 @@ def print_help():
 [b](Examples:)
   [br:green](x-ip)                   [dim](# [i](Show basic IP info))
   [br:green](x-ip) [br:blue](--geo)             [dim](# [i](Show IP with location))
+  [br:green](x-ip) [br:blue](-p[dim](=)ipapi)          [dim](# [i](Use ipapi as the IP provider))
   [br:green](x-ip) [br:blue](--json)            [dim](# [i](Output as JSON))
 """
     FormatCodes.print(help_text)
