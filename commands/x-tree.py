@@ -49,6 +49,13 @@ def print_help():
   [br:green](x-tree) [br:blue](-i[dim](=)"/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
   [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
   [br:green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
+
+[b](Prompts:) [dim]((interactive — press Enter for defaults, or use [br:blue](-d) to skip all))
+  [i|dim](1)  Directories to ignore
+  [i|dim](2)  Include file contents in tree
+  [i|dim](3)  Tree style
+  [i|dim](4)  Indentation size
+  [i|dim](5)  Output tree to file
 """
     FormatCodes.print(help_text)
 

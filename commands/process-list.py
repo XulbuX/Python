@@ -28,6 +28,8 @@ def print_help():
   [br:green](process-list) [br:cyan](1 2 3 4 5)         [dim](# [i](Process a list of numbers))
   [br:green](process-list) [br:cyan](a b c)             [dim](# [i](Process a list of strings))
   [br:green](process-list) [br:cyan]("1,2,3") [br:blue](-s[dim](=)',')    [dim](# [i](Process comma-separated values))
+
+[b](Note:)  When all items are numbers, min, max, sum and average are also shown.
 """
     FormatCodes.print(help_text)
 

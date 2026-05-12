@@ -7,7 +7,7 @@ import keyboard
 
 
 ARGS = Console.get_args({
-    "table_cols": {"-c", "--cols", "--columns"},
+    "table_cols": {"-c", "--cols"},
     "help": {"-h", "--help"},
 })
 TABLE_COLS = (

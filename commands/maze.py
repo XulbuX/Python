@@ -26,16 +26,16 @@ def print_help():
 [b](Usage:) [br:green](maze)
 
 [b](Controls:)
-  [br:red](ENTER)           Start game in normal mode
-  [br:red](CTRL+ENTER)      Start game in ASCII mode
-  [br:red](SPACE)           Generate maze to a file
-  [br:red](WASD / ⏶⏴⏷⏵)     Move the player
-  [br:red](H)               Toggle solution path
-  [br:red](F)               Finish maze
-  [br:red](CTRL+C)          Exit game
+  [br:red](ENTER)          Start game in normal mode
+  [br:red](CTRL+ENTER)     Start game in ASCII mode
+  [br:red](SPACE)          Generate maze to a file
+  [br:red](WASD / ⏶⏴⏷⏵)    Move the player
+  [br:red](H)              Toggle solution path
+  [br:red](F)              Finish maze
+  [br:red](CTRL+C)         Exit game
 
 [b](Examples:)
-  [br:green](maze)            [dim](# [i](Start the interactive maze game))
+  [br:green](maze)    [dim](# [i](Start the interactive maze game))
 """
     FormatCodes.print(help_text)
 

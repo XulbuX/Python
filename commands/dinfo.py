@@ -32,7 +32,7 @@ def print_help():
 
 [b](Options:)
   [br:blue](-r), [br:blue](--recursive)    Also scan all subdirectories recursively
-  [br:blue](-e), [br:blue](--exclude[dim](=)S)    Exclude parts of the info [dim]((scope, size))
+  [br:blue](-e), [br:blue](--exclude[dim](=)S)    Exclude parts of the info [dim]((scope, size — count is always included))
   [br:blue](-s), [br:blue](--skip[dim](=)S)       Skip hidden and/or system items [dim]((hidden, system))
   [br:blue](-G), [br:blue](--gitignore)    Apply .gitignore rules when scanning files
 
