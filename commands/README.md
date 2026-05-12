@@ -3,7 +3,7 @@
 This directory contains quite a few Python files, which are supposed<br>
 to be run as commands in the terminal and do some useful stuff.
 
-**[Figure out what each script (*command*) does.](#what-each-cmd-does)**
+**[Some commands described in more detail.](#cmd-details)**
 
 <br>
 <br>
@@ -112,9 +112,9 @@ The changes are now active, and you can run the files by typing their names (*e.
 <br>
 <br>
 
-<span id="what-each-cmd-does" />
+<span id="cmd-details" />
 
-## What each script (*command*) does
+## Some Commands in More Detail
 
 Run any command with `-h` or `--help` to see its full usage information.<br>
 **⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
@@ -129,9 +129,9 @@ Run any command with `-h` or `--help` to see its full usage information.<br>
 ### `_`
 
 This is a better version of the `cls` or `clear` command to clear your terminal for a few reasons:<br>
-*   the command `_` is faster to type
-*   the command actually **clears** the terminal and doesn't just scroll the content up
-*   the command also resets all the color and style formats
+*   The command `_` is faster to type.
+*   The command actually **clears** the terminal and doesn't just scroll the content up.
+*   The command also resets all the color and style formats.
 
 <br>
 
@@ -150,12 +150,12 @@ The update system is designed to keep managed commands up-to-date while protecti
     These commands can be automatically updated or deleted if they're removed from the repository.
 
 *   **User Commands:** Files **without** the `#[x-cmds]: UPDATE` marker are considered user-created and<br>
-    will **never** be modified or deleted by the update system, keeping your custom commands safe.
+    will **never** be modified or deleted by the update system, keeping your own custom commands safe.
 
 *   **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>
     merges all available commands, and detects three types of changes:
-    -   **New commands** - available in the repository but not locally
-    -   **Updated commands** - local managed commands with content changes
-    -   **Deleted commands** - local managed commands no longer in any repository
+    -   **New commands** – available in the repository but not locally
+    -   **Updated commands** – local managed commands with content changes
+    -   **Deleted commands** – local managed commands no longer in any repository
 
 This approach allows you to safely add your own commands to the directory while still benefiting from automatic updates.
