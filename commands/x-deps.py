@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
-"""List all modules imported across Python files in the script directory.
-Can filter to show only non-standard library modules."""
+"""List all library dependencies imported across Python files in the script directory.
+Filters out local project modules, showing only installable packages."""
 from pathlib import Path
 from typing import Optional
 from xulbux.console import Throbber
@@ -24,28 +24,28 @@ ARGS = Console.get_args({
 
 def print_help():
     help_text = """\
-[b|in|bg:black]( Modules — List all imported modules across scripts )
+[b|in|bg:black]( Deps — List all library dependencies across scripts )
 
-[b](Usage:) [br:green](x-modules) [br:cyan](<path>) [br:blue]([options])
+[b](Usage:) [br:green](x-deps) [br:cyan](<path>) [br:blue]([options])
 
 [b](Arguments:)
   [br:cyan](path)               Directory to scan [dim]((default: script directory))
 
 [b](Options:)
-  [br:blue](-e), [br:blue](--external)     Show only non-standard library modules
+  [br:blue](-e), [br:blue](--external)     Show only non-standard library dependencies
   [br:blue](-r), [br:blue](--recursive)    Scan subdirectories recursively
-  [br:blue](-l), [br:blue](--list)         Output only module names without extra info
+  [br:blue](-l), [br:blue](--list)         Output only dependency names without extra info
   [br:blue](-j), [br:blue](--json)         Output as json format [dim]((ignored if [br:blue](-i) is used))
-  [br:blue](-i), [br:blue](--install)      Install all external modules using pip
+  [br:blue](-i), [br:blue](--install)      Install all external dependencies using pip
 
 [b](Examples:)
-  [br:green](x-modules)               [dim](# [i](List all imported modules in script directory))
-  [br:green](x-modules) [br:cyan]("./src")       [dim](# [i](Scan specific directory))
-  [br:green](x-modules) [br:cyan]("./src") [br:blue](-r)    [dim](# [i](Scan directory recursively))
-  [br:green](x-modules) [br:blue](--external)    [dim](# [i](List only external/third-party modules))
-  [br:green](x-modules) [br:blue](--list)        [dim](# [i](Output only the list of module names))
-  [br:green](x-modules) [br:blue](--json)        [dim](# [i](Output as JSON format))
-  [br:green](x-modules) [br:blue](--install)     [dim](# [i](Install all external modules))
+  [br:green](x-deps)               [dim](# [i](List all dependencies in script directory))
+  [br:green](x-deps) [br:cyan]("./src")       [dim](# [i](Scan specific directory))
+  [br:green](x-deps) [br:cyan]("./src") [br:blue](-r)    [dim](# [i](Scan directory recursively))
+  [br:green](x-deps) [br:blue](--external)    [dim](# [i](List only external/third-party dependencies))
+  [br:green](x-deps) [br:blue](--list)        [dim](# [i](Output only the list of dependency names))
+  [br:green](x-deps) [br:blue](--json)        [dim](# [i](Output as JSON format))
+  [br:green](x-deps) [br:blue](--install)     [dim](# [i](Install all external dependencies))
 """
     FormatCodes.print(help_text)
 
@@ -80,12 +80,28 @@ def extract_imports(file_path: Path) -> set[str]:
     return imports
 
 
+def get_local_module_names(directory: Path) -> set[str]:
+    """Collect all local Python module names (file stems and package dirs) in the tree."""
+    names: set[str] = set()
+    try:
+        for item in directory.rglob("*"):
+            if item.is_file() and item.suffix in (".py", ".pyw"):
+                names.add(item.stem)
+            elif item.is_dir() and (item / "__init__.py").exists():
+                names.add(item.name)
+    except PermissionError:
+        pass
+    return names
+
+
 def get_all_modules(directory: Path, recursive: bool = False, external_only: bool = False) -> dict[str, list[str]]:
     """Get all modules used across Python files, grouped by module name."""
     module_usage: dict[str, list[str]] = {}
 
     if not directory.is_dir():
         raise ValueError(f"Directory not found: {directory}")
+
+    local_modules = get_local_module_names(directory)
 
     def scan_directory(dir_path: Path, base_path: Optional[Path] = None):
         """Scan a directory for Python files and extract imports."""
@@ -95,6 +111,8 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
             for full_path in dir_path.iterdir():
                 if full_path.is_file() and full_path.suffix in (".py", ".pyw"):
                     for module in extract_imports(full_path):
+                        if module in local_modules:
+                            continue
                         if external_only and module in set(sys.stdlib_module_names):
                             continue
                         if module not in module_usage:
