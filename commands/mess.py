@@ -13,6 +13,11 @@ ARGS = Console.get_args({
     "help": {"-h", "--help"},
 })
 
+rand_choice = random.choice
+rand_bits = random.getrandbits
+fc_print = FormatCodes.print
+sleep = time.sleep
+
 
 def print_help():
     help_text = """
@@ -52,21 +57,46 @@ def replace_special(text: str) -> str:
     return text.replace("randomCL", random_hexa()).replace("randomBG", f"BG:{random_hexa()}")
 
 
+def rand_binary_line() -> str:
+    return "".join(
+        (f"[{rand_choice(f)}]" if rand_bits(1) else "") \
+        + (rand_choice(x) if rand_bits(1) else " ")
+        + "[_]"
+        for _ in range(Console.width)
+    )
+
+
+def rand_color_binary_line() -> str:
+    return "".join(
+        (f"[{replace_special(rand_choice(f))}]" if rand_bits(1) else "") \
+        + (rand_choice(x) if rand_bits(1) else " ")
+        + "[_]"
+        for _ in range(Console.width)
+    )
+
+
 def main() -> None:
     if ARGS.help.exists:
         print_help()
         return
 
-    while True:
-        line = "".join(
-            (f"[{replace_special(random.choice(f))}]" if random.randint(0, 1) == 1 else "") \
-            + (random.choice(x) if random.randint(0, 1) == 1 else " ") + "[_]" for _ in range(Console.width)
-        )
+    if ARGS.color_mode.exists:
+        if ARGS.fast_mode.exists:
+            while True:
+                fc_print(rand_color_binary_line())
+        else:
+            while True:
+                fc_print(rand_color_binary_line())
+                sleep(0.025)
 
-        FormatCodes.print(line)
-
-        if not ARGS.fast_mode.exists:
-            time.sleep(0.025)
+    else:
+        if ARGS.fast_mode.exists:
+            while True:
+                fc_print(rand_binary_line())
+        else:
+            while True:
+                fc_print(rand_binary_line())
+                sleep(0.025)
 
 
 if __name__ == "__main__":
