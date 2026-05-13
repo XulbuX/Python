@@ -35,10 +35,10 @@ class GameOfLife:
         self.grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.next_grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         # PRE-COMPUTE UTF-8 BYTE SEQUENCES FOR MAXIMUM EFFICIENCY
-        self.c_full = "█".encode('utf-8')
-        self.c_upper = "▀".encode('utf-8')
-        self.c_lower = "▄".encode('utf-8')
-        self.c_empty = " ".encode('utf-8')
+        self.c_full = "█".encode("utf-8")
+        self.c_upper = "▀".encode("utf-8")
+        self.c_lower = "▄".encode("utf-8")
+        self.c_empty = " ".encode("utf-8")
 
     def initialize_random(self, density: float = 0.3) -> None:
         for y in range(self.height):
