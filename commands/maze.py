@@ -29,7 +29,7 @@ def print_help():
   [br:red](ENTER)          Start game in normal mode
   [br:red](CTRL+ENTER)     Start game in ASCII mode
   [br:red](SPACE)          Generate maze to a file
-  [br:red](WASD / ⏶⏴⏷⏵)    Move the player
+  [br:red](WASD [dim](/) ⏶⏴⏷⏵)    Move the player
   [br:red](H)              Toggle solution path
   [br:red](F)              Finish maze
   [br:red](CTRL+C)         Exit game
