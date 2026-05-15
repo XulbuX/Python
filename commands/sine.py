@@ -89,7 +89,7 @@ def main() -> None:
     speed = max(0.1, float(ARGS.speed.values[0])) if ARGS.speed.exists else 1.0
     y_stretch = max(0.1, float(ARGS.y_stretch.values[0])) if ARGS.y_stretch.exists else 1.0
 
-    show_wave(width=Console.width - 1, speed=(5 / y_stretch, speed))
+    show_wave(width=Console.width - 1, speed=(2 / y_stretch, speed))
 
 
 if __name__ == "__main__":

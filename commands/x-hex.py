@@ -120,48 +120,6 @@ def is_gitignored(file_path: str, patterns: list[tuple[str, str]]) -> bool:
     return False
 
 
-def transform_hex_colors(content: str, operation: Operation, degrees: int = 0) -> tuple[str, int]:
-    changed = 0
-
-    def replace_match(match: rx.Match[str]) -> str:
-        nonlocal changed
-        h_prefix, h_hex, ox_prefix, ox_hex = match.groups()
-        prefix = h_prefix or ox_prefix
-        hex_value = h_hex or ox_hex
-
-        if operation == Operation.UPPER:
-            result = hex_value.upper()
-        elif operation == Operation.LOWER:
-            result = hex_value.lower()
-
-        else:
-            try:
-                color = hexa(prefix + hex_value)
-
-                if operation == Operation.GRAYSCALE:
-                    transformed = color.grayscale()
-                elif operation == Operation.ROTATE:
-                    transformed = color.rotate(degrees)
-                elif operation == Operation.INVERT:
-                    transformed = color.invert()
-                else:
-                    return match.group(0)
-
-                # STRIP # AND RESTORE ORIGINAL PREFIX
-                result = str(transformed).lstrip("#")
-
-            except Exception:
-                return match.group(0)
-
-        if (new_value := prefix + result) != match.group(0):
-            changed += 1
-
-        return new_value
-
-    new_content, _ = PATTERNS.hex.subn(replace_match, content)
-    return new_content, changed
-
-
 def process_file(
     file_path: Path,
     root_dir: str,
@@ -175,17 +133,63 @@ def process_file(
     log_path = str(file_path.relative_to(root_dir))
 
     try:
-        content = file_path.read_text(encoding="utf-8")
-        new_content, modified = transform_hex_colors(content, operation, degrees)
+        changed = 0
+        # IN DRY-RUN MODE, SKIP COLLECTING OUTPUT LINES ENTIRELY
+        out_lines: list[str] | None = None if dry_run else []
 
-        if modified and not dry_run:
-            file_path.write_text(new_content, encoding="utf-8")
+        def replace_match(match: rx.Match[str]) -> str:
+            nonlocal changed
+            h_prefix, h_hex, ox_prefix, ox_hex = match.groups()
+            prefix = h_prefix or ox_prefix
+            hex_value = h_hex or ox_hex
 
-        was_modified: bool = modified > 0
+            if operation == Operation.UPPER:
+                result = hex_value.upper()
+            elif operation == Operation.LOWER:
+                result = hex_value.lower()
+            else:
+                try:
+                    color = hexa(prefix + hex_value)
+
+                    if operation == Operation.GRAYSCALE:
+                        transformed = color.grayscale()
+                    elif operation == Operation.ROTATE:
+                        transformed = color.rotate(degrees)
+                    elif operation == Operation.INVERT:
+                        transformed = color.invert()
+                    else:
+                        return match.group(0)
+
+                    # STRIP # AND RESTORE ORIGINAL PREFIX
+                    result = str(transformed).lstrip("#")
+
+                except Exception:
+                    return match.group(0)
+
+            if (new_value := prefix + result) != match.group(0):
+                changed += 1
+
+            return new_value
+
+        # STREAM LINE-BY-LINE: NEVER LOADS FULL FILE INTO MEMORY
+        with file_path.open("r", encoding="utf-8") as file:
+            for line in file:
+                if "#" not in line and "0x" not in line:
+                    if out_lines is not None:
+                        out_lines.append(line)
+                else:
+                    new_line = PATTERNS.hex.sub(replace_match, line)
+                    if out_lines is not None:
+                        out_lines.append(new_line)
+
+        if changed and not dry_run and out_lines:
+            file_path.write_text("".join(out_lines), encoding="utf-8")
+
+        was_modified: bool = changed > 0
         dim: str = "[dim]" if not was_modified else ""
         title: str = (
-            "would update" if was_modified and dry_run \
-            else ("[b](updated)" if was_modified else "[dim](checked)")
+            "Would update" if was_modified and dry_run \
+            else ("Updated" if was_modified else "[dim|green](✓ checked)")
         )
 
         if len(log_path) > (max_path_len := max(10, Console.width - 50)):
@@ -196,8 +200,8 @@ def process_file(
             title,
             f"{dim}[br:cyan|link:file:///{file_path.resolve()}]({log_path})[_] "
             f"{dim}[br:black]{dots * '.'}[_]{' ' if dots > 0 else ''}"
-            f"{dim}[blue][[b|br:blue]({modified}){dim}[blue]][_]",
-            title_bg_color="br:blue" if was_modified else "br:black",
+            f"{dim}[blue][[b|br:blue]({changed}){dim}[blue]][_]",
+            title_bg_color="br:blue" if was_modified else None,
             start="",
             end="\n",
         )
