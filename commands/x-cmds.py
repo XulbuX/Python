@@ -19,10 +19,15 @@ Only files, starting with a python shebang line (e.g. `#!/usr/bin/env python3`),
 [2] WHICH FILES WILL BE CHECKED FOR UPDATES?
 Only files that include the comment `#[x-cmds]: UPDATE` at the top of the file will be checked for updates from GitHub.
 
-[3] COMMAND DESCRIPTION
+[3] UNLISTED FILES
+Files that include the comment `#[x-cmds]: UNLISTED` at the top of the file will not appear in the commands list.
+Combine options to apply both: `#[x-cmds]: UNLISTED, UPDATE`
+This is useful for shared helper/library files that should be auto-updated but are not standalone commands.
+
+[4] COMMAND DESCRIPTION
 The first multi-line comment (triple quotes) at the start of the file is used as a short description.
 
-[4] COMMAND ARGUMENTS & OPTIONS
+[5] COMMAND ARGUMENTS & OPTIONS
 The use of `Console.get_args()` will automatically be parsed and displayed correctly.
 When getting args using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
 The structure of the comment is similar to how the `**arg_parse_configs` kwargs are defined for `Console.get_args()`:
@@ -39,19 +44,6 @@ CONFIG: ScriptConfig = {
     },
 }
 
-
-class GithubUpdatesConfig(TypedDict):
-    """Schema for GitHub updates configuration."""
-    github_repo_urls: list[str]
-    check_for_new_commands: bool
-    check_for_command_updates: bool
-
-class ScriptConfig(TypedDict):
-    """Schema for the script configuration."""
-    command_dir: Path
-    github_updates: GithubUpdatesConfig
-
-
 ARGS = Console.get_args({
     "list": {"-l", "--list"},
     "update_check": {"-u", "--update"},
@@ -60,13 +52,38 @@ ARGS = Console.get_args({
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
-    update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*UPDATE\s*$",
+    update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*([\w]+(?:\s*,\s*[\w]+)*)\s*$",
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
     get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
     arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
 )
+
+
+class ScriptConfig(TypedDict):
+    """Schema for the script configuration."""
+    
+    command_dir: Path
+    github_updates: GithubUpdatesConfig
+
+
+class GithubUpdatesConfig(TypedDict):
+    """Schema for GitHub updates configuration."""
+    
+    github_repo_urls: list[str]
+    check_for_new_commands: bool
+    check_for_command_updates: bool
+
+
+class GithubDiffs(TypedDict):
+    """Schema for the differences found between local commands and GitHub."""
+    
+    new_commands: list[str]
+    updated_commands: list[str]
+    deleted_commands: list[str]
+    download_urls: dict[str, str]
+    fetch_failed: bool
 
 
 def print_help():
@@ -89,6 +106,7 @@ def print_help():
 
 def is_python_file(filepath: str) -> bool:
     """Check if a file is a Python file by looking for shebang line."""
+
     try:
         with open(filepath, "r", encoding="utf-8") as file:
             return bool(PATTERNS.python_shebang.match(file.readline()))
@@ -97,24 +115,32 @@ def is_python_file(filepath: str) -> bool:
 
 
 def get_python_files() -> set[str]:
-    """Get all Python files in the command directory by checking shebang lines."""
+    """Get all Python files managed by `x-cmds`:<br>
+    Commands with a shebang, or any `.py`/`.pyw` file with `x-cmds` markers."""
+
     python_files: set[str] = set()
     for file_path in CONFIG["command_dir"].iterdir():
-        if file_path.is_file() and is_python_file(str(file_path)):
-            python_files.add(file_path.name)
+        if file_path.is_file() and file_path.suffix in {".py", ".pyw"}:
+            if is_python_file(str(file_path)) or get_xcmds_options(str(file_path)):
+                python_files.add(file_path.name)
     return python_files
 
 
 def get_xcmds_options(filepath: str) -> dict[str, bool]:
     """Get options for `x-cmds` set using special `#[x-cmds]: …` comments."""
+
     options: dict[str, bool] = {}
     try:
         with open(filepath, "r", encoding="utf-8") as file:
             for line in file:
                 if PATTERNS.python_shebang.match(line):
                     continue  # SKIP SHEBANG LINE
-                elif PATTERNS.update_marker.match(line):
-                    options["update_check"] = True
+                elif match := PATTERNS.update_marker.match(line):
+                    for option in (opt.strip().upper() for opt in match.group(1).split(",")):
+                        if option == "UPDATE":
+                            options["update_check"] = True
+                        elif option == "UNLISTED":
+                            options["unlisted"] = True
                 else:
                     break  # STOP AT FIRST NON-MATCHING LINE
     except Exception:
@@ -123,10 +149,15 @@ def get_xcmds_options(filepath: str) -> dict[str, bool]:
 
 
 def sort_flags(flags: list[str]) -> list[str]:
+    """Sort flags by length (shorter first) and then alphabetically."""
+
     return sorted(flags, key=lambda x: (len(x) - len(x.lstrip("-")), x))
 
 
 def arguments_desc(arg_parse_configs: Optional[ArgParseConfigs]) -> str:
+    """Generate a formatted description of command arguments
+    and options based on the provided configuration."""
+
     if not arg_parse_configs or len(arg_parse_configs) < 1:
         return f"\n\n[b](Takes Options/Arguments) [dim]([[i](unknown)])"
 
@@ -181,6 +212,8 @@ def arguments_desc(arg_parse_configs: Optional[ArgParseConfigs]) -> str:
 
 
 def parse_args_comment(comment_str: str) -> ArgParseConfigs:
+    """Parse an arguments comment string into a structured configuration dictionary."""
+
     result: ArgParseConfigs = {}
 
     for match in PATTERNS.args_comment.finditer(cast(re.Match[str], re.match(r"\[(.*)\]", comment_str)).group(1)):
@@ -196,6 +229,7 @@ def parse_args_comment(comment_str: str) -> ArgParseConfigs:
 
 def parse_file_args(content: str) -> Optional[ArgParseConfigs]:
     """Parse arg configs from file content. Returns None if no args section is detected."""
+
     sys_argv_comments = PATTERNS.sys_argv.findall(content)
     get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
 
@@ -232,6 +266,9 @@ def parse_file_args(content: str) -> Optional[ArgParseConfigs]:
 
 
 def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
+    """Generate a formatted string listing all commands, with optional argument hints.<br>
+    If `list_mode` is True, a compact one-line format is used."""
+
     if list_mode:
         cmd_info: list[tuple[str, str]] = []
 
@@ -297,17 +334,13 @@ def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
     return cmds
 
 
-class GitHubDiffs(TypedDict):
-    new_commands: list[str]
-    updated_commands: list[str]
-    deleted_commands: list[str]
-    download_urls: dict[str, str]
-    fetch_failed: bool
 
 
-def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
+
+def get_github_diffs(local_files: set[str]) -> GithubDiffs:
     """Check for new files, updated files, and deleted files on GitHub compared to local command-directory."""
-    result: GitHubDiffs = {
+
+    result: GithubDiffs = {
         "new_commands": [],
         "updated_commands": [],
         "deleted_commands": [],
@@ -409,7 +442,9 @@ def get_github_diffs(local_files: set[str]) -> GitHubDiffs:
     return result
 
 
-def github_diffs_str(github_diffs: GitHubDiffs) -> str:
+def github_diffs_str(github_diffs: GithubDiffs) -> str:
+    """Generate a formatted string summarizing the differences found between local commands and GitHub."""
+
     if github_diffs.get("fetch_failed", False):
         return (
             "[br:red]✗ Failed to fetch command updates from GitHub.\n"
@@ -456,8 +491,9 @@ def github_diffs_str(github_diffs: GitHubDiffs) -> str:
     return diffs
 
 
-def download_files(github_diffs: GitHubDiffs) -> None:
+def download_files(github_diffs: GithubDiffs) -> None:
     """Download new and updated files from GitHub, and delete removed files."""
+
     downloads = github_diffs["download_urls"].items()
     deletions = github_diffs["deleted_commands"]
     total_operations = len(downloads) + len(deletions)
@@ -519,14 +555,19 @@ def download_files(github_diffs: GitHubDiffs) -> None:
 
 
 def main() -> None:
+
     if ARGS.help.exists:
         print_help()
         return
 
     python_files = get_python_files()
+    listed_files = {
+        file for file in python_files \
+        if not get_xcmds_options(str(CONFIG["command_dir"] / file)).get("unlisted")
+    }
 
     if not ARGS.update_check.exists or ARGS.list.exists:
-        FormatCodes.print(get_commands_str(python_files, list_mode=ARGS.list.exists))
+        FormatCodes.print(get_commands_str(listed_files, list_mode=ARGS.list.exists))
     else:
         print()
 

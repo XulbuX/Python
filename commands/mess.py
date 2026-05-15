@@ -25,9 +25,12 @@ def print_help():
 
 [b](Usage:) [br:green](mess) [br:blue]([options])
 
+[b](Controls:)
+  [br:red](CTRL+C)         Stop the animation
+
 [b](Options:)
-  [br:blue](-f), [br:blue](--fast)      Display the mess at maximum speed
-  [br:blue](-c), [br:blue](--color)     Color the mess in random colors
+  [br:blue](-f), [br:blue](--fast)     Display the mess at maximum speed
+  [br:blue](-c), [br:blue](--color)    Color the mess in random colors
 
 [b](Examples:)
   [br:green](mess)            [dim](# [i](Show binary mess at normal speed))
