@@ -28,7 +28,7 @@ REFERENCE_TIMES: dict[int, float] = {
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Pi — Calculate the value of π to a specified number of decimal places )
+[b|in|bg:black]( Pi — Calculate [link:https://en.wikipedia.org/wiki/Pi](the value of π) to a specified number of decimal places )
 
 [b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
 

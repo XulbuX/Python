@@ -14,7 +14,7 @@ ARGS = Console.get_args({"help": {"-h", "--help"}})
 
 def print_help():
     help_text = """
-[b|in|bg:black]( Game of Life — Conway's cellular automaton in the terminal )
+[b|in|bg:black]( Game of Life — [link:https://wikipedia.org/wiki/Conway's_Game_of_Life](Conway's cellular automaton) in the terminal )
 
 [b](Usage:) [br:green](life)
 
