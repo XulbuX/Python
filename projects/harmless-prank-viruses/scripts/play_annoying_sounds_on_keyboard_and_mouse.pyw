@@ -313,7 +313,7 @@ def main() -> None:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        Console.exit("Script terminated by user. [dim]((Ctrl+C detected in console))")
+        Console.exit("Script terminated by user. [dim]((Ctrl(⌘)+C detected in console))")
     except Exception as exc:
         Console.fail(f"An unexpected error occurred in the main background loop: {exc}")
     finally:

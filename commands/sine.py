@@ -20,12 +20,12 @@ def print_help():
 
 [b](Usage:) [br:green](sine) [br:blue]([options])
 
-[b](Controls:)
-  [br:red](CTRL+C)             Stop the animation
-
 [b](Options:)
   [br:blue](-s), [br:blue](--speed)        Animation speed multiplier [dim]((default: 1.0))
   [br:blue](-y), [br:blue](--y-stretch)    Vertical stretch of wave cycles [dim]((default: 1.0))
+
+[b](Controls:)
+  [br:red](Ctrl(⌘)[dim](+)C)          Stop the animation
 
 [b](Examples:)
   [br:green](sine)                  [dim](# [i](Default wave))

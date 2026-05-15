@@ -19,10 +19,10 @@ def print_help():
 [b](Usage:) [br:green](life)
 
 [b](Controls:)
-  [br:red](CTRL+C)    Exit the simulation
+  [br:red](Ctrl(⌘)[dim](+)C)    Exit the simulation
 
 [b](Examples:)
-  [br:green](life)      [dim](# [i](Start Game of Life with interactive setup))
+  [br:green](life)    [dim](# [i](Start Game of Life with interactive setup))
 """
     FormatCodes.print(help_text)
 

@@ -26,13 +26,13 @@ def print_help():
 [b](Usage:) [br:green](maze)
 
 [b](Controls:)
-  [br:red](ENTER)          Start game in normal mode
-  [br:red](CTRL+ENTER)     Start game in ASCII mode
-  [br:red](SPACE)          Generate maze to a file
-  [br:red](WASD [dim](/) ⏶⏴⏷⏵)    Move the player
-  [br:red](H)              Toggle solution path
-  [br:red](F)              Finish maze
-  [br:red](CTRL+C)         Exit game
+  [br:red](Enter)            Start game in normal mode
+  [br:red](Ctrl(⌘)[dim](+)Enter)    Start game in ASCII mode
+  [br:red](Space)            Generate maze to a file
+  [br:red](WASD), [br:red](⏶⏴⏷⏵)       Move the player
+  [br:red](H)                Toggle solution path
+  [br:red](F)                Finish maze
+  [br:red](Ctrl(⌘)[dim](+)C)        Exit game
 
 [b](Examples:)
   [br:green](maze)    [dim](# [i](Start the interactive maze game))
@@ -405,14 +405,14 @@ def main():
         return (s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split())
 
     Console.log_box_bordered(
-        "[br:blue] [b](WASD ⏶⏴⏷⏵)  [blue]:[br:blue] move the player",
-        "[br:blue]     [b](H)      [blue]:[br:blue] toggle solution",
-        "[br:blue]     [b](F)      [blue]:[br:blue] finish maze",
-        "[br:blue]   [b](CTRL+C)   [blue]:[br:blue] exit game",
-        "{hr}"
-        "[br:blue]   [b](ENTER)    [blue]:[br:blue] start game normal",
-        "[br:blue] [b](CTRL+ENTER) [blue]:[br:blue] start game ASCII",
-        "[br:blue]   [b](SPACE)    [blue]:[br:blue] generate to file",
+        "[br:blue]  [b](WASD ⏶⏴⏷⏵)   [blue]:[br:blue] move the player",
+        "[br:blue]      [b](H)       [blue]:[br:blue] toggle solution",
+        "[br:blue]      [b](F)       [blue]:[br:blue] finish maze",
+        "[br:blue]  [b](Ctrl(⌘)[dim](+)[b]C)   [blue]:[br:blue] exit game",
+        "{hr}",
+        "[br:blue]    [b](ENTER)     [blue]:[br:blue] start game normal",
+        "[br:blue][b](Ctrl(⌘)[dim](+)[b]ENTER) [blue]:[br:blue] start game ASCII",
+        "[br:blue]    [b](SPACE)     [blue]:[br:blue] generate to file",
         border_style="dim|br:blue",
         start="\n",
         end="\n\n",
@@ -422,7 +422,7 @@ def main():
         key = keyboard.read_key()
 
         if key == "enter":
-            ascii_mode = keyboard.is_pressed("ctrl")
+            ascii_mode = keyboard.is_pressed("ctrl") or keyboard.is_pressed("cmd")
 
             try:
                 while True:

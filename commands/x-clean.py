@@ -80,13 +80,35 @@ HIVE_NAMES = {
     winreg.HKEY_LOCAL_MACHINE: "HKLM",
 }
 
-########################################## CLI ARGS ##########################################
+########################################## CLI ##########################################
 
 ARGS = Console.get_args({
     "restore_path": "before",
     "restore": {"-r", "--restore"},
     "help": {"-h", "--help"},
 })
+
+
+def print_help():
+    help_text = """
+[b|in|bg:black]( System Cleaner — Clean broken registry entries, env vars, shortcuts & more )
+
+[b](Usage:) [br:green](x-clean) [br:blue]([options])
+
+[b](Options:)
+  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup JSON file at [br:blue](PATH)
+
+[b](Example:)
+  [br:green](x-clean) [br:blue](--restore[dim](=)"path/to/env_vars_backup.json")
+
+[b](What it cleans:)
+  [magenta](1.) Registry [dim]((app paths, uninstall entries, startup entries))
+  [magenta](2.) Environment variables containing non-existent paths
+  [magenta](3.) Broken shortcut (.lnk) files [dim]((start menu, startup, desktop))
+  [magenta](4.) Temp files [dim]((user temp, system temp, prefetch))
+"""
+    FormatCodes.print(help_text)
+
 
 ########################################## HELPERS ##########################################
 
@@ -1038,27 +1060,6 @@ def show_summary(
             )
 
         print()
-
-
-def print_help():
-    help_text = """
-[b|in|bg:black]( System Cleaner — Clean broken registry entries, env vars, shortcuts & more )
-
-[b](Usage:) [br:green](x-clean) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-r), [br:blue](--restore[dim](=)PATH)    Restore env vars from a backup JSON file at [br:blue](PATH)
-
-[b](Example:)
-  [br:green](x-clean) [br:blue](--restore[dim](=)"path/to/env_vars_backup.json")
-
-[b](What it cleans:)
-  [magenta](1.) Registry [dim]((app paths, uninstall entries, startup entries))
-  [magenta](2.) Environment variables containing non-existent paths
-  [magenta](3.) Broken shortcut (.lnk) files [dim]((start menu, startup, desktop))
-  [magenta](4.) Temp files [dim]((user temp, system temp, prefetch))
-"""
-    FormatCodes.print(help_text)
 
 
 ########################################## MAIN ##########################################

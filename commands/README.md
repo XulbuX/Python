@@ -19,11 +19,11 @@ To run these Python scripts as native commands in your terminal, follow these st
 > [!IMPORTANT]<br>
 > Before you begin, ensure you have Python installed and **added to your system's PATH**.<br>
 > This is crucial for the commands to be recognized and executed.
-> 
+>
 > *   **Windows:** make sure to check the box `Add Python to PATH`<br>
 >     and if possible `Install for all users` during the installation of Python.<br>
 >     Verify Python is in your PATH by typing `python --version` or `py --version` in your terminal.
-> 
+>
 > *   **macOS and Linux:** Python is often pre-installed, but you should verify<br>
 >     it's in your PATH by typing `python3 --version` in your terminal.
 
@@ -55,10 +55,13 @@ Before the scripts can run, you need to install their required Python packages. 
 
 1.  Open your terminal.
 2.  Navigate to your *commands-directory* using the `cd` command.
+
     ```shell
     cd "/path/to/your/commands-directory"
     ```
+
 3.  Install the dependencies using pip:
+
     ```shell
     py -m pip install --upgrade -r "requirements.txt"
     ```
@@ -90,16 +93,20 @@ This makes your commands available from any location in your terminal. ⚙️
 *   **Add a shebang line:** Make sure the very first line of every script file is `#!/usr/bin/env python3`.<br>
     (*Note: This is already done for you in all the repository's files.*)
 *   **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
+
     ```shell
     chmod +x "/path/to/your/commands-directory/*"
     ```
+
 *   **Add the directory to your terminal's PATH:**
     1.  For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
     2.  For most **Linux** distributions, edit `~/.bashrc`.
     3.  Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
+
         ```shell
         export PATH="$PATH:/path/to/your/commands-directory"
         ```
+
     4.  Save the file, and then apply the changes by running `source ~/.zshrc` (*or the file you edited*).
 
 <br>

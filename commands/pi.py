@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #[x-cmds]: UPDATE
-"""Calculate the value of pi to a specified number of decimal places."""
+"""Calculate the value of π to a specified number of decimal places."""
 from typing import Iterator
 from xulbux.console import Throbber
 from xulbux import FormatCodes, Console
@@ -26,6 +26,22 @@ REFERENCE_TIMES: dict[int, float] = {
 }
 
 
+def print_help():
+    help_text = """
+[b|in|bg:black]( Pi — Calculate the value of π to a specified number of decimal places )
+
+[b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
+
+[b](Arguments:)
+  [br:cyan](decimals)     Number of decimal places [dim]((default: 10))
+
+[b](Examples:)
+  [br:green](pi)           [dim](# [i](Calculate π to 10 decimal places))
+  [br:green](pi) [br:cyan](10_000)    [dim](# [i](Calculate π to 10,000 decimal places))
+"""
+    FormatCodes.print(help_text)
+
+
 def get_hardware_score() -> float:
     try:
         import psutil
@@ -44,15 +60,18 @@ def get_hardware_score() -> float:
 
 def estimate_runtime(precision: int) -> float:
     ref_points = sorted(REFERENCE_TIMES.keys())
+
     if precision <= 100:
         start_time = time.time()
         _ = pi(precision)
         return time.time() - start_time
+
     if precision >= max(ref_points):
         base_time = REFERENCE_TIMES[max(ref_points)]
         scaling = (precision / max(ref_points))**2.0
         if precision > 1000000:
             scaling *= 1.2
+
     else:
         upper_idx = next(i for i, x in enumerate(ref_points) if x >= precision)
         lower_idx = max(0, upper_idx - 1)
@@ -60,14 +79,18 @@ def estimate_runtime(precision: int) -> float:
         upper_point = ref_points[upper_idx]
         lower_time = REFERENCE_TIMES[lower_point]
         upper_time = REFERENCE_TIMES[upper_point]
+
         if lower_point == upper_point:
             log_factor = 1
         else:
             raw_factor = precision / lower_point
             log_factor = (math.log(raw_factor)**2) / (math.log(upper_point / lower_point))
+
         base_time = lower_time * (upper_time / lower_time)**log_factor
         scaling = 1.0
+
     estimated_time = (base_time * scaling) / get_hardware_score()
+
     if estimated_time < 0.01:
         estimated_time = 0.01
     if precision <= 5000:
@@ -82,7 +105,9 @@ def estimate_runtime(precision: int) -> float:
         correction_factor = 0.9
     else:
         correction_factor = 1.0
+
     estimated_time *= correction_factor
+
     return round(estimated_time, 2)
 
 
@@ -141,28 +166,35 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
             ("second", 1),
         ),
     )
+
     parts: list[str] = []
+
     b_val, val_name, a_name = (
         "[b|br:cyan]" if pretty_print else "",
         f"{'' if short else ' '}{'[_b|i|cyan]' if pretty_print else ''}",
         "[_i|br:cyan]" if pretty_print else "",
     )
+
     for name, formula in units[0 if short else 1]:
         if (val := int(seconds // formula)) > 0:
             if not short:
                 val = f"{val:,}"
             parts.append(f"{b_val}{val}{val_name}{name if val == '1' or short else f'{name}s'}{a_name}")
             seconds %= formula
+
     if not parts:
         formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
         parts.append(
             f"{b_val}{formatted_seconds}{val_name}{units[0 if short else 1][-1][0] if seconds == 1 or short else f'{units[0 if short else 1][-1][0]}s'}{a_name}"
         )
+
     if short:
         return ("[dim](:)" if pretty_print else ":").join(parts)
+
     if len(parts) > 1:
         return (("[dim] + [_dim]" if pretty_print else ", ").join(parts[:-1]) +
                 ("[dim] + [_dim]" if pretty_print else " and ") + parts[-1])
+
     return parts[0]
 
 
@@ -177,22 +209,6 @@ def p() -> Iterator[int]:
 def pi(decimals: int = 10) -> str:
     _p = p()
     return "3." + "".join(str(next(_p)) for _ in range(decimals + 1))[1:]
-
-
-def print_help():
-    help_text = """
-[b|in|bg:black]( Pi — Calculate the value of π to a specified number of decimal places )
-
-[b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](decimals)     Number of decimal places [dim]((default: 10))
-
-[b](Examples:)
-  [br:green](pi)           [dim](# [i](Calculate π to 10 decimal places))
-  [br:green](pi) [br:cyan](10_000)    [dim](# [i](Calculate π to 10,000 decimal places))
-"""
-    FormatCodes.print(help_text)
 
 
 def main() -> None:
@@ -211,6 +227,7 @@ def main() -> None:
         FormatCodes.print(
             f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
         )
+
     else:
         FormatCodes.print(
             f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)" if estimated_secs > 1 else ""

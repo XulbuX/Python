@@ -39,6 +39,9 @@ def print_help():
   [br:blue](-o), [br:blue](--only)           Only copy the command output without command or metadata
   [br:blue](-a), [br:blue](--ansi)           Keep the ANSI codes in the copied output [dim]((default: ANSI removed))
 
+[b](Controls:)
+  [br:red](Ctrl(⌘)[dim](+)C)            Cancel the command and copy the output captured so far
+
 [b](Examples:)
   [br:green](xc) [br:cyan](pip show xulbux)         [dim](# [i](Run and copy Python lib xulbux info))
   [br:green](xc) [br:blue](--no-meta) [br:cyan](git status)    [dim](# [i](Run and copy git status without metadata))
@@ -174,7 +177,7 @@ def main() -> None:
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        FormatCodes.print("\n[br:yellow]━━━ Command cancelled by user ━━━ [dim]((Ctrl+C))[_c]")
+        FormatCodes.print("\n[br:yellow]━━━ Command cancelled by user ━━━ [dim]((Ctrl(⌘)+C))[_c]")
         add_nl_before_end = False
         exit_code = 130  # SIGINT
 
