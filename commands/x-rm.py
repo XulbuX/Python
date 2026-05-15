@@ -71,6 +71,7 @@ def take_ownership_windows(path: Path) -> bool:
             ["takeown", "/F", str(path)] + (["/R", "/D", "Y"] if path.is_dir() else []),
             capture_output=True,
             text=True,
+            timeout=60,
             creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0,
         )
 
@@ -83,6 +84,7 @@ def take_ownership_windows(path: Path) -> bool:
             ["icacls", str(path), "/grant", f"{os.getlogin()}:F", "/C", "/Q"] + (["/T"] if path.is_dir() else []),
             capture_output=True,
             text=True,
+            timeout=60,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
 
@@ -93,6 +95,9 @@ def take_ownership_windows(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully took ownership)")
         return True
 
+    except subprocess.TimeoutExpired:
+        FormatCodes.print(f"[yellow][b](⚠ takeown/icacls timed out, some ownership may have been granted)[_]")
+        return True
     except Exception as exc:
         FormatCodes.print(f"[red][b](✗ Error taking ownership:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
@@ -100,13 +105,14 @@ def take_ownership_windows(path: Path) -> bool:
 
 def remove_attributes_windows(path: Path) -> bool:
     """Remove file attributes on Windows (readonly, system, hidden)."""
-    FormatCodes.print(f"[b](Removing file attributes from [br:cyan]({path.name})...)")
+    FormatCodes.print(f"[b](Removing attributes from [br:cyan]({path.name})...)")
 
     try:
         result = subprocess.run(
             ["attrib", "-R", "-S", "-H", str(path)] + (["/S", "/D"] if path.is_dir() else []),
             capture_output=True,
             text=True,
+            timeout=60,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
 
@@ -117,6 +123,9 @@ def remove_attributes_windows(path: Path) -> bool:
         FormatCodes.print(f"[green](✓ Successfully removed attributes)")
         return True
 
+    except subprocess.TimeoutExpired:
+        FormatCodes.print(f"[yellow][b](⚠ attrib timed out, some attributes may have been cleared)[_]")
+        return True
     except Exception as exc:
         FormatCodes.print(f"[red][b](✗ Error removing attributes:)\n  {str(exc).replace('\n', '\n  ')}[_]")
         return False
@@ -364,7 +373,7 @@ def force_delete(path: Path) -> bool:
                 return True
 
     # STILL FAILED - GIVE UP :(
-    FormatCodes.print(f"\n[b|red](✗ Failed to delete even after trying all techniques :()\n")
+    FormatCodes.print(f"\n[b|red]✗ Failed to delete even after trying all techniques :([_]\n")
 
     if not System.is_elevated:
         if platform.system() == "Windows":
