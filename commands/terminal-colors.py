@@ -2,49 +2,49 @@
 #[x-cmds]: UPDATE
 """Show the foreground and background colors
 from the current terminal color scheme."""
-from xulbux import FormatCodes, Console
-
+from xulbux.format_codes import FmtSegment, FC, F
+from xulbux import Console
 
 ARGS = Console.get_args({"help": {"-h", "--help"}})
 
 
+# fmt: off
 def print_help():
-    help_text = """
-[b|in|bg:black]( Terminal Colors — Show all foreground and background terminal colors )
+    FC(
+        "",
+        (F.BOLD | F.INVERSE | F.BG.BLACK)(" Terminal Colors — Show all foreground and background terminal colors "),
+        "",
+        ((F.BOLD)("Usage: "), (F.BR.GREEN)("terminal-colors")),
+        "",
+    ).print()
 
-[b](Usage:) [br:green](terminal-colors)
-"""
-    FormatCodes.print(help_text)
 
-
-SHELL_COLORS = {
-    "Black": ["black", "br:black", "br:white|bg:black", "br:white|bg:br:black"],
-    "White": ["white", "br:white", "black|bg:white", "black|bg:br:white"],
-    "Red": ["red", "br:red", "black|bg:red", "black|bg:br:red"],
-    "Yellow": ["yellow", "br:yellow", "black|bg:yellow", "black|bg:br:yellow"],
-    "Green": ["green", "br:green", "black|bg:green", "black|bg:br:green"],
-    "Cyan": ["cyan", "br:cyan", "black|bg:cyan", "black|bg:br:cyan"],
-    "Blue": ["blue", "br:blue", "black|bg:blue", "black|bg:br:blue"],
-    "Magenta": ["magenta", "br:magenta", "black|bg:magenta", "black|bg:br:magenta"],
-}
+SHELL_COLORS: list[list[FmtSegment]] = [
+    [F.BLACK,   F.BR.BLACK,   F.WHITE | F.BG.BLACK,   F.WHITE | F.BG.BR.BLACK  ],
+    [F.WHITE,   F.BR.WHITE,   F.BLACK | F.BG.WHITE,   F.BLACK | F.BG.BR.WHITE  ],
+    [F.RED,     F.BR.RED,     F.BLACK | F.BG.RED,     F.BLACK | F.BG.BR.RED    ],
+    [F.YELLOW,  F.BR.YELLOW,  F.BLACK | F.BG.YELLOW,  F.BLACK | F.BG.BR.YELLOW ],
+    [F.GREEN,   F.BR.GREEN,   F.BLACK | F.BG.GREEN,   F.BLACK | F.BG.BR.GREEN  ],
+    [F.CYAN,    F.BR.CYAN,    F.BLACK | F.BG.CYAN,    F.BLACK | F.BG.BR.CYAN   ],
+    [F.BLUE,    F.BR.BLUE,    F.BLACK | F.BG.BLUE,    F.BLACK | F.BG.BR.BLUE   ],
+    [F.MAGENTA, F.BR.MAGENTA, F.BLACK | F.BG.MAGENTA, F.BLACK | F.BG.BR.MAGENTA],
+]
+# fmt: on
 
 
 def show_shell_colors():
-    print()
+    norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS)
+    output = FC("\n")
 
-    for format_codes in SHELL_COLORS.values():
-        FormatCodes.print(f"[{format_codes[0]}](Aa) ", end="")
-    print("  ", end="")
-    for format_codes in SHELL_COLORS.values():
-        FormatCodes.print(f"[{format_codes[2]}]( Aa )", end="")
-    print()
-    for format_codes in SHELL_COLORS.values():
-        FormatCodes.print(f"[{format_codes[1]}](Aa) ", end="")
-    print("  ", end="")
-    for format_codes in SHELL_COLORS.values():
-        FormatCodes.print(f"[{format_codes[3]}]( Aa )", end="")
+    for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:
+        for fmt in fgs:
+            output += FC((fmt("Aa"), " "))
+        output += " "
+        for fmt in bgs:
+            output += FC(fmt(" Aa "))
+        output += "\n"
 
-    print("\n")
+    output.print()
 
 
 if __name__ == "__main__":
