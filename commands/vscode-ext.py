@@ -4,7 +4,7 @@
 the option to directly format them as a JSON list."""
 from pathlib import Path
 from typing import Optional, cast
-from xulbux import FormatCodes, Console, Data
+from xulbux import Console, Data, FC, F
 import subprocess
 import platform
 import os
@@ -14,6 +14,28 @@ ARGS = Console.get_args({
     "as_json": {"-j", "--json"},
     "help": {"-h", "--help"},
 })
+
+
+# fmt: off
+def print_help():
+    title = ["  VS Code Extensions", " — List all installed Visual Studio Code extensions  "]
+    FC(
+        "",
+        ("▄" * len("".join(title))),
+        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (F.BOLD("Usage: "), F.BR.GREEN("vscode-ext "), F.BR.BLUE("[options]")),
+        "",
+        F.BOLD("Options:"),
+        ("  ", F.BR.BLUE("-j"), ", ", F.BR.BLUE("--json"), "    Output as a JSON list"),
+        "",
+        F.BOLD("Examples:"),
+        ("  ", F.BR.GREEN("vscode-ext"), "           ", F.DIM("# ", F.ITALIC("List all installed extensions"))),
+        ("  ", F.BR.GREEN("vscode-ext "), F.BR.BLUE("--json"), "    ", F.DIM("# ", F.ITALIC("Output all extension as a JSON list"))),
+        "",
+    ).print()
+# fmt: on
 
 
 def get_common_vscode_locations() -> list[tuple[str, str]]:
@@ -86,7 +108,12 @@ def find_vscode_executable() -> Optional[tuple[str, str]]:
     for variant in ["code", "code-insiders"]:
         try:
             command = "where" if platform.system() == "Windows" else "which"
-            result = subprocess.run([command, variant], capture_output=True, check=True, text=True)
+            result = subprocess.run(
+                [command, variant],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
             executable = result.stdout.strip().split("\n")[0]  # GET FIRST RESULT
             if executable:
                 return (variant, executable)
@@ -103,26 +130,15 @@ def find_vscode_executable() -> Optional[tuple[str, str]]:
 
 def get_vscode_extensions(executable: str) -> Optional[list[str]]:
     try:
-        result = subprocess.run([executable, "--list-extensions"], capture_output=True, text=True, shell=True)
+        result = subprocess.run(
+            [executable, "--list-extensions"],
+            capture_output=True,
+            text=True,
+            shell=True,
+        )
         return result.stdout.strip().splitlines()
     except subprocess.CalledProcessError as e:
         Console.fail(f"Failed to get extensions: {e.stderr}")
-
-
-def print_help():
-    help_text = """
-[b|in|bg:black]( VS Code Extensions — List all installed Visual Studio Code extensions )
-
-[b](Usage:) [br:green](vscode-ext) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-j), [br:blue](--json)    Output as a JSON list
-
-[b](Examples:)
-  [br:green](vscode-ext)           [dim](# [i](List all installed extensions))
-  [br:green](vscode-ext) [br:blue](--json)    [dim](# [i](Output all extension as a JSON list))
-"""
-    FormatCodes.print(help_text)
 
 
 def main() -> None:
@@ -131,26 +147,34 @@ def main() -> None:
         return
 
     if (vscode_info := find_vscode_executable()) is None:
-        FormatCodes.print("[br:red](Visual Studio Code is not installed or could not be found.)")
+        FC(F.BR.RED("Visual Studio Code is not installed or could not be found."))
         raise SystemExit(1)
 
     variant, executable = vscode_info
     variant_display = "VS Code Insiders" if variant == "code-insiders" else "VS Code"
 
     extensions = cast(list[str], get_vscode_extensions(executable))
-    FormatCodes.print(
-        f"\n[b|bg:black]([in]( FOUND ) {len(extensions)} [in]( INSTALLED {variant_display.upper()} EXTENSIONS ))"
-    )
-    FormatCodes.print(
-        "\n[white]" + (
+
+    FC(
+        "",
+        "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
+        (F.INVERSE | F.BG.BLACK)(
+            "  Found ",
+            F.BOLD(str(len(extensions))),
+            f" installed {variant_display} extensions  ",
+        ),
+        "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀",
+        "",
+        F.WHITE(
             Data.render(
                 extensions,
                 indent=2,
                 as_json=True,
                 syntax_highlighting=True,
             ) if ARGS.as_json.exists else "\n".join(extensions)
-        ) + "[_]\n"
-    )
+        ),
+        "",
+    ).print()
 
 
 if __name__ == "__main__":
