@@ -10,9 +10,12 @@ ARGS = Console.get_args({"help": {"-h", "--help"}})
 
 # fmt: off
 def print_help():
+    title = ["  Terminal Colors", " — Show all foreground and background terminal colors  "]
     FC(
         "",
-        (F.BOLD | F.INVERSE | F.BG.BLACK)(" Terminal Colors — Show all foreground and background terminal colors "),
+        ("▄" * len("".join(title))),
+        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
         "",
         ((F.BOLD)("Usage: "), (F.BR.GREEN)("terminal-colors")),
         "",
