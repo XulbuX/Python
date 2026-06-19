@@ -4,8 +4,7 @@
 including metadata to the clipboard, after execution."""
 from pathlib import Path
 from typing import Optional, Any, IO, cast
-from xulbux.format_codes import FC, F
-from xulbux import Console, System
+from xulbux import Console, System, FC, F
 import subprocess
 import platform
 import shutil

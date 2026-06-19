@@ -7,8 +7,19 @@ from xulbux import Console
 
 ARGS = Console.get_args({"help": {"-h", "--help"}})
 
-
 # fmt: off
+SHELL_COLORS: list[list[FmtSegment]] = [
+    [F.BLACK,   F.BR.BLACK,   F.WHITE | F.BG.BLACK,   F.WHITE | F.BG.BR.BLACK  ],
+    [F.WHITE,   F.BR.WHITE,   F.BLACK | F.BG.WHITE,   F.BLACK | F.BG.BR.WHITE  ],
+    [F.RED,     F.BR.RED,     F.BLACK | F.BG.RED,     F.BLACK | F.BG.BR.RED    ],
+    [F.YELLOW,  F.BR.YELLOW,  F.BLACK | F.BG.YELLOW,  F.BLACK | F.BG.BR.YELLOW ],
+    [F.GREEN,   F.BR.GREEN,   F.BLACK | F.BG.GREEN,   F.BLACK | F.BG.BR.GREEN  ],
+    [F.CYAN,    F.BR.CYAN,    F.BLACK | F.BG.CYAN,    F.BLACK | F.BG.BR.CYAN   ],
+    [F.BLUE,    F.BR.BLUE,    F.BLACK | F.BG.BLUE,    F.BLACK | F.BG.BR.BLUE   ],
+    [F.MAGENTA, F.BR.MAGENTA, F.BLACK | F.BG.MAGENTA, F.BLACK | F.BG.BR.MAGENTA],
+]
+
+
 def print_help():
     title = ["  Terminal Colors", " — Show all foreground and background terminal colors  "]
     FC(
@@ -20,18 +31,6 @@ def print_help():
         ((F.BOLD)("Usage: "), (F.BR.GREEN)("terminal-colors")),
         "",
     ).print()
-
-
-SHELL_COLORS: list[list[FmtSegment]] = [
-    [F.BLACK,   F.BR.BLACK,   F.WHITE | F.BG.BLACK,   F.WHITE | F.BG.BR.BLACK  ],
-    [F.WHITE,   F.BR.WHITE,   F.BLACK | F.BG.WHITE,   F.BLACK | F.BG.BR.WHITE  ],
-    [F.RED,     F.BR.RED,     F.BLACK | F.BG.RED,     F.BLACK | F.BG.BR.RED    ],
-    [F.YELLOW,  F.BR.YELLOW,  F.BLACK | F.BG.YELLOW,  F.BLACK | F.BG.BR.YELLOW ],
-    [F.GREEN,   F.BR.GREEN,   F.BLACK | F.BG.GREEN,   F.BLACK | F.BG.BR.GREEN  ],
-    [F.CYAN,    F.BR.CYAN,    F.BLACK | F.BG.CYAN,    F.BLACK | F.BG.BR.CYAN   ],
-    [F.BLUE,    F.BR.BLUE,    F.BLACK | F.BG.BLUE,    F.BLACK | F.BG.BR.BLUE   ],
-    [F.MAGENTA, F.BR.MAGENTA, F.BLACK | F.BG.MAGENTA, F.BLACK | F.BG.BR.MAGENTA],
-]
 # fmt: on
 
 
