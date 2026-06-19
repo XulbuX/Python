@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import NamedTuple, TypedDict, Optional
 from xulbux.base.consts import COLOR
-from xulbux import FormatCodes, Console, File
+from xulbux import Console, File, FC, F
 import fnmatch
 import time
 import os
@@ -31,33 +31,39 @@ DEFAULT: ScriptDefaults = {
 }
 
 
+# fmt: off
 def print_help():
-    help_text = """
-[b|in|bg:black]( Tree Generator — Quickly generate advanced and good looking directory trees )
-
-[b](Usage:) [br:green](x-tree) [br:cyan](<base_dir>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](base_dir)               Base directory to generate tree from [dim]((default: CWD))
-
-[b](Options:)
-  [br:blue](-i), [br:blue](--ignore-dirs[dim](=)S)    Directories to ignore [dim]((directory paths/names, separated by [br:cyan](|)))
-  [br:blue](-n), [br:blue](--no-progress)      Disable progress display during tree generation
-  [br:blue](-d), [br:blue](--default)          Use all default settings without prompts
-
-[b](Examples:)
-  [br:green](x-tree) [br:blue](-i[dim](=)"/abs/to/dir1 | rel/to/dir2 | dir3")    [dim](# [i](Ignore specified directories))
-  [br:green](x-tree) [br:blue](--no-progress)                             [dim](# [i](Disable progress display))
-  [br:green](x-tree) [br:blue](-d)                                        [dim](# [i](Use all default settings without prompts))
-
-[b](Prompts:) [dim]((interactive — press Enter for defaults, or use [br:blue](-d) to skip all))
-  [i|dim](1)  Directories to ignore
-  [i|dim](2)  Include file contents in tree
-  [i|dim](3)  Tree style
-  [i|dim](4)  Indentation size
-  [i|dim](5)  Output tree to file
-"""
-    FormatCodes.print(help_text)
+    title = ["  Tree Generator", " — Quickly generate advanced and good looking directory trees  "]
+    FC(
+        "",
+        ("▄" * len("".join(title))),
+        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (F.BOLD("Usage: "), F.BR.GREEN("x-tree "), F.BR.CYAN("<base_dir> "), F.BR.BLUE("[options]")),
+        "",
+        F.BOLD("Arguments:"),
+        ("  ", F.BR.CYAN("base_dir"), "               Base directory to generate tree from ", F.DIM("(default: CWD)")),
+        "",
+        F.BOLD("Options:"),
+        ("  ", F.BR.BLUE("-i"), ", ", F.BR.BLUE("--ignore-dirs", F.DIM("="), "S"), "    Directories to ignore ", F.DIM("(directory paths/names, separated by ", F.BR.CYAN("|"), ")")),
+        ("  ", F.BR.BLUE("-n"), ", ", F.BR.BLUE("--no-progress"), "      Disable progress display during tree generation"),
+        ("  ", F.BR.BLUE("-d"), ", ", F.BR.BLUE("--default"), "          Use all default settings without prompts"),
+        "",
+        F.BOLD("Examples:"),
+        ("  ", F.BR.GREEN("x-tree "), F.BR.BLUE("-i", F.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", F.DIM("# ", F.ITALIC("Ignore specified directories"))),
+        ("  ", F.BR.GREEN("x-tree "), F.BR.BLUE("--no-progress"), "                             ", F.DIM("# ", F.ITALIC("Disable progress display"))),
+        ("  ", F.BR.GREEN("x-tree "), F.BR.BLUE("-d"), "                                        ", F.DIM("# ", F.ITALIC("Use all default settings without prompts"))),
+        "",
+        (F.BOLD("Prompts: "), F.DIM("(interactive — press Enter for defaults, or use ", F.BR.BLUE("-d"), " to skip all)")),
+        ("  ", (F.ITALIC | F.DIM)("1"), "  Directories to ignore"),
+        ("  ", (F.ITALIC | F.DIM)("2"), "  Include file contents in tree"),
+        ("  ", (F.ITALIC | F.DIM)("3"), "  Tree style"),
+        ("  ", (F.ITALIC | F.DIM)("4"), "  Indentation size"),
+        ("  ", (F.ITALIC | F.DIM)("5"), "  Output tree to file"),
+        "",
+    ).print()
+# fmt: on
 
 
 class ScriptDefaults(TypedDict):
@@ -446,11 +452,10 @@ class Tree:
         self._ignored_suffix_b = f"{self.line_hor}{self.ignored}\n".encode()
 
     def show_styles(self) -> None:
-        for style, details in self.style_presets.items():
-            FormatCodes.print(
-                f" [b|i]({style})  {details["corners"][0]}{details["line_hor"]}{details["ignored"]}{details["dirname_end"]}",
-                flush=True,
-            )
+        FC(*(
+            ((F.BOLD | F.ITALIC)(f" {style}"), f"  {details['corners'][0]}{details['line_hor']}{details['ignored']}{details['dirname_end']}")
+            for style, details in self.style_presets.items()
+        )).print()
 
     @staticmethod
     @lru_cache(maxsize=4096)
@@ -884,7 +889,7 @@ def main():
             default_val="Y" if include_file_contents else "N",
         ).upper() == "Y"
 
-        FormatCodes.print("[b](Enter the tree style) (1-4)")
+        FC((F.BOLD("Enter the tree style "), "(1-4)")).print()
         tree.show_styles()
         style = Console.input(
             f"({style}) [b](>) ",
@@ -933,7 +938,7 @@ def main():
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
-        FormatCodes.print(f"\n[white]{result}[_]", flush=True)
+        FC("", F.WHITE(result)).print()
 
 
 if __name__ == "__main__":

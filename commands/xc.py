@@ -23,9 +23,12 @@ except Exception as exc:
 
 # fmt: off
 def print_help():
+    title = ["  Execute & Copy", " — Run a command and copy its output to clipboard  "]
     FC(
         "",
-        (F.BOLD | F.INVERSE | F.BG.BLACK)(" Execute & Copy — Run a command and copy its output to clipboard "),
+        ("▄" * len("".join(title))),
+        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
         "",
         (F.BOLD | F.BR.YELLOW)(
             "⚠ Commands that use dynamic progress bars and such\n",
@@ -36,22 +39,22 @@ def print_help():
         (F.BOLD("Usage: "), F.BR.GREEN("xc "), F.BR.BLUE("[options] "), F.BR.CYAN("<command> [args...]")),
         "",
         F.BOLD("Arguments:"),
-        (F.BR.CYAN("command"), "              Command to execute with its arguments"),
+        ("  ", F.BR.CYAN("command"), "              Command to execute with its arguments"),
         "",
         F.BOLD("Options:"),
-        (F.BR.BLUE("-nc"), ", ", F.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
-        (F.BR.BLUE("-nm"), ", ", F.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", F.DIM("(exit code, duration, date)")),
-        (F.BR.BLUE("-o"), ", ", F.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),
-        (F.BR.BLUE("-a"), ", ", F.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", F.DIM("(default: ANSI removed)")),
+        ("  ", F.BR.BLUE("-nc"), ", ", F.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
+        ("  ", F.BR.BLUE("-nm"), ", ", F.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", F.DIM("(exit code, duration, date)")),
+        ("  ", F.BR.BLUE("-o"), ", ", F.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),
+        ("  ", F.BR.BLUE("-a"), ", ", F.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", F.DIM("(default: ANSI removed)")),
         "",
         F.BOLD("Controls:"),
-        (F.BR.RED("Ctrl(⌘)", F.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
+        ("  ", F.BR.RED("Ctrl(⌘)", F.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
         "",
         F.BOLD("Examples:"),
-        (F.BR.GREEN("xc "), F.BR.CYAN("pip show xulbux"), "         ", F.DIM("# ", F.ITALIC("Run and copy Python lib xulbux info"))),
-        (F.BR.GREEN("xc "), F.BR.BLUE("--no-meta "), F.BR.CYAN("git status"), "    ", F.DIM("# ", F.ITALIC("Run and copy git status without metadata"))),
-        (F.BR.GREEN("xc "), F.BR.BLUE("--no-command "), F.BR.CYAN("tree"), "       ", F.DIM("# ", F.ITALIC("Generate an copy a tree listing without the command"))),
-        (F.BR.GREEN("xc "), F.BR.BLUE("--only "), F.BR.CYAN("ls -la"), "           ", F.DIM("# ", F.ITALIC("Run and copy ls -la output only"))),
+        ("  ", F.BR.GREEN("xc "), F.BR.CYAN("pip show xulbux"), "         ", F.DIM("# ", F.ITALIC("Run and copy Python lib xulbux info"))),
+        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--no-meta "), F.BR.CYAN("git status"), "    ", F.DIM("# ", F.ITALIC("Run and copy git status without metadata"))),
+        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--no-command "), F.BR.CYAN("tree"), "       ", F.DIM("# ", F.ITALIC("Generate an copy a tree listing without the command"))),
+        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--only "), F.BR.CYAN("ls -la"), "           ", F.DIM("# ", F.ITALIC("Run and copy ls -la output only"))),
         "",
     ).print()
 # fmt: on
