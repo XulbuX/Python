@@ -171,7 +171,7 @@ def main() -> None:
                 indent=2,
                 as_json=True,
                 syntax_highlighting=True,
-            ) if ARGS.as_json.exists else "\n".join(extensions)
+            ).raw if ARGS.as_json.exists else "\n".join(extensions)
         ),
         "",
     ).print()
