@@ -4,7 +4,7 @@
 the option to directly format them as a JSON list."""
 from pathlib import Path
 from typing import Optional, cast
-from xulbux import Console, Data, FC, F
+from xulbux import StyledText, Console, Data, S
 import subprocess
 import platform
 import os
@@ -19,20 +19,20 @@ ARGS = Console.get_args({
 # fmt: off
 def print_help():
     title = ["  VS Code Extensions", " — List all installed Visual Studio Code extensions  "]
-    FC(
+    StyledText(
         "",
         ("▄" * len("".join(title))),
-        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
         ("▀" * len("".join(title))),
         "",
-        (F.BOLD("Usage: "), F.BR.GREEN("vscode-ext "), F.BR.BLUE("[options]")),
+        (S.BOLD("Usage: "), S.BR.GREEN("vscode-ext "), S.BR.BLUE("[options]")),
         "",
-        F.BOLD("Options:"),
-        ("  ", F.BR.BLUE("-j"), ", ", F.BR.BLUE("--json"), "    Output as a JSON list"),
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-j"), ", ", S.BR.BLUE("--json"), "    Output as a JSON list"),
         "",
-        F.BOLD("Examples:"),
-        ("  ", F.BR.GREEN("vscode-ext"), "           ", F.DIM("# ", F.ITALIC("List all installed extensions"))),
-        ("  ", F.BR.GREEN("vscode-ext "), F.BR.BLUE("--json"), "    ", F.DIM("# ", F.ITALIC("Output all extension as a JSON list"))),
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("vscode-ext"), "           ", S.DIM("# ", S.ITALIC("List all installed extensions"))),
+        ("  ", S.BR.GREEN("vscode-ext "), S.BR.BLUE("--json"), "    ", S.DIM("# ", S.ITALIC("Output all extension as a JSON list"))),
         "",
     ).print()
 # fmt: on
@@ -147,7 +147,7 @@ def main() -> None:
         return
 
     if (vscode_info := find_vscode_executable()) is None:
-        FC(F.BR.RED("Visual Studio Code is not installed or could not be found."))
+        StyledText(S.BR.RED("Visual Studio Code is not installed or could not be found."))
         raise SystemExit(1)
 
     variant, executable = vscode_info
@@ -155,17 +155,17 @@ def main() -> None:
 
     extensions = cast(list[str], get_vscode_extensions(executable))
 
-    FC(
+    StyledText(
         "",
         "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
-        (F.INVERSE | F.BG.BLACK)(
+        (S.INVERSE | S.BG.BLACK)(
             "  Found ",
-            F.BOLD(str(len(extensions))),
+            S.BOLD(str(len(extensions))),
             f" installed {variant_display} extensions  ",
         ),
         "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀",
         "",
-        F.WHITE(
+        S.WHITE(
             Data.render(
                 extensions,
                 indent=2,

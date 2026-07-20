@@ -4,7 +4,7 @@
 including metadata to the clipboard, after execution."""
 from pathlib import Path
 from typing import Optional, Any, IO, cast
-from xulbux import Console, System, FC, F
+from xulbux import StyledText, Console, System, S
 import subprocess
 import platform
 import shutil
@@ -16,44 +16,44 @@ try:
     import pyperclip
 except Exception as exc:
     fmt_error = "\n  ".join(str(exc).splitlines())
-    FC("", F.RED(F.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), F.BR.RED(f"  {fmt_error}"), "").print()
+    StyledText("", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), "").print()
     sys.exit(1)
 
 
 # fmt: off
 def print_help():
     title = ["  Execute & Copy", " — Run a command and copy its output to clipboard  "]
-    FC(
+    StyledText(
         "",
         ("▄" * len("".join(title))),
-        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
         ("▀" * len("".join(title))),
         "",
-        (F.BOLD | F.BR.YELLOW)(
+        (S.BOLD | S.BR.YELLOW)(
             "⚠ Commands that use dynamic progress bars and such\n",
             "  may not render correctly using this tool.\n",
             "  Interactive STDIN is currently not supported.",
         ),
         "",
-        (F.BOLD("Usage: "), F.BR.GREEN("xc "), F.BR.BLUE("[options] "), F.BR.CYAN("<command> [args...]")),
+        (S.BOLD("Usage: "), S.BR.GREEN("xc "), S.BR.BLUE("[options] "), S.BR.CYAN("<command> [args...]")),
         "",
-        F.BOLD("Arguments:"),
-        ("  ", F.BR.CYAN("command"), "              Command to execute with its arguments"),
+        S.BOLD("Arguments:"),
+        ("  ", S.BR.CYAN("command"), "              Command to execute with its arguments"),
         "",
-        F.BOLD("Options:"),
-        ("  ", F.BR.BLUE("-nc"), ", ", F.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
-        ("  ", F.BR.BLUE("-nm"), ", ", F.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", F.DIM("(exit code, duration, date)")),
-        ("  ", F.BR.BLUE("-o"), ", ", F.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),
-        ("  ", F.BR.BLUE("-a"), ", ", F.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", F.DIM("(default: ANSI removed)")),
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-nc"), ", ", S.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
+        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),
+        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),
+        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),
         "",
-        F.BOLD("Controls:"),
-        ("  ", F.BR.RED("Ctrl(⌘)", F.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
+        S.BOLD("Controls:"),
+        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
         "",
-        F.BOLD("Examples:"),
-        ("  ", F.BR.GREEN("xc "), F.BR.CYAN("pip show xulbux"), "         ", F.DIM("# ", F.ITALIC("Run and copy Python lib xulbux info"))),
-        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--no-meta "), F.BR.CYAN("git status"), "    ", F.DIM("# ", F.ITALIC("Run and copy git status without metadata"))),
-        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--no-command "), F.BR.CYAN("tree"), "       ", F.DIM("# ", F.ITALIC("Generate an copy a tree listing without the command"))),
-        ("  ", F.BR.GREEN("xc "), F.BR.BLUE("--only "), F.BR.CYAN("ls -la"), "           ", F.DIM("# ", F.ITALIC("Run and copy ls -la output only"))),
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),
         "",
     ).print()
 # fmt: on
@@ -131,7 +131,7 @@ def main() -> None:
         command_for_shell = shlex.join(command_args)
         command_str_display = command_for_shell
 
-    FC("", F.MAGENTA("━━━ Capturing: ", F.BOLD(command_str_display), " ━━━"), "").print()
+    StyledText("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "").print()
 
     process: Optional[subprocess.Popen[str]] = None
     captured_output: list[str] = []
@@ -185,19 +185,19 @@ def main() -> None:
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        FC("", F.BR.YELLOW("━━━ Command cancelled by user ━━━", F.DIM(" (Ctrl(⌘)+C)"))).print()
+        StyledText("", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl(⌘)+C)"))).print()
         add_nl_before_end = False
         exit_code = 130  # SIGINT
 
     except FileNotFoundError:
-        error_msg = FC(F.RED(F.BOLD("[ERROR] "), "Command not found:"), F.BR.RED(f"  {command_args[0]}"), "")
+        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 127  # COMMAND NOT FOUND
 
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        error_msg = FC(F.RED(F.BOLD("[ERROR] "), "Command execution failed:"), F.BR.RED(f"\n  {fmt_error}"), "")
+        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 1  # GENERAL ERROR
@@ -220,7 +220,7 @@ def main() -> None:
         )
 
     str_output = "".join(captured_output)
-    clipboard_parts.append(str_output if keep_ansi else FC.remove_ansi(str_output))
+    clipboard_parts.append(str_output if keep_ansi else StyledText.remove_ansi(str_output))
 
     if not exclude_meta:
         clipboard_parts.append(
@@ -237,18 +237,18 @@ def main() -> None:
         pyperclip.copy(clipboard_content)
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        FC("", F.BR.RED(F.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "").print()
+        StyledText("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "").print()
         sys.exit(1)
 
     lines_count = len(captured_output)
-    status_f = F.BR.GREEN if exit_code == 0 else F.BR.RED
+    status_f = S.BR.GREEN if exit_code == 0 else S.BR.RED
 
-    FC((
+    StyledText((
         ("\n" if add_nl_before_end else ""),
         status_f("━━━ Output copied to clipboard ━━━ "),
-        F.DIM(
-            F.BOLD(str(lines_count)), F.DIM, f" line{'s' if lines_count != 1 else ''}, ",
-            F.BOLD(duration_str), F.DIM, ", exit ", F.BOLD(str(exit_code))
+        S.DIM(
+            S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''}, ",
+            S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
         )
     ), "").print()
 

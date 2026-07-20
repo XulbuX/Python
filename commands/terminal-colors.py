@@ -2,33 +2,34 @@
 #[x-cmds]: UPDATE
 """Show the foreground and background colors
 from the current terminal color scheme."""
-from xulbux.format_codes import FmtSegment, FC, F
+from xulbux.ansi import StyledSegment, StyledText, S
 from xulbux import Console
+
 
 ARGS = Console.get_args({"help": {"-h", "--help"}})
 
 # fmt: off
-SHELL_COLORS: list[list[FmtSegment]] = [
-    [F.BLACK,   F.BR.BLACK,   F.WHITE | F.BG.BLACK,   F.WHITE | F.BG.BR.BLACK  ],
-    [F.WHITE,   F.BR.WHITE,   F.BLACK | F.BG.WHITE,   F.BLACK | F.BG.BR.WHITE  ],
-    [F.RED,     F.BR.RED,     F.BLACK | F.BG.RED,     F.BLACK | F.BG.BR.RED    ],
-    [F.YELLOW,  F.BR.YELLOW,  F.BLACK | F.BG.YELLOW,  F.BLACK | F.BG.BR.YELLOW ],
-    [F.GREEN,   F.BR.GREEN,   F.BLACK | F.BG.GREEN,   F.BLACK | F.BG.BR.GREEN  ],
-    [F.CYAN,    F.BR.CYAN,    F.BLACK | F.BG.CYAN,    F.BLACK | F.BG.BR.CYAN   ],
-    [F.BLUE,    F.BR.BLUE,    F.BLACK | F.BG.BLUE,    F.BLACK | F.BG.BR.BLUE   ],
-    [F.MAGENTA, F.BR.MAGENTA, F.BLACK | F.BG.MAGENTA, F.BLACK | F.BG.BR.MAGENTA],
+SHELL_COLORS: list[list[StyledSegment]] = [
+    [S.BLACK,   S.BR.BLACK,   S.WHITE | S.BG.BLACK,   S.WHITE | S.BG.BR.BLACK  ],
+    [S.WHITE,   S.BR.WHITE,   S.BLACK | S.BG.WHITE,   S.BLACK | S.BG.BR.WHITE  ],
+    [S.RED,     S.BR.RED,     S.BLACK | S.BG.RED,     S.BLACK | S.BG.BR.RED    ],
+    [S.YELLOW,  S.BR.YELLOW,  S.BLACK | S.BG.YELLOW,  S.BLACK | S.BG.BR.YELLOW ],
+    [S.GREEN,   S.BR.GREEN,   S.BLACK | S.BG.GREEN,   S.BLACK | S.BG.BR.GREEN  ],
+    [S.CYAN,    S.BR.CYAN,    S.BLACK | S.BG.CYAN,    S.BLACK | S.BG.BR.CYAN   ],
+    [S.BLUE,    S.BR.BLUE,    S.BLACK | S.BG.BLUE,    S.BLACK | S.BG.BR.BLUE   ],
+    [S.MAGENTA, S.BR.MAGENTA, S.BLACK | S.BG.MAGENTA, S.BLACK | S.BG.BR.MAGENTA],
 ]
 
 
 def print_help():
     title = ["  Terminal Colors", " — Show all foreground and background terminal colors  "]
-    FC(
+    StyledText(
         "",
         ("▄" * len("".join(title))),
-        (F.INVERSE | F.BG.BLACK)(F.BOLD(title[0]), title[1]),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
         ("▀" * len("".join(title))),
         "",
-        ((F.BOLD)("Usage: "), (F.BR.GREEN)("terminal-colors")),
+        ((S.BOLD)("Usage: "), (S.BR.GREEN)("terminal-colors")),
         "",
     ).print()
 # fmt: on
@@ -36,14 +37,14 @@ def print_help():
 
 def show_shell_colors():
     norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS)
-    output = FC("\n")
+    output = StyledText("\n")
 
     for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:
         for fmt in fgs:
-            output += FC((fmt("Aa"), " "))
+            output += StyledText((fmt("Aa"), " "))
         output += " "
         for fmt in bgs:
-            output += FC(fmt(" Aa "))
+            output += StyledText(fmt(" Aa "))
         output += "\n"
 
     output.print()
