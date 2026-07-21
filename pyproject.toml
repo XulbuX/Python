@@ -1,0 +1,36 @@
+[tool.ruff]
+line-length = 127
+target-version = "py312"
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = [
+  "B",   # flake8-bugbear (finds likely bugs & design problems)
+  "C4",  # flake8-comprehensions (helps write better comprehensions)
+  "C90", # mccabe complexity (checks cyclomatic complexity)
+  "E",   # pycodestyle errors (checks PEP 8 style errors)
+  "F",   # pyflakes (checks for logical errors)
+  "I",   # isort (sorts imports)
+  "RUF", # Ruff-specific linting rules
+  "SIM", # flake8-simplify (helps simplify code)
+  "TCH", # flake8-type-checking (manages type-checking imports)
+  "UP",  # pyupgrade (upgrades syntax for newer Python versions)
+  "W",   # pycodestyle warnings (checks PEP 8 style warnings)
+]
+ignore = [
+  "RUF002", # Docstring contains ambiguous character.
+]
+mccabe = { max-complexity = 12 }
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+no-lines-before = ["first-party", "third-party"]
+section-order = [
+  "future",
+  "local-folder",
+  "standard-library",
+  "first-party",
+  "third-party",
+]

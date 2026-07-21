@@ -1,10 +1,11 @@
-from pathlib import Path
-from typing import Optional, cast
-from xulbux import FormatCodes, EnvPath, FileSys, String, Regex, Code, Data, File, Json
-from xulbux.console import Console, ParsedArgs
-import regex as rx
+# ruff: noqa
+# type: ignore
 import re
-
+from pathlib import Path
+from typing import cast
+import regex as rx
+from xulbux import Code, Data, EnvPath, File, FileSys, FormatCodes, Json, Regex, String
+from xulbux.console import Console, ParsedArgs
 
 VERSION = "1.4.26"
 COMMAND = "x-convert"
@@ -47,18 +48,12 @@ DEFAULT_JSON = {
                 ">> LIBRARY IMPORT-PATH (SEPARATE WITH `\n` IF MULTIPLE NEEDED LIBRARIES - OPTIONAL IF LIBRARY IS NEEDED IN JS-FUNCTION)",
             ],
         ],
-        "date": [
-            "const date = (str:string) => dayjs(str, 'DD.MM.YYYY').format('DD.MM.YYYY')",
-            ["dayjs", "dayjs"],
-        ],
+        "date": ["const date = (str:string) => dayjs(str, 'DD.MM.YYYY').format('DD.MM.YYYY')", ["dayjs", "dayjs"]],
         "dateFormat": [
             "const dateFormat = (date:string, format:string = 'dd. DD.MM.YYYY') => dayjs(date).format(format);",
             ["dayjs", "dayjs"],
         ],
-        "strtotime": [
-            "const strtotime = (str: string) => dayjs(str).unix()",
-            ["dayjs", "dayjs"],
-        ],
+        "strtotime": ["const strtotime = (str: string) => dayjs(str).unix()", ["dayjs", "dayjs"]],
         "ucfirst": "const ucfirst = (str:string) => str.charAt(0).toUpperCase() + str.slice(1)",
         "lcfirst": "const lcfirst = (str:string) => str.charAt(0).toLowerCase() + str.slice(1)",
         "strtoupper": "const strtoupper = (str:string) => str.toUpperCase()",
@@ -126,13 +121,15 @@ C_BR = Regex.brackets("{", "}", is_group=True)
 A_BR = Regex.brackets("<", ">", is_group=True)
 
 
-ARGS = Console.get_args({
-    "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
-    "indent": {"-i", "--indent", "-is", "--indent-spaces"},
-    "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
-    "help": {"-h", "--help"},
-    "debug": {"-d", "--debug"},
-})
+ARGS = Console.get_args(
+    {
+        "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
+        "indent": {"-i", "--indent", "-is", "--indent-spaces"},
+        "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
+        "help": {"-h", "--help"},
+        "debug": {"-d", "--debug"},
+    }
+)
 
 
 def show_help():
@@ -171,12 +168,12 @@ def show_help():
 def get_json(args: ParsedArgs) -> None:
     try:
         global JSON, _JSON
-        JSON, _JSON = Json.read(
-            JSON_FILE, comment_start=">>", comment_end="<<", return_original=True
-        )
+        JSON, _JSON = Json.read(JSON_FILE, comment_start=">>", comment_end="<<", return_original=True)
     except FileNotFoundError:
         Console.fail(f"File not found: [white]{JSON_FILE}", exit=False, start="\n")
-        if Console.confirm(f"{TAB}Create [+|b]{JSON_FILE}[*] with default values in program directory?", default_color="#3EE6DE", end=""):
+        if Console.confirm(
+            f"{TAB}Create [+|b]{JSON_FILE}[*] with default values in program directory?", default_color="#3EE6DE", end=""
+        ):
             Json.create(JSON_FILE, DEFAULT_JSON, indent=4, force=True)
             Console.info(f"[white]{JSON_FILE}[*] created successfully.", start="\n", end="\n\n")
             FormatCodes.print(f"{TAB}[dim]Restarting program...[_]")
@@ -215,49 +212,38 @@ def add_to_env_vars() -> None:
                     "Path to program-directory doesn't exist in your environment variables.\n"
                     f"[#7090FF]If existent, you can execute the program with the command [#FF9E6A]{COMMAND}[#7090FF].[_]",
                     exit=False,
-                    start="\n"
+                    start="\n",
                 )
                 if Console.confirm(
-                    f"{TAB}Add the [+|b]program directory[*] to your environment variables?",
-                    default_color="#3EE6DE",
+                    f"{TAB}Add the [+|b]program directory[*] to your environment variables?", default_color="#3EE6DE"
                 ):
                     EnvPath.add_path(base_dir=True)
                     Console.info(
                         f"Successfully added [white]{base_dir}[_] to your environment variables.\n"
                         f"[#7090FF]If the command [#FF9E6A]{COMMAND}[#7090FF] doesn't work, you might need to restart the console.[_]",
-                        start="\n", end="\n\n"
+                        start="\n",
+                        end="\n\n",
                     )
                     FormatCodes.print("        \t[dim]Continuing program...[_]")
-            Json.update(JSON_FILE, { "is_in_env_vars": base_dir })
+            Json.update(JSON_FILE, {"is_in_env_vars": base_dir})
     except KeyError:
         Console.fail(
-            f"Not all required keys were found in JSON file:  [white]{JSON_FILE}",
-            pause=DEBUG,
-            start="\n",
-            end="\n\n",
+            f"Not all required keys were found in JSON file:  [white]{JSON_FILE}", pause=DEBUG, start="\n", end="\n\n"
         )
 
 
 class blade_to_vue:
     @staticmethod
-    def transform_slots(code: str) -> Optional[str]:
-        pattern_one_line = (
-            r"<x-slot\s*name\s*=\s*"
-            + QUOTES
-            + r"\s*>\s*\n?\s*([^\n>]+)?\s*\n?\s*</x-slot>"
-        )
+    def transform_slots(code: str) -> str | None:
+        pattern_one_line = r"<x-slot\s*name\s*=\s*" + QUOTES + r"\s*>\s*\n?\s*([^\n>]+)?\s*\n?\s*</x-slot>"
         pattern_multiline = r"<x-slot\s*name\s*=\s*" + QUOTES + r"\s*>(.*?)</x-slot>"
 
-        def replace_slot(match: re.Match) -> Optional[str]:
+        def replace_slot(match: re.Match) -> str | None:
             name = match.group(2)
             content = match.group(3).strip()
             if not content:
                 return None
-            content = rx.sub(
-                r"\{\{\s*(" + L_FN + r"\(\s*" + QUOTES + r"\s*\))\s*\}\}",
-                r"\1",
-                content,
-            )
+            content = rx.sub(r"\{\{\s*(" + L_FN + r"\(\s*" + QUOTES + r"\s*\))\s*\}\}", r"\1", content)
             slots[name] = content
 
         slots = {}
@@ -268,26 +254,19 @@ class blade_to_vue:
             attributes = match.group(2).strip()
             for name, value in slots.items():
                 val = value.strip()
-                attributes += f'{f' {':' if Code.is_js(val) else ''}{name}="{val}"' if val and not('\n' in val or '>' in val) else ''}'
+                attributes += (
+                    f"{f' {":" if Code.is_js(val) else ""}{name}="{val}"' if val and not ('\n' in val or '>' in val) else ''}"
+                )
             return f"<{tag} {attributes.strip()}>{match.group(3)}"
 
-        code = rx.sub(
-            pattern_multiline, r"<template #\2>\3</template>", code, flags=re.DOTALL
-        )
+        code = rx.sub(pattern_multiline, r"<template #\2>\3</template>", code, flags=re.DOTALL)
         code = re.sub(r"<(/)?x-slot(.*?)>", r"<\1slot\2>", code)
-        return re.sub(
-            r"<([\w.-]+)(.*?)>(\s*(?:\n|<[\w.-]+\s+|$))",
-            add_slot_attributes,
-            code,
-            count=1,
-        )
+        return re.sub(r"<([\w.-]+)(.*?)>(\s*(?:\n|<[\w.-]+\s+|$))", add_slot_attributes, code, count=1)
 
     @staticmethod
     def add_php_funcs(code: str, php_as_js_functions: dict) -> None:
-        for php_func in Data.remove_duplicates(
-            [func[0] for func in Code.get_func_calls(code)]
-        ):
-            if php_func in php_as_js_functions.keys():
+        for php_func in Data.remove_duplicates([func[0] for func in Code.get_func_calls(code)]):
+            if php_func in php_as_js_functions:
                 js_func = php_as_js_functions[php_func]
                 if (
                     isinstance(js_func, list)
@@ -303,23 +282,14 @@ class blade_to_vue:
 
     @staticmethod
     def transform_script_lang_funcs(code: str) -> str:
-        pattern = (
-            r"(<script(?:\s+[\s\S]*)?>)"
-            + Regex.all_except(r"<|>", is_group=True)
-            + r"(<\/script\s*>)"
-        )
+        pattern = r"(<script(?:\s+[\s\S]*)?>)" + Regex.all_except(r"<|>", is_group=True) + r"(<\/script\s*>)"
 
         def replace_script_lang_func(match: re.Match) -> str:
             script = match.group(2)
             funcs = re.findall(r"lang\s*\(", script)
             if funcs:
                 script = re.sub(r"lang\s*\(", "trans(", script)
-                script = rx.sub(
-                    r"import\s*{\s*lang\s*}\s*from\s*" + QUOTES + r";\s*",
-                    "",
-                    script,
-                    flags=re.DOTALL,
-                )
+                script = rx.sub(r"import\s*{\s*lang\s*}\s*from\s*" + QUOTES + r";\s*", "", script, flags=re.DOTALL)
                 JS_IMPORTS["{ trans }"] = "laravel-vue-i18n"
             return f"{match.group(1)}{script}{match.group(3)}"
 
@@ -331,24 +301,16 @@ class blade_to_vue:
 
         def replace_tag_name(match: re.Match) -> str:
             tag_parts = [match.group(1), match.group(2), match.group(3)]
-            if tag_parts[1] in component_replacements.keys():
+            if tag_parts[1] in component_replacements:
                 value = component_replacements[tag_parts[1]]
-                replacement_name, import_path = (
-                    value if isinstance(value, list) else [value, None]
-                )[:2]
+                replacement_name, import_path = (value if isinstance(value, list) else [value, None])[:2]
                 if import_path:
-                    replacement_name = replacement_name.replace(
-                        ":filename", Path(import_path).stem
-                    )
+                    replacement_name = replacement_name.replace(":filename", Path(import_path).stem)
                     if import_path not in JS_IMPORTS:
                         JS_IMPORTS[replacement_name] = import_path
                 if tag_parts[2]:
                     tag_parts[2] = rx.sub(
-                        r':?([\w-]+)\s*=\s*([\'"])(?:\s*\{\{)?\s*'
-                        + L_FN
-                        + r"\s*"
-                        + R_BR
-                        + r"\s*(?:\}\}\s*)?\2",
+                        r':?([\w-]+)\s*=\s*([\'"])(?:\s*\{\{)?\s*' + L_FN + r"\s*" + R_BR + r"\s*(?:\}\}\s*)?\2",
                         r'\1="\3"',
                         tag_parts[2],
                     )
@@ -362,7 +324,7 @@ class blade_to_vue:
     def transform_func_names(code: str, function_replacements: dict) -> str:
         def replace_func_name(match: re.Match) -> str:
             func_parts = [match.group(1), match.group(2)]
-            if func_parts[0] in function_replacements.keys():
+            if func_parts[0] in function_replacements:
                 return f"{function_replacements[func_parts[0]]}({func_parts[1]})"
             return match.group(0)
 
@@ -378,9 +340,7 @@ class blade_to_vue:
             heading = match.group(2)
             attributes = f"{match.group(1).strip()} {match.group(3).strip()}".strip()
             tag_content = match.group(4)
-            html_tag = (
-                heading if heading in ("h1", "h2", "h3", "h4", "h5", "h6") else "h1"
-            )
+            html_tag = heading if heading in ("h1", "h2", "h3", "h4", "h5", "h6") else "h1"
             return f"<{html_tag} {attributes}>{tag_content}</{html_tag}>".strip()
 
         code = re.sub(pattern_one, replace_heading, code, flags=re.DOTALL)
@@ -391,13 +351,12 @@ class blade_to_vue:
     def transform_loops(code: str) -> str:
         def replace_loop(match: re.Match) -> str:
             loop_content = match.group(1).strip()
-            for_match = re.match(
-                r"\$([\w_]+)\s*=\s*(\S+)\s*;\s*\$\1\s*([<>=!]+)\s*(\S+)\s*;\s*\$\1([\+\-]+)",
-                loop_content,
-            )
+            for_match = re.match(r"\$([\w_]+)\s*=\s*(\S+)\s*;\s*\$\1\s*([<>=!]+)\s*(\S+)\s*;\s*\$\1([\+\-]+)", loop_content)
             if for_match:
                 var, start, _, end, _ = for_match.groups()
-                return f'<div v-for="{var} in Array.from({{length: {end} - {start} + 1}}, (_, i) => i + {start})" :key="{var}">'
+                return (
+                    f'<div v-for="{var} in Array.from({{length: {end} - {start} + 1}}, (_, i) => i + {start})" :key="{var}">'
+                )
             parts = [part.strip() for part in re.split(r"(?i)\s+as\s*", loop_content)]
             if len(parts) == 2:
                 items, item = parts
@@ -409,9 +368,7 @@ class blade_to_vue:
                 else:
                     if item.strip() in ("$key", "$index"):
                         item = "$idx"
-                    return (
-                        f'<div v-for="{item.strip()} in {items}" :key="{item.strip()}">'
-                    )
+                    return f'<div v-for="{item.strip()} in {items}" :key="{item.strip()}">'
             return match.group(0)
 
         code = rx.sub(r"(?i)@for(?:each)?\s*" + R_BR, replace_loop, code)  # type: ignore[overloads]
@@ -421,18 +378,18 @@ class blade_to_vue:
     def transform_concatenated(code: str) -> str:
         concat_code_regex = r"""(?<!\w)((?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*)
                           (?:\s*\.\s*(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*))+)"""
-        split_concat_regex = r"""('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*)|\s*\.\s*"""
+        split_concat_regex = (
+            r"""('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|\$[\w_]*(?:->[\w]+)*(?:\[[^\]]+\])*)|\s*\.\s*"""
+        )
 
-        def is_quoted(s: str) -> Optional[re.Match]:
+        def is_quoted(s: str) -> re.Match | None:
             return re.match(r'^[\'"`].*[\'"`]$', s.strip())
 
         matches = list(rx.compile(concat_code_regex, rx.VERBOSE).finditer(code))
         if matches:
             for match in matches:
                 concat_str = match.group(1)
-                parts = cast(list, Data.remove_empty_items(
-                    rx.compile(split_concat_regex, rx.VERBOSE).findall(concat_str)
-                ))
+                parts = cast("list", Data.remove_empty_items(rx.compile(split_concat_regex, rx.VERBOSE).findall(concat_str)))
                 if any(char in item for item in parts for char in ('"', "'", "`")):
                     is_str, transformed = 0, ""
                     for i, part in enumerate(parts):
@@ -458,7 +415,7 @@ class blade_to_vue:
                                     transformed += f" {part}}}"
                                 else:
                                     transformed += f"${{{part}}}"
-                    if not (is_str == len(parts)):
+                    if is_str != len(parts):
                         transformed = f"`{transformed}`"
                 else:
                     transformed = " + ".join(parts)
@@ -466,40 +423,33 @@ class blade_to_vue:
         return code
 
     @staticmethod
-    def transform_self_closing_tags(
-        code: str,
-        disallowed_tags: list = [
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr",
-        ],
-    ) -> str:
+    def transform_self_closing_tags(code: str, disallowed_tags: list | None = None) -> str:
+        if disallowed_tags is None:
+            disallowed_tags = [
+                "area",
+                "base",
+                "br",
+                "col",
+                "embed",
+                "hr",
+                "img",
+                "input",
+                "link",
+                "meta",
+                "param",
+                "source",
+                "track",
+                "wbr",
+            ]
+
         def replace_self_closing_tag(match: re.Match) -> str:
             tag = match.group(2)
             if tag in disallowed_tags:
                 return f"<{tag} {match.group(3).strip()}>"
-            return (
-                match.group(0)
-                if match.group(1)
-                else f"<{tag} {match.group(3).strip()} />"
-            )
+            return match.group(0) if match.group(1) else f"<{tag} {match.group(3).strip()} />"
 
         code = re.sub(  # CORRECT ALREADY PRESENT, BUT FORBIDDEN SELF-CLOSING TAGS
-            r"<(/?)([\w.-]+)\s*(" + Regex.all_except(r"<|>") + r")\s*/>",
-            replace_self_closing_tag,
-            code,
-            flags=re.DOTALL,
+            r"<(/?)([\w.-]+)\s*(" + Regex.all_except(r"<|>") + r")\s*/>", replace_self_closing_tag, code, flags=re.DOTALL
         )
         return re.sub(
             r"<(/?)([\w.-]+)\s*(" + Regex.all_except(r"<|>") + r")>\s*</\2\s*>",
@@ -509,40 +459,32 @@ class blade_to_vue:
         )
 
     @staticmethod
-    def update_js(code: str, imports: dict, add_js: list, indent: Optional[int] = None) -> str:
+    def update_js(code: str, imports: dict, add_js: list, indent: int | None = None) -> str:
         if not (imports or add_js):
             return code
         if not indent or indent < 0:
             indent = 0
-        pattern = (
-            r"<script(\s+[\s\S]*)?>"
-            + Regex.all_except(r"<\/script\s*>", is_group=True)
-            + r"<\/script\s*>\s*(?=\s*$)"
-        )
+        pattern = r"<script(\s+[\s\S]*)?>" + Regex.all_except(r"<\/script\s*>", is_group=True) + r"<\/script\s*>\s*(?=\s*$)"
         js_parts = {"new": [], "old": []}
         if imports:
-            js_parts = {
-                "new": [
-                    f"import {name} from '{path}';" for (name), path in imports.items()
-                ]
-            }
+            js_parts = {"new": [f"import {name} from '{path}';" for (name), path in imports.items()]}
         if add_js:
-            js_parts["new"] += [""] + add_js
+            js_parts["new"] += ["", *add_js]
 
         def add_new_script(match: re.Match) -> str:
             attrs = match.group(1) if not match.group(1) else match.group(1).strip()
             old_js = match.group(2).rstrip(" \n")
             js_parts["old"] = old_js.splitlines()
-            updated_js = (
-                [*js_parts["new"], *js_parts["old"]] if old_js else [js_parts["new"]]
-            )
+            updated_js = [*js_parts["new"], *js_parts["old"]] if old_js else [js_parts["new"]]
             updated_js = "\n".join([f"{indent * ' '}{line}" for line in updated_js])
             return f"<script{f' {attrs}' if attrs else ''}>\n{updated_js}\n</script>"
 
         if re.search(pattern, code, flags=re.DOTALL):
             code = re.sub(pattern, add_new_script, code, flags=re.DOTALL)
         else:
-            code += f'\n\n<script setup lang="ts">\n{"".join([f"{indent * ' '}{line}" for line in js_parts["new"]])}\n</script>'
+            code += (
+                f'\n\n<script setup lang="ts">\n{"".join([f"{indent * ' '}{line}" for line in js_parts["new"]])}\n</script>'
+            )
         return code
 
     def convert(self, code: str, indent: int = 2) -> str:
@@ -557,10 +499,10 @@ class blade_to_vue:
             r"(?i)(?:count|strlen)\s*" + R_BR, r"\1.length", code
         )
         code = rx.sub(  # TRANSFORM `<tagname {{ $var.merge(['key_name' => 'values']) }} ...>` INTO `<tagname key_name="values" ...>`
-            r"<([\w.-]+)\s+\{\{\s*(\$[\w_]+)\s*->\s*merge\s*\(\s*"
-            + S_BR
-            + r"\s*\)\s*\}\}(.*?)/?>(\s*(?:\n|<[\w.-]+\s+|$))",
-            lambda m: f'<{m.group(1)} {' '.join(f'{a.strip(' \'"')}="{v.strip(' \'"')}"' for a, v in re.findall(r',?\s*(.*)\s*=>\s*(.*)', m.group(3)))} {m.group(4).strip()}>{m.group(5)}',
+            r"<([\w.-]+)\s+\{\{\s*(\$[\w_]+)\s*->\s*merge\s*\(\s*" + S_BR + r"\s*\)\s*\}\}(.*?)/?>(\s*(?:\n|<[\w.-]+\s+|$))",
+            lambda m: (
+                f"<{m.group(1)} {' '.join(f'{a.strip(" '\"")}="{v.strip(" '\"")}"' for a, v in re.findall(r',?\s*(.*)\s*=>\s*(.*)', m.group(3)))} {m.group(4).strip()}>{m.group(5)}"
+            ),
             code,
         )
         code = re.sub(  # TRANSFORM ARROW CHAINS TO DOT CHAINS
@@ -605,9 +547,7 @@ class blade_to_vue:
             r"(?i)\s*@endphp", r" -->", code
         )
         code = rx.sub(  # REPLACE `import { route } from '...';` WITH `import { route } from '@/plugins/route';`
-            r"import\s*{\s*route\s*}\s*from\s*" + QUOTES + r"\s*;",
-            "import { route } from '@/plugins/route';",
-            code,
+            r"import\s*{\s*route\s*}\s*from\s*" + QUOTES + r"\s*;", "import { route } from '@/plugins/route';", code
         )
         code = rx.sub(  # REPLACE `<div @if(true) attr>` SYNTAX WITH `<div :attr="true">` ATTRIBUTES
             r"(?i)(<(?!/)[\w.-]+"
@@ -618,9 +558,7 @@ class blade_to_vue:
             + Regex.all_except(r"<|>")
             + r">)",
             lambda m: (
-                f'{m.group(1)}:{m.group(3).strip()}="{m.group(2).strip()}"{m.group(4)}'
-                if m.group(3).strip()
-                else m.group(0)
+                f'{m.group(1)}:{m.group(3).strip()}="{m.group(2).strip()}"{m.group(4)}' if m.group(3).strip() else m.group(0)
             ),
             code,
             flags=re.DOTALL,
@@ -702,19 +640,13 @@ class blade_to_vue:
             r"(?i)@else(\s+)", r"</span><span v-else>\1", code
         )
         code = re.sub(  # REPLACE `@end...` SYNTAX WITH `</div>` or `</span>` END-TAGS
-            r"(?i)@end([\w_]+)",
-            lambda m: (
-                "</span>"
-                if m.group(1) in ("if", "isset", "elseif", "else")
-                else "</div>"
-            ),
-            code,
+            r"(?i)@end([\w_]+)", lambda m: "</span>" if m.group(1) in ("if", "isset", "elseif", "else") else "</div>", code
         )
         code = rx.sub(  # REPLACE `<div v-if="$slot"><slot name="...">{{ $slot }}</slot></div>` WITH `<slot />` OR `<slot name="..." />`
             r'<([\w-]+)\s+v-if\s*=\s*"\s*\$?slot\s*"\s*>\s*<slot(?:\s+name\s*=\s*'
             + QUOTES
             + r")?\s*>\s*{{\s*\$?slot\s*}}\s*</slot\s*>\s*</\1\s*>",
-            lambda m: f'<slot{f' name="{m.group(3).strip()}"' if m.group(3).strip() else ''} />',
+            lambda m: f"<slot{f' name="{m.group(3).strip()}"' if m.group(3).strip() else ''} />",
             code,
         )
         code = rx.sub(  # REPLACE `__()` AND `$lang()` FUNCTIONS WITH `$t()` FUNCTION
@@ -736,15 +668,11 @@ class blade_to_vue:
             code,
         )
         code = rx.sub(  # REPLACE LEFTOVER `attr="{{  }}"` WITH `:attr="  "`
-            r':?([\w-]+)\s*=\s*([\'"])\s*\{' + C_BR + r"\}\s*\2",
-            lambda m: f':{m.group(1)}="{m.group(3).strip()}"',
-            code,
+            r':?([\w-]+)\s*=\s*([\'"])\s*\{' + C_BR + r"\}\s*\2", lambda m: f':{m.group(1)}="{m.group(3).strip()}"', code
         )
         code = rx.sub(  # REPLACE `{{  }}`-CONCATENATED STRINGS WITH BACKTICK-STRINGS
-            r':?([\w-]+)\s*=\s*([\'"])(((?:\\.|(?:(?!\2).)+)*)\{'
-            + C_BR
-            + r"\}((?:\\.|(?:(?!\2).)+)*))\2",
-            lambda m: f':{m.group(1)}="`{m.group(3).replace('{{', '${').replace('}}', '}')}`"',
+            r':?([\w-]+)\s*=\s*([\'"])(((?:\\.|(?:(?!\2).)+)*)\{' + C_BR + r"\}((?:\\.|(?:(?!\2).)+)*))\2",
+            lambda m: f':{m.group(1)}="`{m.group(3).replace("{{", "${").replace("}}", "}")}`"',
             code,
         )
         code = rx.sub(  # REMOVE `asset(  )` BRACKETS
@@ -768,23 +696,27 @@ class blade_to_vue:
             r"\$attributes\s*\[\s*" + QUOTES + r"\s*\]", r"\2", code
         )
         code = re.sub(  # REMOVE LEFTOVER `$` PREFIXES FROM VARS AND FUNCTIONS
-            r"\$(\w+)(?!\s*\()",
-            lambda m: m.group(1) if not m.group(1) == "t" else m.group(0),
-            code,
+            r"\$(\w+)(?!\s*\()", lambda m: m.group(1) if m.group(1) != "t" else m.group(0), code
         )
 
-        outside_template_script_pattern = (r"(<script(?:\s+[\s\S]*)?>" + Regex.all_except(r"<\/script\s*>") + r"<\/script\s*>\s*)(?=\s*$)")
+        outside_template_script_pattern = (
+            r"(<script(?:\s+[\s\S]*)?>" + Regex.all_except(r"<\/script\s*>") + r"<\/script\s*>\s*)(?=\s*$)"
+        )
         outside_template_script = "\n".join(rx.findall(outside_template_script_pattern, code, flags=re.DOTALL))
         code = rx.sub(  # REMOVE OUTSIDE TEMPLATE SCRIPT
             outside_template_script_pattern, "", code, flags=re.DOTALL
         )
-        vue_content = f"<template>\n{Code.add_indent(code.strip(), Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
+        vue_content = (
+            f"<template>\n{Code.add_indent(code.strip(), Code.get_tab_spaces(code))}\n</template>\n\n{outside_template_script}"
+        )
         if isinstance(ARGS.indent.values[0], int):
             vue_content = String.remove_consecutive_empty_lines(vue_content, max_consecutive=1)
             Console.debug("Removed consecutive empty lines to [b|+]max_consecutive=1[_].", DEBUG, start="\n")
             if not ARGS.indent.values[0] < 1:
                 vue_content = Code.change_tab_size(vue_content, indent, remove_empty_lines=True)
-                Console.debug(f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n")
+                Console.debug(
+                    f"Changed tab size to [b|+]{indent}[_] spaces and removed [b|+]all[_] empty lines.", DEBUG, start="\n"
+                )
         return self.update_js(vue_content, JS_IMPORTS, ADD_JS)
 
 
@@ -800,15 +732,15 @@ def main(args: ParsedArgs):
     if not Path(args.filepath.values[0] or "").is_file():
         Console.fail(f"Path is not a file: [white]{args.filepath.values[0]}", pause=DEBUG)
 
-    with open(args.filepath.values[0] or "", "r") as file:
+    with open(args.filepath.values[0] or "") as file:
         file_content = file.read()
     converter = blade_to_vue()
-    converted_content = (converter.convert(file_content, int(args.indent.values[0] or 2)) if args.blade_vue.exists else None)
+    converted_content = converter.convert(file_content, int(args.indent.values[0] or 2)) if args.blade_vue.exists else None
 
     if converted_content:
         new_file_path = File.rename_extension(args.filepath.values[0] or "", ".vue", camel_case_filename=True)
         if Path(new_file_path).exists():
-            with open(new_file_path, "r") as existing_file:
+            with open(new_file_path) as existing_file:
                 existing_content = existing_file.read()
             if existing_content == converted_content:
                 Console.info("Already formatted this file. [dim](nothing changed)", pause=DEBUG, start="\n", end="\n\n")

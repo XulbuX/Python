@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Quickly convert a 2-digit HEX value to a percentage."""
-from xulbux import FormatCodes, Console
+
+from xulbux import Console, FormatCodes
+
+ARGS = Console.get_args({"hex_value": "before", "help": {"-h", "--help"}})
 
 
-ARGS = Console.get_args({
-    "hex_value": "before",
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Hex → Percent — Quickly convert a 2-digit HEX value to a percentage )
 
@@ -31,7 +29,7 @@ def hex_to_percent(hex_val: str) -> float:
     return round((int(hex_val, 16) / 255) * 100, 2)
 
 
-def main():
+def main() -> None:
     if ARGS.help.exists or not ARGS.hex_value.values:
         print_help()
         return

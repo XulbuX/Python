@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Get the squares of all numbers up to a given number."""
-from xulbux.base.consts import CHARS
-from xulbux import FormatCodes, Console
+
 import keyboard
+from xulbux import Console, FormatCodes
+from xulbux.base.consts import CHARS
 
-
-ARGS = Console.get_args({
-    "table_cols": {"-c", "--cols"},
-    "help": {"-h", "--help"},
-})
-TABLE_COLS = (
-    int(v) \
-    if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() \
-    else 4
-)
+ARGS = Console.get_args({"table_cols": {"-c", "--cols"}, "help": {"-h", "--help"}})
+TABLE_COLS = int(v) if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() else 4
 
 
 def clear_last_lines(count: int) -> None:
@@ -29,7 +23,7 @@ def wait_key_pressed_and_released(key: str) -> None:
         pass
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Squares — Calculate the squares of all numbers up to a given number )
 
@@ -45,7 +39,7 @@ def print_help():
     FormatCodes.print(help_text)
 
 
-def main():
+def main() -> None:
     if ARGS.help.exists:
         print_help()
         return
@@ -58,11 +52,9 @@ def main():
 
     loops = int(
         Console.input(
-            "Until which number do you want all squares to be calculated: ",
-            allowed_chars=CHARS.DIGITS,
-            min_len=1,
-            max_len=7,
-        ) or ""
+            "Until which number do you want all squares to be calculated: ", allowed_chars=CHARS.DIGITS, min_len=1, max_len=7
+        )
+        or ""
     )
 
     i = 1
@@ -70,7 +62,7 @@ def main():
 
     borders = {
         "top": ("╭" + ((row_space * TABLE_COLS) - 2) * "─" + "╮"),
-        "bottom": ("╰" + ((row_space * TABLE_COLS) - 2) * "─" + "╯")
+        "bottom": ("╰" + ((row_space * TABLE_COLS) - 2) * "─" + "╯"),
     }
 
     print(borders["top"])
@@ -81,9 +73,9 @@ def main():
         for _ in range(TABLE_COLS):
             if i <= loops:
                 output = f"│ {i}² = {i * i:,}"
-                row += f"{output}{(row_space - len(output) - 1) * " "}│"
+                row += f"{output}{(row_space - len(output) - 1) * ' '}│"
             else:
-                row += f"│{(row_space - 2) * " "}│"
+                row += f"│{(row_space - 2) * ' '}│"
             i += 1
         print(row)
     print(borders["bottom"])

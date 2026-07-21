@@ -1,11 +1,9 @@
-from typing import Optional
 import re
-
 
 _TIME_RE = re.compile(r"^\s*(?:(\d+):)?(?:(\d{1,2}):)?(\d+(?:\.\d+)?)\s*$")
 
 
-def parse_time(val: str) -> Optional[float]:
+def parse_time(val: str) -> float | None:
     """Parse `HH:MM:SS(.ms)`, `MM:SS(.ms)`, or `SS(.ms)` into seconds.<br>
     Returns `None` if the input cannot be parsed."""
     if not val.strip():

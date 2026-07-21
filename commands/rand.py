@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Generate a truly random number with a specific number of digits or within a range.
 Provide either the number of digits or a min and max range."""
-from typing import Optional
-from xulbux.console import ProgressBar
-from xulbux import FormatCodes, Console
+
 import secrets
 import sys
-
+from xulbux import Console, FormatCodes
+from xulbux.console import ProgressBar
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args({
-    "digits_or_min_max": "before",
-    "batch_gen": {"-b", "--batch", "--batch-gen"},
-    "format": {"-f", "--format"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    {
+        "digits_or_min_max": "before",
+        "batch_gen": {"-b", "--batch", "--batch-gen"},
+        "format": {"-f", "--format"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Random — Generate truly random numbers )
 
@@ -34,20 +36,20 @@ def print_help():
   [br:blue](-f), [br:blue](--format)         Format numbers with commas as thousand separators
 
 [b](Examples:)
-  [br:green](rand) [br:cyan](10)                 [dim](# [i](Generate a random number with 10 digits))
-  [br:green](rand) [br:cyan](-100 100)           [dim](# [i](Generate a random number between -100 and 100))
-  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen[dim](=)3)    [dim](# [i](Generate 3 random numbers with 5 digits))
-  [br:green](rand) [br:cyan](10) [br:blue](--format)        [dim](# [i](Generate a comma-formatted random number with 10 digits))
+  [br:green](rand) [br:cyan](10)                 [dim](# [i](Random number with 10 digits))
+  [br:green](rand) [br:cyan](-100 100)           [dim](# [i](Random number between -100 and 100))
+  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen[dim](=)3)    [dim](# [i](3 random numbers with 5 digits))
+  [br:green](rand) [br:cyan](10) [br:blue](--format)        [dim](# [i](Comma-formatted random number with 10 digits))
 """
     FormatCodes.print(help_text)
 
 
-def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, max_val: Optional[int] = None) -> int:
+def gen_random_int(digits: int | None = None, min_val: int | None = None, max_val: int | None = None) -> int:
     # RANDOM NUMBER WITH SPECIFIC AMOUNT OF DIGITS
     if digits is not None:
         if digits <= 0:
             raise ValueError("The number of decimal places must be a positive integer.")
-        random_int = secrets.randbelow((10**digits - 1) - (min_value := 10**(digits - 1)) + 1) + min_value
+        random_int = secrets.randbelow((10**digits - 1) - (min_value := 10 ** (digits - 1)) + 1) + min_value
 
     # RANDOM NUMBER WITHIN A SPECIFIED RANGE
     elif min_val is not None and max_val is not None:
@@ -61,21 +63,16 @@ def gen_random_int(digits: Optional[int] = None, min_val: Optional[int] = None, 
     return random_int
 
 
-def main():
+def main() -> None:
     if ARGS.help.exists or len(ARGS.digits_or_min_max.values) == 0:
         print_help()
         return
 
     print()
 
-    batch = (
-        int(v) \
-        if (v := ARGS.batch_gen.get(0)) and v.replace("_", "").isdigit()
-        else 1
-    )
+    batch = int(v) if (v := ARGS.batch_gen.get(0)) and v.replace("_", "").isdigit() else 1
 
     match len(ARGS.digits_or_min_max.values):
-
         case 1:
             digits = int(ARGS.digits_or_min_max.values[0])
             FormatCodes.print("[dim](generating...)", end="")
@@ -110,14 +107,18 @@ def main():
                     for i in range(batch):
                         random_int = gen_random_int(min_val=min_val, max_val=max_val)
                         random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
-                        if random_int < lowest_int: lowest_int = random_int
-                        if random_int > highest_int: highest_int = random_int
+                        if random_int < lowest_int:
+                            lowest_int = random_int
+                        if random_int > highest_int:
+                            highest_int = random_int
                         update_progress(i + 1)
                 FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
                 FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}")
                 FormatCodes.print(
-                    f"[b|dim](lowest:)  {'' if lowest_int < 0 else ' '}[dim]({lowest_int:{',' if ARGS.format.exists else ''}})\n"
-                    f"[b|dim](highest:) {'' if highest_int < 0 else ' '}[dim]{highest_int:{',' if ARGS.format.exists else ''}}[_]\n"
+                    f"[b|dim](lowest:)  {'' if lowest_int < 0 else ' '}"
+                    f"[dim]({lowest_int:{',' if ARGS.format.exists else ''}})\n"
+                    f"[b|dim](highest:) {'' if highest_int < 0 else ' '}"
+                    f"[dim]{highest_int:{',' if ARGS.format.exists else ''}}[_]\n"
                 )
             else:
                 random_int = gen_random_int(min_val=min_val, max_val=max_val)

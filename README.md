@@ -2,11 +2,11 @@
 
 This repository contains a ton of useful CLI scripts and other Python related projects.
 
-* <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>** ⚡ *most useful*
-* <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** 🛠️ *practical & fun*
-* Projects/…
-    * <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
-    * <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
+*   <a href="#apps" title="scroll to Apps">Apps</a> | **<a href="./apps" title="open apps directory">open</a>** ⚡ *most useful*
+*   <a href="#commands" title="scroll to Commands">Commands</a> | **<a href="./commands" title="open commands directory">open</a>** 🛠️ *practical & fun*
+*   Projects/…
+    *   <a href="#harmless-prank-viruses" title="scroll to Harmless Prank Viruses">Harmless Prank Viruses</a> | **<a href="./projects/harmless-prank-viruses" title="open harmless-prank-viruses directory">open</a>**
+    *   <a href="#x-convert" title="scroll to x-convert">x-convert</a> | **<a href="./projects/x-convert" title="open x-convert directory">open</a>**
 
 
 ## Apps

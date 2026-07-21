@@ -1,7 +1,7 @@
-from pathlib import Path
-from typing import Any
 import subprocess
 import sys
+from pathlib import Path
+from typing import Any
 
 # PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
 POPEN_FLAGS: dict[str, Any] = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}

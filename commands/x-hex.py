@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Transform all hex color codes in a file or directory:
 uppercase, lowercase, grayscale, hue rotation, inversion, and more."""
+
+import fnmatch
+from enum import Enum
 from pathlib import Path
+import regex as rx
+from xulbux import Console, FormatCodes
 from xulbux.color import hexa
 from xulbux.regex import LazyRegex
-from xulbux import FormatCodes, Console
-from enum import Enum
-import fnmatch
-import regex as rx
 
 
 class Operation(Enum):
@@ -19,22 +21,24 @@ class Operation(Enum):
     INVERT = "invert"
 
 
-ARGS = Console.get_args({
-    "path": "before",
-    "upper": {"-u", "--upper"},
-    "lower": {"-l", "--lower"},
-    "grayscale": {"-g", "--grayscale"},
-    "rotate": {"-r", "--rotate"},
-    "invert": {"-i", "--invert"},
-    "apply_gitignore": {"-G", "--gitignore"},
-    "check": {"-d", "--dry"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    {
+        "path": "before",
+        "upper": {"-u", "--upper"},
+        "lower": {"-l", "--lower"},
+        "grayscale": {"-g", "--grayscale"},
+        "rotate": {"-r", "--rotate"},
+        "invert": {"-i", "--invert"},
+        "apply_gitignore": {"-G", "--gitignore"},
+        "check": {"-d", "--dry"},
+        "help": {"-h", "--help"},
+    }
+)
 
 PATTERNS = LazyRegex(hex=r"(?i)(#)([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3,4})\b|(0x)([0-9A-F]{8}|[0-9A-F]{6})\b")
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Hex Colors — Transform hex color codes in a file or directory )
 
@@ -47,7 +51,7 @@ def print_help():
   [br:blue](-u), [br:blue](--upper)         Uppercase all hex colors [dim]((#9EB6FF))
   [br:blue](-l), [br:blue](--lower)         Lowercase all hex colors [dim]((#9eb6ff))
   [br:blue](-g), [br:blue](--grayscale)     Convert all hex colors to grayscale
-  [br:blue](-r), [br:blue](--rotate[dim](=)DEG)    Rotate the hue of all hex colors by [br:blue](DEG) degrees [dim]((0–360))
+  [br:blue](-r), [br:blue](--rotate[dim](=)DEG)    Rotate the hue of all hex colors by [br:blue](DEG) degrees [dim]((0-360))
   [br:blue](-i), [br:blue](--invert)        Invert all hex colors
 [b](Options:)
   [br:blue](-G), [br:blue](--gitignore)     Apply .gitignore rules when scanning directories
@@ -76,12 +80,12 @@ def load_gitignore_patterns(directory: str) -> list[tuple[str, str]]:
     patterns: list[tuple[str, str]] = []
     current_dir = Path(directory).resolve()
 
-    for parent in [current_dir] + list(current_dir.parents):
+    for parent in [current_dir, *list(current_dir.parents)]:
         gitignore_path = parent / ".gitignore"
 
         if gitignore_path.exists():
             try:
-                with open(gitignore_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(gitignore_path, encoding="utf-8", errors="ignore") as f:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith("#"):
@@ -120,13 +124,7 @@ def is_gitignored(file_path: str, patterns: list[tuple[str, str]]) -> bool:
     return False
 
 
-def process_file(
-    file_path: Path,
-    root_dir: str,
-    operation: Operation,
-    degrees: int = 0,
-    dry_run: bool = False,
-) -> None:
+def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: int = 0, dry_run: bool = False) -> None:  # noqa: C901
     if not is_text_file(file_path):
         return
 
@@ -187,10 +185,7 @@ def process_file(
 
         was_modified: bool = changed > 0
         dim: str = "[dim]" if not was_modified else ""
-        title: str = (
-            "Would update" if was_modified and dry_run \
-            else ("Updated" if was_modified else "[dim|green](✓ checked)")
-        )
+        title: str = "Would update" if was_modified and dry_run else ("Updated" if was_modified else "[dim|green](✓ checked)")
 
         if len(log_path) > (max_path_len := max(10, Console.width - 50)):
             log_path = "…" + log_path[-max_path_len:]
@@ -215,7 +210,7 @@ def process_file(
         )
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     if ARGS.help.exists or not ARGS.path.values:
         print_help()
         return
@@ -235,9 +230,7 @@ def main() -> None:
             degrees = int("".join(ARGS.rotate.values).strip())
         except (ValueError, TypeError):
             Console.fail(
-                "[br:blue](--rotate) requires a degree value (0–360), e.g. [br:blue](--rotate=180)",
-                start="\n",
-                end="\n\n",
+                "[br:blue](--rotate) requires a degree value (0-360), e.g. [br:blue](--rotate=180)", start="\n", end="\n\n"
             )
             return
         operation = Operation.ROTATE
@@ -246,9 +239,10 @@ def main() -> None:
     else:
         Console.fail(
             "No operation given.\n"
-            "Use [br:blue](--upper), [br:blue](--lower), [br:blue](--grayscale), [br:blue](--rotate[dim](=)DEG) or [br:blue](--invert).",
+            "Use [br:blue](--upper), [br:blue](--lower), [br:blue](--grayscale),"
+            "[br:blue](--rotate[dim](=)DEG) or [br:blue](--invert).",
             start="\n",
-            end="\n\n"
+            end="\n\n",
         )
         return
 

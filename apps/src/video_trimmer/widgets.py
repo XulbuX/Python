@@ -1,8 +1,10 @@
-from typing import Callable, Optional
-import customtkinter as ctk  # type: ignore[no-stubs]
 import tkinter as tk
-
+from typing import TYPE_CHECKING
+import customtkinter as ctk  # type: ignore[no-stubs]
 from _shared.consts import COLORS
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TrimTimeline(tk.Canvas):
@@ -21,7 +23,7 @@ class TrimTimeline(tk.Canvas):
         super().__init__(master, height=height, highlightthickness=0, bd=0, cursor="arrow", **kwargs)  # type: ignore[arg-type]
         self._start_frac: float = 0.0
         self._end_frac: float = 1.0
-        self._drag: Optional[str] = None
+        self._drag: str | None = None
         self._drag_ref_x: float = 0.0
         self._drag_ref_s: float = 0.0
         self._drag_ref_e: float = 1.0
@@ -35,8 +37,8 @@ class TrimTimeline(tk.Canvas):
         self._c_handle: str = _c["primary"]
         self.configure(bg=self._c_bg)
 
-        self.on_change: Optional[Callable[[float, float], None]] = None
-        self.on_commit: Optional[Callable[[float, float], None]] = None
+        self.on_change: Callable[[float, float], None] | None = None
+        self.on_commit: Callable[[float, float], None] | None = None
 
         self.bind("<Configure>", lambda _e: self._draw())
         self.bind("<ButtonPress-1>", self._on_press)
@@ -80,7 +82,7 @@ class TrimTimeline(tk.Canvas):
         p = self._pad()
         return (x - p) / max(1, w - 2 * p)
 
-    def _hit(self, x: float) -> Optional[str]:
+    def _hit(self, x: float) -> str | None:
         sx = self._frac_to_x(self._start_frac)
         ex = self._frac_to_x(self._end_frac)
         if abs(x - sx) <= self._GRAB_PX:
@@ -181,8 +183,30 @@ class TrimTimeline(tk.Canvas):
             return
 
         pts: list[float] = [
-            x1 + rr, y1, x2 - rr, y1, x2, y1, x2, y1 + rr, x2, y2 - rr, x2, y2, x2 - rr, y2, x1 + rr, y2, x1, y2, x1, y2 - rr,
-            x1, y1 + rr, x1, y1
+            x1 + rr,
+            y1,
+            x2 - rr,
+            y1,
+            x2,
+            y1,
+            x2,
+            y1 + rr,
+            x2,
+            y2 - rr,
+            x2,
+            y2,
+            x2 - rr,
+            y2,
+            x1 + rr,
+            y2,
+            x1,
+            y2,
+            x1,
+            y2 - rr,
+            x1,
+            y1 + rr,
+            x1,
+            y1,
         ]
 
         self.create_polygon(pts, smooth=True, fill=fill, outline="")

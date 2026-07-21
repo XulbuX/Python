@@ -1,6 +1,5 @@
-from random import randint, choice
 import tkinter as tk
-
+from random import choice, randint
 
 WINS = 1000
 MSGS = [
@@ -45,7 +44,7 @@ MSGS = [
 ]
 
 
-def make_window():
+def make_window() -> None:
     win = tk.Toplevel()
     win.overrideredirect(True)
     x = randint(0, root.winfo_screenwidth() - 200)

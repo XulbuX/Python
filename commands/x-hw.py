@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Get detailed hardware information about your PC."""
-from xulbux import FormatCodes, Console, Data
-from typing import TYPE_CHECKING, TypedDict, Optional, Any
-import subprocess
+
 import platform
 import re
+import subprocess
+from typing import TYPE_CHECKING, Any, TypedDict
+from xulbux import Console, Data, FormatCodes
 
 if TYPE_CHECKING:
     import psutil
@@ -13,20 +15,17 @@ if TYPE_CHECKING:
 # CHECK IF PSUTIL IS AVAILABLE (MAY FAIL ON PYTHON 3.14)
 try:
     import psutil
+
     PSUTIL_AVAILABLE: bool = True
-    PSUTIL_ERROR: Optional[str] = None
+    PSUTIL_ERROR: str | None = None
 except (ImportError, ModuleNotFoundError) as exc:
     PSUTIL_AVAILABLE: bool = False  # type: ignore[no-redef]
-    PSUTIL_ERROR: Optional[str] = str(exc)  # type: ignore[no-redef]
+    PSUTIL_ERROR: str | None = str(exc)  # type: ignore[no-redef]
 
-ARGS = Console.get_args({
-    "detailed": {"-d", "--detailed"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args({"detailed": {"-d", "--detailed"}, "json_output": {"-j", "--json"}, "help": {"-h", "--help"}})
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Hardware Info — Get detailed hardware information about your PC )
 
@@ -47,13 +46,12 @@ def print_help():
 class AdapterInfo(TypedDict):
     name: str
     is_up: bool
-    speed: Optional[str]
-    mac: Optional[str]
+    speed: str | None
+    mac: str | None
 
 
 class HardwareInfo:
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.system: dict[str, Any] = {}
         self.cpu: dict[str, Any] = {}
         self.memory: dict[str, Any] = {}
@@ -103,12 +101,7 @@ class HardwareInfo:
 
     def _get_memory_info(self, detailed: bool = False) -> dict[str, Any]:
         """Get memory information."""
-        info: dict[str, Any] = {
-            "total": None,
-            "available": None,
-            "used": None,
-            "usage_percent": None,
-        }
+        info: dict[str, Any] = {"total": None, "available": None, "used": None, "usage_percent": None}
 
         if PSUTIL_AVAILABLE:
             mem = psutil.virtual_memory()
@@ -127,12 +120,7 @@ class HardwareInfo:
 
     def _get_disk_info(self, detailed: bool = False) -> dict[str, Any]:
         """Get disk information."""
-        info: dict[str, Any] = {
-            "partitions": [],
-            "total_size": None,
-            "total_used": None,
-            "total_free": None,
-        }
+        info: dict[str, Any] = {"partitions": [], "total_size": None, "total_used": None, "total_free": None}
 
         if PSUTIL_AVAILABLE:
             partitions = psutil.disk_partitions()
@@ -172,20 +160,17 @@ class HardwareInfo:
 
         return info
 
-    def _get_gpu_info(self) -> dict[str, Any]:
+    def _get_gpu_info(self) -> dict[str, Any]:  # noqa: C901
         """Get GPU information."""
-        info: dict[str, Any] = {
-            "gpus": [],
-        }
+        info: dict[str, Any] = {"gpus": []}
 
         system = platform.system()
 
         if system == "Windows":
             try:
-                result = subprocess.run(["wmic", "path", "win32_VideoController", "get", "name"],
-                                        capture_output=True,
-                                        text=True,
-                                        timeout=5)
+                result = subprocess.run(
+                    ["wmic", "path", "win32_VideoController", "get", "name"], capture_output=True, text=True, timeout=5
+                )
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")[1:]
                     for line in lines:
@@ -224,9 +209,7 @@ class HardwareInfo:
 
     def _get_network_info(self) -> dict[str, Any]:
         """Get network adapter information."""
-        info: dict[str, Any] = {
-            "adapters": [],
-        }
+        info: dict[str, Any] = {"adapters": []}
 
         if PSUTIL_AVAILABLE:
             stats = psutil.net_if_stats()
@@ -253,12 +236,7 @@ class HardwareInfo:
 
     def _get_battery_info(self) -> dict[str, Any]:
         """Get battery information (for laptops)."""
-        info: dict[str, Any] = {
-            "has_battery": False,
-            "percent": None,
-            "power_plugged": None,
-            "time_left": None,
-        }
+        info: dict[str, Any] = {"has_battery": False, "percent": None, "power_plugged": None, "time_left": None}
 
         if PSUTIL_AVAILABLE:
             try:
@@ -319,7 +297,7 @@ class HardwareInfo:
             result["battery"] = self.battery
         return result
 
-    def display(self) -> None:
+    def display(self) -> None:  # noqa: C901
         """Display hardware information in formatted output."""
         print()
 
@@ -355,11 +333,11 @@ class HardwareInfo:
                 cpu_text.append(f"     [b](CPU Usage) : [br:white]({self.cpu['cpu_usage']})")
             if self.cpu.get("per_core_usage"):
                 cpu_text.append("{hr}")
-                cores = self.cpu['per_core_usage']
+                cores = self.cpu["per_core_usage"]
                 formatted_cores: list[str] = []
                 for i in range(0, len(cores), 10):
-                    formatted_cores.append('[br:white]' + ', '.join(cores[i:i + 10]))
-                cpu_text.append(f"[b|br:cyan](Per-Core Usage)\n" + '\n'.join(formatted_cores) + "[_c]")
+                    formatted_cores.append("[br:white]" + ", ".join(cores[i : i + 10]))
+                cpu_text.append("[b|br:cyan](Per-Core Usage)\n" + "\n".join(formatted_cores) + "[_c]")
             Console.log_box_bordered(*cpu_text, border_style="br:cyan")
 
         # GPU INFO
@@ -404,7 +382,7 @@ class HardwareInfo:
                 disk_text.append(f"[b](Total Free) : [br:white]({self.disk['total_free']})")
 
             if self.disk.get("partitions"):
-                for i, partition in enumerate(self.disk["partitions"]):
+                for partition in self.disk["partitions"]:
                     disk_text.append("{hr}")
                     disk_text.append(f"[b|br:magenta]({partition['device']})")
                     disk_text.append(f"     [b](Mount) : [br:white]({partition['mountpoint']})")
@@ -462,9 +440,7 @@ def main() -> None:
         return
 
     if ARGS.json_output.exists:
-        print()
-        Data.print(hw_info.to_dict(), indent=2, as_json=True)
-        print()
+        FormatCodes.print(f"\n{Data.render(hw_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         hw_info.display()
 

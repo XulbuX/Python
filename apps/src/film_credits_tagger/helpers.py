@@ -1,6 +1,4 @@
-from typing import Optional
 import re
-
 from consts import ValueType
 
 
@@ -27,7 +25,7 @@ def parse_date(val: str) -> str:
     return f"{year}:{month:02d}:{day:02d} 00:00:00"
 
 
-def exiftool_date_to_display(exiftool_date: str) -> Optional[str]:
+def exiftool_date_to_display(exiftool_date: str) -> str | None:
     """Convert an ExifTool date string (`YYYY:MM:DD …`) to display format `DD/MM/YYYY`.<br>
     Returns `None` if `exiftool_date` does not start with a recognizable `YYYY:MM:DD` pattern."""
     if match := re.match(r"(\d{4}):(\d{2}):(\d{2})", exiftool_date):
@@ -35,7 +33,7 @@ def exiftool_date_to_display(exiftool_date: str) -> Optional[str]:
     return None
 
 
-def validate_field(val: str, value_type: ValueType) -> Optional[str]:
+def validate_field(val: str, value_type: ValueType) -> str | None:
     """Return a human-readable error string if `val` fails validation for `value_type`, else `None`."""
     match value_type:
         case ValueType.Date:

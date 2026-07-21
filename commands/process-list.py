@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Process a list of items and display some statistics."""
-from typing import Callable
-from xulbux import FormatCodes, Console
+
+from xulbux import Console, FormatCodes
+
+ARGS = Console.get_args({"list_items": "before", "separator": {"-s", "--sep"}, "help": {"-h", "--help"}})
 
 
-ARGS = Console.get_args({
-    "list_items": "before",
-    "separator": {"-s", "--sep"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Process List — Process a list of items and display statistics )
 
@@ -42,10 +38,7 @@ def main() -> None:
     sep = ARGS.separator.get(0, "")
 
     if sep != "":
-        if not ARGS.list_items.exists:
-            input_str = input(">  ")
-        else:
-            input_str = " ".join(ARGS.list_items.values)
+        input_str = input(">  ") if not ARGS.list_items.exists else " ".join(ARGS.list_items.values)
         lst = [x for x in input_str.split(sep) if x.strip() not in {"", None}]
     else:
         lst = [str(val) for val in ARGS.list_items.values]
@@ -55,7 +48,10 @@ def main() -> None:
         FormatCodes.print(f"[br:cyan]{'\n'.join(lst)}[_]\n")
         if all(e.isnumeric() for e in lst):
             lst = [int(e) if e.replace("_", "").isdigit() else float(e) for e in lst]
-            average: Callable[[list[int | float]], float] = lambda nums: sum(nums) / len(nums)
+
+            def average(nums: list[int | float]) -> float:
+                return sum(nums) / len(nums)
+
             Console.log_box_bordered(
                 f"[b](Min)     : [br:cyan]({min(lst)})",
                 f"[b](Max)     : [br:cyan]({max(lst)})",

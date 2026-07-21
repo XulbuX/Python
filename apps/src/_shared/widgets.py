@@ -1,12 +1,12 @@
 # pyright: basic
-from pathlib import Path
-from typing import Optional
-from PIL import Image
-import customtkinter as ctk
-import tkinter as tk
+import contextlib
 import io
-
+import tkinter as tk
+from pathlib import Path
+from typing import ClassVar
 from _shared.consts import COLORS, ICONS
+import customtkinter as ctk
+from PIL import Image
 
 
 def bind_clean_paste(tk_widget: tk.Misc) -> None:
@@ -19,14 +19,11 @@ def bind_clean_paste(tk_widget: tk.Misc) -> None:
         except tk.TclError:
             return "break"
 
-        try:
+        with contextlib.suppress(tk.TclError):
             tk_widget.delete("sel.first", "sel.last")  # type: ignore[attr-defined]
-        except tk.TclError:
-            pass
 
         tk_widget.insert(  # type: ignore[attr-defined]
-            "insert",
-            text.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
+            "insert", text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
         )
 
         return "break"
@@ -39,9 +36,9 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     -------------------------------------------------------------------------------------
     Replaces `currentColor` with `color` (CSS hex string) before rasterizing.<br>
     Pipeline: `svglib` → `ReportLab PDF` (no native Cairo needed) → `PyMuPDF` → `PIL`"""
+    import fitz  # PyMuPDF
     from reportlab.graphics.renderPDF import drawToString
     from svglib.svglib import svg2rlg
-    import fitz  # PyMuPDF
 
     svg_src = svg_path.read_text(encoding="utf-8").replace("currentColor", color)
     drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # type: ignore[arg-type]
@@ -85,7 +82,7 @@ class SingleLineEntry(ctk.CTkEntry):
     def _sle_focus_in(self, _event: object = None) -> None:
         if self._placeholder_text_active:
             self._deactivate_placeholder()
-        # UNCONDITIONAL – CTkEntry'S OWN FocusIn CLEARS _placeholder_text_active FIRST,
+        # UNCONDITIONAL; CTkEntry'S OWN FocusIn CLEARS _placeholder_text_active FIRST,
         # SO A GUARDED RESET WOULD NEVER RUN; _deactivate_placeholder() NEVER RESETS IT
         self._entry.configure(insertbackground=self._apply_appearance_mode(self._text_color))
 
@@ -94,7 +91,7 @@ class SingleLineEntry(ctk.CTkEntry):
             self._activate_placeholder()
 
     def delete(self, first_index: object, last_index: object = None) -> None:
-        # DEACTIVATE FIRST – super().delete() CLEARS THE TEXT BUT LEAVES _placeholder_text_active = True
+        # DEACTIVATE FIRST; super().delete() CLEARS THE TEXT BUT LEAVES _placeholder_text_active = True
         if self._placeholder_text_active:
             self._deactivate_placeholder()
 
@@ -249,9 +246,9 @@ class ToolTip:
     def __init__(self, widget: tk.Misc, text: str, delay_ms: int = 1000) -> None:
         self._widget = widget
         self._text = text
-        self._tip: Optional[tk.Toplevel] = None
-        self._after_id: Optional[str] = None
-        self._poll_id: Optional[str] = None
+        self._tip: tk.Toplevel | None = None
+        self._after_id: str | None = None
+        self._poll_id: str | None = None
         self._delay_ms = delay_ms
 
         tk.Misc.bind(widget, "<Enter>", self._schedule, add="+")
@@ -265,13 +262,16 @@ class ToolTip:
     _TIP_R = 12
     _TIP_PX, _TIP_PY = 10, 7
     _POLL_MS: int = 150
-    _TIP_COLORS = {
+    _TIP_COLORS: ClassVar[dict[str, dict[str, str]]] = {
         "dark": {
-            "bg": COLORS["dark"]["secondary_hover"], "border": COLORS["dark"]["secondary_border"],
-            "fg": COLORS["dark"]["foreground"]
+            "bg": COLORS["dark"]["secondary_hover"],
+            "border": COLORS["dark"]["secondary_border"],
+            "fg": COLORS["dark"]["foreground"],
         },
         "light": {
-            "bg": COLORS["light"]["background"], "border": COLORS["light"]["secondary_border"], "fg": COLORS["light"]["card"]
+            "bg": COLORS["light"]["background"],
+            "border": COLORS["light"]["secondary_border"],
+            "fg": COLORS["light"]["card"],
         },
     }
     _TIP_TRANSPARENT = "#010203"  # UNIQUE NEAR-BLACK USED AS TRANSPARENCY KEY ON WINDOWS
@@ -321,10 +321,8 @@ class ToolTip:
         self._tip.wm_geometry(f"{tw}x{th}+{tip_x}+{tip_y}")
         self._tip.configure(bg=self._TIP_TRANSPARENT)
 
-        try:
+        with contextlib.suppress(tk.TclError):
             self._tip.wm_attributes("-transparentcolor", self._TIP_TRANSPARENT)
-        except tk.TclError:
-            pass
 
         cv = tk.Canvas(self._tip, width=tw, height=th, bg=self._TIP_TRANSPARENT, highlightthickness=0)
         cv.pack()
@@ -338,14 +336,36 @@ class ToolTip:
 
         inset = 1
         ipts = [
-            cr, inset, tw - cr, inset, tw - inset, inset, tw - inset, cr, tw - inset, th - cr, tw - inset, th - inset, tw - cr,
-            th - inset, cr, th - inset, inset, th - inset, inset, th - cr, inset, cr, inset, inset
+            cr,
+            inset,
+            tw - cr,
+            inset,
+            tw - inset,
+            inset,
+            tw - inset,
+            cr,
+            tw - inset,
+            th - cr,
+            tw - inset,
+            th - inset,
+            tw - cr,
+            th - inset,
+            cr,
+            th - inset,
+            inset,
+            th - inset,
+            inset,
+            th - cr,
+            inset,
+            cr,
+            inset,
+            inset,
         ]
 
         cv.create_polygon(ipts, smooth=True, fill=tip_bg, outline="")
         ty = TIP_PY
 
-        for para, ph in zip(paragraphs, para_heights):
+        for para, ph in zip(paragraphs, para_heights, strict=False):
             cv.create_text(TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
             ty += ph + PARA_GAP
 
@@ -363,7 +383,7 @@ class ToolTip:
             py = self._widget.winfo_pointery()
 
             if wx <= px < wx + ww and wy <= py < wy + wh:
-                return  # POINTER STILL INSIDE – NOT A REAL LEAVE
+                return  # POINTER STILL INSIDE; NOT A REAL LEAVE
 
         except tk.TclError:
             pass
@@ -412,10 +432,8 @@ class ToolTip:
         self._poll_id = None
 
         if self._tip:
-            try:
+            with contextlib.suppress(tk.TclError):
                 self._tip.destroy()
-            except tk.TclError:
-                pass
             self._tip = None
 
 
@@ -429,13 +447,13 @@ class SpinnerButton(ctk.CTkButton):
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self._spin_frames: list[ctk.CTkImage] = []
         self._spin_idx: int = 0
-        self._spin_after_id: Optional[str] = None
+        self._spin_after_id: str | None = None
         self._spinning: bool = False
         self._saved_text: str = ""
         self._saved_state: str = "normal"
 
     def _build_frames(self, color_hex: str, size: int = 18) -> None:
-        # RENDER LOADER SVG AT 3× FOR ANTI-ALIASING, THEN GENERATE ONE ROTATED FRAME PER STEP
+        # RENDER LOADER SVG AT 3x FOR ANTI-ALIASING, THEN GENERATE ONE ROTATED FRAME PER STEP
         HI = size * 3
         r, g, b, a = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
         base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # type: ignore[attr-defined]
@@ -462,7 +480,7 @@ class SpinnerButton(ctk.CTkButton):
         self.configure(text="", image=self._spin_frames[0], state="disabled")
         self._tick()
 
-    def stop(self, *, state: Optional[str] = None) -> None:
+    def stop(self, *, state: str | None = None) -> None:
         if not self._spinning:
             return
         self._spinning = False
@@ -493,10 +511,10 @@ class SegmentedButton(ctk.CTkFrame):
         self,
         master: object,
         values: list[str],
-        command: Optional[object] = None,
+        command: object | None = None,
         width: int = 0,
         height: int = 28,
-        font: Optional[ctk.CTkFont] = None,
+        font: ctk.CTkFont | None = None,
         tooltip: str = "",
         **kwargs: object,
     ) -> None:

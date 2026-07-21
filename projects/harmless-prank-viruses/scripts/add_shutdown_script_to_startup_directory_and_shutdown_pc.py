@@ -1,14 +1,14 @@
-from pathlib import Path
+import os
 import subprocess
 import sys
-import os
+from pathlib import Path
 
 # INITIALIZE VARIABLES
 SD_MESSAGE: str = "PC is shutting down in {time}."
 SD_MINUTES: int = 5
 
 
-def main():
+def main() -> None:
     global SD_MESSAGE, SD_MINUTES
 
     # GET FINAL VARIABLE VALUES

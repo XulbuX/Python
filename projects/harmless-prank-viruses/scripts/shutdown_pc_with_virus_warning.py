@@ -1,6 +1,6 @@
+import os
 import subprocess
 import time
-import os
 
 
 def shutdown(message: str = "WARNING: Virus detected. Starting system cleanup process...", delay: int = 5) -> None:
@@ -9,9 +9,9 @@ def shutdown(message: str = "WARNING: Virus detected. Starting system cleanup pr
         subprocess.run(["shutdown", "/s", "/f", "/t", str(delay), "/c", message])
     elif os_type == "posix":
         if "darwin" in os.uname().sysname.lower():  # type: ignore
-            subprocess.run(["sudo", "shutdown", "-h", f"+{delay//60}", message])
+            subprocess.run(["sudo", "shutdown", "-h", f"+{delay // 60}", message])
         else:
-            subprocess.run(["sudo", "shutdown", "-h", f"+{delay//60}", message])
+            subprocess.run(["sudo", "shutdown", "-h", f"+{delay // 60}", message])
     else:
         print(f"Shutdown not supported on this OS: {os_type}")
     time.sleep(delay)

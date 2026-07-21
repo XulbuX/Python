@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Get local and public IP addresses with optional geolocation information."""
-from xulbux import FormatCodes, Console, Data
-from typing import Optional, Any
-import subprocess
-import socket
+
 import json
 import re
+import socket
+import subprocess
+from typing import Any
+from xulbux import Console, Data, FormatCodes
+
+ARGS = Console.get_args(
+    {
+        "get_geo": {"-g", "--geo", "--location"},
+        "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
+        "json_output": {"-j", "--json"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
-ARGS = Console.get_args({
-    "get_geo": {"-g", "--geo", "--location"},
-    "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( IP Info — Get local and public IP addresses with geolocation )
 
@@ -38,16 +41,15 @@ def print_help():
 
 
 class IPInfo:
-
-    def __init__(self):
-        self.local_ipv4: Optional[str] = None
-        self.local_ipv6: Optional[str] = None
-        self.public_ipv4: Optional[str] = None
-        self.public_ipv6: Optional[str] = None
+    def __init__(self) -> None:
+        self.local_ipv4: str | None = None
+        self.local_ipv6: str | None = None
+        self.public_ipv4: str | None = None
+        self.public_ipv6: str | None = None
         self.all_interfaces: dict[str, dict[str, str]] = {}
-        self.geo_info: Optional[dict[str, Any]] = None
+        self.geo_info: dict[str, Any] | None = None
 
-    def _get_local_ip(self) -> Optional[str]:
+    def _get_local_ip(self) -> str | None:
         """Get primary local IPv4 address."""
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -59,7 +61,7 @@ class IPInfo:
         except Exception:
             return None
 
-    def _get_local_ipv6(self) -> Optional[str]:
+    def _get_local_ipv6(self) -> str | None:
         """Get local IPv6 address."""
         try:
             s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -96,8 +98,8 @@ class IPInfo:
                 # GET GATEWAY INFORMATION
                 try:
                     gateways = netifaces.gateways()
-                    if 'default' in gateways and netifaces.AF_INET in gateways['default']:
-                        default_gateway_info = gateways['default'][netifaces.AF_INET]
+                    if "default" in gateways and netifaces.AF_INET in gateways["default"]:
+                        default_gateway_info = gateways["default"][netifaces.AF_INET]
                         if len(default_gateway_info) >= 2 and default_gateway_info[1] == interface:
                             interface_info["gateway"] = default_gateway_info[0]
                 except Exception:
@@ -110,7 +112,7 @@ class IPInfo:
         except ImportError:
             return self._get_interfaces_fallback()
 
-    def _get_interfaces_fallback(self) -> dict[str, dict[str, str]]:
+    def _get_interfaces_fallback(self) -> dict[str, dict[str, str]]:  # noqa: C901
         """Fallback method to get interfaces using system commands."""
         interfaces: dict[str, dict[str, str]] = {}
 
@@ -171,7 +173,7 @@ class IPInfo:
                             interfaces[current_interface]["status"] = "Disconnected"
 
                 # SET STATUS TO CONNECTED FOR INTERFACES WITH IP ADDRESSES
-                for interface_name, interface_data in interfaces.items():
+                for _, interface_data in interfaces.items():
                     if "status" not in interface_data and any(key in interface_data for key in ["ipv4", "ipv6"]):
                         interface_data["status"] = "Connected"
 
@@ -187,7 +189,7 @@ class IPInfo:
 
         return interfaces
 
-    def _get_public_ip(self, provider: str = "ipify", ipv6: bool = False) -> Optional[str]:
+    def _get_public_ip(self, provider: str = "ipify", ipv6: bool = False) -> str | None:
         """Get public IP address from various providers."""
         providers = {
             "ipify": f"https://api{'64' if ipv6 else ''}.ipify.org?format=text",
@@ -199,16 +201,18 @@ class IPInfo:
 
         try:
             import urllib.request
+
             with urllib.request.urlopen(url, timeout=5) as response:
                 ip = response.read().decode("utf-8").strip()
                 return ip if ip else None
         except Exception:
             return None
 
-    def _get_geolocation(self, ip: str) -> Optional[dict[str, Any]]:
+    def _get_geolocation(self, ip: str) -> dict[str, Any] | None:
         """Get geolocation information for an IP address."""
         try:
             import urllib.request
+
             url = f"https://ipapi.co/{ip}/json/"
 
             with urllib.request.urlopen(url, timeout=5) as response:
@@ -231,7 +235,7 @@ class IPInfo:
         except Exception:
             return None
 
-    def gather_info(self, provider: Optional[str], get_geo: bool = False) -> None:
+    def gather_info(self, provider: str | None, get_geo: bool = False) -> None:
         """Gather all IP information."""
         Console.info("Gathering IP information...", start="\n")
         provider = provider or "ipify"
@@ -261,7 +265,7 @@ class IPInfo:
             result["geolocation"] = self.geo_info
         return result
 
-    def display(self) -> None:
+    def display(self) -> None:  # noqa: C901
         """Display IP information in formatted output."""
         print()
 
@@ -270,33 +274,34 @@ class IPInfo:
         if self.local_ipv4:
             local_ips_text.append(f"[b](IPv4) : [white]({self.local_ipv4})")
         else:
-            local_ips_text.append(f"[b](IPv4) : [i|dim|white](Not Found)")
+            local_ips_text.append("[b](IPv4) : [i|dim|white](Not Found)")
         if self.local_ipv6:
             local_ips_text.append(f"[b](IPv6) : [white]({self.local_ipv6})")
         else:
-            local_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*local_ips_text, border_style=f"green")
+            local_ips_text.append("[b](IPv6) : [i|dim|white](Not Found)")
+        Console.log_box_bordered(*local_ips_text, border_style="green")
 
         FormatCodes.print("\n[b|cyan](Public IP Addresses)")
         public_ips_text: list[str] = []
         if self.public_ipv4:
             public_ips_text.append(f"[b](IPv4) : [white]({self.public_ipv4})")
         else:
-            public_ips_text.append(f"[b](IPv4) : [i|dim|white](Not Found)")
+            public_ips_text.append("[b](IPv4) : [i|dim|white](Not Found)")
         if self.public_ipv6:
             public_ips_text.append(f"[b](IPv6) : [white]({self.public_ipv6})")
         else:
-            public_ips_text.append(f"[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*public_ips_text, border_style=f"cyan")
+            public_ips_text.append("[b](IPv6) : [i|dim|white](Not Found)")
+        Console.log_box_bordered(*public_ips_text, border_style="cyan")
 
         if self.all_interfaces:
             FormatCodes.print("\n[b|blue](All Network Interfaces)")
             interfaces_text: list[str] = []
-            i = 0
-            for interface, addrs in self.all_interfaces.items():
+            for i, (interface, addrs) in enumerate(self.all_interfaces.items()):
                 status = (
-                    f" [i|{'green' if addrs['status'].lower() == 'connected' else 'dim|white'}]({addrs['status']})"
-                ) if "status" in addrs else ""
+                    (f" [i|{'green' if addrs['status'].lower() == 'connected' else 'dim|white'}]({addrs['status']})")
+                    if "status" in addrs
+                    else ""
+                )
                 interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|blue]({interface}){status}")
                 p = "   " if "dns_suffix" in addrs else ""
                 # IPv4 INFO
@@ -312,7 +317,6 @@ class IPInfo:
                 # DNS SUFFIX
                 if "dns_suffix" in addrs:
                     interfaces_text.append(f"[b](DNS Suffix) : [white]({addrs['dns_suffix']})")
-                i += 1
             Console.log_box_bordered(*interfaces_text, border_style="blue")
 
         if self.geo_info:
@@ -336,7 +340,7 @@ class IPInfo:
                 geo_text.append(f"{p}     [b](ISP) : [white]{geo['org']}[_c]")
             if geo.get("asn"):
                 geo_text.append(f"{p}     [b](ASN) : [white]{geo['asn']}[_c]")
-            Console.log_box_bordered(*geo_text, border_style=f"magenta")
+            Console.log_box_bordered(*geo_text, border_style="magenta")
 
         print()
 
@@ -355,9 +359,7 @@ def main() -> None:
         return
 
     if ARGS.json_output.exists:
-        print()
-        Data.print(ip_info.to_dict(), indent=2, as_json=True)
-        print()
+        FormatCodes.print(f"\n{Data.render(ip_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         ip_info.display()
 

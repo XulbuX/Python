@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Show the foreground and background colors
 from the current terminal color scheme."""
-from xulbux.ansi import StyledSegment, StyledText, S
-from xulbux import Console
 
+from xulbux import Console
+from xulbux.ansi import S, StyledSegment, StyledText
 
 ARGS = Console.get_args({"help": {"-h", "--help"}})
 
@@ -19,9 +20,10 @@ SHELL_COLORS: list[list[StyledSegment]] = [
     [S.BLUE,    S.BR.BLUE,    S.BLACK | S.BG.BLUE,    S.BLACK | S.BG.BR.BLUE   ],
     [S.MAGENTA, S.BR.MAGENTA, S.BLACK | S.BG.MAGENTA, S.BLACK | S.BG.BR.MAGENTA],
 ]
+# fmt: on
 
 
-def print_help():
+def print_help() -> None:
     title = ["  Terminal Colors", " — Show all foreground and background terminal colors  "]
     StyledText(
         "",
@@ -32,11 +34,10 @@ def print_help():
         ((S.BOLD)("Usage: "), (S.BR.GREEN)("terminal-colors")),
         "",
     ).print()
-# fmt: on
 
 
-def show_shell_colors():
-    norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS)
+def show_shell_colors() -> None:
+    norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS, strict=False)
     output = StyledText("\n")
 
     for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:

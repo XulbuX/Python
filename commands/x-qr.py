@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Lets you quickly generate QR codes directly within the terminal."""
-from pathlib import Path
-from typing import Optional
-from xulbux.base.consts import COLOR
-from xulbux.console import ParsedArgs, Throbber
-from xulbux import FormatCodes, Console
-import xml.etree.ElementTree as ET
+
+import re
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
+from pathlib import Path
 import qrcode
-import re
+from xulbux import Console, FormatCodes
+from xulbux.base.consts import COLOR
+from xulbux.console import ParsedArgs, Throbber
+
+ARGS = Console.get_args(
+    {
+        "text": "before",
+        "invert": {"-i", "--invert"},
+        "scale": {"-s", "--scale"},
+        "error_correction": {"-e", "--error"},
+        "contact": {"-c", "--contact"},
+        "wifi": {"-w", "--wifi"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
-ARGS = Console.get_args({
-    "text": "before",
-    "invert": {"-i", "--invert"},
-    "scale": {"-s", "--scale"},
-    "error_correction": {"-e", "--error"},
-    "contact": {"-c", "--contact"},
-    "wifi": {"-w", "--wifi"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( QR Code Generator — Quickly generate QR codes directly within the terminal )
 
@@ -50,23 +52,28 @@ def print_help():
     FormatCodes.print(help_text)
 
 
-def phone_validator(user_input: str) -> Optional[str]:
+def phone_validator(user_input: str) -> str | None:
+    """Validate phone number format."""
+
     if user_input and not re.match(r"[\d\s+()-./x]+", user_input):
         return "Enter a valid phone number (+99123456789)"
 
 
-def email_validator(user_input: str) -> Optional[str]:
+def email_validator(user_input: str) -> str | None:
+    """Validate email address format."""
+
     if not re.match(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", user_input):
         return "Enter a valid E-Mail address (example@domain.com)"
 
 
 class VCard:
-
-    def __init__(self, vcard_str: str):
+    def __init__(self, vcard_str: str) -> None:
         self.vcard_str = vcard_str
         self.details = self.get_vcard_details()
 
     def get_vcard_details(self) -> dict[str, str]:
+        """Parse vCard string and extract details."""
+
         lines = self.vcard_str.strip().split("\n")
         details = {"name": "", "phone": "", "email": ""}
 
@@ -94,32 +101,40 @@ class VCard:
         return details
 
     def get_vcard_str(self) -> str:
+        """Generate vCard string from details."""
+
         vcard = f"BEGIN:VCARD\nVERSION:3.0\nFN:{self.details['name']}\n"
+
         if self.details["phone"]:
             vcard += f"TEL:{self.details['phone']}\n"
         if self.details["email"]:
             vcard += f"EMAIL:{self.details['email']}\n"
         vcard += "END:VCARD"
+
         return vcard
 
     def get_display_info(self) -> str:
+        """Get formatted display information."""
+
         info = self.details
         display = f"Name: {info['name']}\n"
+
         if info["phone"]:
             display += f"Phone: {info['phone']}\n"
         if info["email"]:
             display += f"Email: {info['email']}\n"
+
         return display.strip()
 
 
 class WiFi:
-
-    def __init__(self, network_name: str = ""):
+    def __init__(self, network_name: str = "") -> None:
         self.network_name = network_name.strip()
         self.wifi_info = self._get_wifi_info()
 
     def _get_saved_profiles(self) -> list[str]:
         """Get list of saved WiFi profiles."""
+
         try:
             result = subprocess.run(
                 ["netsh", "wlan", "show", "profiles"],
@@ -137,32 +152,27 @@ class WiFi:
                         ssid = line.split(":", 1)[1].strip()
                         profiles.append(ssid)
             return profiles
-        except:
+
+        except Exception:
             return []
 
-    def _get_current_network(self) -> Optional[str]:
+    def _get_current_network(self) -> str | None:
         """Try to detect current WiFi network."""
-        methods = [
+
+        for method in [
             'netsh wlan show interfaces | findstr /i "SSID"',
             '(Get-NetConnectionProfile | Where-Object {$_.NetworkCategory -ne "DomainAuthenticated"}).Name',
-        ]
-
-        for method in methods:
+        ]:
             try:
                 if method.startswith("netsh"):
                     result = subprocess.run(
-                        method,
-                        shell=True,
-                        capture_output=True,
-                        text=True,
-                        encoding="utf-8",
-                        errors="ignore",
-                        timeout=10,
+                        method, shell=True, capture_output=True, text=True, encoding="utf-8", errors="ignore", timeout=10
                     )
                     if result.returncode == 0:
                         for line in result.stdout.split("\n"):
                             if "SSID" in line and "BSSID" not in line:
                                 return line.split(":", 1)[1].strip()
+
                 else:
                     result = subprocess.run(
                         ["powershell", "-NoProfile", "-Command", method],
@@ -174,26 +184,30 @@ class WiFi:
                     )
                     if result.returncode == 0 and result.stdout.strip():
                         return result.stdout.strip()
-            except:
+
+            except Exception:
                 continue
+
         return None
 
-    def _try_get_password(self, ssid: str) -> Optional[str]:
+    def _try_get_password(self, ssid: str) -> str | None:
         """Try multiple methods to get WiFi password."""
-        # XML EXPORT
+
+        # XML export
         password = self._export_xml_method(ssid)
         if password:
-            Console.done(f"Retrieved password using XML export method")
+            Console.done("Retrieved password using XML export method")
             return password
-        # DIRECT NETSH VARIATIONS
+        # Direct netsh variations
         password = self._netsh_variations(ssid)
         if password:
-            Console.done(f"Retrieved password using netsh method")
+            Console.done("Retrieved password using netsh method")
             return password
         return None
 
-    def _export_xml_method(self, ssid: str) -> Optional[str]:
+    def _export_xml_method(self, ssid: str) -> str | None:
         """Try to get password by exporting profile to XML."""
+
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 result = subprocess.run(
@@ -204,6 +218,7 @@ class WiFi:
                     errors="ignore",
                     timeout=15,
                 )
+
                 if result.returncode == 0:
                     for file_item in Path(temp_dir).iterdir():
                         if file_item.suffix == ".xml":
@@ -213,27 +228,23 @@ class WiFi:
                                         return elem.text
                             except ET.ParseError:
                                 continue
-        except:
+
+        except Exception:
             pass
+
         return None
 
-    def _netsh_variations(self, ssid: str) -> Optional[str]:
+    def _netsh_variations(self, ssid: str) -> str | None:
         """Try different netsh command variations."""
-        commands = [
+
+        for cmd in [
             f'netsh wlan show profile "{ssid}" key=clear',
             f'netsh wlan show profile name="{ssid}" key=clear',
             f"netsh wlan show profile {ssid} key=clear",
-        ]
-        for cmd in commands:
+        ]:
             try:
                 result = subprocess.run(
-                    cmd,
-                    shell=True,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="ignore",
-                    timeout=10,
+                    cmd, shell=True, capture_output=True, text=True, encoding="utf-8", errors="ignore", timeout=10
                 )
                 if result.returncode == 0:
                     for line in result.stdout.split("\n"):
@@ -241,12 +252,15 @@ class WiFi:
                             password = line.split(":", 1)[1].strip()
                             if password:
                                 return password
-            except:
+
+            except Exception:
                 continue
+
         return None
 
     def _get_security_type(self, ssid: str) -> str:
         """Determine the security type of the network."""
+
         try:
             result = subprocess.run(
                 ["netsh", "wlan", "show", "profile", ssid],
@@ -256,6 +270,7 @@ class WiFi:
                 errors="ignore",
                 timeout=10,
             )
+
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
                     if "Authentication" in line:
@@ -266,11 +281,15 @@ class WiFi:
                             return "WEP"
                         elif "OPEN" in auth:
                             return "nopass"
-        except:
+
+        except Exception:
             pass
+
         return "WPA"
 
     def _prompt_for_details(self) -> dict[str, str | bool]:
+        """Prompt user for WiFi details, trying to auto-detect if possible."""
+
         with Throbber().context():
             profiles = self._get_saved_profiles()
             current = (self._get_current_network() or "").replace("\n", " ").strip()
@@ -282,16 +301,13 @@ class WiFi:
                 FormatCodes.print(f" [white]({i:2d}) {profile}{current_marker}")
 
         if not self.network_name:
-            if current:
-                if Console.confirm(f"\nUse current network [br:cyan]({current})?"):
-                    self.network_name = current
+            if current and Console.confirm(f"\nUse current network [br:cyan]({current})?"):
+                self.network_name = current
 
             if not self.network_name:
                 if profiles:
                     choice = Console.input(
-                        f"Enter network number (1-{len(profiles)}) or network name: ",
-                        min_len=1,
-                        max_len=32,
+                        f"Enter network number (1-{len(profiles)}) or network name: ", min_len=1, max_len=32
                     ).strip()
 
                     if choice.replace("_", "").isdigit():
@@ -301,18 +317,12 @@ class WiFi:
                         else:
                             Console.warn(f"Invalid number. Please choose between 1 and {len(profiles)}.")
                             self.network_name = Console.input(
-                                "Enter WiFi network name (SSID): ",
-                                min_len=1,
-                                max_len=32,
+                                "Enter WiFi network name (SSID): ", min_len=1, max_len=32
                             ).strip()
                     else:
                         self.network_name = choice
                 else:
-                    self.network_name = Console.input(
-                        "Enter WiFi network name (SSID): ",
-                        min_len=1,
-                        max_len=32,
-                    ).strip()
+                    self.network_name = Console.input("Enter WiFi network name (SSID): ", min_len=1, max_len=32).strip()
 
         if not self.network_name:
             raise ValueError("Network name is required for WiFi QR code.")
@@ -323,19 +333,15 @@ class WiFi:
         if not password:
             Console.warn("Could not retrieve password automatically.", end="\n\n")
             Console.log_box_bordered(
-                f"[b](Antivirus alert? Safe to ignore:)",
-                f"It's likely because we tried to",
-                f"read a saved WiFi password.",
+                "[b](Antivirus alert? Safe to ignore:)",
+                "It's likely because we tried to",
+                "read a saved WiFi password.",
                 border_style=f"dim|{COLOR.ORANGE}",
                 default_color=COLOR.ORANGE,
                 indent=2,
             )
             password = Console.input(
-                f"Enter password for '{self.network_name}': ",
-                start="\n",
-                mask_char="*",
-                min_len=8,
-                max_len=64,
+                f"Enter password for '{self.network_name}': ", start="\n", mask_char="*", min_len=8, max_len=64
             ).strip()
             if not password:
                 raise ValueError("Password is required for WiFi QR code.")
@@ -348,55 +354,63 @@ class WiFi:
 
     def _get_wifi_info(self) -> dict[str, str | bool]:
         """Get WiFi information either from input or by detection."""
+
         try:
             return self._prompt_for_details()
-        except (KeyboardInterrupt, ValueError) as e:
-            if isinstance(e, ValueError):
-                raise e
+
+        except (KeyboardInterrupt, ValueError) as exc:
+            if isinstance(exc, ValueError):
+                raise exc
             else:
-                raise KeyboardInterrupt()
+                raise KeyboardInterrupt() from exc
 
     def get_wifi_string(self) -> str:
         """Generate WiFi QR code string."""
+
         info = self.wifi_info
         return f"WIFI:T:{info['security']};S:{info['ssid']};P:{info['password']};H:{'true' if info['hidden'] else 'false'};;"
 
     def get_display_info(self) -> str:
         """Get formatted display information."""
+
         info = self.wifi_info
         display = f"Network: {info['ssid']}\n"
-        display += f"Password: **********\n"
+        display += "Password: **********\n"
         display += f"Security: {info['security']}\n"
         display += f"Hidden: {'Yes' if info['hidden'] else 'No'}"
+
         return display
 
 
-def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
+def ascii_qr(text: str, args: ParsedArgs) -> str | None:  # noqa: C901
     """Generate and display QR code in terminal."""
+
     try:
         scale = int(v) if (v := args.scale.get(0)) and v.replace("_", "").isdigit() else 1
         invert = args.invert.exists
-        error_level = int({ \
-            "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
-            "M": qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
-            "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
-            "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
-        }.get( \
-            ((args.error_correction.values or [None])[0] or "M").upper(),
-            qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
-        ))
+        error_level = int(
+            {
+                "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
+                "M": qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+                "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
+                "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
+            }.get(
+                ((args.error_correction.values or [None])[0] or "M").upper(),
+                qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+            )
+        )
 
         qr = qrcode.QRCode(version=1, error_correction=error_level, box_size=1, border=0)
         qr.add_data(text)
 
         try:
             qr.make(fit=True)
-        except ValueError as e:
-            if "Invalid version" in (err_str := str(e)) or "expected 1 to 40" in err_str:
+        except ValueError as exc:
+            if "Invalid version" in (err_str := str(exc)) or "expected 1 to 40" in err_str:
                 raise ValueError(
                     f"Cannot fit {len(text)} characters into a QR code.\n"
                     f"Please reduce the amount of data or try a lower error correction level ([br:blue](-e L))."
-                )
+                ) from exc
             raise
 
         matrix = qr.get_matrix()
@@ -423,6 +437,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
                         char = " "
                     line += char
                 lines.append(line)
+
         else:
             chars = ("  ", "██") if invert else ("██", "  ")
             for row in matrix:
@@ -435,8 +450,8 @@ def ascii_qr(text: str, args: ParsedArgs) -> Optional[str]:
 
         return "  " + "\n  ".join(lines)
 
-    except ValueError as e:
-        Console.fail(e)
+    except ValueError as exc:
+        Console.fail(exc)
 
 
 def main() -> None:

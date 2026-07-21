@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Calculate the value of π to a specified number of decimal places."""
-from typing import Iterator
-from xulbux.console import Throbber
-from xulbux import FormatCodes, Console
+
 import math
-import time
 import sys
+import time
+from collections.abc import Iterator
+from xulbux import Console, FormatCodes
+from xulbux.console import Throbber
 
-
-ARGS = Console.get_args({
-    "decimal_places": "before",
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args({"decimal_places": "before", "help": {"-h", "--help"}})
 
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
@@ -26,9 +24,10 @@ REFERENCE_TIMES: dict[int, float] = {
 }
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
-[b|in|bg:black]( Pi — Calculate [link:https://en.wikipedia.org/wiki/Pi](the value of π) to a specified number of decimal places )
+[b|in|bg:black]( Pi — Calculate [link:https://en.wikipedia.org/wiki/Pi](the value of π) \
+to a specified number of decimal places )
 
 [b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
 
@@ -68,7 +67,7 @@ def estimate_runtime(precision: int) -> float:
 
     if precision >= max(ref_points):
         base_time = REFERENCE_TIMES[max(ref_points)]
-        scaling = (precision / max(ref_points))**2.0
+        scaling = (precision / max(ref_points)) ** 2.0
         if precision > 1000000:
             scaling *= 1.2
 
@@ -84,9 +83,9 @@ def estimate_runtime(precision: int) -> float:
             log_factor = 1
         else:
             raw_factor = precision / lower_point
-            log_factor = (math.log(raw_factor)**2) / (math.log(upper_point / lower_point))
+            log_factor = (math.log(raw_factor) ** 2) / (math.log(upper_point / lower_point))
 
-        base_time = lower_time * (upper_time / lower_time)**log_factor
+        base_time = lower_time * (upper_time / lower_time) ** log_factor
         scaling = 1.0
 
     estimated_time = (base_time * scaling) / get_hardware_score()
@@ -185,15 +184,20 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
     if not parts:
         formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
         parts.append(
-            f"{b_val}{formatted_seconds}{val_name}{units[0 if short else 1][-1][0] if seconds == 1 or short else f'{units[0 if short else 1][-1][0]}s'}{a_name}"
+            f"{b_val}{formatted_seconds}{val_name}"
+            + (units[0 if short else 1][-1][0] if seconds == 1 or short else f"{units[0 if short else 1][-1][0]}s")
+            + a_name
         )
 
     if short:
         return ("[dim](:)" if pretty_print else ":").join(parts)
 
     if len(parts) > 1:
-        return (("[dim] + [_dim]" if pretty_print else ", ").join(parts[:-1]) +
-                ("[dim] + [_dim]" if pretty_print else " and ") + parts[-1])
+        return (
+            ("[dim] + [_dim]" if pretty_print else ", ").join(parts[:-1])
+            + ("[dim] + [_dim]" if pretty_print else " and ")
+            + parts[-1]
+        )
 
     return parts[0]
 
@@ -217,15 +221,12 @@ def main() -> None:
         return
 
     global CALC_DONE
-    input_k = (
-        int(v) \
-        if (v := ARGS.decimal_places.get(0)) and v.replace("_", "").isdigit()
-        else 10
-    )
+    input_k = int(v) if (v := ARGS.decimal_places.get(0)) and v.replace("_", "").isdigit() else 10
 
     if (estimated_secs := estimate_runtime(input_k)) >= 604800:
         FormatCodes.print(
-            f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
+            f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n"
+            f"\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
         )
 
     else:

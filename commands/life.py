@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
-"""Conway's game of life in the console."""
-from typing import Optional
-from xulbux.base.consts import CHARS
-from xulbux import FormatCodes, Console
-import random
-import time
-import sys
+# ruff: noqa: RUF001
+# [x-cmds]: UPDATE
 
+"""Conway's game of life in the console."""
+
+import random
+import sys
+import time
+from xulbux import Console, FormatCodes
+from xulbux.base.consts import CHARS
 
 ARGS = Console.get_args({"help": {"-h", "--help"}})
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
-[b|in|bg:black]( Game of Life — [link:https://wikipedia.org/wiki/Conway's_Game_of_Life](Conway's cellular automaton) in the terminal )
+[b|in|bg:black]( Game of Life — \
+[link:https://wikipedia.org/wiki/Conway's_Game_of_Life](Conway's cellular automaton) \
+in the terminal )
 
 [b](Usage:) [br:green](life)
 
@@ -28,17 +31,16 @@ def print_help():
 
 
 class GameOfLife:
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.width = Console.width
         self.height = Console.height * 2
         self.grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.next_grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         # PRE-COMPUTE UTF-8 BYTE SEQUENCES FOR MAXIMUM EFFICIENCY
-        self.c_full = "█".encode("utf-8")
-        self.c_upper = "▀".encode("utf-8")
-        self.c_lower = "▄".encode("utf-8")
-        self.c_empty = " ".encode("utf-8")
+        self.c_full = "█".encode()
+        self.c_upper = "▀".encode()
+        self.c_lower = "▄".encode()
+        self.c_empty = b" "
 
     def initialize_random(self, density: float = 0.3) -> None:
         for y in range(self.height):
@@ -52,9 +54,8 @@ class GameOfLife:
                 if dx == 0 and dy == 0:
                     continue
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.width and 0 <= ny < self.height:
-                    if self.grid[ny][nx]:
-                        count += 1
+                if 0 <= nx < self.width and 0 <= ny < self.height and self.grid[ny][nx]:
+                    count += 1
         return count
 
     def update(self) -> None:
@@ -75,10 +76,14 @@ class GameOfLife:
             for col in range(self.width):
                 upper_filled = self.grid[row][col]
                 lower_filled = self.grid[row + 1][col]
-                if upper_filled and lower_filled: char_bytes = self.c_full
-                elif upper_filled: char_bytes = self.c_upper
-                elif lower_filled: char_bytes = self.c_lower
-                else: char_bytes = self.c_empty
+                if upper_filled and lower_filled:
+                    char_bytes = self.c_full
+                elif upper_filled:
+                    char_bytes = self.c_upper
+                elif lower_filled:
+                    char_bytes = self.c_lower
+                else:
+                    char_bytes = self.c_empty
                 line.extend(char_bytes)
             frame.extend(line)
             if i < (self.height - 1) // 2 - 1:
@@ -86,11 +91,7 @@ class GameOfLife:
         sys.stdout.write(f"\x1bc{frame.decode('utf-8')}")
 
     def add_glider(self, x: int, y: int) -> None:
-        glider = [
-            [False, True, False],
-            [False, False, True],
-            [True, True, True],
-        ]
+        glider = [[False, True, False], [False, False, True], [True, True, True]]
         for dy in range(3):
             for dx in range(3):
                 nx, ny = x + dx, y + dy
@@ -103,7 +104,7 @@ class GameOfLife:
             self.grid[y][x] = True
             self.grid[y + 1][x] = True
 
-    def run(self, gens: Optional[int] = None, delay: float = 0.05) -> None:
+    def run(self, gens: int | None = None, delay: float = 0.05) -> None:
         try:
             gen = 0
             while gens is None or gen < gens:
@@ -129,23 +130,15 @@ class GameOfLife:
             sys.stdout.write("\x1bc")
 
 
-def main():
+def main() -> None:
     if ARGS.help.exists:
         print_help()
         return
 
     game = GameOfLife()
 
-    FormatCodes.print("[b](Choose Initialization)\n"
-                      " [b|i](1)  Random pattern\n"
-                      " [b|i](2)  Some classic patterns")
-    choice = Console.input(
-        "(1) [b](>) ",
-        max_len=1,
-        allowed_chars="12",
-        default_val=1,
-        output_type=int,
-    )
+    FormatCodes.print("[b](Choose Initialization)\n [b|i](1)  Random pattern\n [b|i](2)  Some classic patterns")
+    choice = Console.input("(1) [b](>) ", max_len=1, allowed_chars="12", default_val=1, output_type=int)
 
     match choice:
         case 2:

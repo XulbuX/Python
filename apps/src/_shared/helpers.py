@@ -1,11 +1,12 @@
-from pathlib import Path
-from typing import Any, Optional
-from PIL import Image, ImageTk
-import tkinter.font as tkfont
-import subprocess
-import tempfile
+import contextlib
 import ctypes
+import subprocess
 import sys
+import tempfile
+import tkinter.font as tkfont
+from pathlib import Path
+from typing import Any
+from PIL import Image, ImageTk
 
 
 def get_system_theme() -> str:
@@ -13,8 +14,10 @@ def get_system_theme() -> str:
     try:
         if sys.platform == "win32":
             import winreg
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            ) as key:
                 value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
             return "light" if value == 1 else "dark"
 
@@ -24,9 +27,7 @@ def get_system_theme() -> str:
 
         else:
             result = subprocess.run(
-                ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
-                capture_output=True,
-                text=True,
+                ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"], capture_output=True, text=True
             )
             return "dark" if "dark" in result.stdout.lower() else "light"
 
@@ -36,15 +37,22 @@ def get_system_theme() -> str:
 
 def resolve_mono_font(size: int) -> tuple[str, int]:
     """Return the first available modern monospace font, falling back to Courier New."""
-    for name in ["Cascadia Code", "Cascadia Mono", "Consolas", "JetBrains Mono", "Fira Code", "Source Code Pro",
-                 "Courier New"]:
+    for name in [
+        "Cascadia Code",
+        "Cascadia Mono",
+        "Consolas",
+        "JetBrains Mono",
+        "Fira Code",
+        "Source Code Pro",
+        "Courier New",
+    ]:
         if name in set(tkfont.families()):
             return (name, size)
 
     return ("Courier New", size)
 
 
-def setup_window_icon(window: Any, icon_png: Path) -> Optional[Path]:
+def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
     """Set the window and taskbar icon from a PNG file."""
     if not icon_png.is_file():
         return None
@@ -52,15 +60,13 @@ def setup_window_icon(window: Any, icon_png: Path) -> Optional[Path]:
     pil_icon: Image.Image = Image.open(str(icon_png))
 
     if sys.platform == "win32":
-        ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)
+        ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)  # noqa: SIM115
         ico_tmp.close()
         pil_icon.save(ico_tmp.name, format="ICO", sizes=[(512, 512), (256, 256), (128, 128), (64, 64)])
         ico_path: Path = Path(ico_tmp.name)
 
-        try:
+        with contextlib.suppress(Exception):
             window.iconbitmap(str(ico_path))
-        except Exception:
-            pass
 
         # ALSO PUSH VIA WIN32 API AFTER RENDERING, COVERING ANY TASKBAR REFRESH EDGE CASES
         def _apply_win32() -> None:

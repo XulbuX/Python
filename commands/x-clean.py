@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Clean broken registry entries, environment variables, shortcuts and temp files."""
 
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, Any
-from xulbux import FormatCodes, Console, System, FileSys
-from xulbux.console import Throbber
-import subprocess
-import winreg
+import contextlib
 import json
 import os
+import subprocess
+import winreg
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+from xulbux import Console, FileSys, FormatCodes, System
+from xulbux.console import Throbber
 
 try:
     from win32com.client import Dispatch as COMDispatch
+
     HAS_WIN32COM = True
+
 except ImportError:
     COMDispatch = None
     HAS_WIN32COM = False  # type: ignore[constant-reassignment]
@@ -48,8 +52,10 @@ PATH_VALUE_NAMES = {"UninstallString", "QuietUninstallString", "InstallLocation"
 
 # ENVIRONMENT VARIABLE REGISTRY LOCATIONS
 ENV_USER_KEY: tuple[int, str] = (winreg.HKEY_CURRENT_USER, "Environment")
-ENV_SYSTEM_KEY: tuple[int,
-                      str] = (winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment")
+ENV_SYSTEM_KEY: tuple[int, str] = (
+    winreg.HKEY_LOCAL_MACHINE,
+    "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
+)
 
 # SHORTCUT DIRECTORIES TO SCAN
 SHORTCUT_DIRS: list[tuple[str, Path]] = []
@@ -75,21 +81,14 @@ def _build_shortcut_dirs() -> list[tuple[str, Path]]:
     return dirs
 
 
-HIVE_NAMES = {
-    winreg.HKEY_CURRENT_USER: "HKCU",
-    winreg.HKEY_LOCAL_MACHINE: "HKLM",
-}
+HIVE_NAMES = {winreg.HKEY_CURRENT_USER: "HKCU", winreg.HKEY_LOCAL_MACHINE: "HKLM"}
 
 ########################################## CLI ##########################################
 
-ARGS = Console.get_args({
-    "restore_path": "before",
-    "restore": {"-r", "--restore"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args({"restore_path": "before", "restore": {"-r", "--restore"}, "help": {"-h", "--help"}})
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( System Cleaner — Clean broken registry entries, env vars, shortcuts & more )
 
@@ -118,7 +117,7 @@ def hive_name(hive: int) -> str:
     return HIVE_NAMES.get(hive, str(hive))
 
 
-def extract_path_from_value(value: str) -> Optional[Path]:
+def extract_path_from_value(value: str) -> Path | None:
     """Extract a file/directory path from a registry value string.<br>
     Handles quoted paths, paths with args, MsiExec, rundll32, etc."""
     if not value:
@@ -134,24 +133,19 @@ def extract_path_from_value(value: str) -> Optional[Path]:
     if (lower := stripped.lower()).startswith("msiexec") or lower.startswith("rundll32"):
         return None
 
-    # HANDLE QUOTED PATHS: "C:\path\to\file.exe" /args
-    if stripped.startswith('"'):
-        if (end := stripped.find('"', 1)) != -1:
-            # ONLY ACCEPT ABSOLUTE PATHS OR ENV VAR PATHS
-            if looks_like_path(candidate := stripped[1:end]):
-                return Path(candidate)
+    # HANDLE QUOTED PATHS ("C:\path\to\file.exe" /args); ONLY ACCEPT ABSOLUTE PATHS OR ENV VAR PATHS
+    if stripped.startswith('"') and (end := stripped.find('"', 1)) != -1 and looks_like_path(candidate := stripped[1:end]):
+        return Path(candidate)
 
     # HANDLE PATHS WITH ARGUMENTS: C:\path\file.exe /arg
     # LOOK FOR .EXE OR OTHER EXECUTABLE EXTENSIONS
     for ext in (".exe", ".msi", ".bat", ".cmd", ".com"):
-        if (idx := lower.find(ext)) != -1:
-            if looks_like_path(candidate := stripped[:idx + len(ext)]):
-                return Path(candidate)
+        if (idx := lower.find(ext)) != -1 and looks_like_path(candidate := stripped[: idx + len(ext)]):
+            return Path(candidate)
 
     # HANDLE DISPLAY ICON FORMAT: path.exe,0
-    if "," in stripped:
-        if (candidate := stripped.split(",")[0].strip().strip('"')) and looks_like_path(candidate):
-            return Path(candidate)
+    if "," in stripped and (candidate := stripped.split(",")[0].strip().strip('"')) and looks_like_path(candidate):
+        return Path(candidate)
 
     # FINAL FALLBACK
     if looks_like_path(stripped):
@@ -201,13 +195,13 @@ def looks_like_path(value: str) -> bool:
     return False
 
 
-def resolve_shortcut(lnk_path: Path) -> Optional[Path]:
+def resolve_shortcut(lnk_path: Path) -> Path | None:
     """Resolve a `.lnk` shortcut file to its target path."""
     if not HAS_WIN32COM or COMDispatch is None:
         return None
 
     try:
-        if (target := COMDispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath):
+        if target := COMDispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath:
             return Path(target)
         return None
 
@@ -251,12 +245,9 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
                     if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
                         path = extract_path_from_value(str(val_data))
                         if path is not None and not path_exists(path):
-                            issues.append({
-                                "hive": hive,
-                                "path": full_path,
-                                "subkey": subkey_name,
-                                "broken_path": str(val_data),
-                            })
+                            issues.append(
+                                {"hive": hive, "path": full_path, "subkey": subkey_name, "broken_path": str(val_data)}
+                            )
                 except OSError:
                     pass
 
@@ -296,10 +287,8 @@ def scan_registry_unins_paths() -> list[dict[str, Any]]:
 
                 # GET DISPLAY NAME
                 display_name = subkey_name
-                try:
+                with contextlib.suppress(OSError):
                     display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
-                except OSError:
-                    pass
 
                 # CHECK ALL PATH VALUES IN THIS KEY
                 broken_values: list[tuple[str, str]] = []
@@ -327,13 +316,15 @@ def scan_registry_unins_paths() -> list[dict[str, Any]]:
 
                 # IF WE FOUND BROKEN PATHS AND NO VALID PATHS, FLAG THE ENTIRE ENTRY
                 if broken_values and not has_any_valid:
-                    issues.append({
-                        "hive": hive,
-                        "path": full_path,
-                        "subkey": subkey_name,
-                        "display_name": display_name,
-                        "broken_values": broken_values,
-                    })
+                    issues.append(
+                        {
+                            "hive": hive,
+                            "path": full_path,
+                            "subkey": subkey_name,
+                            "display_name": display_name,
+                            "broken_values": broken_values,
+                        }
+                    )
         finally:
             winreg.CloseKey(root_key)
 
@@ -369,13 +360,9 @@ def scan_registry_startup_paths() -> list[dict[str, Any]]:
                     continue
 
                 if not path_exists(p):
-                    issues.append({
-                        "hive": hive,
-                        "path": reg_path,
-                        "value_name": name,
-                        "value_data": str(value),
-                        "value_type": val_type,
-                    })
+                    issues.append(
+                        {"hive": hive, "path": reg_path, "value_name": name, "value_data": str(value), "value_type": val_type}
+                    )
         finally:
             winreg.CloseKey(key)
 
@@ -416,24 +403,28 @@ def scan_env_vars() -> dict[str, list[dict[str, Any]]]:
                         p for p in paths if looks_like_path(p) and not path_exists(Path(expand_env_in_path(p.strip('"'))))
                     ]
                     if broken:
-                        result[scope].append({
-                            "name": name,
-                            "value_type": val_type,
-                            "original_value": str_value,
-                            "broken_paths": broken,
-                            "scope": scope,
-                        })
+                        result[scope].append(
+                            {
+                                "name": name,
+                                "value_type": val_type,
+                                "original_value": str_value,
+                                "broken_paths": broken,
+                                "scope": scope,
+                            }
+                        )
                 # CHECK IF THE SINGLE VALUE LOOKS LIKE A BROKEN PATH
                 elif looks_like_path(str_value):
                     p = Path(expand_env_in_path(str_value.strip().strip('"')))
                     if not path_exists(p):
-                        result[scope].append({
-                            "name": name,
-                            "value_type": val_type,
-                            "original_value": str_value,
-                            "broken_paths": [str_value],
-                            "scope": scope,
-                        })
+                        result[scope].append(
+                            {
+                                "name": name,
+                                "value_type": val_type,
+                                "original_value": str_value,
+                                "broken_paths": [str_value],
+                                "scope": scope,
+                            }
+                        )
 
         finally:
             winreg.CloseKey(key)
@@ -460,11 +451,7 @@ def scan_shortcuts() -> list[dict[str, Any]]:
         _scan_shortcuts_recursive(dir_path, broken_shortcuts)
 
         if broken_shortcuts:
-            issues.append({
-                "label": label,
-                "dir_path": dir_path,
-                "broken_shortcuts": broken_shortcuts,
-            })
+            issues.append({"label": label, "dir_path": dir_path, "broken_shortcuts": broken_shortcuts})
 
     return issues
 
@@ -482,10 +469,7 @@ def _scan_shortcuts_recursive(directory: Path, broken_list: list[dict[str, Any]]
         elif entry.suffix.lower() == ".lnk":
             target = resolve_shortcut(entry)
             if target is not None and not path_exists(target):
-                broken_list.append({
-                    "lnk_path": entry,
-                    "target": str(target),
-                })
+                broken_list.append({"lnk_path": entry, "target": str(target)})
 
 
 def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
@@ -518,20 +502,13 @@ def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
             for f in dir_path.rglob("*"):
                 if f.is_file():
                     file_count += 1
-                    try:
+                    with contextlib.suppress(OSError, PermissionError):
                         total_size += f.stat().st_size
-                    except (OSError, PermissionError):
-                        pass
         except (PermissionError, OSError):
             pass
 
         if file_count > 0:
-            result.append({
-                "label": label,
-                "path": dir_path,
-                "file_count": file_count,
-                "size_bytes": total_size,
-            })
+            result.append({"label": label, "path": dir_path, "file_count": file_count, "size_bytes": total_size})
 
     return {"dirs": result}
 
@@ -604,10 +581,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
                 except OSError:
                     break
                 i += 1
-                data[scope][name] = {
-                    "value": value,
-                    "type": val_type,
-                }
+                data[scope][name] = {"value": value, "type": val_type}
         finally:
             winreg.CloseKey(key)
 
@@ -640,7 +614,7 @@ def restore_env_vars(backup_path: Path) -> None:
 
     # SHOW WHAT WILL BE RESTORED
     for scope in ("user", "system"):
-        if scope in data and data[scope]:
+        if data.get(scope):
             FormatCodes.print(f"\n  [b]({scope.upper()} variables:) [dim]({len(data[scope])} entries)")
 
     if not Console.confirm("\n[b](Restore these environment variables?)", default_is_yes=False):
@@ -678,6 +652,7 @@ def _broadcast_env_change() -> None:
     """Broadcast `WM_SETTINGCHANGE` so other processes pick up env var changes."""
     try:
         import ctypes
+
         HWND_BROADCAST = 0xFFFF
         WM_SETTINGCHANGE = 0x001A
         SMTO_ABORTIFHUNG = 0x0002
@@ -692,9 +667,7 @@ def _broadcast_env_change() -> None:
 
 
 def execute_registry_cleanup(
-    app_path_issues: list[dict[str, Any]],
-    unins_issues: list[dict[str, Any]],
-    startup_issues: list[dict[str, Any]],
+    app_path_issues: list[dict[str, Any]], unins_issues: list[dict[str, Any]], startup_issues: list[dict[str, Any]]
 ) -> list[str]:
     """Delete broken registry entries. Returns list of failure messages."""
     failures: list[str] = []
@@ -778,12 +751,13 @@ def _delete_registry_tree(hive: int, key_path: str) -> None:
     # NOW DELETE THE KEY ITSELF
     parent_path = "\\".join(key_path.split("\\")[:-1])
     key_name = key_path.split("\\")[-1]
+
     try:
         parent = winreg.OpenKey(hive, parent_path, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
         winreg.DeleteKey(parent, key_name)
         winreg.CloseKey(parent)
-    except OSError as e:
-        raise OSError(f"Could not delete key {key_path}: {e}")
+    except OSError as exc:
+        raise OSError(f"Could not delete key {key_path}: {exc}") from exc
 
 
 def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
@@ -822,7 +796,8 @@ def execute_env_cleanup(env_issues: dict[str, Any]) -> list[str]:
                         winreg.CloseKey(key)
                         removed_count = len(broken)
                         FormatCodes.print(
-                            f"  [green](✓) Removed [b]({removed_count}) broken path{'' if removed_count == 1 else 's'} from [cyan]{name} [dim|br:cyan]in {scope}[_]"
+                            f"  [green](✓) Removed [b]({removed_count}) broken path{'' if removed_count == 1 else 's'} "
+                            f"from [cyan]{name} [dim|br:cyan]in {scope}[_]"
                         )
 
                 else:
@@ -933,6 +908,7 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
                         deleted += 1
                     elif item.is_dir():
                         import shutil
+
                         shutil.rmtree(item, ignore_errors=True)
                         if not item.exists():
                             deleted += 1
@@ -966,7 +942,7 @@ def format_size(size_bytes: int, /) -> str:
     return f"{size:.1f} TB"
 
 
-def show_summary(
+def show_summary(  # noqa: C901
     reg_app_path_issues: list[dict[str, Any]],
     reg_unins_issues: list[dict[str, Any]],
     reg_startup_issues: list[dict[str, Any]],
@@ -999,8 +975,9 @@ def show_summary(
 
         for issue in reg_unins_issues:
             FormatCodes.print(
-                f"  [red](✗) [b|magenta]({issue['display_name']}) [br:magenta]({hive_name(issue['hive'])}\\…\\{issue['subkey']})"
-                f" — {len(issue['broken_values'])} broken path{'' if len(issue['broken_values']) == 1 else 's'}:"
+                f"  [red](✗) [b|magenta]({issue['display_name']}) "
+                f"[br:magenta]({hive_name(issue['hive'])}\\…\\{issue['subkey']}) "
+                f"— {len(issue['broken_values'])} broken path{'' if len(issue['broken_values']) == 1 else 's'}:"
             )
             for val_name, val_data in issue["broken_values"]:
                 p = extract_path_from_value(val_data)
@@ -1042,8 +1019,9 @@ def show_summary(
 
         for location in shortcut_issues:
             FormatCodes.print(
-                f"  [b|blue]({location['label']})"
-                f" — remove {len(location['broken_shortcuts'])} broken shortcut{'' if len(location['broken_shortcuts']) == 1 else 's'}:"
+                f"  [b|blue]({location['label']}) "
+                f"— remove {len(location['broken_shortcuts'])} broken "
+                f"shortcut{'' if len(location['broken_shortcuts']) == 1 else 's'}:"
             )
             for sc in location["broken_shortcuts"]:
                 FormatCodes.print(f"    [red](✗) [dim|br:blue]{sc['lnk_path'].name}[_c] → {sc['target']}[_]")
@@ -1055,8 +1033,7 @@ def show_summary(
 
         for d in temp_info["dirs"]:
             FormatCodes.print(
-                f"  [yellow](⟳ [b]({d['label']}))"
-                f"[dim]( — {d['file_count']} files, [b]{format_size(d['size_bytes'])})"
+                f"  [yellow](⟳ [b]({d['label']}))[dim]( — {d['file_count']} files, [b]{format_size(d['size_bytes'])})"
             )
 
         print()
@@ -1089,7 +1066,7 @@ def choose_options() -> dict[str, bool]:
     return selected
 
 
-def main():
+def main() -> None:  # noqa: C901
     if ARGS.help.exists:
         print_help()
         return
@@ -1099,15 +1076,16 @@ def main():
         restore_path_str = "".join(ARGS.restore_path.values).strip()
         if not restore_path_str:
             Console.fail(
-                "Please provide a path to the backup JSON file.\n  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)",
+                "Please provide a path to the backup JSON file.\n"
+                "  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)",
                 start="\n",
-                end="\n\n"
+                end="\n\n",
             )
             return
         restore_env_vars(Path(restore_path_str))
         return
 
-    FormatCodes.print(f"\n[b|bg:black]( Windows [in]( SYSTEM PATHS CLEANER ))")
+    FormatCodes.print("\n[b|bg:black]( Windows [in]( SYSTEM PATHS CLEANER ))")
     Console.log_box_bordered(
         "[yellow](This tool scans for and removes broken system paths.)",
         "[yellow]([dim](→) Backups are created before any modifications.)",
@@ -1217,7 +1195,8 @@ def main():
         )
     else:
         FormatCodes.print(
-            f"\n[b]([red](✓) Cleanup completed with [red]({len(all_failures)}) failure{'' if len(all_failures) == 1 else 's'}:)\n"
+            f"\n[b]([red](✓) Cleanup completed with [red]({len(all_failures)}) "
+            f"failure{'' if len(all_failures) == 1 else 's'}:)\n"
         )
         for msg in all_failures:
             FormatCodes.print(f"  [red](✗) [br:red]{msg}[_]")

@@ -1,32 +1,33 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
 """Get detailed information about files in the current directory."""
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
-from pathlib import Path
-from xulbux.base.types import ProgressUpdater
-from xulbux.console import ProgressBar, Throbber
-from xulbux import FormatCodes, Console
+
 import fnmatch
 import math
+import os
 import re
 import stat
-import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from xulbux import Console, FormatCodes
+from xulbux.base.types import ProgressUpdater
+from xulbux.console import ProgressBar, Throbber
 
-
-ARGS = Console.get_args({
-    "recursive": {"-r", "--recursive"},
-    "exclude_info": {"-e", "--exclude"},
-    "skip_hidden": {"-H", "--skip-hidden"},
-    "apply_gitignore": {"-G", "--gitignore"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    {
+        "recursive": {"-r", "--recursive"},
+        "exclude_info": {"-e", "--exclude"},
+        "skip_hidden": {"-H", "--skip-hidden"},
+        "apply_gitignore": {"-G", "--gitignore"},
+        "help": {"-h", "--help"},
+    }
+)
 
 EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split()}
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Directory Info — Get details about files in the current directory )
 
@@ -67,10 +68,7 @@ def is_hidden(path: str) -> bool:
 
 def should_skip_path(path: str) -> bool:
     """Check if a path should be skipped based on skip options."""
-    if ARGS.skip_hidden.exists and is_hidden(path):
-        return True
-    else:
-        return False
+    return bool(ARGS.skip_hidden.exists and is_hidden(path))
 
 
 def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]]:
@@ -78,12 +76,12 @@ def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]
     patterns: list[tuple[re.Pattern[str], bool]] = []
     current_dir = Path(directory).resolve()
 
-    for parent in [current_dir] + list(current_dir.parents):
+    for parent in [current_dir, *list(current_dir.parents)]:
         gitignore_path = parent / ".gitignore"
 
         if gitignore_path.exists():
             try:
-                with open(gitignore_path, "r", encoding="utf-8", errors="ignore") as file:
+                with open(gitignore_path, encoding="utf-8", errors="ignore") as file:
                     for line in file:
                         if not (line := line.strip()) or line.startswith("#"):
                             continue
@@ -91,10 +89,7 @@ def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]
                         is_dir = line.endswith("/")
                         clean = line.rstrip("/")
 
-                        if clean.startswith("/"):
-                            full = str(parent / clean[1:])
-                        else:
-                            full = str(parent / clean)
+                        full = str(parent / clean[1:]) if clean.startswith("/") else str(parent / clean)
 
                         try:
                             flags = re.IGNORECASE if os.name == "nt" else 0
@@ -163,7 +158,8 @@ def count_lines(file_path: str) -> int:
                 return 0
             if file_size < 1024 * 1024:
                 content = file.read()
-                if b"\x00" in content: return 0
+                if b"\x00" in content:
+                    return 0
                 return content.count(b"\n")
 
             lines = 0
@@ -193,7 +189,7 @@ def count_lines(file_path: str) -> int:
 
             return lines
 
-    except:
+    except Exception:
         return 0
 
 
@@ -204,16 +200,11 @@ def process_file(file_path: str) -> tuple[int, int, int]:
 
         size = Path(file_path).stat().st_size
 
-        if "scope" in EXCLUDE:
-            lines = 0
-        elif size == 0:
-            lines = 0
-        else:
-            lines = count_lines(file_path)
+        lines = 0 if "scope" in EXCLUDE or size == 0 else count_lines(file_path)
 
         return 1, lines, 0 if "size" in EXCLUDE else size
 
-    except:
+    except Exception:
         return 1, 0, 0
 
 
@@ -223,10 +214,7 @@ def calc_files_scope(files: list[str], update_progress: ProgressUpdater) -> tupl
 
     cpu_count = os.cpu_count() or 4
 
-    if len(files) < 50:
-        max_workers = min(len(files), cpu_count)
-    else:
-        max_workers = min(cpu_count * 3, len(files), 128)
+    max_workers = min(len(files), cpu_count) if len(files) < 50 else min(cpu_count * 3, len(files), 128)
 
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -268,7 +256,7 @@ def format_bytes_size(bytes: int) -> str:
     return f"{s} {size_name[i]}"
 
 
-def main():
+def main() -> None:
     if ARGS.help.exists:
         print_help()
         return

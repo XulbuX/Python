@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 _ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
 
 APP_ICON_PNG: Path = _ASSET_DIR / "img" / "VideoTrimmer.png"

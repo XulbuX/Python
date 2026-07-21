@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Displays an animated, random text character mess.
 The mess can be made faster and displayed in color."""
-from xulbux import FormatCodes, Console
+
 import random
 import time
+from xulbux import Console, FormatCodes
 
-
-ARGS = Console.get_args({
-    "fast_mode": {"-f", "--fast"},
-    "color_mode": {"-c", "--color"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args({"fast_mode": {"-f", "--fast"}, "color_mode": {"-c", "--color"}, "help": {"-h", "--help"}})
 
 rand_choice = random.choice
 rand_bits = random.getrandbits
@@ -19,7 +16,7 @@ fc_print = FormatCodes.print
 sleep = time.sleep
 
 
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Mess — Display an animated random text character mess )
 
@@ -44,12 +41,44 @@ def print_help():
 x = ["0", "1"]
 f = ["dim", "bold", "inverse", "underline", "strikethrough", "double-underline"]
 if ARGS.color_mode.exists:
-    f.extend([
-        "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "BR:black", "BR:red", "BR:green", "BR:yellow",
-        "BR:blue", "BR:magenta", "BR:cyan", "BR:white", "BG:black", "BG:red", "BG:green", "BG:yellow", "BG:blue", "BG:magenta",
-        "BG:cyan", "BG:white", "BG:BR:black", "BG:BR:red", "BG:BR:green", "BG:BR:yellow", "BG:BR:blue", "BG:BR:magenta",
-        "BG:BR:cyan", "BG:BR:white", "randomCL", "randomBG"
-    ])
+    f.extend(
+        [
+            "black",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "white",
+            "BR:black",
+            "BR:red",
+            "BR:green",
+            "BR:yellow",
+            "BR:blue",
+            "BR:magenta",
+            "BR:cyan",
+            "BR:white",
+            "BG:black",
+            "BG:red",
+            "BG:green",
+            "BG:yellow",
+            "BG:blue",
+            "BG:magenta",
+            "BG:cyan",
+            "BG:white",
+            "BG:BR:black",
+            "BG:BR:red",
+            "BG:BR:green",
+            "BG:BR:yellow",
+            "BG:BR:blue",
+            "BG:BR:magenta",
+            "BG:BR:cyan",
+            "BG:BR:white",
+            "randomCL",
+            "randomBG",
+        ]
+    )
 
 
 def random_hexa() -> str:
@@ -62,18 +91,14 @@ def replace_special(text: str) -> str:
 
 def rand_binary_line() -> str:
     return "".join(
-        (f"[{rand_choice(f)}]" if rand_bits(1) else "") \
-        + (rand_choice(x) if rand_bits(1) else " ")
-        + "[_]"
+        (f"[{rand_choice(f)}]" if rand_bits(1) else "") + (rand_choice(x) if rand_bits(1) else " ") + "[_]"
         for _ in range(Console.width)
     )
 
 
 def rand_color_binary_line() -> str:
     return "".join(
-        (f"[{replace_special(rand_choice(f))}]" if rand_bits(1) else "") \
-        + (rand_choice(x) if rand_bits(1) else " ")
-        + "[_]"
+        (f"[{replace_special(rand_choice(f))}]" if rand_bits(1) else "") + (rand_choice(x) if rand_bits(1) else " ") + "[_]"
         for _ in range(Console.width)
     )
 

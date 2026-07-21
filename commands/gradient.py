@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
-from typing import Literal, cast
-from xulbux import FormatCodes, Console, Color
-from xulbux.color import rgba, hexa
+
 import colorsys
+from typing import Literal, cast
+from xulbux import Color, Console, FormatCodes
+from xulbux.color import hexa, rgba
+
+ARGS = Console.get_args(
+    {
+        "color_points": "before",
+        "steps": {"-s", "--steps"},
+        "hsv": {"-H", "--hsv"},
+        "oklch": {"-O", "--oklch"},
+        "list": {"-l", "--list"},
+        "numerate": {"-n", "--numerate"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
-ARGS = Console.get_args({
-    "color_points": "before",
-    "steps": {"-s", "--steps"},
-    "hsv": {"-H", "--hsv"},
-    "oklch": {"-O", "--oklch"},
-    "list": {"-l", "--list"},
-    "numerate": {"-n", "--numerate"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """
 [b|in|bg:black]( Gradient — Generate and preview advanced color gradients )
 
@@ -52,10 +55,7 @@ def print_help():
 
 
 def interpolate_oklch(
-    color_1: rgba,
-    color_2: rgba,
-    t: float,
-    hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
+    color_1: rgba, color_2: rgba, t: float, hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest"
 ) -> rgba:
     """Interpolate between two colors using OKLCH color space for perceptual uniformity.\n
     ---------------------------------------------------------------------------------------
@@ -65,8 +65,8 @@ def interpolate_oklch(
     - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
     try:
-        from colorspacious import cspace_convert  # type: ignore[no-stubs]
         import numpy as np
+        from colorspacious import cspace_convert  # type: ignore[no-stubs]
     except ImportError as e:
         raise ImportError(
             "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.\n"
@@ -78,8 +78,8 @@ def interpolate_oklch(
     rgb_b = np.array([color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0])
 
     # CONVERT SRGB TO OKLCH (using CAM02-UCS / JCh which is similar to OKLCH)
-    oklch_a = cast(np.ndarray, cspace_convert(rgb_a, "sRGB1", "JCh"))
-    oklch_b = cast(np.ndarray, cspace_convert(rgb_b, "sRGB1", "JCh"))
+    oklch_a = cast("np.ndarray", cspace_convert(rgb_a, "sRGB1", "JCh"))
+    oklch_b = cast("np.ndarray", cspace_convert(rgb_b, "sRGB1", "JCh"))
 
     # INTERPOLATE IN OKLCH SPACE
     L = oklch_a[0] + (oklch_b[0] - oklch_a[0]) * t
@@ -112,22 +112,19 @@ def interpolate_oklch(
 
     # CONVERT BACK TO SRGB
     oklch_interpolated = np.array([L, C, h])
-    rgb_interpolated = cast(np.ndarray, cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
+    rgb_interpolated = cast("np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
 
     # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
     rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
-    r = int(round(rgb_interpolated[0] * 255))
-    g = int(round(rgb_interpolated[1] * 255))
-    b = int(round(rgb_interpolated[2] * 255))
+    r = round(rgb_interpolated[0] * 255)
+    g = round(rgb_interpolated[1] * 255)
+    b = round(rgb_interpolated[2] * 255)
 
     return rgba(r, g, b)
 
 
 def interpolate_hsv(
-    color_1: rgba,
-    color_2: rgba,
-    t: float,
-    hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
+    color_1: rgba, color_2: rgba, t: float, hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest"
 ) -> rgba:
     """Interpolate between two colors using HSV color space with directional hue rotation.\n
     ---------------------------------------------------------------------------------------
@@ -175,7 +172,7 @@ def interpolate_hsv(
     r, g, b = colorsys.hsv_to_rgb(h_deg / 360.0, s, v)
 
     # CONVERT TO 0-255 RANGE
-    return rgba(int(round(r * 255)), int(round(g * 255)), int(round(b * 255)))
+    return rgba(round(r * 255), round(g * 255), round(b * 255))
 
 
 def generate_multi_gradient(
@@ -215,11 +212,7 @@ def generate_multi_gradient(
         seg_steps = steps_per_segment + (1 if seg_idx < remainder else 0)
 
         segment = generate_gradient(
-            color_1=colors[seg_idx],
-            color_2=colors[seg_idx + 1],
-            steps=seg_steps,
-            mode=mode,
-            hue_direction=directions[seg_idx],
+            color_1=colors[seg_idx], color_2=colors[seg_idx + 1], steps=seg_steps, mode=mode, hue_direction=directions[seg_idx]
         )
 
         if seg_idx == 0:
@@ -264,20 +257,16 @@ def generate_gradient(
         # LINEAR RGB INTERPOLATION
         for i in range(steps):
             t = i / (steps - 1) if steps > 1 else 0
-            r = int(round(color_1[0] + (color_2[0] - color_1[0]) * t))
-            g = int(round(color_1[1] + (color_2[1] - color_1[1]) * t))
-            b = int(round(color_1[2] + (color_2[2] - color_1[2]) * t))
+            r = round(color_1[0] + (color_2[0] - color_1[0]) * t)
+            g = round(color_1[1] + (color_2[1] - color_1[1]) * t)
+            b = round(color_1[2] + (color_2[2] - color_1[2]) * t)
             gradient.append(rgba(r, g, b).to_hexa())
 
     return tuple(gradient)
 
 
 def display_gradient(
-    gradient: tuple[hexa, ...],
-    source_colors: list[hexa],
-    width: int,
-    list_colors: bool = False,
-    numerate: bool = False,
+    gradient: tuple[hexa, ...], source_colors: list[hexa], width: int, list_colors: bool = False, numerate: bool = False
 ) -> None:
     """Display gradient using half-block char to fit 2 colors per character position.\n
     ---------------------------------------------------------------------------------------
@@ -308,13 +297,8 @@ def display_gradient(
 
     gradient_str = f"{''.join(gradient_parts)}[_]\n" * 4
 
-    color_segments = [
-        f"[b|i|{c}|bg:{c}](`[bg:{Color.text_color_for_on_bg(c)}]{c}[bg:{c}]`)" for c in source_colors
-    ]
-    summary = (
-        f"[in] FROM {" TO ".join(color_segments)} "
-        f"IN [b]({total_colors}) STEPS [_]"
-    )
+    color_segments = [f"[b|i|{c}|bg:{c}](`[bg:{Color.text_color_for_on_bg(c)}]{c}[bg:{c}]`)" for c in source_colors]
+    summary = f"[in] FROM {' TO '.join(color_segments)} IN [b]({total_colors}) STEPS [_]"
 
     if not list_colors:
         FormatCodes.print(f"\n{gradient_str}\n{summary}")
@@ -333,12 +317,8 @@ def display_gradient(
 
 
 def parse_color_args(
-    color_args: list[str],
-    mode: Literal["linear", "hsv", "oklch"] = "linear",
-) -> tuple[
-    list[rgba],
-    list[Literal["shortest", "clockwise", "counterclockwise"]],
-]:
+    color_args: list[str], mode: Literal["linear", "hsv", "oklch"] = "linear"
+) -> tuple[list[rgba], list[Literal["shortest", "clockwise", "counterclockwise"]]]:
     directions: list[Literal["shortest", "clockwise", "counterclockwise"]] = []
     colors: list[rgba] = []
 
@@ -349,7 +329,9 @@ def parse_color_args(
         # CHECK IF IT'S A DIRECTION ARROW
         if arg in (">", "<"):
             if mode == "linear":
-                raise ValueError("Direction arrows ([br:cyan](< >)) are only supported with [br:blue](--hsv) or [br:blue](--oklch) modes")
+                raise ValueError(
+                    "Direction arrows ([br:cyan](< >)) are only supported with [br:blue](--hsv) or [br:blue](--oklch) modes"
+                )
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
@@ -367,8 +349,11 @@ def parse_color_args(
                 if (hex_color := hexa(arg)).has_alpha():
                     raise ValueError(f"Color [br:cyan]({arg}) includes alpha channel, which is not supported")
                 colors.append(hex_color.to_rgba())
-            except Exception:
-                raise ValueError(f"Invalid color format [br:cyan]({arg}):\nExpected opaque hex color (e.g. [br:cyan](F00) or [br:cyan](FF0000))")
+            except Exception as exc:
+                raise ValueError(
+                    f"Invalid color format [br:cyan]({arg}):\n"
+                    "Expected opaque hex color (e.g. [br:cyan](F00) or [br:cyan](FF0000))"
+                ) from exc
 
             # IF THIS ISN'T THE FIRST COLOR AND WE DON'T HAVE A DIRECTION YET FOR THIS SEGMENT
             if len(colors) > 1 and len(directions) < len(colors) - 1:
@@ -391,7 +376,6 @@ def main() -> None:
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
     color_args = " ".join(ARGS.color_points.values).split()
 
-
     if len(color_args) < 2:
         raise ValueError("Please provide at least 2 colors in hex format (e.g. [br:cyan](F00 00F))")
 
@@ -411,12 +395,7 @@ def main() -> None:
 
     total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else Console.width * 2
 
-    gradient = generate_multi_gradient(
-        colors=colors,
-        directions=directions,
-        steps=total_steps,
-        mode=mode,
-    )
+    gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],

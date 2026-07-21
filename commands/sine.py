@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# ruff: noqa: RUF001
+# [x-cmds]: UPDATE
+
 """Show a sine wave animation inside the terminal."""
-from typing import Optional
-from xulbux import FormatCodes, Console
+
 import math
 import time
+from xulbux import Console, FormatCodes
+
+ARGS = Console.get_args({"speed": {"-s", "--speed"}, "y_stretch": {"-y", "--y-stretch"}, "help": {"-h", "--help"}})
 
 
-ARGS = Console.get_args({
-    "speed": {"-s", "--speed"},
-    "y_stretch": {"-y", "--y-stretch"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """\
 [b|in|bg:black]( Sine — Show a sine wave animation inside the terminal )
 
@@ -39,13 +36,10 @@ def print_help():
 def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:
     t = 0
     half_w = width // 2
-    prev_x: Optional[int] = None
+    prev_x: int | None = None
 
     def wave_x(step: float) -> int:
-        return max(0, min(
-            width - 1,
-            int(half_w * math.sin(math.radians(step * speed[0])) + half_w),
-        ))
+        return max(0, min(width - 1, int(half_w * math.sin(math.radians(step * speed[0])) + half_w)))
 
     while True:
         x1 = wave_x(t)  # UPPER HALF OF THIS TERMINAL ROW

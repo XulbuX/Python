@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """Execute a command and automatically copy the full output
 including metadata to the clipboard, after execution."""
-from pathlib import Path
-from typing import Optional, Any, IO, cast
-from xulbux import StyledText, Console, System, S
-import subprocess
+
+import contextlib
 import platform
-import shutil
 import shlex
-import time
+import shutil
+import subprocess
 import sys
+import time
+from pathlib import Path
+from typing import IO, Any, cast
+from xulbux import Console, S, StyledText, System
 
 try:
     import pyperclip
 except Exception as exc:
     fmt_error = "\n  ".join(str(exc).splitlines())
-    StyledText("", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), "").print()
+    StyledText(
+        "", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), ""
+    ).print()
     sys.exit(1)
 
 
 # fmt: off
-def print_help():
+def print_help() -> None:
     title = ["  Execute & Copy", " — Run a command and copy its output to clipboard  "]
     StyledText(
         "",
@@ -42,18 +47,18 @@ def print_help():
         "",
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-nc"), ", ", S.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
-        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),
-        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),
-        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),
+        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),  # noqa: E501
+        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),  # noqa: E501
         "",
         S.BOLD("Controls:"),
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),
+        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),  # noqa: E501
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),  # noqa: E501
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),  # noqa: E501
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),  # noqa: E501
         "",
     ).print()
 # fmt: on
@@ -61,13 +66,14 @@ def print_help():
 
 def parse_flags_and_command(args: list[str]) -> tuple[bool, bool, bool, bool, list[str]]:
     """Parse `xc` flags at the start, then extract the command."""
+
     show_help, exclude_cmd, exclude_meta, keep_ansi = False, False, False, False
 
     i = 0
     while i < len(args):
         arg = args[i].lower().strip()
 
-        # CHECK FOR XC FLAGS
+        # Check for XC flags:
         if arg in {"-h", "--help"}:
             show_help = True
             i += 1
@@ -85,45 +91,43 @@ def parse_flags_and_command(args: list[str]) -> tuple[bool, bool, bool, bool, li
             keep_ansi = True
             i += 1
         else:
-            # NOT AN XC FLAG, THIS IS THE START OF THE COMMAND
+            # Not an XC flag; this is the start of the command.
             break
 
     return show_help, exclude_cmd, exclude_meta, keep_ansi, args[i:]
 
 
-def terminate_process(process: Optional[subprocess.Popen[str]]) -> None:
+def terminate_process(process: subprocess.Popen[str] | None) -> None:
     """Safely terminate a `subprocess.Popen` process."""
+
     if process is None:
         return
+
     try:
         process.terminate()
         process.wait(timeout=2)
-    except:
-        try:
+    except Exception:
+        with contextlib.suppress(BaseException):
             process.kill()
-        except:
-            pass
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     ################################### PARSE ARGS & INIT ###################################
     show_help, exclude_cmd, exclude_meta, keep_ansi, command_args = parse_flags_and_command(
-        sys.argv[1:]  # [no_command: {-nc, --no-command}, no_meta: {-nm, --no-meta}, only: {-o, --only}, help: {-h, --help}, command: after]
+        # [no_command: {-nc, --no-command}, no_meta: {-nm, --no-meta}, only: {-o, --only}, help: {-h, --help}, command: after]
+        sys.argv[1:]
     )
 
     if show_help or not command_args:
         print_help()
         sys.exit(0)
 
-    # PROPERLY CONSTRUCT COMMAND STRING FOR THE SHELL
+    # Properly construct command string for the shell:
     if platform.system() == "Windows":
-        # ON WINDOWS, USE POWERSHELL-STYLE COMMAND WITH -Command FLAG
+        # On Windows, use PowerShell-style command with `-command` flag:
         escaped_args: list[str] = []
         for arg in command_args:
-            if " " in arg or '"' in arg or "'" in arg:
-                escaped_arg = "'" + arg.replace("'", "''") + "'"
-            else:
-                escaped_arg = arg
+            escaped_arg = "'" + arg.replace("'", "''") + "'" if " " in arg or '"' in arg or "'" in arg else arg
             escaped_args.append(escaped_arg)
         command_for_shell = " ".join(escaped_args)
         command_str_display = subprocess.list2cmdline(command_args)
@@ -133,7 +137,7 @@ def main() -> None:
 
     StyledText("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "").print()
 
-    process: Optional[subprocess.Popen[str]] = None
+    process: subprocess.Popen[str] | None = None
     captured_output: list[str] = []
     add_nl_before_end = True
     start_time = time.time()
@@ -141,15 +145,15 @@ def main() -> None:
 
     #################################### RUN THE COMMAND ####################################
     try:
-        # bufsize=1 AND text=True ENABLES LINE-BY-LINE TEXT STREAMING
+        # `bufsize=1` and `text=True` enables line-by-line text streaming:
         general_popen_kwargs: dict[str, Any] = {
-            "stdin": None,  # KEEP STDIN CONNECTED TO TERMINAL FOR INTERACTIVE COMMANDS
-            "stdout": subprocess.PIPE,  # ALLOWS US TO READ IT
-            "stderr": subprocess.STDOUT,  # MERGES ERRORS INTO THE MAIN OUTPUT STREAM (CHRONOLOGICAL ORDER)
-            "shell": True,  # USE SHELL TO INTERPRET FOR ACCESS TO ALIASES, PATH, …
-            "text": True,
             "bufsize": 1,
-            "errors": "replace",  # REPLACE INVALID CHARS INSTEAD OF FAILING
+            "errors": "replace",  # Replace invalid chars instead of failing.
+            "shell": True,  # Use shell to interpret for access to aliases, path, ….
+            "stderr": subprocess.STDOUT,  # Merges errors into the main output stream (chronological order).
+            "stdin": None,  # Keep STDIN connected to terminal for interactive commands.
+            "stdout": subprocess.PIPE,  # Allows us to read it.
+            "text": True,
         }
 
         if platform.system() == "Windows":
@@ -158,49 +162,43 @@ def main() -> None:
                     "pwsh.exe" if shutil.which("pwsh") else "powershell.exe",
                     "-NoProfile",
                     "-Command",
-                    f"$env:PYTHONIOENCODING='utf-8'; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; {command_for_shell}",
+                    "$env:PYTHONIOENCODING='utf-8'; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
+                    + command_for_shell,
                 ],
                 encoding="utf-8",
                 **general_popen_kwargs,
             )
         else:
-            process = subprocess.Popen(
-                command_for_shell,
-                encoding=sys.stdout.encoding or "utf-8",
-                **general_popen_kwargs,
-            )
+            process = subprocess.Popen(command_for_shell, encoding=sys.stdout.encoding or "utf-8", **general_popen_kwargs)
 
-        # STREAM OUTPUT TO CONSOLE + CAPTURE IT
+        # Stream output to console & capture it:
         while True:
-            if (
-                not (line := cast(IO[str], process.stdout).readline()) \
-                and process.poll() is not None
-            ):
+            if not (line := cast("IO[str]", process.stdout).readline()) and process.poll() is not None:
                 break
             if line:
                 sys.stdout.write(line)
                 captured_output.append(line)
 
-        # WAIT FOR PROCESS TO FULLY CLOSE TO GET RETURN CODE
+        # Wait for process to fully close to get return code:
         exit_code = process.wait()
 
     except KeyboardInterrupt:
         StyledText("", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl(⌘)+C)"))).print()
         add_nl_before_end = False
-        exit_code = 130  # SIGINT
+        exit_code = 130  # SIGINT.
 
     except FileNotFoundError:
         error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "")
         captured_output.append(error_msg.raw)
         error_msg.print()
-        exit_code = 127  # COMMAND NOT FOUND
+        exit_code = 127  # Command not found.
 
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
         error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "")
         captured_output.append(error_msg.raw)
         error_msg.print()
-        exit_code = 1  # GENERAL ERROR
+        exit_code = 1  # General error.
 
     finally:
         terminate_process(process)
@@ -213,9 +211,8 @@ def main() -> None:
 
     if not exclude_cmd:
         clipboard_parts.append(
-            ("Administrator" if System.is_elevated else Console.user) +
-            f" on {platform.node()} ({platform.system()})"
-            f" at {"~" if (cwd := Path.cwd()).expanduser() == Path.home() else cwd}\n"
+            ("Administrator" if System.is_elevated else Console.user) + f" on {platform.node()} ({platform.system()})"
+            f" at {'~' if (cwd := Path.cwd()).expanduser() == Path.home() else cwd}\n"
             f"$ {command_str_display}\n\n"
         )
 
@@ -224,10 +221,7 @@ def main() -> None:
 
     if not exclude_meta:
         clipboard_parts.append(
-            f"\n{'─' * Console.width}\n"
-            f"[{time.ctime(start_time)}]\n"
-            f"Took : {duration_str}\n"
-            f"Exit : {exit_code}\n"
+            f"\n{'─' * Console.width}\n[{time.ctime(start_time)}]\nTook : {duration_str}\nExit : {exit_code}\n"
         )
 
     clipboard_content = "".join(clipboard_parts)
@@ -243,6 +237,7 @@ def main() -> None:
     lines_count = len(captured_output)
     status_f = S.BR.GREEN if exit_code == 0 else S.BR.RED
 
+    # fmt: off
     StyledText((
         ("\n" if add_nl_before_end else ""),
         status_f("━━━ Output copied to clipboard ━━━ "),
@@ -251,8 +246,9 @@ def main() -> None:
             S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
         )
     ), "").print()
+    # fmt: on
 
-    # EXIT WITH THE SAME CODE AS THE COMMAND
+    # Exit with the same code as the command:
     sys.exit(exit_code)
 
 

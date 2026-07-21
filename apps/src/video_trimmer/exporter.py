@@ -4,18 +4,16 @@ The exporter runs ffmpeg in a background thread and reports<br>
 progress via callbacks. The caller is responsible for marshalling<br>
 those callbacks back onto its UI thread (e.g. with `tk.after`).
 """
-from typing import Callable, Optional
+
+import contextlib
 import subprocess
 import threading
-
-# SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT
+from collections.abc import Callable
 from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
-
 from helpers import format_time
 
-
 ProgressCallback = Callable[[float], None]
-DoneCallback = Callable[[bool, Optional[str]], None]
+DoneCallback = Callable[[bool, str | None], None]
 
 
 class TrimExporter:
@@ -26,26 +24,24 @@ class TrimExporter:
     Re-encoding is required for frame accuracy; the source video bitrate<br>
     is probed and matched so output size is proportional to clip length."""
 
-    def __init__(self, ffmpeg_path: str, ffprobe_path: Optional[str] = None) -> None:
+    def __init__(self, ffmpeg_path: str, ffprobe_path: str | None = None) -> None:
         self.ffmpeg_path = ffmpeg_path
         self.ffprobe_path = ffprobe_path
-        self._proc: Optional[subprocess.Popen[str]] = None
+        self._proc: subprocess.Popen[str] | None = None
 
     def export(
         self,
         src: str,
         dst: str,
         start_s: float,
-        end_s: Optional[float],
-        clip_total: Optional[float],
+        end_s: float | None,
+        clip_total: float | None,
         on_progress: ProgressCallback,
         on_done: DoneCallback,
     ) -> threading.Thread:
         """Start a background trim. Returns the worker thread."""
         thread = threading.Thread(
-            target=self._worker,
-            args=(src, dst, start_s, end_s, clip_total, on_progress, on_done),
-            daemon=True,
+            target=self._worker, args=(src, dst, start_s, end_s, clip_total, on_progress, on_done), daemon=True
         )
         thread.start()
 
@@ -54,14 +50,12 @@ class TrimExporter:
     def cancel(self) -> None:
         """Kill the in-flight ffmpeg process if any."""
         if (proc := self._proc) is not None and proc.poll() is None:
-            try:
+            with contextlib.suppress(Exception):
                 proc.kill()
-            except Exception:
-                pass
 
     ######################################## INTERNAL ########################################
 
-    def _build_cmd(self, src: str, dst: str, start_s: float, end_s: Optional[float]) -> list[str]:
+    def _build_cmd(self, src: str, dst: str, start_s: float, end_s: float | None) -> list[str]:
         # INPUT SEEK TO ~2s BEFORE THE TARGET REDUCES DECODING COST FOR LONG INPUTS.
         # OUTPUT SEEK (-ss AFTER -i) IS FRAME-ACCURATE BECAUSE RE-ENCODING IS USED.
         prelude = max(0.0, start_s - 2.0)
@@ -83,11 +77,11 @@ class TrimExporter:
         video_flags = ["libx264", "-b:v", str(video_bitrate)] if video_bitrate else ["libx264", "-crf", "23"]
         video_flags += ["-preset", "medium"]
 
-        cmd += ["-map", "0", "-c:v"] + video_flags + ["-c:a", "copy", "-c:s", "copy", "-avoid_negative_ts", "make_zero", dst]
+        cmd += ["-map", "0", "-c:v", *video_flags, "-c:a", "copy", "-c:s", "copy", "-avoid_negative_ts", "make_zero", dst]
 
         return cmd
 
-    def _probe_video_bitrate(self, src: str) -> Optional[int]:
+    def _probe_video_bitrate(self, src: str) -> int | None:
         """Return the video stream bitrate in bits/s, or None if unavailable."""
         if not self.ffprobe_path:
             return None
@@ -96,8 +90,16 @@ class TrimExporter:
         try:
             res = subprocess.run(
                 [
-                    self.ffprobe_path, "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=bit_rate", "-of",
-                    "default=noprint_wrappers=1:nokey=1", src
+                    self.ffprobe_path,
+                    "-v",
+                    "error",
+                    "-select_streams",
+                    "v:0",
+                    "-show_entries",
+                    "stream=bit_rate",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    src,
                 ],
                 capture_output=True,
                 text=True,
@@ -115,8 +117,14 @@ class TrimExporter:
         try:
             res = subprocess.run(
                 [
-                    self.ffprobe_path, "-v", "error", "-show_entries", "format=bit_rate", "-of",
-                    "default=noprint_wrappers=1:nokey=1", src
+                    self.ffprobe_path,
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=bit_rate",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    src,
                 ],
                 capture_output=True,
                 text=True,
@@ -137,8 +145,8 @@ class TrimExporter:
         src: str,
         dst: str,
         start_s: float,
-        end_s: Optional[float],
-        clip_total: Optional[float],
+        end_s: float | None,
+        clip_total: float | None,
         on_progress: ProgressCallback,
         on_done: DoneCallback,
     ) -> None:

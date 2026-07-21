@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# [x-cmds]: UPDATE
+
 """List all library dependencies imported across Python files in the script directory.
 Filters out local project modules, showing only installable packages."""
-from pathlib import Path
-from typing import Optional
-from xulbux.console import Throbber
-from xulbux import FormatCodes, Console, FileSys, Data
+
+import re
 import subprocess
 import sys
-import re
+from pathlib import Path
+from xulbux import Console, Data, FileSys, FormatCodes
+from xulbux.console import Throbber
+
+ARGS = Console.get_args(
+    {
+        "directory": "before",
+        "external_only": {"-e", "--external"},
+        "recursive": {"-r", "--recursive"},
+        "list": {"-l", "--list"},
+        "as_json": {"-j", "--json"},
+        "install": {"-i", "--install"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
-ARGS = Console.get_args({
-    "directory": "before",
-    "external_only": {"-e", "--external"},
-    "recursive": {"-r", "--recursive"},
-    "list": {"-l", "--list"},
-    "as_json": {"-j", "--json"},
-    "install": {"-i", "--install"},
-    "help": {"-h", "--help"},
-})
-
-
-def print_help():
+def print_help() -> None:
     help_text = """\
 [b|in|bg:black]( Deps — List all library dependencies across scripts )
 
@@ -56,16 +58,16 @@ def extract_imports(file_path: Path) -> set[str]:
     import_pattern = re.compile(r"^\s*(?:from\s+(\S+)|import\s+(\S+))", re.MULTILINE)
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
             # REMOVE DOCSTRINGS AND COMMENTS BEFORE PROCESSING
             # TRIPLE-QUOTED STRINGS (DOCSTRINGS)
-            content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', '', content)
+            content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', "", content)
             # SINGLE/DOUBLE QUOTED STRINGS
-            content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', '', content)
+            content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', "", content)
             # COMMENTS (LINES STARTING WITH #)
-            content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
+            content = re.sub(r"#.*$", "", content, flags=re.MULTILINE)
 
             for match in import_pattern.finditer(content):
                 module = match.group(1) or match.group(2)
@@ -103,7 +105,7 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
 
     local_modules = get_local_module_names(directory)
 
-    def scan_directory(dir_path: Path, base_path: Optional[Path] = None):
+    def scan_directory(dir_path: Path, base_path: Path | None = None) -> None:
         """Scan a directory for Python files and extract imports."""
         if base_path is None:
             base_path = dir_path
@@ -117,7 +119,7 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
                             continue
                         if module not in module_usage:
                             module_usage[module] = []
-                        module_usage[module].append(str(full_path.relative_to(base_path).with_suffix('')))
+                        module_usage[module].append(str(full_path.relative_to(base_path).with_suffix("")))
                 elif recursive and full_path.is_dir():
                     scan_directory(full_path, base_path)
         except PermissionError:
@@ -127,10 +129,11 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
     return module_usage
 
 
-def show_and_install_modules(modules: dict[str, list[str]], external_only: bool, install: bool = False) -> None:
+def show_and_install_modules(modules: dict[str, list[str]], external_only: bool, install: bool = False) -> None:  # noqa: C901
     title_start = "INSTALLING" if install else "FOUND"
     output = (
-        f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( EXTERNAL MODULES ))\n" if external_only
+        f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( EXTERNAL MODULES ))\n"
+        if external_only
         else f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( MODULES ))\n"
     )
 
@@ -147,7 +150,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
 
             if usage_count <= 5:
                 if (rendered_line_len + len(file_paths := ", ".join(sorted(files)))) > console_w:
-                    line += f" {file_paths[:console_w - (rendered_line_len + 1)]}…"
+                    line += f" {file_paths[: console_w - (rendered_line_len + 1)]}…"
                 else:
                     line += f" {file_paths}"
             else:
@@ -155,7 +158,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
                 overflow_part = f", [dim](+{usage_count - 3} more)"
                 rendered_overflow_len = len(FormatCodes.remove(overflow_part))
                 if (rendered_line_len + len(file_paths) + rendered_overflow_len) > console_w:
-                    line += f" {file_paths[:console_w - (rendered_line_len + rendered_overflow_len + 1)]}…{overflow_part}"
+                    line += f" {file_paths[: console_w - (rendered_line_len + rendered_overflow_len + 1)]}…{overflow_part}"
                 else:
                     line += f" {file_paths}{overflow_part}"
 
@@ -186,24 +189,38 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
                     [sys.executable, "-m", "pip", "install", "--upgrade", module],
                     capture_output=True,
                     text=True,
-                    timeout=300  # 5 MINUTE TIMEOUT PER MODULE
+                    timeout=300,  # 5 MINUTE TIMEOUT PER MODULE
                 )
 
                 if result.returncode == 0:
                     FormatCodes.print(f"[br:green](✓ Installed [b]({module}))")
                 else:
-                    FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in result.stderr.splitlines()) + "[_]")
+                    FormatCodes.print(
+                        f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]"
+                        + "\n[_dim|red]│ [dim|br:red]".join(
+                            re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in result.stderr.splitlines()
+                        )
+                        + "[_]"
+                    )
                     failed_modules.append(module)
             except subprocess.TimeoutExpired:
                 FormatCodes.print(f"[br:red](✗ Timed out installing [b]({module}))")
                 failed_modules.append(module)
             except Exception as exc:
-                FormatCodes.print(f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]" + "\n[_dim|red]│ [dim|br:red]".join(re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in str(exc).splitlines()) + "[_]")
+                FormatCodes.print(
+                    f"[br:red](✗ Failed to install [b]({module}):)\n[_dim|red]│ [dim|br:red]"
+                    + "\n[_dim|red]│ [dim|br:red]".join(
+                        re.sub(r"(?i)^(?:error:\s*|\[error\]\s*)?(.*)", r"\1", line) for line in str(exc).splitlines()
+                    )
+                    + "[_]"
+                )
                 failed_modules.append(module)
 
     print()
     if failed_modules:
-        FormatCodes.print(f"[b|yellow](⚠ Failed to install {len(failed_modules)} module{'' if len(failed_modules) == 1 else 's'}:)")
+        FormatCodes.print(
+            f"[b|yellow](⚠ Failed to install {len(failed_modules)} module{'' if len(failed_modules) == 1 else 's'}:)"
+        )
         for module in failed_modules:
             FormatCodes.print(f"[br:yellow]([dim](•) {module})")
         print()
@@ -222,11 +239,7 @@ def main() -> None:
     directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else FileSys.script_dir
 
     with Throbber().context():
-        modules = get_all_modules(
-            directory=directory,
-            recursive=ARGS.recursive.exists,
-            external_only=external_only,
-        )
+        modules = get_all_modules(directory=directory, recursive=ARGS.recursive.exists, external_only=external_only)
 
     if not modules:
         if external_only:
@@ -240,12 +253,7 @@ def main() -> None:
             json_data = sorted(modules.keys())
         else:
             json_data = {module: sorted(files) for module, files in sorted(modules.items())}
-        FormatCodes.print(f"\n{Data.render(
-            json_data,
-            indent=2,
-            as_json=True,
-            syntax_highlighting=True,
-        )}\n")
+        FormatCodes.print(f"\n{Data.render(json_data, indent=2, as_json=True, syntax_highlighting=True)}\n")
 
     else:
         show_and_install_modules(modules, external_only, ARGS.install.exists)

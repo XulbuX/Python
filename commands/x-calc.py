@@ -1,43 +1,48 @@
 #!/usr/bin/env python3
-#[x-cmds]: UPDATE
+# ruff: noqa: C901,RUF001
+# [x-cmds]: UPDATE
+
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
 There's no number size limit — the only limit is your system's memory."""
-from typing import Callable, Optional, Any
-from xulbux import FormatCodes, Console
-from xulbux.regex import LazyRegex
-import sympy
-import numpy
-import sys
-import re
 
+import re
+import sys
+from collections.abc import Callable, Generator
+from typing import Any, ClassVar
+import numpy
+import sympy
+from xulbux import Console, FormatCodes
+from xulbux.regex import LazyRegex
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args({
-    "calculation": "before",
-    "ans": {"-a", "--ans"},
-    "precision": {"-p", "--precision"},
-    "format": {"-f", "--format"},
-    "debug": {"-d", "--debug"},
-    "help": {"-h", "--help"},
-})
+ARGS = Console.get_args(
+    {
+        "calculation": "before",
+        "ans": {"-a", "--ans"},
+        "precision": {"-p", "--precision"},
+        "format": {"-f", "--format"},
+        "debug": {"-d", "--debug"},
+        "help": {"-h", "--help"},
+    }
+)
 DEBUG = ARGS.debug.exists
 REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
+
 
 def sanitize(expression: Any, /) -> sympy.Expr:
     return sympy.sympify(expression)  # type: ignore[return-type]
 
+
 def clean_num(token: str, /) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
-    if (no_seps_num := REGEX.thousands_seps.sub("", token)
-        ).replace(".", "").replace("-", "").isdigit():
+    if (no_seps_num := REGEX.thousands_seps.sub("", token)).replace(".", "").replace("-", "").isdigit():
         return no_seps_num
     return token
 
 
 class OPERATORS:
-
     # ARITHMETIC OPERATORS
     MINUS = ("o:minus", ["-", "−"])
     PLUS = ("o:plus", ["+", "＋"])
@@ -62,12 +67,28 @@ class OPERATORS:
     GREATER_THAN_EQUAL = ("o:greater_equal_than", ["ge", ">=", "≥", "⩾"])
 
     ALL = (
-        MINUS, PLUS, MULTIPLY, DIVIDE, FLOOR_DIVIDE, MODULO, POWER, AND, OR, NOT, XOR, FACTORIAL, EQUALS, NOT_EQUALS,
-        LESS_THAN, LESS_THAN_EQUAL, GREATER_THAN, GREATER_THAN_EQUAL
+        MINUS,
+        PLUS,
+        MULTIPLY,
+        DIVIDE,
+        FLOOR_DIVIDE,
+        MODULO,
+        POWER,
+        AND,
+        OR,
+        NOT,
+        XOR,
+        FACTORIAL,
+        EQUALS,
+        NOT_EQUALS,
+        LESS_THAN,
+        LESS_THAN_EQUAL,
+        GREATER_THAN,
+        GREATER_THAN_EQUAL,
     )
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-    PRECEDENCE: dict[str | tuple[str, ...], int] = {
+    PRECEDENCE: ClassVar[dict[str | tuple[str, ...], int]] = {
         # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
         FACTORIAL[0]: 5,
         POWER[0]: 4,
@@ -80,7 +101,7 @@ class OPERATORS:
         XOR[0]: -3,
     }
 
-    IMPLEMENT: dict[str, Callable[[Any, Any], Any]] = {
+    IMPLEMENT: ClassVar[dict[str, Callable[[Any, Any], Any]]] = {
         # ARITHMETIC OPERATORS
         MINUS[0]: lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
         PLUS[0]: lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
@@ -106,7 +127,7 @@ class OPERATORS:
     }
 
     @classmethod
-    def get(cls, operator_id: str, /):
+    def get(cls, operator_id: str, /) -> Callable[[Any, Any], Any] | None:
         """Get the operator function by operator ID."""
         return cls.IMPLEMENT.get(operator_id)
 
@@ -115,7 +136,8 @@ class OPERATORS:
         """Get the operator ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for op_id, symbols in cls.ALL:
-            if token_lower in symbols: return op_id
+            if token_lower in symbols:
+                return op_id
         return None
 
     @classmethod
@@ -128,14 +150,15 @@ class OPERATORS:
         """Get the operator precedence by operator ID."""
         for keys, val in cls.PRECEDENCE.items():
             if isinstance(keys, tuple):
-                if operator_id in keys: return val
+                if operator_id in keys:
+                    return val
             else:
-                if operator_id == keys: return val
+                if operator_id == keys:
+                    return val
         return 5  # DEFAULT
 
 
 class CONSTANTS:
-
     # MATHEMATICAL CONSTANTS
     ANS = ("c:ans", ["ans", "answer"])
     E = ("c:e", ["e", "euler"])
@@ -147,7 +170,7 @@ class CONSTANTS:
     ALL = (ANS, E, INF, PI, TAU, PHI)
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-    IMPLEMENT: dict[str, object] = {
+    IMPLEMENT: ClassVar[dict[str, object]] = {
         ANS[0]: (ARGS.ans.values or [None])[0],
         E[0]: sympy.E,
         INF[0]: sympy.oo,
@@ -157,7 +180,7 @@ class CONSTANTS:
     }
 
     @classmethod
-    def get(cls, constant_id: str, /):
+    def get(cls, constant_id: str, /) -> object | None:
         """Get the constant function by constant ID."""
         return cls.IMPLEMENT.get(constant_id)
 
@@ -166,7 +189,8 @@ class CONSTANTS:
         """Get the constant ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for const_id, symbols in cls.ALL:
-            if token_lower in symbols: return const_id
+            if token_lower in symbols:
+                return const_id
         return None
 
     @classmethod
@@ -176,7 +200,6 @@ class CONSTANTS:
 
 
 class FUNCTIONS:
-
     # PROGRAMMING FUNCTIONS
     ABS = ("f:abs", ["abs", "absolute", "magnitude"])
     FLOOR = ("f:floor", ["floor"])
@@ -220,13 +243,44 @@ class FUNCTIONS:
     MAX = ("f:max", ["max", "maximum"])
 
     ALL = (
-        ABS, FLOOR, CEIL, ROUND, SIGN, LN, LOG, LOGB, LOG2, LOG10, EXP, RAD, DEG,
-        SIN, ASIN, COS, ACOS, TAN, ATAN, SINH, COSH, TANH, ASINH, ACOSH, ATANH,
-        COT, SEC, CSC, FAC, SQRT, CBRT, POW, MIN, MAX
+        ABS,
+        FLOOR,
+        CEIL,
+        ROUND,
+        SIGN,
+        LN,
+        LOG,
+        LOGB,
+        LOG2,
+        LOG10,
+        EXP,
+        RAD,
+        DEG,
+        SIN,
+        ASIN,
+        COS,
+        ACOS,
+        TAN,
+        ATAN,
+        SINH,
+        COSH,
+        TANH,
+        ASINH,
+        ACOSH,
+        ATANH,
+        COT,
+        SEC,
+        CSC,
+        FAC,
+        SQRT,
+        CBRT,
+        POW,
+        MIN,
+        MAX,
     )
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
-    IMPLEMENT: dict[str, Callable[[Any], Any]] = {
+    IMPLEMENT: ClassVar[dict[str, Callable[[Any], Any]]] = {
         # PROGRAMMING FUNCTIONS
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
@@ -271,7 +325,7 @@ class FUNCTIONS:
     }
 
     @classmethod
-    def get(cls, func_id: str, /):
+    def get(cls, func_id: str, /) -> Callable[[Any], Any] | None:
         """Get the function lambda by function ID."""
         return cls.IMPLEMENT.get(func_id)
 
@@ -280,7 +334,8 @@ class FUNCTIONS:
         """Get the function ID for a token by searching through the token lists."""
         token_lower = token.lower()
         for func_id, symbols in cls.ALL:
-            if token_lower in symbols: return func_id
+            if token_lower in symbols:
+                return func_id
         return None
 
     @classmethod
@@ -291,16 +346,25 @@ class FUNCTIONS:
 
 PATTERN = re.compile(
     "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
-    + r"|[a-z]+|" + "|".join(map(re.escape, OPERATORS.MINUS[1])) + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|" + "|".join(map(re.escape, OPERATORS.MINUS[1]))
-    + r"\d+(?:[_']\d+)*|" + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|\d+(?:[_']\d+)*|" + r"\(|\)|,",
-    re.IGNORECASE
+    + r"|[a-z]+|"
+    + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|"
+    + "|".join(map(re.escape, OPERATORS.MINUS[1]))
+    + r"\d+(?:[_']\d+)*|"
+    + r"\d+(?:[_']\d+)*\.\d+(?:[_']\d+)*|\d+(?:[_']\d+)*|"
+    + r"\(|\)|,",
+    re.IGNORECASE,
 )
 
 
-def print_help():
-    o_list = "\n".join(f"[i|dim]({o_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for o_id, symbols in OPERATORS.ALL)
-    c_list = "\n".join(f"[i|dim]({c_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL))
-    f_list = "\n".join(f"[i|dim]({f_id.split(":")[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL))
+def print_help() -> None:
+    o_list = "\n".join(f"[i|dim]({o_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for o_id, symbols in OPERATORS.ALL)
+    c_list = "\n".join(
+        f"[i|dim]({c_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL)
+    )
+    f_list = "\n".join(
+        f"[i|dim]({f_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL)
+    )
     help_text = f"""\
 [b|in|bg:black]( Advanced Calculator — Perform complex calculations directly from the command line )
 
@@ -311,14 +375,17 @@ def print_help():
 
 [b](Options:)
   [br:blue](-a), [br:blue](--ans[dim](=)VALUE)      Value to use for 'ans' constant
-  [br:blue](-p), [br:blue](--precision[dim](=)N)    Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
+  [br:blue](-p), [br:blue](--precision[dim](=)N)    \
+Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
   [br:blue](-f), [br:blue](--format)         Format the output with thousands separators
   [br:blue](-d), [br:blue](--debug)          Show debug information during calculation
 
 [b](Examples:)
   [br:green](x-calc) [br:cyan]("2 + 2 * 2")                                [dim](# [i](Simple arithmetic))
-  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans[dim](=)6)                          [dim](# [i](Using the 'ans' constant))
-  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p[dim](=)1000)    [dim](# [i](High precision with functions and constants))   
+  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans[dim](=)6)                          \
+[dim](# [i](Using the 'ans' constant))
+  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p[dim](=)1000)    \
+[dim](# [i](High precision with functions and constants))
 
 [b](Possible operators:)
 {o_list}
@@ -336,13 +403,7 @@ def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
     FormatCodes.print(f"\033[2K\r{sep.join(str(val) for val in values)}", end=end)
 
 
-def print_line(
-    title: Optional[str] = None,
-    /, *,
-    char: str = "═",
-    width: int = Console.width,
-    end: str = "\n"
-) -> None:
+def print_line(title: str | None = None, /, *, char: str = "═", width: int = Console.width, end: str = "\n") -> None:
     if not title:
         FormatCodes.print(f"[dim]{char * width}[_dim]", end=end)
         return
@@ -351,9 +412,9 @@ def print_line(
     final = FormatCodes.to_ansi(f"[dim]{line}[_dim] [b]{title}[_b] [dim]{line}")
     final_len = len(FormatCodes.remove_ansi(final))
 
-    if not final_len == width:
+    if final_len != width:
         if final_len > width:
-            final = final[:width + (len(final) - final_len)]
+            final = final[: width + (len(final) - final_len)]
         if final_len < width:
             final = final + (width - final_len) * char
 
@@ -366,31 +427,27 @@ def clear_lines(num_lines: int = 1) -> None:
 
 
 class Calc:
-
-    def __init__(
-        self, /, *,
-        calc_str: str,
-        last_ans: Optional[str] = None,
-        precision: int = 110,
-        max_num_len: int = 100
-    ):
+    def __init__(self, /, *, calc_str: str, last_ans: str | None = None, precision: int = 110, max_num_len: int = 100) -> None:
         self.calc_str = calc_str
         self.last_ans = last_ans
         self.precision = precision
         self.max_num_len = max_num_len
-        self.inf_precision = (precision == -1)
+        self.inf_precision = precision == -1
 
     def __str__(self) -> str:
         return self.calc_str
 
     def __repr__(self) -> str:
-        return f"Calc(calc_str={self.calc_str!r}, last_ans={self.last_ans!r}, precision={self.precision}, max_num_len={self.max_num_len})"
+        return (
+            f"Calc(calc_str={self.calc_str!r}, last_ans={self.last_ans!r}, "
+            f"precision={self.precision}, max_num_len={self.max_num_len})"
+        )
 
     def eval(self) -> str:
         if DEBUG:
             clear_lines()
             print()
-            print_line(f"NEW CALCULATION")
+            print_line("NEW CALCULATION")
             FormatCodes.print(f"[dim](raw calculation string:)\n[b|dim](>>>) {self.calc_str}")
         else:
             print_overwrite("[dim|white](calculating...)", end="")
@@ -425,15 +482,14 @@ class Calc:
         # CHECK IF RESULT IS AN EXACT INTEGER TO AVOID FLOAT PRECISION ERRORS
         is_exact_integer = False
         try:
-            if hasattr(result, 'is_integer') and getattr(result, 'is_integer', False):
+            if (
+                (hasattr(result, "is_integer") and getattr(result, "is_integer", False))
+                or isinstance(result, sympy.Integer)
+                or (hasattr(result, "is_Integer") and getattr(result, "is_Integer", False))
+                or isinstance(result, int)
+            ):
                 is_exact_integer = True
-            elif isinstance(result, sympy.Integer):
-                is_exact_integer = True
-            elif hasattr(result, 'is_Integer') and getattr(result, 'is_Integer', False):
-                is_exact_integer = True
-            elif isinstance(result, int):
-                is_exact_integer = True
-        except:
+        except Exception:
             pass
 
         if is_exact_integer:
@@ -443,7 +499,7 @@ class Calc:
         else:
             try:
                 result_str = "{:.{}f}".format(result, self.precision)
-                result_str = (result_str.rstrip("0").rstrip(".") if "." in result_str else result_str)
+                result_str = result_str.rstrip("0").rstrip(".") if "." in result_str else result_str
             except OverflowError:
                 result_str = str(result)
             if DEBUG:
@@ -505,10 +561,10 @@ class Calc:
         if not self.inf_precision and len(num_str) > self.max_num_len and "." in num_str:
             num_str = num_str[:-10]
             int_part, decimal_part = num_str.split(".")
-            short_decimal_part = decimal_part[:self.max_num_len]
+            short_decimal_part = decimal_part[: self.max_num_len]
 
             if DEBUG:
-                print_line(f"TRUNCATING REPEATING DECIMAL")
+                print_line("TRUNCATING REPEATING DECIMAL")
                 FormatCodes.print(f"[dim](input string:) {num_str}")
                 FormatCodes.print(f"[dim](decimal part:) {short_decimal_part}")
 
@@ -522,7 +578,7 @@ class Calc:
         # FORMAT LONG NUMBERS TO EXPONENTS (skip for infinite precision)
         elif not self.inf_precision and len(num_str) > self.max_num_len:
             if DEBUG:
-                print_line(f"FORMATTING LONG NUMBERS TO EXPONENTS")
+                print_line("FORMATTING LONG NUMBERS TO EXPONENTS")
                 FormatCodes.print(f"[dim](input string:) {num_str}")
             num_str = self._format_exponents(num_str)
             if DEBUG:
@@ -537,13 +593,10 @@ class Calc:
             if len(str(number_sequence := match.group(1))) <= self.max_num_len:
                 return number_sequence
 
-            base = number_sequence[:self.max_num_len]
+            base = number_sequence[: self.max_num_len]
             exponent_value = len(number_sequence) - self.max_num_len
 
-            if exponent_value >= 0:
-                sign = "+"
-            else:
-                sign = "-"
+            sign = "+" if exponent_value >= 0 else "-"
 
             return base + "e" + sign + str(abs(exponent_value))
 
@@ -554,16 +607,16 @@ class Calc:
             return False
 
         repts.reverse()
-        loops = (len(repts) if max_check_loops < 0 or len(repts) < max_check_loops else max_check_loops)
+        loops = len(repts) if max_check_loops < 0 or len(repts) < max_check_loops else max_check_loops
 
         for loop in range(loops):
             rept = repts[loop]
 
-            if not string[-((len(rept)) * 2):] == rept * 2:
+            if string[-(len(rept) * 2) :] != rept * 2:
                 found = i = 0
 
                 for i in range(len(string), 1, -1):
-                    if string[i - len(rept):i] == rept:
+                    if string[i - len(rept) : i] == rept:
                         if found > 0:
                             break
                         else:
@@ -596,7 +649,7 @@ class Calc:
         return False
 
     @staticmethod
-    def _get_rept(string: str, /):
+    def _get_rept(string: str, /) -> Generator[str, None, None]:
         for match in re.finditer(r"(.+?)\1+", string):
             yield match.group(1)
 
@@ -605,9 +658,7 @@ class Calc:
         result: list[str] = []
 
         for token in tokens:
-
             if isinstance(token, str):
-
                 if token.startswith("o:"):
                     for op_id, symbols in OPERATORS.ALL:
                         if op_id == token:
@@ -649,7 +700,8 @@ class Calc:
             match = preliminary_matches[i]
 
             # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
-            if (match in OPERATORS.MINUS[1]
+            if (
+                match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
                 and REGEX.thousands_seps.sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
             ):
@@ -660,10 +712,7 @@ class Calc:
                 else:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS AN OPERATOR OR OPEN PARENTHESIS, TREAT AS NEGATIVE NUMBER
-                    if (OPERATORS.is_operator(prev_match)
-                        or prev_match == "("
-                        or FUNCTIONS.is_function(prev_match)
-                    ):
+                    if OPERATORS.is_operator(prev_match) or prev_match == "(" or FUNCTIONS.is_function(prev_match):
                         should_be_negative = True
 
                 if should_be_negative:
@@ -682,7 +731,8 @@ class Calc:
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
-                    if (REGEX.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
+                    if (
+                        REGEX.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
                         or prev_match == ")"
                         or CONSTANTS.is_constant(prev_match)
                     ):
@@ -729,31 +779,29 @@ class Calc:
 
             # FIND THE INNERMOST PARENTHESES
             for i, char in enumerate(calc_str):
-
                 if char == "(":
                     paren_stack.append(i)
 
-                elif char == ")":
-                    if paren_stack:
-                        start_idx = paren_stack.pop()
-                        end_idx = i
+                elif char == ")" and paren_stack:
+                    start_idx = paren_stack.pop()
+                    end_idx = i
 
-                        # CHECK IF THIS IS A FUNCTION CALL BY LOOKING AT WHAT'S BEFORE THE OPENING PARENTHESIS
-                        if start_idx > 0:
-                            token_start = start_idx - 1
-                            while token_start > 0 and calc_str[token_start - 1].isalnum():
-                                token_start -= 1
-                            token_before = calc_str[token_start:start_idx]
+                    # CHECK IF THIS IS A FUNCTION CALL BY LOOKING AT WHAT'S BEFORE THE OPENING PARENTHESIS
+                    if start_idx > 0:
+                        token_start = start_idx - 1
+                        while token_start > 0 and calc_str[token_start - 1].isalnum():
+                            token_start -= 1
+                        token_before = calc_str[token_start:start_idx]
 
-                            # IF IT'S A FUNCTION, DON'T PROCESS THESE PARENTHESES
-                            if FUNCTIONS.is_function(token_before):
-                                continue
+                        # IF IT'S A FUNCTION, DON'T PROCESS THESE PARENTHESES
+                        if FUNCTIONS.is_function(token_before):
+                            continue
 
-                        inner_expr = calc_str[start_idx + 1:end_idx]
-                        result = self._perform_eval(inner_expr)
-                        should_add_mult = (start_idx > 0 and calc_str[start_idx - 1].isdigit())
-                        calc_str = calc_str[:start_idx] + ("*" if should_add_mult else "") + result + calc_str[end_idx + 1:]
-                        break
+                    inner_expr = calc_str[start_idx + 1 : end_idx]
+                    result = self._perform_eval(inner_expr)
+                    should_add_mult = start_idx > 0 and calc_str[start_idx - 1].isdigit()
+                    calc_str = calc_str[:start_idx] + ("*" if should_add_mult else "") + result + calc_str[end_idx + 1 :]
+                    break
 
             else:
                 break
@@ -771,7 +819,7 @@ class Calc:
                 else:
                     try:
                         split_sympy.append(sanitize(token))
-                    except:
+                    except Exception:
                         split_sympy.append(token)
 
             return split_sympy
@@ -784,7 +832,7 @@ class Calc:
                 idx = split.index(c_id)
 
                 if DEBUG:
-                    print_line(f"CALCULATING CONSTANT")
+                    print_line("CALCULATING CONSTANT")
                     FormatCodes.print(f"[dim](constant ID:) {c_id}")
 
                 constant_value = CONSTANTS.get(c_id)
@@ -795,16 +843,16 @@ class Calc:
                     FormatCodes.print(f"[dim](value:) {constant_value}")
 
                 formatted_result = str(self.format_result(constant_value))
-                new_split = split[:idx] + [formatted_result] + split[idx + 1:]
-                split = new_split
-                split_sympy = sympify(split)
+                new_split: list[str | object] = [*split[:idx], formatted_result, *split[idx + 1 :]]
+                split: list[str | object] = new_split
+                split_sympy: list[str | object] = sympify(split)
 
         # ITERATE OVER FUNCTIONS AVAILABLE
         for f_id, _ in FUNCTIONS.ALL:
             while f_id in split:
                 idx = split.index(f_id)
 
-                if (idx + 1 < len(split) and split[idx + 1] == "("):
+                if idx + 1 < len(split) and split[idx + 1] == "(":
                     paren_count = 0
                     end_paren_idx = -1
 
@@ -819,10 +867,10 @@ class Calc:
 
                     if end_paren_idx == -1:
                         break
-                    arg_tokens = split[idx + 2:end_paren_idx]
+                    arg_tokens = split[idx + 2 : end_paren_idx]
 
                     if DEBUG:
-                        print_line(f"CALCULATING FUNCTION")
+                        print_line("CALCULATING FUNCTION")
                         FormatCodes.print(f"[dim](function ID:) {f_id}")
                         FormatCodes.print(f"[dim](arg_tokens:) {arg_tokens}")
 
@@ -838,7 +886,7 @@ class Calc:
                         if "," in arg_tokens:
                             comma_idx = arg_tokens.index(",")
                             arg1_tokens = arg_tokens[:comma_idx]
-                            arg2_tokens = arg_tokens[comma_idx + 1:]
+                            arg2_tokens = arg_tokens[comma_idx + 1 :]
 
                             if len(arg1_tokens) == 1:
                                 arg1_sympy_idx = idx + 2
@@ -859,7 +907,7 @@ class Calc:
                                 break
 
                             if DEBUG:
-                                FormatCodes.print(f"[dim](two-argument function)")
+                                FormatCodes.print("[dim](two-argument function)")
                                 FormatCodes.print(f"[dim](arg1:) {arg1_value}")
                                 FormatCodes.print(f"[dim](arg2:) {arg2_value}")
 
@@ -879,7 +927,7 @@ class Calc:
                     if DEBUG:
                         FormatCodes.print(f"[dim](result:) {result}")
                     formatted_result = self.format_result(result)  # type: ignore[arg-type]
-                    new_split = split[:idx] + [formatted_result] + split[end_paren_idx + 1:]
+                    new_split = [*split[:idx], formatted_result, *split[end_paren_idx + 1 :]]
                     split = new_split
                     split_sympy = sympify(split)
 
@@ -894,11 +942,9 @@ class Calc:
                 if isinstance(token, str) and token.startswith("o:"):
                     precedence = OPERATORS.get_precedence(token)
                     # GIVE PREFIX 'NOT' HIGHER PRECEDENCE THAN BINARY OPERATORS
-                    if (token == OPERATORS.NOT[0] and (
-                        i == 0
-                        or isinstance(s := split[i - 1], str) and s.startswith("o:")
-                        or s in ["("]
-                    )):
+                    if token == OPERATORS.NOT[0] and (
+                        i == 0 or (isinstance(s := split[i - 1], str) and s.startswith("o:")) or s in ["("]
+                    ):
                         precedence = 3  # HIGHER THAN BINARY ARITHMETIC OPERATORS
                     operator_positions.append((i, token, precedence))
 
@@ -910,7 +956,7 @@ class Calc:
             idx, operator_id, _ = highest_ops[-1]
 
             if DEBUG:
-                print_line(f"CALCULATING OPERATOR")
+                print_line("CALCULATING OPERATOR")
                 FormatCodes.print(f"[dim](operator ID:) {operator_id}")
 
             operator_func = OPERATORS.get(operator_id)
@@ -926,28 +972,25 @@ class Calc:
                     FormatCodes.print(f"[dim](argument:) {split_sympy[idx - 1]}")
                     FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((postfix factorial))")
                     FormatCodes.print(f"[dim](result:) {result}")
-                new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 1:]
+                new_split = [*split[: idx - 1], self.format_result(result), *split[idx + 1 :]]
 
             # UNARY MINUS
             elif operator_id == OPERATORS.MINUS[0] and (
-                idx == 0
-                or isinstance(s := split[idx - 1], str) and s.startswith("o:")
+                idx == 0 or (isinstance(s := split[idx - 1], str) and s.startswith("o:"))
             ):
                 if idx + 1 >= len(split):
                     break
                 result = operator_func(0, split_sympy[idx + 1])
                 if DEBUG:
-                    FormatCodes.print(f"[dim](argument:) 0")
+                    FormatCodes.print("[dim](argument:) 0")
                     FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((unary minus))")
                     FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
                     FormatCodes.print(f"[dim](result:) {result}")
-                new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
+                new_split = [*split[:idx], self.format_result(result), *split[idx + 2 :]]
 
             # PREFIX NOT OPERATOR
             elif operator_id == OPERATORS.NOT[0] and (
-                idx == 0
-                or isinstance(s := split[idx - 1], str) and s.startswith("o:")
-                or s in ["("]
+                idx == 0 or (isinstance(s := split[idx - 1], str) and s.startswith("o:")) or s in ["("]
             ):
                 if idx + 1 >= len(split):
                     break
@@ -956,7 +999,7 @@ class Calc:
                     FormatCodes.print(f"[dim](operator:) {operator_id} [dim]((prefix NOT))")
                     FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
                     FormatCodes.print(f"[dim](result:) {result}")
-                new_split = split[:idx] + [self.format_result(result)] + split[idx + 2:]
+                new_split = [*split[:idx], self.format_result(result), *split[idx + 2 :]]
 
             # BINARY OPERATOR
             else:
@@ -968,7 +1011,7 @@ class Calc:
                     FormatCodes.print(f"[dim](operator:) {operator_id}")
                     FormatCodes.print(f"[dim](argument:) {split_sympy[idx + 1]}")
                     FormatCodes.print(f"[dim](result:) {result}")
-                new_split = split[:idx - 1] + [self.format_result(result)] + split[idx + 2:]
+                new_split = [*split[: idx - 1], self.format_result(result), *split[idx + 2 :]]
 
             split = new_split
             split_sympy = sympify(split)
@@ -980,24 +1023,29 @@ class Calc:
             try:
                 result = sanitize(calc_str)
                 calc_str = self.format_result(result)
-            except:
-                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
+            except Exception as exc:
+                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})") from exc
 
         if calc_str == SAVE_CALC_STR:
             try:
                 sanitize(calc_str)
-            except:
-                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})")
+            except Exception as exc:
+                raise Exception(f"Could not perform calculation on [br:cyan]({SAVE_CALC_STR})") from exc
+
         return calc_str
 
 
-def main():
+def main() -> None:
     print()
 
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
         precision_value = int(v) if (v := ARGS.precision.get(0)) and v.lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
-            Console.fail(f"[b](ValueError:) Precision must be positive or [br:cyan](-1) for infinite precision, got [br:cyan]({precision_value})", end="\n\n")
+            Console.fail(
+                "[b](ValueError:) Precision must be positive or [br:cyan](-1) "
+                f"for infinite precision, got [br:cyan]({precision_value})",
+                end="\n\n",
+            )
             return
 
         if precision_value == -1:
@@ -1033,7 +1081,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print_overwrite("[b|br:red](✗)\n")
     except RecursionError:
-        Console.fail("[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))", start="\n\n", end="\n\n")
+        Console.fail(
+            "[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))",
+            start="\n\n",
+            end="\n\n",
+        )
     except MemoryError:
         Console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
     except OverflowError as exc:
