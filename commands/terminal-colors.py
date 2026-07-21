@@ -33,6 +33,7 @@ def print_help() -> None:
         "",
         ((S.BOLD)("Usage: "), (S.BR.GREEN)("terminal-colors")),
         "",
+        sep="\n",
     ).print()
 
 
@@ -42,7 +43,7 @@ def show_shell_colors() -> None:
 
     for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:
         for fmt in fgs:
-            output += StyledText((fmt("Aa"), " "))
+            output += StyledText(fmt("Aa"), " ")
         output += " "
         for fmt in bgs:
             output += StyledText(fmt(" Aa "))

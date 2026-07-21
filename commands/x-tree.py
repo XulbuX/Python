@@ -67,6 +67,7 @@ def print_help() -> None:
         ("  ", (S.ITALIC | S.DIM)("4"), "  Indentation size"),
         ("  ", (S.ITALIC | S.DIM)("5"), "  Output tree to file"),
         "",
+        sep="\n",
     ).print()
 # fmt: on
 
@@ -490,7 +491,8 @@ class Tree:
                     f"  {details['corners'][0]}{details['line_hor']}{details['ignored']}{details['dirname_end']}",
                 )
                 for style, details in self.style_presets.items()
-            )
+            ),
+            sep="\n",
         ).print()
 
     @staticmethod
@@ -986,7 +988,7 @@ def main() -> None:
             == "Y"
         )
 
-        StyledText((S.BOLD("Enter the tree style "), "(1-4)")).print()
+        StyledText(S.BOLD("Enter the tree style "), "(1-4)").print()
         tree.show_styles()
         style = Console.input(f"({style}) [b](>) ", max_len=1, allowed_chars="1234", default_val=style, output_type=int)
 
@@ -1034,7 +1036,7 @@ def main() -> None:
         else:
             Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
-        StyledText("", S.WHITE(result)).print()
+        StyledText("\n", S.WHITE(result)).print()
 
 
 if __name__ == "__main__":

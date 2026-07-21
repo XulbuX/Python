@@ -20,7 +20,7 @@ try:
 except Exception as exc:
     fmt_error = "\n  ".join(str(exc).splitlines())
     StyledText(
-        "", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), ""
+        "", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), "", sep="\n"
     ).print()
     sys.exit(1)
 
@@ -60,6 +60,7 @@ def print_help() -> None:
         ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),  # noqa: E501
         ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),  # noqa: E501
         "",
+        sep="\n",
     ).print()
 # fmt: on
 
@@ -135,7 +136,7 @@ def main() -> None:  # noqa: C901
         command_for_shell = shlex.join(command_args)
         command_str_display = command_for_shell
 
-    StyledText("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "").print()
+    StyledText("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "", sep="\n").print()
 
     process: subprocess.Popen[str] | None = None
     captured_output: list[str] = []
@@ -183,19 +184,19 @@ def main() -> None:  # noqa: C901
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        StyledText("", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl(⌘)+C)"))).print()
+        StyledText("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl(⌘)+C)"))).print()
         add_nl_before_end = False
         exit_code = 130  # SIGINT.
 
     except FileNotFoundError:
-        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "")
+        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "\n")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 127  # Command not found.
 
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "")
+        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "\n")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 1  # General error.
@@ -231,21 +232,22 @@ def main() -> None:  # noqa: C901
         pyperclip.copy(clipboard_content)
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        StyledText("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "").print()
+        StyledText("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "", sep="\n").print()
         sys.exit(1)
 
     lines_count = len(captured_output)
     status_f = S.BR.GREEN if exit_code == 0 else S.BR.RED
 
     # fmt: off
-    StyledText((
+    StyledText(
         ("\n" if add_nl_before_end else ""),
         status_f("━━━ Output copied to clipboard ━━━ "),
         S.DIM(
             S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''}, ",
             S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
-        )
-    ), "").print()
+        ),
+        "\n",
+    ).print()
     # fmt: on
 
     # Exit with the same code as the command:

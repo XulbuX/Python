@@ -32,6 +32,7 @@ def print_help() -> None:
         ("  ", S.BR.GREEN("vscode-ext"), "           ", S.DIM("# ", S.ITALIC("List all installed extensions"))),
         ("  ", S.BR.GREEN("vscode-ext "), S.BR.BLUE("--json"), "    ", S.DIM("# ", S.ITALIC("Output all extension as a JSON list"))),  # noqa: E501
         "",
+        sep="\n",
     ).print()
 # fmt: on
 
@@ -181,6 +182,7 @@ def main() -> None:
             else "\n".join(extensions)
         ),
         "",
+        sep="\n",
     ).print()
 
 
