@@ -77,7 +77,7 @@ PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
     update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*([\w]+(?:\s*,\s*[\w]+)*)\s*$",
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
-    sys_argv=r"(?m)sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
+    sys_argv=r"(?m)(?:#\s*(\[.+?\])\s*)?sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
     get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
     arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
@@ -234,8 +234,12 @@ def parse_args_comment(comment_str: str) -> ArgParseConfigs:
 def parse_file_args(content: str) -> ArgParseConfigs | None:
     """Parse arg configs from file content. Returns None if no args section is detected."""
 
-    sys_argv_comments = PATTERNS.sys_argv.findall(content)
-    get_args_funcs = [func_args[1] for func_args in PATTERNS.get_args.findall(content) if func_args[1]]
+    sys_argv_matches = cast("list[tuple[str, ...] | str]", PATTERNS.sys_argv.findall(content))
+    sys_argv_comments: list[str] = [
+        c for groups in sys_argv_matches for c in (groups if isinstance(groups, tuple) else (groups,)) if c
+    ]
+    get_args_matches = cast("list[tuple[str, ...]]", PATTERNS.get_args.findall(content))
+    get_args_funcs = [func_args[1] for func_args in get_args_matches if func_args[1]]
 
     if not get_args_funcs and not sys_argv_comments:
         return None
