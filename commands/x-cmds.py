@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Literal, TypedDict, cast
 import requests
-from xulbux import Console, FileSys, FormatCodes, String, System
+from xulbux import Console, FileSys, FormatCodes, S, String, StyledText, System
 from xulbux.base.types import ArgParseConfigs
 from xulbux.console import Throbber
 from xulbux.regex import LazyRegex
@@ -528,7 +528,7 @@ def download_files(github_diffs: GithubDiffs) -> None:
     if total_operations == 0:
         return
 
-    if not Console.confirm("\n[b](Execute these updates?)", end="\n", default_is_yes=True):
+    if not Console.confirm(StyledText(S.BOLD("\nExecute these updates?")), end="\n", default_is_yes=True):
         FormatCodes.print("[dim|magenta](✗ Not updating commands from GitHub)\n\n")
         return
 
