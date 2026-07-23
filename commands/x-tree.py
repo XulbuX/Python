@@ -15,7 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, NamedTuple, TypedDict
 import xulbux as xx
-from xulbux.ansi import AnyStyle, S, StyledText
+from xulbux.ansi import AnyStyle, S, StyledText, _StyleGroup
 from xulbux.base.consts import COLOR
 
 ARGS = xx.console.get_args(
@@ -28,19 +28,13 @@ ARGS = xx.console.get_args(
     }
 )
 
-DEFAULT: ScriptDefaults = {
-    "ignore_dirs": [],
-    "auto_ignore": True,
-    "include_file_contents": False,
-    "tree_style": 2,
-    "indent": 2,
-    "into_file": False,
-}
 
-COLORS: TreeColors = {
-    "line": S.BR.BLACK,
+COLORS: TreeColorConfig = {
+    "line": S.DIM | S.WHITE,
+    "line_dull": S.DIM | S.BR.BLACK,
     "error": S.RED,
-    "dir": S.BR.WHITE,
+    "dir": S.BOLD | S.BR.WHITE,
+    "dir_dull": S.BR.WHITE,
     "file": S.WHITE,
     "symlink": S.BR.BLUE,
     "executable": S.BR.GREEN,
@@ -49,7 +43,25 @@ COLORS: TreeColors = {
     "video": S.MAGENTA,
     "audio": S.BR.CYAN,
     "code": S.BR.YELLOW,
-    "content": S.BR.BLACK,
+    "content": S.DIM | S.WHITE,
+}
+
+CHARS: TreeCharConfig = {
+    "line_ver": "│",
+    "line_hor": "─",
+    "branch_new": "├",
+    "corners": ("╰", "╯", "╮"),
+    "error": "⚠",
+    "ignored": "…",
+    "dirname_end": "/",
+}
+
+DEFAULT: ScriptDefaults = {
+    "ignore_dirs": [],
+    "auto_ignore": True,
+    "include_file_contents": False,
+    "indent": 2,
+    "into_file": False,
 }
 
 # fmt: off
@@ -94,40 +106,32 @@ def print_help() -> None:
         (S.BOLD("Prompts: "), S.DIM("(interactive — press Enter for defaults, or use ", S.BR.BLUE("-d"), " to skip all)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
         ("  ", (S.ITALIC | S.DIM)("2"), "  Include file contents in tree"),
-        ("  ", (S.ITALIC | S.DIM)("3"), "  Tree style"),
-        ("  ", (S.ITALIC | S.DIM)("4"), "  Indentation size"),
-        ("  ", (S.ITALIC | S.DIM)("5"), "  Output tree to file"),
+                ("  ", (S.ITALIC | S.DIM)("3"), "  Indentation size"),
+        ("  ", (S.ITALIC | S.DIM)("4"), "  Output tree to file"),
         "",
         sep="\n",
     ).print()
 # fmt: on
 
 
-class TreeColors(TypedDict):
-    line: AnyStyle
-    error: AnyStyle
-    dir: AnyStyle
-    file: AnyStyle
-    symlink: AnyStyle
-    executable: AnyStyle
-    archive: AnyStyle
-    image: AnyStyle
-    video: AnyStyle
-    audio: AnyStyle
-    code: AnyStyle
-    content: AnyStyle
+class TreeColorConfig(TypedDict):
+    line: AnyStyle | _StyleGroup
+    line_dull: AnyStyle | _StyleGroup
+    error: AnyStyle | _StyleGroup
+    dir: AnyStyle | _StyleGroup
+    dir_dull: AnyStyle | _StyleGroup
+    file: AnyStyle | _StyleGroup
+    symlink: AnyStyle | _StyleGroup
+    executable: AnyStyle | _StyleGroup
+    archive: AnyStyle | _StyleGroup
+    image: AnyStyle | _StyleGroup
+    video: AnyStyle | _StyleGroup
+    audio: AnyStyle | _StyleGroup
+    code: AnyStyle | _StyleGroup
+    content: AnyStyle | _StyleGroup
 
 
-class ScriptDefaults(TypedDict):
-    ignore_dirs: list[str]
-    auto_ignore: bool
-    include_file_contents: bool
-    tree_style: int
-    indent: int
-    into_file: bool
-
-
-class TreeStylePreset(TypedDict):
+class TreeCharConfig(TypedDict):
     line_ver: str
     line_hor: str
     branch_new: str
@@ -135,6 +139,14 @@ class TreeStylePreset(TypedDict):
     error: str
     ignored: str
     dirname_end: str
+
+
+class ScriptDefaults(TypedDict):
+    ignore_dirs: list[str]
+    auto_ignore: bool
+    include_file_contents: bool
+    indent: int
+    into_file: bool
 
 
 class DirScanResult(NamedTuple):
@@ -356,50 +368,13 @@ class IGNORE:
     )
 
 
-class TreeStyle:
+class TreeChars:
     """Manages the visual styling and ANSI codes for the tree."""
 
-    PRESETS: ClassVar[dict[int, TreeStylePreset]] = {
-        1: {
-            "line_ver": "│",
-            "line_hor": "─",
-            "branch_new": "├",
-            "corners": ("└", "┘", "┐"),
-            "error": "⚠",
-            "ignored": "…",
-            "dirname_end": "/",
-        },
-        2: {
-            "line_ver": "│",
-            "line_hor": "─",
-            "branch_new": "├",
-            "corners": ("╰", "╯", "╮"),
-            "error": "⚠",
-            "ignored": "…",
-            "dirname_end": "/",
-        },
-        3: {
-            "line_ver": "┃",
-            "line_hor": "━",
-            "branch_new": "┣",
-            "corners": ("┗", "┛", "┓"),
-            "error": "⚠",
-            "ignored": "…",
-            "dirname_end": "/",
-        },
-        4: {
-            "line_ver": "║",
-            "line_hor": "═",
-            "branch_new": "╠",
-            "corners": ("╚", "╝", "╗"),
-            "error": "⚠",
-            "ignored": "…",
-            "dirname_end": "/",
-        },
-    }
+    def __init__(self, indent_size: int):
+        """Initialize tree styling options and compile required ANSI characters."""
 
-    def __init__(self, style_id: int, indent_size: int):
-        preset = self.PRESETS.get(style_id, self.PRESETS[1])
+        preset = CHARS
         self.line_ver = preset["line_ver"]
         self.line_hor = preset["line_hor"]
         self.branch_new = preset["branch_new"]
@@ -413,39 +388,25 @@ class TreeStyle:
         self.line_hor_str = self.line_hor * max(0, indent_size - (2 if indent_size > 2 else 1)) + " "
 
         # Colors as ANSI strings:
-        self.c_reset = StyledText(S.RESET).ansi
         self.c_dim = StyledText(S.DIM).ansi
-        self.c_b_in = StyledText(S.BOLD, S.INVERSE).ansi
+        self.c_bold = StyledText(S.BOLD).ansi
+        self.c_bold_in = StyledText(S.BOLD | S.INVERSE).ansi
+        self.c_reset = StyledText(S.RESET).ansi
 
-        self.c_line = StyledText(COLORS["line"]).ansi
-        self.c_error = StyledText(COLORS["error"]).ansi
-        self.c_dir = StyledText(S.BOLD, COLORS["dir"]).ansi
-        self.c_file = StyledText(COLORS["file"]).ansi
-        self.c_symlink = StyledText(COLORS["symlink"]).ansi
-        self.c_executable = StyledText(COLORS["executable"]).ansi
-        self.c_archive = StyledText(COLORS["archive"]).ansi
-        self.c_image = StyledText(COLORS["image"]).ansi
-        self.c_video = StyledText(COLORS["video"]).ansi
-        self.c_audio = StyledText(COLORS["audio"]).ansi
-        self.c_code = StyledText(COLORS["code"]).ansi
-        self.c_content = StyledText(COLORS["content"]).ansi
-
-        self.c_dir_dim = StyledText(S.DIM, self.c_dir).ansi
-        self.c_line_dim = StyledText(S.DIM, self.c_line).ansi
-
-    @classmethod
-    def show_styles(cls) -> None:
-        """Display available tree styles with their corresponding visual representation."""
-        StyledText(
-            *(
-                (
-                    (S.BOLD | S.ITALIC)(f" {style}"),
-                    f"  {details['corners'][0]}{details['line_hor']} {details['ignored']}{details['dirname_end']}",
-                )
-                for style, details in cls.PRESETS.items()
-            ),
-            sep="\n",
-        ).print()
+        self.c_line = StyledText(self.c_reset, COLORS["line"]).ansi
+        self.c_line_dull = StyledText(self.c_reset, COLORS["line_dull"]).ansi
+        self.c_error = StyledText(self.c_reset, COLORS["error"]).ansi
+        self.c_dir = StyledText(self.c_reset, COLORS["dir"]).ansi
+        self.c_dir_dull = StyledText(self.c_reset, COLORS["dir_dull"]).ansi
+        self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
+        self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
+        self.c_executable = StyledText(self.c_reset, COLORS["executable"]).ansi
+        self.c_archive = StyledText(self.c_reset, COLORS["archive"]).ansi
+        self.c_image = StyledText(self.c_reset, COLORS["image"]).ansi
+        self.c_video = StyledText(self.c_reset, COLORS["video"]).ansi
+        self.c_audio = StyledText(self.c_reset, COLORS["audio"]).ansi
+        self.c_code = StyledText(self.c_reset, COLORS["code"]).ansi
+        self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
 
 
 class DirectoryScanner:
@@ -457,6 +418,8 @@ class DirectoryScanner:
     _SEP_SPLITTER = re.compile(r"[-_~@\s]+")
 
     def __init__(self, ignore_dirs: list[str], auto_ignore: bool):
+        """Initialize the directory scanner with ignore sets and rules."""
+
         self.auto_ignore = auto_ignore
 
         all_ignores = ignore_dirs.copy()
@@ -470,6 +433,7 @@ class DirectoryScanner:
 
     def should_ignore_path(self, path: str) -> bool:  # noqa: C901
         """Check if a relative path matches any user-specified or default ignore pattern."""
+
         if not path or not self.ignore_set:
             return False
 
@@ -506,12 +470,14 @@ class DirectoryScanner:
                         path_parts = path_lower.split("/")
                     if any(fnmatch.fnmatch(part, pattern) for part in path_parts):
                         return True
+
         return False
 
     @staticmethod
     @lru_cache(maxsize=4096)
     def is_likely_hash_name(name: str) -> bool:
         """Determine if a filename or directory name is likely a hash or unique identifier."""
+
         if not DirectoryScanner._HASH_NAME_CHARS.issuperset(name):
             return False
         if len(name) < 2:
@@ -527,6 +493,7 @@ class DirectoryScanner:
     @staticmethod
     def _find_filename_patterns(names: list[str], min_pattern_length: int = 4) -> tuple[bool, float]:
         """Analyze filenames to detect patterns indicating localization, versioning etc."""
+
         if len(names) < 5:
             return False, 0.0
 
@@ -550,6 +517,7 @@ class DirectoryScanner:
     @lru_cache(maxsize=1024)  # noqa: B019
     def scan_directory(self, dir_path: str) -> DirScanResult:  # noqa: C901
         """Scan a directory and decide if it should be auto-ignored or partially ignored."""
+
         if not self.auto_ignore:
             try:
                 with os.scandir(dir_path) as it:
@@ -596,6 +564,7 @@ class DirectoryScanner:
                 return DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, False, entries)
 
             return DirScanResult(False, total_count, hash_count, False, entries)
+
         except Exception:
             return DirScanResult(False, 0, 0, False, ())
 
@@ -606,11 +575,12 @@ class TreeConfig:
     ignore_dirs: list[str] = field(default_factory=lambda: [])
     auto_ignore: bool = True
     include_file_contents: bool = False
-    style_id: int = 2
     indent: int = 2
     display_progress: bool = True
 
     def __post_init__(self):
+        """Resolve base directory and set derived properties."""
+
         self.base_dir = self.base_dir.resolve()
         self.indent_size = self.indent + 1
 
@@ -619,15 +589,18 @@ class TreeRenderer:
     """Orchestrates directory traversal and formats the tree output."""
 
     def __init__(self, config: TreeConfig):
+        """Initialize the renderer with config, styling, and scanner."""
+
         self.config = config
-        self.style = TreeStyle(config.style_id, config.indent_size)
+        self.chars = TreeChars(config.indent_size)
         self.scanner = DirectoryScanner(config.ignore_dirs, config.auto_ignore)
         self.stats = GenerationStats()
         self._progress_update_interval = 0.05
-        self._last_progress_update = 0
+        self._last_progress_update: float = 0.0
 
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
+
         if self.config.display_progress:
             xx.console.info("starting tree generation...", start="\n")
         else:
@@ -655,6 +628,7 @@ class TreeRenderer:
 
     def _update_progress(self, current_dir: Path, is_dir: bool = True) -> None:
         """Update the generation progress display in terminal."""
+
         if is_dir:
             self.stats.processed_dirs += 1
         else:
@@ -702,6 +676,7 @@ class TreeRenderer:
 
     def _render_tree(self, dir_path: Path, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
+
         self._update_progress(dir_path)
 
         try:
@@ -729,20 +704,22 @@ class TreeRenderer:
 
     def _render_root(self, dir_path: Path, lines: list[str]) -> None:
         """Render the root directory at the top of the tree."""
+
         base_name = dir_path.name or dir_path.drive.rstrip(":\\")
-        lines.append(f"{self.style.c_dir}{base_name}{self.style.c_reset}")
-        lines.append(f"{self.style.c_line}{self.style.c_dir_dim}{self.style.dirname_end}{self.style.c_reset}")
-        lines.append(f"{self.style.c_line}\n")
+        lines.append(f"{self.chars.c_dir}{base_name}{self.chars.c_reset}")
+        lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
+        lines.append(f"{self.chars.c_line}\n")
 
     def _render_all_entries(
         self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
     ) -> None:
         """Render standard directory entries."""
+
         for idx, entry in enumerate(entries):
             is_dir = entry.is_dir()
             is_last = idx == len(entries) - 1
-            branch = self.style.corners[0] if is_last else self.style.branch_new
-            current_prefix = f"{prefix}{branch}{self.style.line_hor_str}"
+            branch = self.chars.corners[0] if is_last else self.chars.branch_new
+            current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
             current_rel_path = str(Path(parent_rel_path) / entry.name)
 
             should_ignore_entry = self.scanner.should_ignore_path(current_rel_path)
@@ -762,6 +739,7 @@ class TreeRenderer:
         self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
     ) -> None:
         """Render entries with some hash names collapsed into an ignored marker."""
+
         visible_entries: list[os.DirEntry[str] | None] = []
         last_was_ignored = False
 
@@ -784,8 +762,8 @@ class TreeRenderer:
                 self._render_ignored_branch(prefix, is_last, lines)
                 continue
 
-            branch = self.style.corners[0] if is_last else self.style.branch_new
-            current_prefix = f"{prefix}{branch}{self.style.line_hor_str}"
+            branch = self.chars.corners[0] if is_last else self.chars.branch_new
+            current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
 
             if entry.is_dir():
                 self._render_directory(
@@ -804,19 +782,23 @@ class TreeRenderer:
         current_rel_path: str,
         lines: list[str],
     ) -> None:
-        lines.append(f"{current_prefix}{self.style.c_dir}{entry.name}{self.style.c_reset}")
-        lines.append(f"{self.style.c_line}{self.style.c_dir_dim}{self.style.dirname_end}{self.style.c_reset}")
-        lines.append(f"{self.style.c_line}\n")
+        """Render a single directory node and recursively process its children."""
+
+        lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
+        lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
+        lines.append(f"{self.chars.c_line}\n")
 
         new_prefix = prefix + (
-            " " * self.style.indent_size if is_last else f"{self.style.line_ver}" + " " * (self.style.indent_size - 1)
+            " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}" + " " * (self.chars.indent_size - 1)
         )
         self._render_tree(Path(entry.path), new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(self, entry: os.DirEntry[str], prefix: str, current_prefix: str, is_last: bool, lines: list[str]) -> None:
+        """Render a file node and optionally its contents if configured."""
+
         self._update_progress(Path(entry.path), is_dir=False)
         color = self._get_file_color(entry)
-        lines.append(f"{current_prefix}{color}{entry.name}{self.style.c_reset}{self.style.c_line}\n")
+        lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
 
         if self.config.include_file_contents and self._is_text_file(entry.path):
             self._render_file_contents(entry.path, prefix, is_last, lines)
@@ -824,34 +806,41 @@ class TreeRenderer:
     def _render_ignored_entry(
         self, entry: os.DirEntry[str], prefix: str, is_last: bool, is_dir: bool, lines: list[str]
     ) -> None:
-        branch = self.style.corners[0] if is_last else self.style.branch_new
+        """Render a specifically ignored node with dimmed styling."""
+
+        branch = self.chars.corners[0] if is_last else self.chars.branch_new
 
         if is_last:
-            lines.append(f"{prefix}{self.style.c_line_dim}{branch}")
+            lines.append(f"{prefix}{self.chars.c_line_dull}{branch}")
         else:
-            lines.append(f"{prefix}{branch}{self.style.c_line_dim}")
+            lines.append(f"{prefix}{branch}{self.chars.c_line_dull}")
 
-        lines.append(f"{self.style.line_hor_str}{entry.name}")
-
-        if is_dir:
-            lines.append(self.style.dirname_end)
-
-        lines.append(f"{self.style.c_reset}{self.style.c_line}\n")
+        lines.append(f"{self.chars.line_hor_str}{entry.name}")
 
         if is_dir:
-            ignored_prefix = f"{prefix}{self.style.tab}" if is_last else f"{prefix}{self.style.line_ver}{self.style.tab[:-1]}"
+            lines.append(self.chars.dirname_end)
+
+        lines.append(f"{self.chars.c_reset}{self.chars.c_line}\n")
+
+        if is_dir:
+            ignored_prefix = f"{prefix}{self.chars.tab}" if is_last else f"{prefix}{self.chars.line_ver}{self.chars.tab[:-1]}"
             self._render_ignored_branch(ignored_prefix, is_last=True, lines=lines)
 
     def _render_ignored_branch(self, prefix: str, is_last: bool, lines: list[str]) -> None:
-        branch = self.style.corners[0] if is_last else self.style.branch_new
+        """Render a branch indicating collapsed or ignored files."""
+
+        branch = self.chars.corners[0] if is_last else self.chars.branch_new
         lines.append(
-            f"{prefix}{self.style.c_line_dim}{branch}{self.style.line_hor_str}{self.style.ignored}{self.style.c_reset}{self.style.c_line}\n"
+            f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{self.chars.ignored}{self.chars.c_reset}{self.chars.c_line}\n"
         )
 
     def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, lines: list[str]) -> None:
+        """Read and render the contents of a text file into the tree view."""
+
         content_prefix = prefix + (
-            " " * self.style.indent_size if is_last else f"{self.style.line_ver}" + " " * (self.style.indent_size - 1)
+            " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}" + " " * (self.chars.indent_size - 1)
         )
+
         try:
             with open(filepath, encoding="utf-8", errors="replace") as f:
                 file_lines = f.readlines()
@@ -878,73 +867,78 @@ class TreeRenderer:
                 for line in file_lines
             ]
             content_width = max(len(line.rstrip()) for line in file_lines)
-            hor_border = self.style.line_hor * (content_width + 2)
+            hor_border = self.chars.line_hor * (content_width + 2)
 
-            lines.append(f"{content_prefix}{self.style.branch_new}{hor_border}{self.style.corners[2]}\n")
+            lines.append(f"{content_prefix}{self.chars.branch_new}{hor_border}{self.chars.corners[2]}\n")
 
             for line in file_lines:
                 stripped = line.rstrip()
                 padding = " " * (content_width - len(stripped))
                 lines.append(
-                    f"{content_prefix}{self.style.line_ver} {self.style.c_content}{stripped}"
-                    f"{self.style.c_reset}{self.style.c_line}{padding} {self.style.line_ver}\n"
+                    f"{content_prefix}{self.chars.line_ver} {self.chars.c_content}{stripped}"
+                    f"{self.chars.c_reset}{self.chars.c_line}{padding} {self.chars.line_ver}\n"
                 )
 
-            lines.append(f"{content_prefix}{self.style.corners[0]}{hor_border}{self.style.corners[1]}\n")
+            lines.append(f"{content_prefix}{self.chars.corners[0]}{hor_border}{self.chars.corners[1]}\n")
 
         except Exception:
             lines.append(
-                f"{content_prefix}{self.style.corners[0]}{self.style.line_hor}"
-                f"{self.style.c_b_in}{self.style.c_error} {self.style.error} "
-                f"Error reading file contents. {self.style.c_reset}\n{self.style.c_line}"
+                f"{content_prefix}{self.chars.corners[0]}{self.chars.line_hor}"
+                f"{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
+                f"Error reading file contents. {self.chars.c_reset}\n{self.chars.c_line}"
             )
 
     def _render_error(self, exc: Exception, prefix: str, lines: list[str]) -> None:
-        error_prefix = prefix + self.style.corners[0] + (self.style.line_hor * (self.style.indent_size - 1))
+        """Render an error message node when a path cannot be accessed."""
+
+        error_prefix = prefix + self.chars.corners[0] + (self.chars.line_hor * (self.chars.indent_size - 1))
         lines.append(
-            f"{error_prefix}{self.style.c_b_in}{self.style.c_error} {self.style.error} "
-            f"{exc!s} {self.style.c_reset}\n{self.style.c_line}"
+            f"{error_prefix}{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
+            f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
         )
 
     def _get_file_color(self, entry: os.DirEntry[str]) -> str:  # noqa: C901
         """Determine the color string for a file based on its type and extension."""
+
         if entry.is_symlink():
-            return self.style.c_symlink
+            return self.chars.c_symlink
 
         try:
             if os.access(entry.path, os.X_OK):
-                return self.style.c_executable
+                return self.chars.c_executable
         except Exception:
             pass
 
         ext = Path(entry.name).suffix.lower()
         if ext in EXEC_EXTS:
-            return self.style.c_executable
+            return self.chars.c_executable
         elif ext in IMAGE_EXTS:
-            return self.style.c_image
+            return self.chars.c_image
         elif ext in ARCHIVE_EXTS:
-            return self.style.c_archive
+            return self.chars.c_archive
         elif ext in CODE_EXTS:
-            return self.style.c_code
+            return self.chars.c_code
         elif ext in VIDEO_EXTS:
-            return self.style.c_video
+            return self.chars.c_video
         elif ext in AUDIO_EXTS:
-            return self.style.c_audio
+            return self.chars.c_audio
 
         if entry.is_file():
             try:
                 if entry.stat().st_size > 2:
                     with open(entry.path, "rb") as f:
                         if f.read(2) == b"#!":
-                            return self.style.c_executable
+                            return self.chars.c_executable
             except Exception:
                 pass
 
-        return self.style.c_file
+        return self.chars.c_file
 
     @staticmethod
     @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
+        """Determine if a file is a text file by inspecting its mime type or bytes."""
+
         if Path(filepath).suffix.lower() in BINARY_EXTENSIONS:
             return False
 
@@ -958,7 +952,8 @@ class TreeRenderer:
 
 
 def get_user_inputs(config: TreeConfig) -> None:
-    """Prompt user for missing configuration if not using defaults."""
+    """Prompt the user for terminal inputs to construct the TreeConfig interactively."""
+
     if ARGS.ignore_dirs.exists:
         config.ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values else []
     else:
@@ -999,16 +994,6 @@ def get_user_inputs(config: TreeConfig) -> None:
         == "Y"
     )
 
-    StyledText(S.BOLD("Enter the tree style "), "(1-4)").print()
-    TreeStyle.show_styles()
-    config.style_id = xx.console.input(
-        StyledText(f"({config.style_id})", S.BOLD(" > ")),
-        max_len=1,
-        allowed_chars="1234",
-        default_val=config.style_id,
-        output_type=int,
-    )
-
     config.indent = xx.console.input(
         StyledText(S.BOLD("Enter the indent "), f"({config.indent})", S.BOLD(" > ")),
         max_len=2,
@@ -1030,7 +1015,6 @@ def main() -> None:
         ignore_dirs=DEFAULT["ignore_dirs"].copy(),
         auto_ignore=DEFAULT["auto_ignore"],
         include_file_contents=DEFAULT["include_file_contents"],
-        style_id=DEFAULT["tree_style"],
         indent=DEFAULT["indent"],
         display_progress=(not ARGS.no_progress.exists),
     )
@@ -1056,7 +1040,6 @@ def main() -> None:
         ignore_dirs=config.ignore_dirs,
         auto_ignore=config.auto_ignore,
         include_file_contents=config.include_file_contents,
-        style_id=config.style_id,
         indent=config.indent,
         display_progress=config.display_progress,
     )
@@ -1081,6 +1064,7 @@ def main() -> None:
             )
         else:
             xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
+
     else:
         print()
         result.print()
