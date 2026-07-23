@@ -609,6 +609,7 @@ class TreeConfig:
     include_file_contents: bool = False
     max_content_lines: int = 0
     indent: int = 2
+    max_width: int = 0
     display_progress: bool = True
 
     def __post_init__(self):
@@ -646,18 +647,25 @@ class TreeRenderer:
         self._render_tree(self.config.base_dir, "", 0, "", lines)
         result_str = "".join(lines)
 
-        console_width = xx.console.get_width()
         tree_info = StyledText(
             ("max depth ", S.BR.CYAN(str(self.stats.max_depth))),
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_dirs:,}"), " dirs"),
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
         )
 
+        if self.config.max_width > 0:
+            max_width = self.config.max_width
+        else:
+            max_width = max(
+                max((len(re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", line)) for line in result_str.split("\n")), default=80) + 1,
+                len(tree_info.raw) + 2,
+            )
+
         return StyledText(
             (COLORS["line"], result_str),
             "\n",
-            (S.RESET, S.DIM("─" * console_width), "\n"),
-            (" " * (console_width - len(tree_info.raw) - 1), tree_info.ansi),
+            (S.RESET, S.DIM("─" * max_width), "\n"),
+            (" " * (max_width - len(tree_info.raw) - 1), tree_info.ansi),
             "\n",
         )
 
@@ -821,8 +829,12 @@ class TreeRenderer:
     ) -> None:
         """Render a single directory node and recursively process its children."""
 
-        max_name_width = max(10, xx.console.get_width() - len(current_prefix) - len(self.chars.dirname_end))
-        if len(entry.name) <= max_name_width:
+        max_name_width = (
+            max(10, self.config.max_width - len(current_prefix) - len(self.chars.dirname_end))
+            if self.config.max_width > 0
+            else 0
+        )
+        if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
             lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}\n")
@@ -855,8 +867,8 @@ class TreeRenderer:
         self._update_progress(Path(entry.path), is_dir=False)
         color, color_dim = self._get_file_color(entry)
 
-        max_name_width = max(10, xx.console.get_width() - len(current_prefix))
-        if len(entry.name) <= max_name_width:
+        max_name_width = max(10, self.config.max_width - len(current_prefix)) if self.config.max_width > 0 else 0
+        if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
             lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
         else:
             w = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
@@ -941,10 +953,11 @@ class TreeRenderer:
                 for line in file_lines
             ]
 
-            max_content_width = max(10, xx.console.get_width() - len(content_prefix) - 4)
+            max_content_width = max(10, self.config.max_width - len(content_prefix) - 4) if self.config.max_width > 0 else 0
+
             wrapped_lines: list[str] = []
             for line in file_lines:
-                if len(line) > max_content_width:
+                if self.config.max_width > 0 and len(line) > max_content_width:
                     w = textwrap.wrap(line, width=max_content_width, drop_whitespace=True, break_long_words=True)
                     if not w:
                         wrapped_lines.append("")
@@ -1065,9 +1078,9 @@ def get_user_inputs(config: TreeConfig) -> None:
     if not ARGS.ignore_dirs.exists:
         ignore_input = xx.console.input(
             StyledText(
-                S.BOLD("Enter directory names/paths which's content should be ignored "),
-                ("(", S.CYAN("|"), " separated)"),
-                S.BOLD(" > "),
+                S.BOLD("Which directory names/paths should be ignored? "),
+                S.DIM("(", S.CYAN("|"), " separated)\n"),
+                " > ",
             ),
         )
         config.ignore_dirs = [d.strip() for d in ignore_input.split("|")]
@@ -1075,9 +1088,8 @@ def get_user_inputs(config: TreeConfig) -> None:
     config.auto_ignore = (
         xx.console.input(
             StyledText(
-                S.BOLD("Enable auto-ignore unimportant directories "),
-                ("(Y)" if config.auto_ignore else "(N)"),
-                S.BOLD(" > "),
+                S.BOLD("Enable auto-ignore unimportant directories?\n"),
+                (S.DIM("(Y)" if config.auto_ignore else "(N)"), " > "),
             ),
             max_len=1,
             allowed_chars="yYnN",
@@ -1089,9 +1101,8 @@ def get_user_inputs(config: TreeConfig) -> None:
     if not ARGS.include_file_contents.exists:
         content_input = xx.console.input(
             StyledText(
-                S.BOLD("How much file contents should be included? "),
-                "(Enter/non-number = none, 0/negative = all, N = max lines)",
-                S.BOLD(" > "),
+                S.BOLD("How much file contents should be included?\n0 = full file contents, N = first N lines\n"),
+                (S.DIM("(none)"), " > "),
             ),
         )
         if content_input.strip() == "":
@@ -1104,7 +1115,10 @@ def get_user_inputs(config: TreeConfig) -> None:
                 config.include_file_contents = False
 
     config.indent = xx.console.input(
-        StyledText(S.BOLD("Enter the indent "), f"({config.indent})", S.BOLD(" > ")),
+        StyledText(
+            S.BOLD("What should the indentation size be?\n"),
+            (S.DIM(f"({config.indent})"), " > "),
+        ),
         max_len=2,
         allowed_chars="0123456789",
         default_val=config.indent,
@@ -1153,7 +1167,10 @@ def main() -> None:
 
         into_file = (
             xx.console.input(
-                StyledText(S.BOLD("Output tree into file "), ("(Y)" if into_file else "(N)"), S.BOLD(" > ")),
+                StyledText(
+                    S.BOLD("Output tree to a file?\n"),
+                    (S.DIM("(Y)" if into_file else "(N)"), " > "),
+                ),
                 max_len=1,
                 allowed_chars="yYnN",
                 default_val="Y" if into_file else "N",
@@ -1169,6 +1186,7 @@ def main() -> None:
         include_file_contents=config.include_file_contents,
         max_content_lines=config.max_content_lines,
         indent=config.indent,
+        max_width=0 if into_file else xx.console.get_width(),
         display_progress=config.display_progress,
     )
 
@@ -1180,7 +1198,7 @@ def main() -> None:
         try:
             file = xx.file.create("tree.txt", result.raw)
         except FileExistsError:
-            cls_line = "\033[F\033[K"
+            cls_line = "\033[F\033[K\n"
             if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
                 file = xx.file.create("tree.txt", result.raw, force=True)
             else:
