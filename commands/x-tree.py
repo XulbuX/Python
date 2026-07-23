@@ -9,6 +9,7 @@ from __future__ import annotations
 import fnmatch
 import os
 import re
+import textwrap
 import time
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -27,7 +28,6 @@ ARGS = xx.console.get_args(
         "help": {"-h", "--help"},
     }
 )
-
 
 COLORS: TreeColorConfig = {
     "line": S.DIM | S.WHITE,
@@ -857,7 +857,8 @@ class TreeRenderer:
                 return
 
             file_lines = [
-                line.replace("\t", "    ").translate(
+                line.replace("\t", "    ")
+                .translate(
                     {
                         0x2000: " ",
                         0x2001: " ",
@@ -872,9 +873,24 @@ class TreeRenderer:
                         0x200A: " ",
                     }
                 )
+                .rstrip()
                 for line in file_lines
             ]
-            content_width = max(len(line.rstrip()) for line in file_lines)
+
+            max_content_width = max(10, xx.console.get_width() - len(content_prefix) - 4)
+            wrapped_lines: list[str] = []
+            for line in file_lines:
+                if len(line) > max_content_width:
+                    w = textwrap.wrap(line, width=max_content_width, drop_whitespace=False, break_long_words=True)
+                    if not w:
+                        wrapped_lines.append("")
+                    else:
+                        wrapped_lines.extend(w)
+                else:
+                    wrapped_lines.append(line)
+            file_lines = wrapped_lines
+
+            content_width = max((len(line) for line in file_lines), default=0)
             hor_border = self.chars.line_hor * (content_width + 2)
 
             lines.append(
@@ -882,10 +898,9 @@ class TreeRenderer:
             )
 
             for line in file_lines:
-                stripped = line.rstrip()
-                padding = " " * (content_width - len(stripped))
+                padding = " " * (content_width - len(line))
                 lines.append(
-                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {self.chars.c_content}{stripped}"
+                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {self.chars.c_content}{line}"
                     f"{self.chars.c_reset}{border_color}{padding} {self.chars.line_ver}\n"
                 )
 
