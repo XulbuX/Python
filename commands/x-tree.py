@@ -38,6 +38,9 @@ DEFAULT: ScriptDefaults = {
 COLORS: TreeColors = {
     "line": S.BR.BLACK,
     "error": S.RED,
+    "dir": S.BR.CYAN,
+    "file": S.WHITE,
+    "content": S.BR.BLACK,
 }
 
 
@@ -80,6 +83,9 @@ def print_help() -> None:
 class TreeColors(TypedDict):
     line: AnyStyle
     error: AnyStyle
+    dir: AnyStyle
+    file: AnyStyle
+    content: AnyStyle
 
 
 class ScriptDefaults(TypedDict):
@@ -365,9 +371,26 @@ class Tree:
         self.ignore_set: frozenset[str] = frozenset()
 
         self._c_reset: str = StyledText(S.RESET).ansi
+        self._c_dim: str = StyledText(S.DIM).ansi
         self._c_b_in: str = StyledText(S.BOLD, S.INVERSE).ansi
+
         self._c_line: str = StyledText(COLORS["line"]).ansi
         self._c_error: str = StyledText(COLORS["error"]).ansi
+        self._c_dir: str = StyledText(COLORS["dir"]).ansi
+        self._c_file: str = StyledText(COLORS["file"]).ansi
+        self._c_content: str = StyledText(COLORS["content"]).ansi
+
+        self._c_dir_dim: str = StyledText(COLORS["dir"], S.DIM).ansi
+        self._c_line_dim: str = StyledText(COLORS["line"], S.DIM).ansi
+
+        self._c_reset_b = self._c_reset.encode()
+        self._c_line_b = self._c_line.encode()
+        self._c_dir_b = self._c_dir.encode()
+        self._c_file_b = self._c_file.encode()
+        self._c_dim_b = self._c_dim.encode()
+        self._c_content_b = self._c_content.encode()
+        self._c_dir_dim_b = self._c_dir_dim.encode()
+        self._c_line_dim_b = self._c_line_dim.encode()
 
         self.style_presets: dict[int, TreeStylePreset] = {
             1: {
@@ -501,7 +524,7 @@ class Tree:
         self._branch_new_b = self.branch_new.encode()
         self._corners_b = tuple(c.encode() for c in self.corners)
         self._dirname_end_b = self.dirname_end.encode()
-        self._ignored_suffix_b = f"{_line_hor_str} {self.ignored}\n".encode()
+        self._ignored_suffix_b = f"{_line_hor_str} {self._c_line_dim}{self.ignored}{self._c_reset}{self._c_line}\n".encode()
 
     def show_styles(self) -> None:
         """Display available tree styles with their corresponding visual representation."""
@@ -755,8 +778,14 @@ class Tree:
             if _level == 0:
                 dir_path = Path(_dir)
                 base_name = dir_path.name or dir_path.drive.rstrip(":\\")
+                result.extend(self._c_dir_b)
                 result.extend(base_name.encode())
+                result.extend(self._c_reset_b)
+                result.extend(self._c_line_b)
+                result.extend(self._c_dir_dim_b)
                 result.extend(self._dirname_end_b)
+                result.extend(self._c_reset_b)
+                result.extend(self._c_line_b)
                 result.extend(self._NEWLINE)
                 _parent_path = ""
 
@@ -771,6 +800,7 @@ class Tree:
 
             if scan_result.should_ignore:
                 result.extend(prefix_bytes)
+                result.extend(self._c_line_dim_b)
                 result.extend(self._corners_b[0])
                 result.extend(self._ignored_suffix_b)
                 return bytes(result).decode() if result else ""
@@ -800,6 +830,7 @@ class Tree:
 
                     if entry is None:
                         result.extend(prefix_bytes)
+                        result.extend(self._c_line_dim_b)
                         result.extend(self._corners_b[0] if is_last else self._branch_new_b)
                         result.extend(self._ignored_suffix_b)
                         continue
@@ -809,8 +840,14 @@ class Tree:
 
                     if entry.is_dir():
                         result.extend(current_prefix)
+                        result.extend(self._c_dir_b)
                         result.extend(entry.name.encode())
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
+                        result.extend(self._c_dir_dim_b)
                         result.extend(self._dirname_end_b)
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
                         result.extend(self._NEWLINE)
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
                         result.extend(self._gen_tree(Path(entry.path), new_prefix, _level + 1).encode())
@@ -818,7 +855,10 @@ class Tree:
                     else:
                         self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
+                        result.extend(self._c_file_b)
                         result.extend(entry.name.encode())
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
                         result.extend(self._NEWLINE)
 
                         if self.include_file_contents and self._is_text_file(entry.path):
@@ -858,7 +898,8 @@ class Tree:
                                             padding = " " * (content_width - len(stripped))
                                             result.extend(
                                                 (
-                                                    f"{content_prefix}{self.line_ver} {stripped}{padding} {self.line_ver}\n"
+                                                    f"{content_prefix}{self.line_ver} {self._c_content}{stripped}"
+                                                    f"{self._c_reset}{self._c_line}{padding} {self.line_ver}\n"
                                                 ).encode()
                                             )
 
@@ -888,23 +929,32 @@ class Tree:
                         is_dir and self._scan_directory(entry.path).should_ignore
                     ):
                         result.extend(current_prefix)
+                        result.extend(self._c_line_dim_b)
                         result.extend(entry.name.encode())
-
                         if is_dir:
                             result.extend(self._dirname_end_b)
-                            result.extend(self._NEWLINE)
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
+                        result.extend(self._NEWLINE)
+
+                        if is_dir:
                             result.extend(prefix_tab if is_last else prefix_ver)
+                            result.extend(self._c_line_dim_b)
                             result.extend(self._corners_b[0])
                             result.extend(self._ignored_suffix_b)
-                        else:
-                            result.extend(self._NEWLINE)
 
                         continue
 
                     if is_dir:
                         result.extend(current_prefix)
+                        result.extend(self._c_dir_b)
                         result.extend(entry.name.encode())
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
+                        result.extend(self._c_dir_dim_b)
                         result.extend(self._dirname_end_b)
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
                         result.extend(self._NEWLINE)
                         new_prefix = _prefix + (" " * self.indent if is_last else self.line_ver + " " * (self.indent - 1))
                         result.extend(self._gen_tree(Path(entry.path), new_prefix, _level + 1, current_rel_path).encode())
@@ -912,7 +962,10 @@ class Tree:
                     else:
                         self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
+                        result.extend(self._c_file_b)
                         result.extend(entry.name.encode())
+                        result.extend(self._c_reset_b)
+                        result.extend(self._c_line_b)
                         result.extend(self._NEWLINE)
 
                         if self.include_file_contents and self._is_text_file(entry.path):
@@ -950,7 +1003,8 @@ class Tree:
                                         for line in lines:
                                             result.extend(
                                                 (
-                                                    f"{content_prefix}{self.line_ver} {(stripped := line.rstrip())}"
+                                                    f"{content_prefix}{self.line_ver} {self._c_content}"
+                                                    f"{(stripped := line.rstrip())}{self._c_reset}{self._c_line}"
                                                     f"{' ' * (content_width - len(stripped))} {self.line_ver}\n"
                                                 ).encode()
                                             )
