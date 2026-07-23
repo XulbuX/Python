@@ -399,13 +399,21 @@ class TreeChars:
         self.c_dir = StyledText(self.c_reset, COLORS["dir"]).ansi
         self.c_dir_dull = StyledText(self.c_reset, COLORS["dir_dull"]).ansi
         self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
+        self.c_file_dim = StyledText(self.c_reset, S.DIM, COLORS["file"]).ansi
         self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
+        self.c_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["symlink"]).ansi
         self.c_executable = StyledText(self.c_reset, COLORS["executable"]).ansi
+        self.c_executable_dim = StyledText(self.c_reset, S.DIM, COLORS["executable"]).ansi
         self.c_archive = StyledText(self.c_reset, COLORS["archive"]).ansi
+        self.c_archive_dim = StyledText(self.c_reset, S.DIM, COLORS["archive"]).ansi
         self.c_image = StyledText(self.c_reset, COLORS["image"]).ansi
+        self.c_image_dim = StyledText(self.c_reset, S.DIM, COLORS["image"]).ansi
         self.c_video = StyledText(self.c_reset, COLORS["video"]).ansi
+        self.c_video_dim = StyledText(self.c_reset, S.DIM, COLORS["video"]).ansi
         self.c_audio = StyledText(self.c_reset, COLORS["audio"]).ansi
+        self.c_audio_dim = StyledText(self.c_reset, S.DIM, COLORS["audio"]).ansi
         self.c_code = StyledText(self.c_reset, COLORS["code"]).ansi
+        self.c_code_dim = StyledText(self.c_reset, S.DIM, COLORS["code"]).ansi
         self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
 
 
@@ -755,7 +763,7 @@ class TreeRenderer:
         if visible_entries and visible_entries[-1] is None:
             visible_entries.pop()
 
-        for idx, entry in enumerate(visible_entries):
+        for idx, entry in enumerate(visible_entries):  # type: ignore
             is_last = idx == len(visible_entries) - 1
 
             if entry is None:
@@ -797,11 +805,11 @@ class TreeRenderer:
         """Render a file node and optionally its contents if configured."""
 
         self._update_progress(Path(entry.path), is_dir=False)
-        color = self._get_file_color(entry)
+        color, color_dim = self._get_file_color(entry)
         lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
 
         if self.config.include_file_contents and self._is_text_file(entry.path):
-            self._render_file_contents(entry.path, prefix, is_last, lines)
+            self._render_file_contents(entry.path, prefix, is_last, color_dim, lines)
 
     def _render_ignored_entry(
         self, entry: os.DirEntry[str], prefix: str, is_last: bool, is_dir: bool, lines: list[str]
@@ -834,7 +842,7 @@ class TreeRenderer:
             f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{self.chars.ignored}{self.chars.c_reset}{self.chars.c_line}\n"
         )
 
-    def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, lines: list[str]) -> None:
+    def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, border_color: str, lines: list[str]) -> None:
         """Read and render the contents of a text file into the tree view."""
 
         content_prefix = prefix + (
@@ -869,21 +877,25 @@ class TreeRenderer:
             content_width = max(len(line.rstrip()) for line in file_lines)
             hor_border = self.chars.line_hor * (content_width + 2)
 
-            lines.append(f"{content_prefix}{self.chars.branch_new}{hor_border}{self.chars.corners[2]}\n")
+            lines.append(
+                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.branch_new}{hor_border}{self.chars.corners[2]}\n"
+            )
 
             for line in file_lines:
                 stripped = line.rstrip()
                 padding = " " * (content_width - len(stripped))
                 lines.append(
-                    f"{content_prefix}{self.chars.line_ver} {self.chars.c_content}{stripped}"
-                    f"{self.chars.c_reset}{self.chars.c_line}{padding} {self.chars.line_ver}\n"
+                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {self.chars.c_content}{stripped}"
+                    f"{self.chars.c_reset}{border_color}{padding} {self.chars.line_ver}\n"
                 )
 
-            lines.append(f"{content_prefix}{self.chars.corners[0]}{hor_border}{self.chars.corners[1]}\n")
+            lines.append(
+                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.corners[0]}{hor_border}{self.chars.corners[1]}{self.chars.c_reset}{self.chars.c_line}\n"
+            )
 
         except Exception:
             lines.append(
-                f"{content_prefix}{self.chars.corners[0]}{self.chars.line_hor}"
+                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.corners[0]}{self.chars.line_hor}"
                 f"{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
                 f"Error reading file contents. {self.chars.c_reset}\n{self.chars.c_line}"
             )
@@ -897,42 +909,42 @@ class TreeRenderer:
             f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
         )
 
-    def _get_file_color(self, entry: os.DirEntry[str]) -> str:  # noqa: C901
+    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
         """Determine the color string for a file based on its type and extension."""
 
         if entry.is_symlink():
-            return self.chars.c_symlink
+            return self.chars.c_symlink, self.chars.c_symlink_dim
 
         try:
             if os.access(entry.path, os.X_OK):
-                return self.chars.c_executable
+                return self.chars.c_executable, self.chars.c_executable_dim
         except Exception:
             pass
 
         ext = Path(entry.name).suffix.lower()
         if ext in EXEC_EXTS:
-            return self.chars.c_executable
+            return self.chars.c_executable, self.chars.c_executable_dim
         elif ext in IMAGE_EXTS:
-            return self.chars.c_image
+            return self.chars.c_image, self.chars.c_image_dim
         elif ext in ARCHIVE_EXTS:
-            return self.chars.c_archive
+            return self.chars.c_archive, self.chars.c_archive_dim
         elif ext in CODE_EXTS:
-            return self.chars.c_code
+            return self.chars.c_code, self.chars.c_code_dim
         elif ext in VIDEO_EXTS:
-            return self.chars.c_video
+            return self.chars.c_video, self.chars.c_video_dim
         elif ext in AUDIO_EXTS:
-            return self.chars.c_audio
+            return self.chars.c_audio, self.chars.c_audio_dim
 
         if entry.is_file():
             try:
                 if entry.stat().st_size > 2:
                     with open(entry.path, "rb") as f:
                         if f.read(2) == b"#!":
-                            return self.chars.c_executable
+                            return self.chars.c_executable, self.chars.c_executable_dim
             except Exception:
                 pass
 
-        return self.chars.c_file
+        return self.chars.c_file, self.chars.c_file_dim
 
     @staticmethod
     @lru_cache(maxsize=1024)
