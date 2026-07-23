@@ -12,7 +12,8 @@ import sys
 import time
 from pathlib import Path
 import psutil
-from xulbux import Console, FormatCodes, System
+import xulbux as xx
+from xulbux import FormatCodes
 
 ######################### CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED #########################
 
@@ -61,7 +62,7 @@ PROTECTED_PROCESSES_UNIX = {
     "zsh",
 }
 
-ARGS = Console.get_args({"rm_path": "before", "confirmed": {"-y", "--yes"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({"rm_path": "before", "confirmed": {"-y", "--yes"}, "help": {"-h", "--help"}})
 
 
 def print_help() -> None:
@@ -106,7 +107,11 @@ def take_ownership_windows(path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=60,
-            creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0,
+            creationflags=(
+                subprocess.CREATE_NO_WINDOW  # type: ignore[type-unknown]
+                if platform.system() == "Windows"
+                else 0
+            ),
         )
 
         if result.returncode != 0:
@@ -119,7 +124,7 @@ def take_ownership_windows(path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=60,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=subprocess.CREATE_NO_WINDOW,  # type: ignore[type-unknown]
         )
 
         if result.returncode != 0:
@@ -148,7 +153,7 @@ def remove_attributes_windows(path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=60,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=subprocess.CREATE_NO_WINDOW,  # type: ignore[type-unknown]
         )
 
         if result.returncode != 0:
@@ -417,7 +422,7 @@ def force_delete(path: Path) -> bool:  # noqa: C901
     # Still failed; give up :(
     FormatCodes.print("\n[b|red]✗ Failed to delete even after trying all techniques :([_]\n")
 
-    if not System.is_elevated:
+    if not xx.system.is_elevated():
         if platform.system() == "Windows":
             FormatCodes.print("[dim|blue](ⓘ [i](Try running with Administrator privileges.))\n")
         else:
@@ -434,7 +439,7 @@ def path_validator(path: str) -> str | None:
     """Validate the input path."""
 
     if not Path(path).exists():
-        max_w = Console.width - 23
+        max_w = xx.console.get_width() - 23
         str_p = path if (length := len(path)) <= max_w else f"...{path[length - (max_w - 3) :]}"
         return f"Path [i]({str_p}) doesn't exist."
 
@@ -445,13 +450,13 @@ def main() -> None:
         return
 
     FormatCodes.print(f"\n[b|bg:black]( {platform.system()} [in]( FORCE DELETE UTILITY ))")
-    Console.log_box_bordered(
+    xx.console.log_box_bordered(
         "[yellow](This will terminate processes if needed.)",
         "[yellow](Critical system processes are protected.)",
         border_style="dim|yellow",
     )
 
-    if not System.is_elevated:
+    if not xx.system.is_elevated():
         if platform.system() == "Windows":
             FormatCodes.print("\n[yellow](⚠ Not running as Administrator. Some operations may fail.)")
         else:
@@ -461,15 +466,15 @@ def main() -> None:
             )
 
     if len(target_path := "".join(ARGS.rm_path.values) or ARGS.confirmed.get(0, "")) == 0:
-        target_path = Console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
+        target_path = xx.console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
 
     if not (target_path := Path(target_path)).exists():
-        Console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
+        xx.console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
 
-    if not ARGS.confirmed.exists and not Console.confirm(
+    if not ARGS.confirmed.exists and not xx.console.confirm(
         f"\n[b](Are you sure you want to delete [br:cyan|bg:black]({target_path.name})?)", default_is_yes=False
     ):
-        Console.exit("Deletion aborted.", start="\n", end="\n\n", exit_code=0)
+        xx.console.exit("Deletion aborted.", start="\n", end="\n\n", exit_code=0)
 
     sys.exit(0 if force_delete(target_path) else 1)
 
@@ -480,4 +485,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("[b|red](✗ Canceled by user.)\n")
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

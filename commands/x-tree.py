@@ -13,10 +13,11 @@ import time
 from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, NamedTuple, TypedDict
-from xulbux import Console, File, S, StyledText
+import xulbux as xx
+from xulbux import S, StyledText
 from xulbux.base.consts import COLOR
 
-ARGS = Console.get_args(
+ARGS = xx.console.get_args(
     {
         "base_dir": "before",
         "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
@@ -414,9 +415,9 @@ class Tree:
             ignore_dirs = []
         self.display_progress = self.display_progress if display_progress is None else display_progress
         if self.display_progress:
-            Console.info("starting tree generation...", start="\n")
+            xx.console.info("starting tree generation...", start="\n")
         else:
-            Console.info("generating tree...", start="\n")
+            xx.console.info("generating tree...", start="\n")
 
         self.gen_stats = GenerationStats()
 
@@ -452,7 +453,7 @@ class Tree:
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
 
-        Console.done(
+        xx.console.done(
             f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) "
             f"[br:cyan]({self.gen_stats.processed_dirs:,}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files:,}) files",
             start="\033[F\033[K",
@@ -695,7 +696,7 @@ class Tree:
             format(self.gen_stats.processed_dirs, ","),
             format(self.gen_stats.processed_files, ","),
         )
-        max_rel_path_len = Console.width - (
+        max_rel_path_len = xx.console.get_width() - (
             30
             + len(
                 f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} "
@@ -706,7 +707,7 @@ class Tree:
         if len(rel_path) > max_rel_path_len:
             rel_path = "..." + rel_path[-max_rel_path_len:]
 
-        Console.log(
+        xx.console.log(
             "GENERATING TREE",
             (
                 f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) "
@@ -963,13 +964,13 @@ def main() -> None:
         if ARGS.ignore_dirs.exists:
             ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values else []
         else:
-            ignore_dirs = Console.input(
+            ignore_dirs = xx.console.input(
                 "[b](Enter directory names/paths which's content should be ignored) ([cyan](|) separated) [b](>) "
             ).split("|")
         ignore_dirs = [d.strip() for d in ignore_dirs]
 
         auto_ignore = (
-            Console.input(
+            xx.console.input(
                 f"[b](Enable auto-ignore unimportant directories) {'(Y)' if auto_ignore else '(N)'} [b](>) ",
                 max_len=1,
                 allowed_chars="yYnN",
@@ -979,7 +980,7 @@ def main() -> None:
         )
 
         include_file_contents = (
-            Console.input(
+            xx.console.input(
                 f"[b](Display the file contents in the tree) {'(Y)' if include_file_contents else '(N)'} [b](>) ",
                 max_len=1,
                 allowed_chars="yYnN",
@@ -990,9 +991,9 @@ def main() -> None:
 
         StyledText(S.BOLD("Enter the tree style "), "(1-4)").print()
         tree.show_styles()
-        style = Console.input(f"({style}) [b](>) ", max_len=1, allowed_chars="1234", default_val=style, output_type=int)
+        style = xx.console.input(f"({style}) [b](>) ", max_len=1, allowed_chars="1234", default_val=style, output_type=int)
 
-        indent = Console.input(
+        indent = xx.console.input(
             f"[b](Enter the indent) ({indent}) [b](>) ",
             max_len=2,
             allowed_chars="0123456789",
@@ -1001,7 +1002,7 @@ def main() -> None:
         )
 
         into_file = (
-            Console.input(
+            xx.console.input(
                 f"[b](Output tree into file) {'(Y)' if into_file else '(N)'} [b](>) ",
                 max_len=1,
                 allowed_chars="yYnN",
@@ -1022,19 +1023,19 @@ def main() -> None:
     if into_file:
         file, cls_line = None, ""
         try:
-            file = File.create("tree.txt", result)
+            file = xx.file.create("tree.txt", result)
         except FileExistsError:
             cls_line = "\033[F\033[K"
-            if Console.confirm(f"{' ' * 17}[white]tree.txt[_] already exists. Overwrite?", end=""):
-                file = File.create("tree.txt", result, force=True)
+            if xx.console.confirm(f"{' ' * 17}[white]tree.txt[_] already exists. Overwrite?", end=""):
+                file = xx.file.create("tree.txt", result, force=True)
             else:
-                Console.exit()
+                xx.console.exit()
         if file:
-            Console.done(
+            xx.console.done(
                 f"[white|link:file:///{file.resolve()}]({file.name}) successfully created.", start=cls_line, end="\n\n"
             )
         else:
-            Console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
+            xx.console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
     else:
         StyledText("\n", S.WHITE(result)).print()
 
@@ -1045,6 +1046,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except PermissionError:
-        Console.fail("Permission to create file was denied.", start="\n", end="\n\n")
+        xx.console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

@@ -13,7 +13,8 @@ import sys
 import time
 from pathlib import Path
 from typing import IO, Any, cast
-from xulbux import Console, S, StyledText, System
+import xulbux as xx
+from xulbux import S, StyledText
 
 try:
     import pyperclip
@@ -163,7 +164,7 @@ def main() -> None:  # noqa: C901
                     "pwsh.exe" if shutil.which("pwsh") else "powershell.exe",
                     "-NoProfile",
                     "-Command",
-                    "$env:PYTHONIOENCODING='utf-8'; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
+                    "$env:PYTHONIOENCODING='utf-8'; [Console]::OutputEncoding = [system.Text.Encoding]::UTF8; "
                     + command_for_shell,
                 ],
                 encoding="utf-8",
@@ -212,7 +213,8 @@ def main() -> None:  # noqa: C901
 
     if not exclude_cmd:
         clipboard_parts.append(
-            ("Administrator" if System.is_elevated else Console.user) + f" on {platform.node()} ({platform.system()})"
+            ("Administrator" if xx.system.is_elevated() else xx.console.get_user())
+            + f" on {platform.node()} ({platform.system()})"
             f" at {'~' if (cwd := Path.cwd()).expanduser() == Path.home() else cwd}\n"
             f"$ {command_str_display}\n\n"
         )
@@ -222,7 +224,7 @@ def main() -> None:  # noqa: C901
 
     if not exclude_meta:
         clipboard_parts.append(
-            f"\n{'─' * Console.width}\n[{time.ctime(start_time)}]\nTook : {duration_str}\nExit : {exit_code}\n"
+            f"\n{'─' * xx.console.get_width()}\n[{time.ctime(start_time)}]\nTook : {duration_str}\nExit : {exit_code}\n"
         )
 
     clipboard_content = "".join(clipboard_parts)
@@ -260,4 +262,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
