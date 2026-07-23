@@ -30,8 +30,8 @@ ARGS = xx.console.get_args(
 )
 
 COLORS: TreeColorConfig = {
-    "line": S.DIM | S.WHITE,
-    "line_dull": S.DIM | S.BR.BLACK,
+    "line": S.BR.BLACK,
+    "line_dull": S.BR.BLACK,
     "error": S.RED,
     "dir": S.BOLD | S.BR.WHITE,
     "dir_dull": S.BR.WHITE,
@@ -808,9 +808,29 @@ class TreeRenderer:
     ) -> None:
         """Render a single directory node and recursively process its children."""
 
-        lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
-        lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
-        lines.append(f"{self.chars.c_line}\n")
+        max_name_width = max(10, xx.console.get_width() - len(current_prefix) - len(self.chars.dirname_end))
+        if len(entry.name) <= max_name_width:
+            lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
+            lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
+            lines.append(f"{self.chars.c_line}\n")
+        else:
+            w = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
+            lines.append(f"{current_prefix}{self.chars.c_dir}{w[0]}{self.chars.c_reset}\n")
+
+            branch = self.chars.corners[0] if is_last else self.chars.branch_new
+            if is_last:
+                wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
+            else:
+                indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
+                wrap_indent = f"{self.chars.line_ver}" + " " * indent_len
+            wrap_prefix = f"{prefix}{wrap_indent}"
+
+            for part in w[1:-1]:
+                lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}\n")
+
+            lines.append(f"{wrap_prefix}{self.chars.c_dir}{w[-1]}{self.chars.c_reset}")
+            lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
+            lines.append(f"{self.chars.c_line}\n")
 
         new_prefix = prefix + (
             " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}" + " " * (self.chars.indent_size - 1)
@@ -822,7 +842,24 @@ class TreeRenderer:
 
         self._update_progress(Path(entry.path), is_dir=False)
         color, color_dim = self._get_file_color(entry)
-        lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
+
+        max_name_width = max(10, xx.console.get_width() - len(current_prefix))
+        if len(entry.name) <= max_name_width:
+            lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
+        else:
+            w = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
+            lines.append(f"{current_prefix}{color}{w[0]}{self.chars.c_reset}{self.chars.c_line}\n")
+
+            branch = self.chars.corners[0] if is_last else self.chars.branch_new
+            if is_last:
+                wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
+            else:
+                indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
+                wrap_indent = f"{self.chars.line_ver}" + " " * indent_len
+            wrap_prefix = f"{prefix}{wrap_indent}"
+
+            for part in w[1:]:
+                lines.append(f"{wrap_prefix}{color}{part}{self.chars.c_reset}{self.chars.c_line}\n")
 
         if self.config.include_file_contents and self._is_text_file(entry.path):
             self._render_file_contents(entry.path, prefix, is_last, color_dim, lines)
@@ -897,7 +934,7 @@ class TreeRenderer:
             wrapped_lines: list[str] = []
             for line in file_lines:
                 if len(line) > max_content_width:
-                    w = textwrap.wrap(line, width=max_content_width, drop_whitespace=False, break_long_words=True)
+                    w = textwrap.wrap(line, width=max_content_width, drop_whitespace=True, break_long_words=True)
                     if not w:
                         wrapped_lines.append("")
                     else:
