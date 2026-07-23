@@ -4,103 +4,95 @@
 """Displays an animated, random text character mess.
 The mess can be made faster and displayed in color."""
 
-import random
+import random as rnd
 import time
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux.ansi import AnyStyle, S, StyledText
 
-ARGS = Console.get_args({"fast_mode": {"-f", "--fast"}, "color_mode": {"-c", "--color"}, "help": {"-h", "--help"}})
-
-rand_choice = random.choice
-rand_bits = random.getrandbits
-fc_print = FormatCodes.print
-sleep = time.sleep
+ARGS = xx.console.get_args({"fast_mode": {"-f", "--fast"}, "color_mode": {"-c", "--color"}, "help": {"-h", "--help"}})
 
 
+# fmt: off
 def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Mess — Display an animated random text character mess )
+    title = ["  Mess", " — Display a random binary mess  "]
+    StyledText(
+        "",
+        ("▄" * len("".join(title))),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (S.BOLD("Usage: "), S.BR.GREEN("mess "), S.BR.BLUE("[options]")),
+        "",
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--fast"), "     Display the mess at maximum speed"),
+        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--color"), "    Color the mess in random colors"),
+        "",
+        S.BOLD("Controls:"),
+        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "      Stop the animation"),
+        "",
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("mess"), "           ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
+        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("--fast"), "     ", S.DIM("# ", S.ITALIC("Show binary mess at maximum speed"))),
+        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("--color"), "    ", S.DIM("# ", S.ITALIC("Show colorful binary mess"))),
+        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # noqa: E501
+        "",
+        sep="\n",
+    ).print()
+# fmt: on
 
-[b](Usage:) [br:green](mess) [br:blue]([options])
 
-[b](Options:)
-  [br:blue](-f), [br:blue](--fast)     Display the mess at maximum speed
-  [br:blue](-c), [br:blue](--color)    Color the mess in random colors
+digits: list[str] = ["0", "1"]
+styles: list[AnyStyle] = [S.DIM, S.BOLD, S.INVERSE, S.UNDERLINE, S.STRIKETHROUGH, S.DOUBLE_UNDERLINE]
 
-[b](Controls:)
-  [br:red](Ctrl(⌘)[dim](+)C)      Stop the animation
-
-[b](Examples:)
-  [br:green](mess)            [dim](# [i](Show binary mess at normal speed))
-  [br:green](mess) [br:blue](--fast)     [dim](# [i](Show binary mess at maximum speed))
-  [br:green](mess) [br:blue](--color)    [dim](# [i](Show colorful binary mess))
-  [br:green](mess) [br:blue](-f -c)      [dim](# [i](Show colorful binary mess at maximum speed))
-"""
-    FormatCodes.print(help_text)
-
-
-x = ["0", "1"]
-f = ["dim", "bold", "inverse", "underline", "strikethrough", "double-underline"]
 if ARGS.color_mode.exists:
-    f.extend(
+    styles.extend(
         [
-            "black",
-            "red",
-            "green",
-            "yellow",
-            "blue",
-            "magenta",
-            "cyan",
-            "white",
-            "BR:black",
-            "BR:red",
-            "BR:green",
-            "BR:yellow",
-            "BR:blue",
-            "BR:magenta",
-            "BR:cyan",
-            "BR:white",
-            "BG:black",
-            "BG:red",
-            "BG:green",
-            "BG:yellow",
-            "BG:blue",
-            "BG:magenta",
-            "BG:cyan",
-            "BG:white",
-            "BG:BR:black",
-            "BG:BR:red",
-            "BG:BR:green",
-            "BG:BR:yellow",
-            "BG:BR:blue",
-            "BG:BR:magenta",
-            "BG:BR:cyan",
-            "BG:BR:white",
-            "randomCL",
-            "randomBG",
+            S.BLACK,
+            S.RED,
+            S.GREEN,
+            S.YELLOW,
+            S.BLUE,
+            S.MAGENTA,
+            S.CYAN,
+            S.WHITE,
+            S.BR.BLACK,
+            S.BR.RED,
+            S.BR.GREEN,
+            S.BR.YELLOW,
+            S.BR.BLUE,
+            S.BR.MAGENTA,
+            S.BR.CYAN,
+            S.BR.WHITE,
+            S.BG.BLACK,
+            S.BG.RED,
+            S.BG.GREEN,
+            S.BG.YELLOW,
+            S.BG.BLUE,
+            S.BG.MAGENTA,
+            S.BG.CYAN,
+            S.BG.WHITE,
+            S.BG.BR.BLACK,
+            S.BG.BR.RED,
+            S.BG.BR.GREEN,
+            S.BG.BR.YELLOW,
+            S.BG.BR.BLUE,
+            S.BG.BR.MAGENTA,
+            S.BG.BR.CYAN,
+            S.BG.BR.WHITE,
         ]
     )
 
 
 def random_hexa() -> str:
-    return f"#{random.randint(0, 255):02X}{random.randint(0, 255):02X}{random.randint(0, 255):02X}"
+    return f"#{rnd.randint(0, 255):02X}{rnd.randint(0, 255):02X}{rnd.randint(0, 255):02X}"
 
 
-def replace_special(text: str) -> str:
-    return text.replace("randomCL", random_hexa()).replace("randomBG", f"BG:{random_hexa()}")
+def binary_line() -> StyledText:
+    return StyledText(*(rnd.choice(digits) for _ in range(xx.console.get_width())))
 
 
-def rand_binary_line() -> str:
-    return "".join(
-        (f"[{rand_choice(f)}]" if rand_bits(1) else "") + (rand_choice(x) if rand_bits(1) else " ") + "[_]"
-        for _ in range(Console.width)
-    )
-
-
-def rand_color_binary_line() -> str:
-    return "".join(
-        (f"[{replace_special(rand_choice(f))}]" if rand_bits(1) else "") + (rand_choice(x) if rand_bits(1) else " ") + "[_]"
-        for _ in range(Console.width)
-    )
+def color_binary_line() -> StyledText:
+    return StyledText(*(rnd.choice(styles)(rnd.choice(digits)) for _ in range(xx.console.get_width())))
 
 
 def main() -> None:
@@ -111,20 +103,20 @@ def main() -> None:
     if ARGS.color_mode.exists:
         if ARGS.fast_mode.exists:
             while True:
-                fc_print(rand_color_binary_line())
+                color_binary_line().print()
         else:
             while True:
-                fc_print(rand_color_binary_line())
-                sleep(0.025)
+                color_binary_line().print()
+                time.sleep(0.025)
 
     else:
         if ARGS.fast_mode.exists:
             while True:
-                fc_print(rand_binary_line())
+                binary_line().print()
         else:
             while True:
-                fc_print(rand_binary_line())
-                sleep(0.025)
+                binary_line().print()
+                time.sleep(0.025)
 
 
 if __name__ == "__main__":
@@ -133,4 +125,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
