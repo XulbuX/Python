@@ -38,8 +38,15 @@ DEFAULT: ScriptDefaults = {
 COLORS: TreeColors = {
     "line": S.BR.BLACK,
     "error": S.RED,
-    "dir": S.BR.CYAN,
+    "dir": S.BR.WHITE,
     "file": S.WHITE,
+    "symlink": S.BR.CYAN,
+    "executable": S.BR.GREEN,
+    "archive": S.BR.RED,
+    "image": S.BR.MAGENTA,
+    "video": S.MAGENTA,
+    "audio": S.CYAN,
+    "code": S.BR.YELLOW,
     "content": S.BR.BLACK,
 }
 
@@ -85,6 +92,13 @@ class TreeColors(TypedDict):
     error: AnyStyle
     dir: AnyStyle
     file: AnyStyle
+    symlink: AnyStyle
+    executable: AnyStyle
+    archive: AnyStyle
+    image: AnyStyle
+    video: AnyStyle
+    audio: AnyStyle
+    code: AnyStyle
     content: AnyStyle
 
 
@@ -95,6 +109,43 @@ class ScriptDefaults(TypedDict):
     tree_style: int
     indent: int
     into_file: bool
+
+
+IMAGE_EXTS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".ico", ".tiff", ".ai"})
+ARCHIVE_EXTS = frozenset({".zip", ".tar", ".gz", ".rar", ".7z", ".bz2", ".xz", ".tgz"})
+VIDEO_EXTS = frozenset({".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"})
+AUDIO_EXTS = frozenset({".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"})
+EXEC_EXTS = frozenset({".exe", ".bat", ".cmd", ".com", ".appimage"})
+CODE_EXTS = frozenset(
+    {
+        ".bash",
+        ".bat",
+        ".c",
+        ".cpp",
+        ".css",
+        ".go",
+        ".h",
+        ".hpp",
+        ".html",
+        ".java",
+        ".js",
+        ".json",
+        ".md",
+        ".php",
+        ".ps1",
+        ".py",
+        ".pyi",
+        ".pyw",
+        ".rb",
+        ".rs",
+        ".sh",
+        ".ts",
+        ".xml",
+        ".yaml",
+        ".yml",
+        ".zsh",
+    }
+)
 
 
 class TreeStylePreset(TypedDict):
@@ -376,17 +427,31 @@ class Tree:
 
         self._c_line: str = StyledText(COLORS["line"]).ansi
         self._c_error: str = StyledText(COLORS["error"]).ansi
-        self._c_dir: str = StyledText(COLORS["dir"]).ansi
+        self._c_dir: str = StyledText(S.BOLD, COLORS["dir"]).ansi
         self._c_file: str = StyledText(COLORS["file"]).ansi
+        self._c_symlink: str = StyledText(COLORS["symlink"]).ansi
+        self._c_executable: str = StyledText(COLORS["executable"]).ansi
+        self._c_archive: str = StyledText(COLORS["archive"]).ansi
+        self._c_image: str = StyledText(COLORS["image"]).ansi
+        self._c_video: str = StyledText(COLORS["video"]).ansi
+        self._c_audio: str = StyledText(COLORS["audio"]).ansi
+        self._c_code: str = StyledText(COLORS["code"]).ansi
         self._c_content: str = StyledText(COLORS["content"]).ansi
 
-        self._c_dir_dim: str = StyledText(COLORS["dir"], S.DIM).ansi
-        self._c_line_dim: str = StyledText(COLORS["line"], S.DIM).ansi
+        self._c_dir_dim: str = StyledText(S.DIM, self._c_dir).ansi
+        self._c_line_dim: str = StyledText(S.DIM, self._c_line).ansi
 
         self._c_reset_b = self._c_reset.encode()
         self._c_line_b = self._c_line.encode()
         self._c_dir_b = self._c_dir.encode()
         self._c_file_b = self._c_file.encode()
+        self._c_symlink_b = self._c_symlink.encode()
+        self._c_executable_b = self._c_executable.encode()
+        self._c_archive_b = self._c_archive.encode()
+        self._c_image_b = self._c_image.encode()
+        self._c_video_b = self._c_video.encode()
+        self._c_audio_b = self._c_audio.encode()
+        self._c_code_b = self._c_code.encode()
         self._c_dim_b = self._c_dim.encode()
         self._c_content_b = self._c_content.encode()
         self._c_dir_dim_b = self._c_dir_dim.encode()
@@ -524,7 +589,7 @@ class Tree:
         self._branch_new_b = self.branch_new.encode()
         self._corners_b = tuple(c.encode() for c in self.corners)
         self._dirname_end_b = self.dirname_end.encode()
-        self._ignored_suffix_b = f"{_line_hor_str} {self._c_line_dim}{self.ignored}{self._c_reset}{self._c_line}\n".encode()
+        self._ignored_suffix_b = f"{_line_hor_str} {self.ignored}{self._c_reset}{self._c_line}\n".encode()
 
     def show_styles(self) -> None:
         """Display available tree styles with their corresponding visual representation."""
@@ -694,6 +759,42 @@ class Tree:
 
         return False
 
+    def _get_file_color_b(self, entry: os.DirEntry[str]) -> bytes:  # noqa: C901
+        """Determine the color for a file based on its type and extension."""
+        if entry.is_symlink():
+            return self._c_symlink_b
+
+        try:
+            if os.access(entry.path, os.X_OK):
+                return self._c_executable_b
+        except Exception:
+            pass
+
+        ext = Path(entry.name).suffix.lower()
+        if ext in EXEC_EXTS:
+            return self._c_executable_b
+        elif ext in IMAGE_EXTS:
+            return self._c_image_b
+        elif ext in ARCHIVE_EXTS:
+            return self._c_archive_b
+        elif ext in CODE_EXTS:
+            return self._c_code_b
+        elif ext in VIDEO_EXTS:
+            return self._c_video_b
+        elif ext in AUDIO_EXTS:
+            return self._c_audio_b
+
+        if entry.is_file():
+            try:
+                if entry.stat().st_size > 2:
+                    with open(entry.path, "rb") as f:
+                        if f.read(2) == b"#!":
+                            return self._c_executable_b
+            except Exception:
+                pass
+
+        return self._c_file_b
+
     @staticmethod
     @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
@@ -830,8 +931,12 @@ class Tree:
 
                     if entry is None:
                         result.extend(prefix_bytes)
-                        result.extend(self._c_line_dim_b)
-                        result.extend(self._corners_b[0] if is_last else self._branch_new_b)
+                        if is_last:
+                            result.extend(self._c_line_dim_b)
+                            result.extend(self._corners_b[0])
+                        else:
+                            result.extend(self._branch_new_b)
+                            result.extend(self._c_line_dim_b)
                         result.extend(self._ignored_suffix_b)
                         continue
 
@@ -855,7 +960,7 @@ class Tree:
                     else:
                         self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
-                        result.extend(self._c_file_b)
+                        result.extend(self._get_file_color_b(entry))
                         result.extend(entry.name.encode())
                         result.extend(self._c_reset_b)
                         result.extend(self._c_line_b)
@@ -928,8 +1033,14 @@ class Tree:
                     if self._should_ignore_path(current_rel_path) or (
                         is_dir and self._scan_directory(entry.path).should_ignore
                     ):
-                        result.extend(current_prefix)
-                        result.extend(self._c_line_dim_b)
+                        result.extend(prefix_bytes)
+                        if is_last:
+                            result.extend(self._c_line_dim_b)
+                            result.extend(branch)
+                        else:
+                            result.extend(branch)
+                            result.extend(self._c_line_dim_b)
+                        result.extend(self._line_hor_b)
                         result.extend(entry.name.encode())
                         if is_dir:
                             result.extend(self._dirname_end_b)
@@ -962,7 +1073,7 @@ class Tree:
                     else:
                         self._update_progress(Path(entry.path), is_dir=False)
                         result.extend(current_prefix)
-                        result.extend(self._c_file_b)
+                        result.extend(self._get_file_color_b(entry))
                         result.extend(entry.name.encode())
                         result.extend(self._c_reset_b)
                         result.extend(self._c_line_b)
