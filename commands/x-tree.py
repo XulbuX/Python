@@ -25,6 +25,7 @@ ARGS = xx.console.get_args(
         "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
         "no_progress": {"-n", "-np", "--no-progress"},
         "use_all_defaults": {"-d", "--default"},
+        "max_content_lines": {"-m", "--max-lines"},
         "help": {"-h", "--help"},
     }
 )
@@ -60,6 +61,7 @@ DEFAULT: ScriptDefaults = {
     "ignore_dirs": [],
     "auto_ignore": True,
     "include_file_contents": False,
+    "max_content_lines": 0,
     "indent": 2,
     "into_file": False,
 }
@@ -72,11 +74,12 @@ AUDIO_EXTS = frozenset({".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"})
 EXEC_EXTS = frozenset({".exe", ".bat", ".cmd", ".com", ".appimage"})
 CODE_EXTS = frozenset({
     ".bash", ".bat", ".c", ".cpp", ".css", ".go", ".h", ".hpp", ".html", ".java", ".js", ".json", ".md", ".php", ".ps1", ".py",
-    ".pyi", ".pyw", ".rb", ".rs", ".sh", ".ts", ".xml", ".yaml", ".yml", ".zsh"
+    ".pyi", ".pyw", ".rb", ".rs", ".sh", ".ts", ".vbs", ".xml", ".yaml", ".yml", ".zsh"
 })
 BINARY_EXTENSIONS = frozenset({
-    ".7z", ".avi", ".bin", ".cur", ".dat", ".db", ".dll", ".doc", ".docx", ".dylib", ".exe", ".gif", ".gz", ".ico", ".jpeg",
-    ".jpg", ".mov", ".mp3", ".mp4", ".pdf", ".png", ".rar", ".so", ".sqlite", ".tar", ".xls", ".xlsx", ".zip"
+    ".7z", ".ai", ".avi", ".bin", ".cur", ".dat", ".db", ".dll", ".doc", ".docx", ".dylib", ".eps", ".exe", ".gif", ".gz",
+    ".ico", ".jpeg", ".jpg", ".mov", ".mp3", ".mp4", ".pdf", ".png", ".psd", ".rar", ".so", ".sqlite", ".svg", ".tar", ".tif",
+    ".tiff", ".webp", ".xls", ".xlsx", ".zip"
 })
 
 
@@ -145,6 +148,7 @@ class ScriptDefaults(TypedDict):
     ignore_dirs: list[str]
     auto_ignore: bool
     include_file_contents: bool
+    max_content_lines: int
     indent: int
     into_file: bool
 
@@ -385,12 +389,13 @@ class TreeChars:
 
         self.indent_size = indent_size
         self.tab = " " * indent_size
-        self.line_hor_str = self.line_hor * max(0, indent_size - (2 if indent_size > 2 else 1)) + " "
+        self.line_hor_str = f"{self.line_hor} "
 
         # Colors as ANSI strings:
         self.c_dim = StyledText(S.DIM).ansi
         self.c_bold = StyledText(S.BOLD).ansi
         self.c_bold_in = StyledText(S.BOLD | S.INVERSE).ansi
+        self.c_italic = StyledText(S.ITALIC).ansi
         self.c_reset = StyledText(S.RESET).ansi
 
         self.c_line = StyledText(self.c_reset, COLORS["line"]).ansi
@@ -451,7 +456,7 @@ class DirectoryScanner:
             all_ignores.extend(d.lower() for d in IGNORE.paths)
 
         self.ignore_set = frozenset(
-            (d.lower().replace("\\", "/") if not Path(d).is_absolute() else "/" + d.lower().replace("\\", "/").lstrip("/"))
+            (d.lower().replace("\\", "/") if not Path(d).is_absolute() else f"/{d.lower().replace('\\', '/').lstrip('/')}")
             for d in all_ignores
         )
 
@@ -599,6 +604,7 @@ class TreeConfig:
     ignore_dirs: list[str] = field(default_factory=lambda: [])
     auto_ignore: bool = True
     include_file_contents: bool = False
+    max_content_lines: int = 0
     indent: int = 2
     display_progress: bool = True
 
@@ -684,7 +690,7 @@ class TreeRenderer:
         max_rel_path_len = xx.console.get_width() - (18 + status_len)
 
         if len(rel_path) > max_rel_path_len:
-            rel_path = "…" + rel_path[-max_rel_path_len:]
+            rel_path = f"…{rel_path[-max_rel_path_len:]}"
 
         xx.console.log(
             "Sprouting",
@@ -822,7 +828,7 @@ class TreeRenderer:
                 wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
             else:
                 indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
-                wrap_indent = f"{self.chars.line_ver}" + " " * indent_len
+                wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
             wrap_prefix = f"{prefix}{wrap_indent}"
 
             for part in w[1:-1]:
@@ -832,9 +838,8 @@ class TreeRenderer:
             lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}\n")
 
-        new_prefix = prefix + (
-            " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}" + " " * (self.chars.indent_size - 1)
-        )
+        indent_str = " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}{' ' * (self.chars.indent_size - 1)}"
+        new_prefix = f"{prefix}{indent_str}"
         self._render_tree(Path(entry.path), new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(self, entry: os.DirEntry[str], prefix: str, current_prefix: str, is_last: bool, lines: list[str]) -> None:
@@ -855,7 +860,7 @@ class TreeRenderer:
                 wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
             else:
                 indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
-                wrap_indent = f"{self.chars.line_ver}" + " " * indent_len
+                wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
             wrap_prefix = f"{prefix}{wrap_indent}"
 
             for part in w[1:]:
@@ -898,9 +903,8 @@ class TreeRenderer:
     def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, border_color: str, lines: list[str]) -> None:
         """Read and render the contents of a text file into the tree view."""
 
-        content_prefix = prefix + (
-            " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}" + " " * (self.chars.indent_size - 1)
-        )
+        indent_str = " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}{' ' * (self.chars.indent_size - 1)}"
+        content_prefix = f"{prefix}{indent_str}"
 
         try:
             with open(filepath, encoding="utf-8", errors="replace") as f:
@@ -943,7 +947,16 @@ class TreeRenderer:
                     wrapped_lines.append(line)
             file_lines = wrapped_lines
 
+            truncation_msg = ""
+            if self.config.max_content_lines > 0 and len(file_lines) > self.config.max_content_lines:
+                remaining = len(file_lines) - self.config.max_content_lines
+                file_lines = file_lines[: self.config.max_content_lines]
+                truncation_msg = f"{remaining} more"
+
             content_width = max((len(line) for line in file_lines), default=0)
+            if truncation_msg:
+                content_width = max(content_width, len(truncation_msg))
+
             hor_border = self.chars.line_hor * (content_width + 2)
 
             lines.append(
@@ -953,8 +966,16 @@ class TreeRenderer:
             for line in file_lines:
                 padding = " " * (content_width - len(line))
                 lines.append(
-                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {self.chars.c_content}{line}"
+                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {line}"
                     f"{self.chars.c_reset}{border_color}{padding} {self.chars.line_ver}\n"
+                )
+
+            if truncation_msg:
+                padding = " " * (content_width - len(truncation_msg))
+                lines.append(
+                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} "
+                    f"{padding}{self.chars.c_italic}{truncation_msg}"
+                    f"{self.chars.c_reset}{border_color} {self.chars.line_ver}\n"
                 )
 
             lines.append(
@@ -971,7 +992,7 @@ class TreeRenderer:
     def _render_error(self, exc: Exception, prefix: str, lines: list[str]) -> None:
         """Render an error message node when a path cannot be accessed."""
 
-        error_prefix = prefix + self.chars.corners[0] + (self.chars.line_hor * (self.chars.indent_size - 1))
+        error_prefix = f"{prefix}{self.chars.corners[0]}{self.chars.line_hor * (self.chars.indent_size - 1)}"
         lines.append(
             f"{error_prefix}{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
             f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
@@ -1074,6 +1095,16 @@ def get_user_inputs(config: TreeConfig) -> None:
         == "Y"
     )
 
+    if config.include_file_contents:
+        config.max_content_lines = xx.console.input(
+            StyledText(
+                S.BOLD("Max lines to display per file "), f"({config.max_content_lines}, 0 = unlimited)", S.BOLD(" > ")
+            ),
+            allowed_chars="0123456789",
+            default_val=config.max_content_lines,
+            output_type=int,
+        )
+
     config.indent = xx.console.input(
         StyledText(S.BOLD("Enter the indent "), f"({config.indent})", S.BOLD(" > ")),
         max_len=2,
@@ -1095,6 +1126,7 @@ def main() -> None:
         ignore_dirs=DEFAULT["ignore_dirs"].copy(),
         auto_ignore=DEFAULT["auto_ignore"],
         include_file_contents=DEFAULT["include_file_contents"],
+        max_content_lines=int(v) if (v := ARGS.max_content_lines.get(0)) else DEFAULT["max_content_lines"],
         indent=DEFAULT["indent"],
         display_progress=(not ARGS.no_progress.exists),
     )
@@ -1120,6 +1152,7 @@ def main() -> None:
         ignore_dirs=config.ignore_dirs,
         auto_ignore=config.auto_ignore,
         include_file_contents=config.include_file_contents,
+        max_content_lines=config.max_content_lines,
         indent=config.indent,
         display_progress=config.display_progress,
     )
