@@ -25,7 +25,7 @@ ARGS = xx.console.get_args(
         "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
         "no_progress": {"-n", "-np", "--no-progress"},
         "use_all_defaults": {"-d", "--default"},
-        "max_content_lines": {"-m", "--max-lines"},
+        "include_file_contents": {"-c", "--content"},
         "help": {"-h", "--help"},
     }
 )
@@ -98,12 +98,15 @@ def print_help() -> None:
         "",
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore-dirs", S.DIM("="), "S"), "    Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
+        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
         ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--no-progress"), "      Disable progress display during tree generation"),
         ("  ", S.BR.BLUE("-d"), ", ", S.BR.BLUE("--default"), "          Use all default settings without prompts"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-progress"), "                             ", S.DIM("# ", S.ITALIC("Disable progress display"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-d"), "                                        ", S.DIM("# ", S.ITALIC("Use all default settings without prompts"))),  # noqa: E501
         "",
         (S.BOLD("Prompts: "), S.DIM("(interactive — press Enter for defaults, or use ", S.BR.BLUE("-d"), " to skip all)")),
@@ -643,18 +646,20 @@ class TreeRenderer:
         self._render_tree(self.config.base_dir, "", 0, "", lines)
         result_str = "".join(lines)
 
-        xx.console.log(
-            "Photosynthesis Complete",
-            StyledText(
-                ("max depth ", S.BR.CYAN(str(self.stats.max_depth))),
-                (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_dirs:,}"), " dirs"),
-                (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
-            ),
-            title_bg_color=S.BG.BR.GREEN,
-            start="\033[F\033[K",
+        console_width = xx.console.get_width()
+        tree_info = StyledText(
+            ("max depth ", S.BR.CYAN(str(self.stats.max_depth))),
+            (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_dirs:,}"), " dirs"),
+            (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
         )
 
-        return StyledText(COLORS["line"], result_str)
+        return StyledText(
+            (COLORS["line"], result_str),
+            "\n",
+            (S.RESET, S.DIM("─" * console_width), "\n"),
+            (" " * (console_width - len(tree_info.raw) - 1), tree_info.ansi),
+            "\n",
+        )
 
     def _update_progress(self, current_dir: Path, is_dir: bool = True) -> None:
         """Update the generation progress display in terminal."""
@@ -731,6 +736,8 @@ class TreeRenderer:
 
         except Exception as exc:
             self._render_error(exc, prefix, lines)
+
+        print("\033[F\033[K", end="")  # Clear tree generation progress line.
 
     def _render_root(self, dir_path: Path, lines: list[str]) -> None:
         """Render the root directory at the top of the tree."""
@@ -1055,9 +1062,7 @@ class TreeRenderer:
 def get_user_inputs(config: TreeConfig) -> None:
     """Prompt the user for terminal inputs to construct the TreeConfig interactively."""
 
-    if ARGS.ignore_dirs.exists:
-        config.ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values else []
-    else:
+    if not ARGS.ignore_dirs.exists:
         ignore_input = xx.console.input(
             StyledText(
                 S.BOLD("Enter directory names/paths which's content should be ignored "),
@@ -1081,29 +1086,22 @@ def get_user_inputs(config: TreeConfig) -> None:
         == "Y"
     )
 
-    config.include_file_contents = (
-        xx.console.input(
+    if not ARGS.include_file_contents.exists:
+        content_input = xx.console.input(
             StyledText(
-                S.BOLD("Display the file contents in the tree "),
-                ("(Y)" if config.include_file_contents else "(N)"),
+                S.BOLD("How much file contents should be included? "),
+                "(Enter/non-number = none, 0/negative = all, N = max lines)",
                 S.BOLD(" > "),
             ),
-            max_len=1,
-            allowed_chars="yYnN",
-            default_val="Y" if config.include_file_contents else "N",
-        ).upper()
-        == "Y"
-    )
-
-    if config.include_file_contents:
-        config.max_content_lines = xx.console.input(
-            StyledText(
-                S.BOLD("Max lines to display per file "), f"({config.max_content_lines}, 0 = unlimited)", S.BOLD(" > ")
-            ),
-            allowed_chars="0123456789",
-            default_val=config.max_content_lines,
-            output_type=int,
         )
+        if content_input.strip() == "":
+            config.include_file_contents = False
+        else:
+            try:
+                config.include_file_contents = True
+                config.max_content_lines = max(0, int(content_input))
+            except ValueError:
+                config.include_file_contents = False
 
     config.indent = xx.console.input(
         StyledText(S.BOLD("Enter the indent "), f"({config.indent})", S.BOLD(" > ")),
@@ -1119,14 +1117,31 @@ def main() -> None:
         print_help()
         return
 
-    base_dir = Path(v) if (v := ARGS.base_dir.get(0)) else Path.cwd()
+    base_dir = Path(val) if (val := ARGS.base_dir.get(0)) else Path.cwd()
+
+    if ARGS.ignore_dirs.exists:
+        ignore_dirs = [d.strip() for d in ARGS.ignore_dirs.values[0].split("|")] if ARGS.ignore_dirs.values else []
+    else:
+        ignore_dirs = DEFAULT["ignore_dirs"].copy()
+
+    inc_contents = DEFAULT["include_file_contents"]
+    max_lines = DEFAULT["max_content_lines"]
+
+    if ARGS.include_file_contents.exists:
+        inc_contents = True
+        v = ARGS.include_file_contents.get(0)
+        if v is not None:
+            try:
+                max_lines = max(0, int(v))
+            except ValueError:
+                max_lines = 0
 
     config = TreeConfig(
         base_dir=base_dir,
-        ignore_dirs=DEFAULT["ignore_dirs"].copy(),
+        ignore_dirs=ignore_dirs,
         auto_ignore=DEFAULT["auto_ignore"],
-        include_file_contents=DEFAULT["include_file_contents"],
-        max_content_lines=int(v) if (v := ARGS.max_content_lines.get(0)) else DEFAULT["max_content_lines"],
+        include_file_contents=inc_contents,
+        max_content_lines=max_lines,
         indent=DEFAULT["indent"],
         display_progress=(not ARGS.no_progress.exists),
     )
