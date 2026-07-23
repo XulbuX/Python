@@ -425,6 +425,22 @@ class DirectoryScanner:
     _UUID_ANYWHERE = re.compile(r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}")
     _SEP_SPLITTER = re.compile(r"[-_~@\s]+")
 
+    _TEXT_TRANS = str.maketrans(
+        {
+            0x2000: " ",
+            0x2001: " ",
+            0x2002: " ",
+            0x2003: " ",
+            0x2004: " ",
+            0x2005: " ",
+            0x2006: " ",
+            0x2007: " ",
+            0x2008: " ",
+            0x2009: " ",
+            0x200A: " ",
+        }
+    )
+
     def __init__(self, ignore_dirs: list[str], auto_ignore: bool):
         """Initialize the directory scanner with ignore sets and rules."""
 
@@ -931,7 +947,7 @@ class TreeRenderer:
             return self.chars.c_symlink, self.chars.c_symlink_dim
 
         try:
-            if os.access(entry.path, os.X_OK):
+            if entry.stat(follow_symlinks=False).st_mode & 0o111:
                 return self.chars.c_executable, self.chars.c_executable_dim
         except Exception:
             pass
@@ -970,10 +986,10 @@ class TreeRenderer:
             return False
 
         try:
-            with open(filepath, "rb") as f:
-                chunk = f.read(1024)
-                text_characters = bytes(range(32, 127)) + b"\n\r\t\f\b"
-                return bool(chunk) and all(byte in text_characters for byte in chunk)
+            with open(filepath, "rb") as file:
+                if not (chunk := file.read(1024)):
+                    return False
+                return b"\0" not in chunk
         except Exception:
             return False
 
