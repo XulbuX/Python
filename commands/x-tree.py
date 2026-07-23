@@ -361,7 +361,7 @@ class Tree:
                 "branch_new": "├",
                 "corners": ("└", "┘", "┐"),
                 "error": "⚠",
-                "ignored": "...",
+                "ignored": "…",
                 "dirname_end": "/",
             },
             2: {
@@ -370,7 +370,7 @@ class Tree:
                 "branch_new": "├",
                 "corners": ("╰", "╯", "╮"),
                 "error": "⚠",
-                "ignored": "...",
+                "ignored": "…",
                 "dirname_end": "/",
             },
             3: {
@@ -379,7 +379,7 @@ class Tree:
                 "branch_new": "┣",
                 "corners": ("┗", "┛", "┓"),
                 "error": "⚠",
-                "ignored": "...",
+                "ignored": "…",
                 "dirname_end": "/",
             },
             4: {
@@ -388,7 +388,7 @@ class Tree:
                 "branch_new": "╠",
                 "corners": ("╚", "╝", "╗"),
                 "error": "⚠",
-                "ignored": "...",
+                "ignored": "…",
                 "dirname_end": "/",
             },
         }
@@ -454,8 +454,12 @@ class Tree:
         result = self._gen_tree(self.base_dir)
 
         xx.console.done(
-            f"[b](Generated tree:) max depth [br:cyan]({self.gen_stats.max_depth}) [dim](|) "
-            f"[br:cyan]({self.gen_stats.processed_dirs:,}) dirs [dim](|) [br:cyan]({self.gen_stats.processed_files:,}) files",
+            StyledText(
+                S.BOLD("Generating tree: "),
+                ("max depth ", S.BR.CYAN(str(self.gen_stats.max_depth))),
+                (S.DIM(" | "), S.BR.CYAN(f"{self.gen_stats.processed_dirs:,}"), " dirs"),
+                (S.DIM(" | "), S.BR.CYAN(f"{self.gen_stats.processed_files:,}"), " files"),
+            ),
             start="\033[F\033[K",
         )
 
@@ -697,23 +701,23 @@ class Tree:
             format(self.gen_stats.processed_files, ","),
         )
         max_rel_path_len = xx.console.get_width() - (
-            30
+            28
             + len(
-                f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth} "
-                f"| {formatted_dirs} dirs | {formatted_files} files | "
+                f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth}"
+                f" | {formatted_dirs} dirs | {formatted_files} files | "
             )
         )
 
         if len(rel_path) > max_rel_path_len:
-            rel_path = "..." + rel_path[-max_rel_path_len:]
+            rel_path = "…" + rel_path[-max_rel_path_len:]
 
         xx.console.log(
             "GENERATING TREE",
-            (
-                f"depth [br:cyan]({self.gen_stats.current_depth}/{self.gen_stats.max_depth}) "
-                f"[dim](|) [br:cyan]({formatted_dirs}) dirs "
-                f"[dim](|) [br:cyan]({formatted_files}) files "
-                f"[dim](|) [white]{rel_path}[_]"
+            StyledText(
+                ("depth ", S.BR.CYAN(f"{self.gen_stats.current_depth}/{self.gen_stats.max_depth}")),
+                (S.DIM(" | "), S.BR.CYAN(formatted_dirs), " dirs"),
+                (S.DIM(" | "), S.BR.CYAN(formatted_files), " files"),
+                (S.DIM(" | "), S.WHITE(rel_path)),
             ),
             title_bg_color=COLOR.BLUE,
             start="\033[F\033[K",
@@ -847,8 +851,11 @@ class Tree:
 
                             except Exception:
                                 result.extend(
-                                    f"{content_prefix}{self.corners[0]}{self.line_hor}[b|in|red] {self.error} "
-                                    f"Error reading file contents. [_b|_in|white]\n".encode()
+                                    StyledText(
+                                        (content_prefix, self.corners[0], self.line_hor),
+                                        (S.BOLD | S.INVERSE | S.RED)(f" {self.error} Error reading file contents. "),
+                                        ("\n", S.WHITE),
+                                    ).ansi.encode()
                                 )
 
             else:
@@ -935,13 +942,22 @@ class Tree:
 
                             except Exception:
                                 result.extend(
-                                    f"{content_prefix}{self.corners[0]}{self.line_hor}[b|in|red] {self.error} "
-                                    f"Error reading file contents. [_b|_in|white]\n".encode()
+                                    StyledText(
+                                        (content_prefix, self.corners[0], self.line_hor),
+                                        (S.BOLD | S.INVERSE | S.RED)(f" {self.error} Error reading file contents. "),
+                                        ("\n", S.WHITE),
+                                    ).ansi.encode()
                                 )
 
         except Exception as exc:
             error_prefix = _prefix + self.corners[0] + (self.line_hor * (self.indent - 1))
-            result.extend(f"{error_prefix}[b|in|red] {self.error} {exc!s} [_b|_in|white]\n".encode())
+            result.extend(
+                StyledText(
+                    error_prefix,
+                    (S.BOLD | S.INVERSE | S.RED)(f" {self.error} {exc!s} "),
+                    ("\n", S.WHITE),
+                ).ansi.encode()
+            )
 
         return bytes(result).decode() if result else ""
 
@@ -965,13 +981,21 @@ def main() -> None:
             ignore_dirs = ARGS.ignore_dirs.values[0].split("|") if ARGS.ignore_dirs.values else []
         else:
             ignore_dirs = xx.console.input(
-                "[b](Enter directory names/paths which's content should be ignored) ([cyan](|) separated) [b](>) "
+                StyledText(
+                    S.BOLD("Enter directory names/paths which's content should be ignored "),
+                    ("(", S.CYAN("|"), " separated)"),
+                    S.BOLD(" > "),
+                ),
             ).split("|")
         ignore_dirs = [d.strip() for d in ignore_dirs]
 
         auto_ignore = (
             xx.console.input(
-                f"[b](Enable auto-ignore unimportant directories) {'(Y)' if auto_ignore else '(N)'} [b](>) ",
+                StyledText(
+                    S.BOLD("Enable auto-ignore unimportant directories "),
+                    ("(Y)" if auto_ignore else "(N)"),
+                    S.BOLD(" > "),
+                ),
                 max_len=1,
                 allowed_chars="yYnN",
                 default_val="Y" if auto_ignore else "N",
@@ -981,7 +1005,11 @@ def main() -> None:
 
         include_file_contents = (
             xx.console.input(
-                f"[b](Display the file contents in the tree) {'(Y)' if include_file_contents else '(N)'} [b](>) ",
+                StyledText(
+                    S.BOLD("Display the file contents in the tree "),
+                    ("(Y)" if include_file_contents else "(N)"),
+                    S.BOLD(" > "),
+                ),
                 max_len=1,
                 allowed_chars="yYnN",
                 default_val="Y" if include_file_contents else "N",
@@ -991,10 +1019,16 @@ def main() -> None:
 
         StyledText(S.BOLD("Enter the tree style "), "(1-4)").print()
         tree.show_styles()
-        style = xx.console.input(f"({style}) [b](>) ", max_len=1, allowed_chars="1234", default_val=style, output_type=int)
+        style = xx.console.input(
+            StyledText(f"({style})", S.BOLD(" > ")),
+            max_len=1,
+            allowed_chars="1234",
+            default_val=style,
+            output_type=int,
+        )
 
         indent = xx.console.input(
-            f"[b](Enter the indent) ({indent}) [b](>) ",
+            StyledText(S.BOLD("Enter the indent "), f"({indent})", S.BOLD(" > ")),
             max_len=2,
             allowed_chars="0123456789",
             default_val=indent,
@@ -1003,7 +1037,7 @@ def main() -> None:
 
         into_file = (
             xx.console.input(
-                f"[b](Output tree into file) {'(Y)' if into_file else '(N)'} [b](>) ",
+                StyledText(S.BOLD("Output tree into file "), ("(Y)" if into_file else "(N)"), S.BOLD(" > ")),
                 max_len=1,
                 allowed_chars="yYnN",
                 default_val="Y" if into_file else "N",
@@ -1026,16 +1060,16 @@ def main() -> None:
             file = xx.file.create("tree.txt", result)
         except FileExistsError:
             cls_line = "\033[F\033[K"
-            if xx.console.confirm(f"{' ' * 17}[white]tree.txt[_] already exists. Overwrite?", end=""):
+            if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
                 file = xx.file.create("tree.txt", result, force=True)
             else:
                 xx.console.exit()
         if file:
             xx.console.done(
-                f"[white|link:file:///{file.resolve()}]({file.name}) successfully created.", start=cls_line, end="\n\n"
+                StyledText((S.WHITE | S.link(file))(file.name), " successfully created."), start=cls_line, end="\n\n"
             )
         else:
-            xx.console.fail("[br:red]File is empty or failed to create file.[_]", start=cls_line, end="\n\n")
+            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
     else:
         StyledText("\n", S.WHITE(result)).print()
 
