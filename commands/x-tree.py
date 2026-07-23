@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar, NamedTuple, TypedDict
 import xulbux as xx
-from xulbux import S, StyledText
+from xulbux.ansi import AnyStyle, S, StyledText
 from xulbux.base.consts import COLOR
 
 ARGS = xx.console.get_args(
@@ -34,6 +34,10 @@ DEFAULT: ScriptDefaults = {
     "tree_style": 2,
     "indent": 2,
     "into_file": False,
+}
+COLORS: TreeColors = {
+    "line": S.BR.BLACK,
+    "error": S.RED,
 }
 
 
@@ -71,6 +75,11 @@ def print_help() -> None:
         sep="\n",
     ).print()
 # fmt: on
+
+
+class TreeColors(TypedDict):
+    line: AnyStyle
+    error: AnyStyle
 
 
 class ScriptDefaults(TypedDict):
@@ -354,6 +363,12 @@ class Tree:
         self.indent: int = indent
         self.display_progress: bool | None = display_progress
         self.ignore_set: frozenset[str] = frozenset()
+
+        self._c_reset: str = StyledText(S.RESET).ansi
+        self._c_b_in: str = StyledText(S.BOLD, S.INVERSE).ansi
+        self._c_line: str = StyledText(COLORS["line"]).ansi
+        self._c_error: str = StyledText(COLORS["error"]).ansi
+
         self.style_presets: dict[int, TreeStylePreset] = {
             1: {
                 "line_ver": "│",
@@ -408,7 +423,7 @@ class Tree:
         style: int | None = None,
         indent: int | None = None,
         display_progress: bool | None = None,
-    ) -> str:
+    ) -> StyledText:
         """Generate the directory tree as a string."""
 
         if ignore_dirs is None:
@@ -453,17 +468,18 @@ class Tree:
         self._reset_style_attrs()
         result = self._gen_tree(self.base_dir)
 
-        xx.console.done(
+        xx.console.log(
+            "Photosynthesis Complete",
             StyledText(
-                S.BOLD("Generating tree: "),
                 ("max depth ", S.BR.CYAN(str(self.gen_stats.max_depth))),
                 (S.DIM(" | "), S.BR.CYAN(f"{self.gen_stats.processed_dirs:,}"), " dirs"),
                 (S.DIM(" | "), S.BR.CYAN(f"{self.gen_stats.processed_files:,}"), " files"),
             ),
+            title_bg_color=S.BG.BR.GREEN,
             start="\033[F\033[K",
         )
 
-        return result
+        return StyledText(COLORS["line"], result)
 
     def _reset_style_attrs(self) -> None:
         """Reset style attributes based on the current style preset."""
@@ -480,11 +496,12 @@ class Tree:
 
         self._tab = self._SPACE * self.indent
         self._line_ver_b = self.line_ver.encode()
-        self._line_hor_b = self.line_hor.encode() * max(0, self.indent - (2 if self.indent > 2 else 1))
+        _line_hor_str = self.line_hor * max(0, self.indent - (2 if self.indent > 2 else 1))
+        self._line_hor_b = f"{_line_hor_str} ".encode()
         self._branch_new_b = self.branch_new.encode()
         self._corners_b = tuple(c.encode() for c in self.corners)
         self._dirname_end_b = self.dirname_end.encode()
-        self._ignored_suffix_b = f"{self.line_hor}{self.ignored}\n".encode()
+        self._ignored_suffix_b = f"{_line_hor_str} {self.ignored}\n".encode()
 
     def show_styles(self) -> None:
         """Display available tree styles with their corresponding visual representation."""
@@ -493,7 +510,7 @@ class Tree:
             *(
                 (
                     (S.BOLD | S.ITALIC)(f" {style}"),
-                    f"  {details['corners'][0]}{details['line_hor']}{details['ignored']}{details['dirname_end']}",
+                    f"  {details['corners'][0]}{details['line_hor']} {details['ignored']}{details['dirname_end']}",
                 )
                 for style, details in self.style_presets.items()
             ),
@@ -701,7 +718,7 @@ class Tree:
             format(self.gen_stats.processed_files, ","),
         )
         max_rel_path_len = xx.console.get_width() - (
-            28
+            18
             + len(
                 f"depth {self.gen_stats.current_depth}/{self.gen_stats.max_depth}"
                 f" | {formatted_dirs} dirs | {formatted_files} files | "
@@ -712,7 +729,7 @@ class Tree:
             rel_path = "…" + rel_path[-max_rel_path_len:]
 
         xx.console.log(
-            "GENERATING TREE",
+            "Sprouting",
             StyledText(
                 ("depth ", S.BR.CYAN(f"{self.gen_stats.current_depth}/{self.gen_stats.max_depth}")),
                 (S.DIM(" | "), S.BR.CYAN(formatted_dirs), " dirs"),
@@ -851,11 +868,13 @@ class Tree:
 
                             except Exception:
                                 result.extend(
-                                    StyledText(
-                                        (content_prefix, self.corners[0], self.line_hor),
-                                        (S.BOLD | S.INVERSE | S.RED)(f" {self.error} Error reading file contents. "),
-                                        ("\n", S.WHITE),
-                                    ).ansi.encode()
+                                    (
+                                        content_prefix
+                                        + self.corners[0]
+                                        + self.line_hor
+                                        + f"{self._c_b_in}{self._c_error} {self.error} "
+                                        f"Error reading file contents. {self._c_reset}\n{self._c_line}"
+                                    ).encode()
                                 )
 
             else:
@@ -942,21 +961,19 @@ class Tree:
 
                             except Exception:
                                 result.extend(
-                                    StyledText(
-                                        (content_prefix, self.corners[0], self.line_hor),
-                                        (S.BOLD | S.INVERSE | S.RED)(f" {self.error} Error reading file contents. "),
-                                        ("\n", S.WHITE),
-                                    ).ansi.encode()
+                                    (
+                                        content_prefix
+                                        + self.corners[0]
+                                        + self.line_hor
+                                        + f"{self._c_b_in}{self._c_error} {self.error}"
+                                        f" Error reading file contents. {self._c_reset}\n{self._c_line}"
+                                    ).encode()
                                 )
 
         except Exception as exc:
             error_prefix = _prefix + self.corners[0] + (self.line_hor * (self.indent - 1))
             result.extend(
-                StyledText(
-                    error_prefix,
-                    (S.BOLD | S.INVERSE | S.RED)(f" {self.error} {exc!s} "),
-                    ("\n", S.WHITE),
-                ).ansi.encode()
+                (error_prefix + f"{self._c_b_in}{self._c_error} {self.error} {exc!s} {self._c_reset}\n{self._c_line}").encode()
             )
 
         return bytes(result).decode() if result else ""
@@ -1057,11 +1074,11 @@ def main() -> None:
     if into_file:
         file, cls_line = None, ""
         try:
-            file = xx.file.create("tree.txt", result)
+            file = xx.file.create("tree.txt", result.raw)
         except FileExistsError:
             cls_line = "\033[F\033[K"
             if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
-                file = xx.file.create("tree.txt", result, force=True)
+                file = xx.file.create("tree.txt", result.raw, force=True)
             else:
                 xx.console.exit()
         if file:
@@ -1071,7 +1088,8 @@ def main() -> None:
         else:
             xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
     else:
-        StyledText("\n", S.WHITE(result)).print()
+        print()
+        result.print()
 
 
 if __name__ == "__main__":
