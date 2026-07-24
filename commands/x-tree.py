@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple, TypedDict, cast
 import xulbux as xx
 from xulbux import S, StyledText, Throbber
 
@@ -27,6 +27,7 @@ ARGS = xx.console.get_args(
     {
         "base_dir": "before",
         "ignore_dirs": {"-i", "--ignore"},
+        "auto_ignore_mode": {"-a", "--auto-ignore"},
         "include_file_contents": {"-c", "--content"},
         "to_file": {"-f", "--file"},
         "interactive": {"-I", "--interactive"},
@@ -63,7 +64,7 @@ CHARS: TreeCharConfig = {
 
 DEFAULT: ScriptDefaults = {
     "ignore_dirs": [],
-    "auto_ignore": True,
+    "auto_ignore_mode": 2,
     "include_file_contents": False,
     "max_content_lines": 0,
     "indent": 2,
@@ -119,26 +120,29 @@ def print_help() -> None:
         (S.BOLD("Usage: "), S.BR.GREEN("x-tree "), S.BR.CYAN("<base_dir> "), S.BR.BLUE("[options]")),
         "",
         S.BOLD("Arguments:"),
-        ("  ", S.BR.CYAN("base_dir"), "             Base directory to generate tree from ", S.DIM("(default: CWD)")),
+        ("  ", S.BR.CYAN("base_dir"), "               Base directory to generate tree from ", S.DIM("(default: CWD)")),
         "",
         S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "       Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
-        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "      Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "         Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
-        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "    Prompt for interactive tree settings"),
+        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
+        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
+        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
+        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "           Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--auto-ignore", S.DIM("="), "1"), "                           ", S.DIM("# ", S.ITALIC("Set auto-ignore mode to hardcoded only"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # noqa: E501
         "",
         (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
-        ("  ", (S.ITALIC | S.DIM)("2"), "  Include file contents in tree"),
-                ("  ", (S.ITALIC | S.DIM)("3"), "  Indentation size"),
-        ("  ", (S.ITALIC | S.DIM)("4"), "  Output tree to file"),
+        ("  ", (S.ITALIC | S.DIM)("2"), "  Auto-ignore mode"),
+        ("  ", (S.ITALIC | S.DIM)("3"), "  Include file contents in tree"),
+        ("  ", (S.ITALIC | S.DIM)("4"), "  Indentation size"),
+        ("  ", (S.ITALIC | S.DIM)("5"), "  Output tree to file"),
         "",
         sep="\n",
     ).print()
@@ -174,7 +178,7 @@ class TreeCharConfig(TypedDict):
 
 class ScriptDefaults(TypedDict):
     ignore_dirs: list[str]
-    auto_ignore: bool
+    auto_ignore_mode: Literal[0, 1, 2]
     include_file_contents: bool
     max_content_lines: int
     indent: int
@@ -227,16 +231,20 @@ class IGNORE:
         ".minecraft/assets/objects",
         ".minecraft/assets/skins",
         ".mvn",
+        ".mypy_*",
         ".next",
         ".npm",
         ".nuxt",
         ".nvm",
         ".nx",
         ".output",
+        ".pytest_*",
+        ".ruff_*",
         ".scannerwork",
         ".sonar",
         ".svn",
         ".terraform",
+        ".tmp.*",
         ".tox",
         ".venv",
         ".vs",
@@ -248,6 +256,7 @@ class IGNORE:
         "*[-_.@]temp",
         "$recycle.bin",
         "addons-l10n",
+        "adobe/common/ptx",
         "adobe/typeQuest",
         "aggregatedCache",
         "artifacts",
@@ -278,6 +287,8 @@ class IGNORE:
         "dawnWebGPUCache",
         "debug",
         "debugbar",
+        "dim-1/mw$default",
+        "dim1/mw$default",
         "dist-newstyle",
         "dist",
         "docker",
@@ -475,13 +486,13 @@ class DirectoryScanner:
         }
     )
 
-    def __init__(self, ignore_dirs: list[str], auto_ignore: bool):
+    def __init__(self, ignore_dirs: list[str], auto_ignore_mode: Literal[0, 1, 2]):
         """Initialize the directory scanner with ignore sets and rules."""
 
-        self.auto_ignore = auto_ignore
+        self.auto_ignore_mode = auto_ignore_mode
 
         all_ignores = ignore_dirs.copy()
-        if auto_ignore:
+        if auto_ignore_mode > 0:
             all_ignores.extend(path.lower() for path in IGNORE.paths)
 
         self.exact_names: set[str] = set()
@@ -613,7 +624,7 @@ class DirectoryScanner:
         if cached is not None:
             return cached
 
-        if not self.auto_ignore:
+        if self.auto_ignore_mode != 2:
             try:
                 with os.scandir(dir_path) as it:
                     result = DirScanResult(False, 0, 0, False, tuple(it))
@@ -677,12 +688,12 @@ class DirectoryScanner:
 @dataclass
 class TreeConfig:
     base_dir: Path
+    max_width: int = 0
     ignore_dirs: list[str] = field(default_factory=lambda: [])
-    auto_ignore: bool = True
+    auto_ignore_mode: Literal[0, 1, 2] = 2
     include_file_contents: bool = False
     max_content_lines: int = 0
     indent: int = 2
-    max_width: int = 0
 
     def __post_init__(self):
         """Resolve base directory and set derived properties."""
@@ -699,14 +710,14 @@ class TreeRenderer:
 
         self.config = config
         self.chars = TreeChars(config.indent_size)
-        self.scanner = DirectoryScanner(config.ignore_dirs, config.auto_ignore)
+        self.scanner = DirectoryScanner(config.ignore_dirs, config.auto_ignore_mode)
         self.stats = GenerationStats()
         self._progress_update_interval = 0.05
         self._last_progress_update: float = 0.0
         self._progress_item_count: int = 0
         self._console_width: int = xx.console.get_width()
 
-    def _pre_scan_parallel(self, root_dir: str) -> None:
+    def _pre_scan_parallel(self, root_dir: str) -> None:  # noqa: C901
         """Pre-populate the scan and ignore caches by scanning all subdirectories in
         parallel before the single-threaded rendering pass. I/O calls release the GIL,
         so a thread pool gives a large real-world speedup on any modern SSD."""
@@ -714,12 +725,20 @@ class TreeRenderer:
         done = threading.Event()
         max_workers = min(32, (os.cpu_count() or 4) * 4)
         active = [1]  # Number of in-flight tasks; pre-counted before each submit.
+        canceled = [False]
 
         def _scan(abs_path: str, rel_path: str) -> None:
+            if canceled[0]:
+                with lock:
+                    active[0] -= 1
+                    if active[0] == 0:
+                        done.set()
+                return
+
             try:
                 result = self.scanner.scan_directory(abs_path)
 
-                if not result.should_ignore:
+                if not result.should_ignore and not canceled[0]:
                     new_items: list[tuple[str, str]] = []
 
                     for entry in result.entries:
@@ -728,7 +747,7 @@ class TreeRenderer:
                             if not self.scanner.should_ignore_path(entry_rel):
                                 new_items.append((entry.path, entry_rel))
 
-                    if new_items:
+                    if new_items and not canceled[0]:
                         with lock:
                             active[0] += len(new_items)
                         for item in new_items:
@@ -740,9 +759,17 @@ class TreeRenderer:
                     if active[0] == 0:
                         done.set()
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor = ThreadPoolExecutor(max_workers=max_workers)
+        try:
             executor.submit(_scan, root_dir, "")
-            done.wait()
+            while not done.wait(0.1):
+                pass
+        except KeyboardInterrupt:
+            canceled[0] = True
+            executor.shutdown(wait=False)
+            raise
+        finally:
+            executor.shutdown(wait=False)
 
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
@@ -830,9 +857,13 @@ class TreeRenderer:
 
         max_rel_path_len = max(10, self._console_width - 22)
 
-        rel_path = current_name if len(current_name) <= max_rel_path_len else f"…{current_name[-max_rel_path_len:]}"
+        rel_path = current_name if len(current_name) <= max_rel_path_len else f".{current_name[-max_rel_path_len:]}"
+        rel_path = rel_path or " "
 
-        xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
+        if is_dir:
+            xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
+        else:
+            xx.console.log("Sprouting", f"{self.chars.c_file}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
 
     def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
@@ -841,7 +872,7 @@ class TreeRenderer:
         bslash = dir_path.rfind("\\")
         sep_pos = max(slash, bslash)
         dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
-        self._update_progress(dir_name, level)
+        self._update_progress(dir_name or dir_path, level)
 
         try:
             if level == 0:
@@ -1211,23 +1242,26 @@ def get_user_inputs(config: TreeConfig) -> None:
         )
         config.ignore_dirs = [i_dir.strip() for i_dir in ignore_input.split("|")]
 
-    config.auto_ignore = (
+    config.auto_ignore_mode = cast(
+        "Literal[0, 1, 2]",
         xx.console.input(
             StyledText(
-                S.BOLD("Enable auto-ignore unimportant directories?\n"),
-                (S.DIM("(Y)" if config.auto_ignore else "(N)"), " > "),
+                S.BOLD("Auto-ignore unimportant directories?\n"),
+                "0 = None, 1 = Hardcoded only, 2 = Smart\n",
+                (S.DIM(f"({config.auto_ignore_mode})"), " > "),
             ),
             max_len=1,
-            allowed_chars="yYnN",
-            default_val="Y" if config.auto_ignore else "N",
-        ).upper()
-        == "Y"
+            allowed_chars="012",
+            default_val=config.auto_ignore_mode,
+            output_type=int,
+        ),
     )
 
     if not ARGS.include_file_contents.exists:
         content_input = xx.console.input(
             StyledText(
-                S.BOLD("How much file contents should be included?\n0 = full file contents, N = first N lines\n"),
+                S.BOLD("How much file contents should be included?\n"),
+                "0 = full file contents, N = first N lines\n",
                 (S.DIM("(none)"), " > "),
             ),
         )
@@ -1269,18 +1303,26 @@ def main() -> None:  # noqa: C901
     inc_contents = DEFAULT["include_file_contents"]
     max_lines = DEFAULT["max_content_lines"]
 
-    if ARGS.include_file_contents.exists:
-        inc_contents = True
-        if (flag_val := ARGS.include_file_contents.get(0)) is not None:
-            try:
-                max_lines = max(0, int(flag_val))
-            except ValueError:
-                max_lines = 0
+    if (inc_contents := ARGS.include_file_contents.exists) and (flag_val := ARGS.include_file_contents.get(0)) is not None:
+        try:
+            max_lines = max(0, int(flag_val))
+        except ValueError:
+            max_lines = 0
+
+    auto_ignore_mode = DEFAULT["auto_ignore_mode"]
+    if ARGS.auto_ignore_mode.exists and (flag_val := ARGS.auto_ignore_mode.get(0)) is not None:
+        try:
+            val = int(flag_val)
+            if val not in (0, 1, 2):
+                raise ValueError
+            auto_ignore_mode = val
+        except ValueError:
+            xx.console.fail(f"Invalid auto-ignore mode: {flag_val}. Must be 0, 1, or 2.", start="\n", end="\n\n")
 
     config = TreeConfig(
         base_dir=base_dir,
         ignore_dirs=ignore_dirs,
-        auto_ignore=DEFAULT["auto_ignore"],
+        auto_ignore_mode=auto_ignore_mode,
         include_file_contents=inc_contents,
         max_content_lines=max_lines,
         indent=DEFAULT["indent"],
@@ -1289,12 +1331,10 @@ def main() -> None:  # noqa: C901
     into_file = DEFAULT["into_file"]
     target_path = Path.cwd() / "tree.txt"
 
-    if ARGS.to_file.exists:
-        into_file = True
-        if val := ARGS.to_file.get(0):
-            target_path = Path(val).resolve()
-            if target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
-                target_path = target_path / "tree.txt"
+    if (into_file := ARGS.to_file.exists) and (val := ARGS.to_file.get(0)) is not None:
+        target_path = Path(val).resolve()
+        if target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
+            target_path = target_path / "tree.txt"
 
     if ARGS.interactive.exists:
         get_user_inputs(config)
@@ -1313,15 +1353,17 @@ def main() -> None:  # noqa: C901
                 == "Y"
             )
 
+        print()
+
     # Re-initialize config in case user changed indent/style properties:
     config = TreeConfig(
         base_dir=config.base_dir,
+        max_width=0 if into_file else xx.console.get_width(),
         ignore_dirs=config.ignore_dirs,
-        auto_ignore=config.auto_ignore,
+        auto_ignore_mode=config.auto_ignore_mode,
         include_file_contents=config.include_file_contents,
         max_content_lines=config.max_content_lines,
         indent=config.indent,
-        max_width=0 if into_file else xx.console.get_width(),
     )
 
     renderer = TreeRenderer(config)
