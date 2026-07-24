@@ -23,7 +23,6 @@ ARGS = xx.console.get_args(
     {
         "base_dir": "before",
         "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
-        "no_progress": {"-n", "-np", "--no-progress"},
         "use_all_defaults": {"-d", "--default"},
         "include_file_contents": {"-c", "--content"},
         "help": {"-h", "--help"},
@@ -120,12 +119,10 @@ def print_help() -> None:
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore-dirs", S.DIM("="), "S"), "    Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--no-progress"), "      Disable progress display during tree generation"),
         ("  ", S.BR.BLUE("-d"), ", ", S.BR.BLUE("--default"), "          Use all default settings without prompts"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-progress"), "                             ", S.DIM("# ", S.ITALIC("Disable progress display"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-d"), "                                        ", S.DIM("# ", S.ITALIC("Use all default settings without prompts"))),  # noqa: E501
@@ -187,12 +184,13 @@ class DirScanResult(NamedTuple):
 
 @dataclass
 class GenerationStats:
-    """Tracks statistics for displaying during tree generation."""
+    """Keeps track of statistics during the tree generation process."""
 
     processed_dirs: int = 0
     processed_files: int = 0
     current_depth: int = 0
     max_depth: int = 0
+    start_time: float = field(default_factory=time.time)
 
 
 class IGNORE:
@@ -479,49 +477,65 @@ class DirectoryScanner:
         if auto_ignore:
             all_ignores.extend(d.lower() for d in IGNORE.paths)
 
-        self.ignore_set = frozenset(
-            (d.lower().replace("\\", "/") if not Path(d).is_absolute() else f"/{d.lower().replace('\\', '/').lstrip('/')}")
-            for d in all_ignores
-        )
+        self.exact_names: set[str] = set()
+        self.exact_paths: set[str] = set()
+        self.wildcard_names: list[re.Pattern[str]] = []
+        self.wildcard_paths: list[list[re.Pattern[str]]] = []
+        self.wildcard_abs_paths: list[re.Pattern[str]] = []
+
+        for pattern in all_ignores:
+            p = pattern.lower().replace("\\", "/")
+            if Path(p).is_absolute():
+                p = f"/{p.lstrip('/')}"
+
+            if "*" not in p and "[" not in p:
+                if "/" in p:
+                    self.exact_paths.add(p)
+                else:
+                    self.exact_names.add(p)
+            else:
+                if "/" in p:
+                    if p.startswith("/"):
+                        self.wildcard_abs_paths.append(re.compile(fnmatch.translate(p[1:])))
+                    else:
+                        parts = [re.compile(fnmatch.translate(part)) for part in p.split("/")]
+                        self.wildcard_paths.append(parts)
+                else:
+                    self.wildcard_names.append(re.compile(fnmatch.translate(p)))
 
     def should_ignore_path(self, path: str) -> bool:  # noqa: C901
         """Check if a relative path matches any user-specified or default ignore pattern."""
 
-        if not path or not self.ignore_set:
+        if not path:
             return False
 
         path_lower = path.lower().replace("\\", "/")
-        path_parts = None
+        name = path_lower.rsplit("/", 1)[-1]
 
-        for pattern in self.ignore_set:
-            has_wildcard = "*" in pattern or "[" in pattern
+        if name in self.exact_names:
+            return True
 
-            if not has_wildcard:
-                if "/" in pattern:
-                    if (pattern.startswith("/") and path_lower == pattern[1:]) or pattern in path_lower:
-                        return True
-                else:
-                    if path_parts is None:
-                        path_parts = path_lower.split("/")
-                    if pattern in path_parts:
-                        return True
-            else:
-                if "/" in pattern:
-                    if pattern.startswith("/"):
-                        if fnmatch.fnmatch(path_lower, pattern[1:]):
-                            return True
-                    else:
-                        if path_parts is None:
-                            path_parts = path_lower.split("/")
-                        pattern_parts = pattern.split("/")
-                        plen = len(pattern_parts)
-                        for i in range(len(path_parts) - plen + 1):
-                            if all(fnmatch.fnmatch(path_parts[i + j], pattern_parts[j]) for j in range(plen)):
-                                return True
-                else:
-                    if path_parts is None:
-                        path_parts = path_lower.split("/")
-                    if any(fnmatch.fnmatch(part, pattern) for part in path_parts):
+        if self.exact_paths:
+            for ep in self.exact_paths:
+                if (ep.startswith("/") and path_lower == ep[1:]) or ep in path_lower:
+                    return True
+
+        if self.wildcard_names:
+            for w in self.wildcard_names:
+                if w.match(name):
+                    return True
+
+        if self.wildcard_abs_paths:
+            for w in self.wildcard_abs_paths:
+                if w.match(path_lower):
+                    return True
+
+        if self.wildcard_paths:
+            path_parts = path_lower.split("/")
+            for pattern_parts in self.wildcard_paths:
+                plen = len(pattern_parts)
+                for i in range(len(path_parts) - plen + 1):
+                    if all(pattern_parts[j].match(path_parts[i + j]) for j in range(plen)):
                         return True
 
         return False
@@ -531,7 +545,7 @@ class DirectoryScanner:
     def is_likely_hash_name(name: str) -> bool:
         """Determine if a filename or directory name is likely a hash or unique identifier."""
 
-        if not DirectoryScanner._HASH_NAME_CHARS.issuperset(name):
+        if name.strip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/="):
             return False
         if len(name) < 2:
             return bool(IGNORE.pattern.match(name))
@@ -631,7 +645,6 @@ class TreeConfig:
     max_content_lines: int = 0
     indent: int = 2
     max_width: int = 0
-    display_progress: bool = True
 
     def __post_init__(self):
         """Resolve base directory and set derived properties."""
@@ -656,10 +669,7 @@ class TreeRenderer:
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
 
-        if self.config.display_progress:
-            xx.console.info("starting tree generation...", start="\n")
-        else:
-            xx.console.info("generating tree...", start="\n")
+        xx.console.info("starting tree generation...", start="\n")
 
         if not self.config.base_dir.is_dir():
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
@@ -668,7 +678,8 @@ class TreeRenderer:
         self._render_tree(self.config.base_dir, "", 0, "", lines)
         result_str = "".join(lines)
 
-        tree_info = StyledText(
+        time_taken = StyledText("took ", S.BR.CYAN(self._format_time(time.time() - self.stats.start_time)))
+        tree_stats = StyledText(
             ("max depth ", S.BR.CYAN(str(self.stats.max_depth))),
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_dirs:,}"), " dirs"),
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
@@ -679,18 +690,36 @@ class TreeRenderer:
         else:
             max_width = max(
                 max((len(re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", line)) for line in result_str.split("\n")), default=80) + 1,
-                len(tree_info.raw) + 2,
+                len(time_taken.raw) + len(tree_stats.raw) + 2,
             )
 
         return StyledText(
             (COLORS["line"], result_str),
             "\n",
             (S.RESET, S.DIM("─" * max_width), "\n"),
-            (" " * (max_width - len(tree_info.raw) - 1), tree_info.ansi),
+            (" ", time_taken.ansi, " " * max(2, max_width - len(time_taken.raw) - len(tree_stats.raw) - 2), tree_stats.ansi),
             "\n",
         )
 
-    def _update_progress(self, current_dir: Path, is_dir: bool = True) -> None:
+    @staticmethod
+    def _format_time(elapsed: float) -> str:
+        m, s = divmod(int(elapsed), 60)
+        h, m = divmod(m, 60)
+        ms = int((elapsed % 1) * 1000)
+
+        parts: list[str] = []
+        if h > 0:
+            parts.append(f"{h}h")
+        if m > 0:
+            parts.append(f"{m}m")
+        if s > 0:
+            parts.append(f"{s}s")
+        if ms > 0:
+            parts.append(f"{ms}ms")
+
+        return "".join(parts) if parts else "0ms"
+
+    def _update_progress(self, current_dir: Path, level: int, is_dir: bool = True) -> None:
         """Update the generation progress display in terminal."""
 
         if is_dir:
@@ -698,11 +727,8 @@ class TreeRenderer:
         else:
             self.stats.processed_files += 1
 
-        self.stats.current_depth = len(Path(current_dir).parts) - len(Path(self.config.base_dir).parts)
+        self.stats.current_depth = level
         self.stats.max_depth = max(self.stats.max_depth, self.stats.current_depth)
-
-        if not self.config.display_progress:
-            return
 
         current_time = time.time()
         if current_time - self._last_progress_update < self._progress_update_interval:
@@ -710,38 +736,19 @@ class TreeRenderer:
 
         self._last_progress_update = current_time
 
-        try:
-            rel_path = str(Path(current_dir).relative_to(self.config.base_dir)).replace("\\", "/")
-        except ValueError:
-            rel_path = Path(current_dir).name
+        rel_path = current_dir.name
 
-        formatted_dirs = f"{self.stats.processed_dirs:,}"
-        formatted_files = f"{self.stats.processed_files:,}"
-
-        status_len = len(
-            f"depth {self.stats.current_depth}/{self.stats.max_depth} | {formatted_dirs} dirs | {formatted_files} files | "
-        )
-        max_rel_path_len = xx.console.get_width() - (18 + status_len)
+        max_rel_path_len = max(10, xx.console.get_width() - 22)
 
         if len(rel_path) > max_rel_path_len:
             rel_path = f"…{rel_path[-max_rel_path_len:]}"
 
-        xx.console.log(
-            "Sprouting",
-            StyledText(
-                ("depth ", S.BR.CYAN(f"{self.stats.current_depth}/{self.stats.max_depth}")),
-                (S.DIM(" | "), S.BR.CYAN(formatted_dirs), " dirs"),
-                (S.DIM(" | "), S.BR.CYAN(formatted_files), " files"),
-                (S.DIM(" | "), S.WHITE(rel_path)),
-            ),
-            title_bg_color=COLOR.BLUE,
-            start="\x1b[F\x1b[K",
-        )
+        xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=COLOR.BLUE, start="\x1b[F\x1b[K")
 
     def _render_tree(self, dir_path: Path, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
 
-        self._update_progress(dir_path)
+        self._update_progress(dir_path, level)
 
         try:
             if level == 0:
@@ -797,7 +804,7 @@ class TreeRenderer:
             if is_dir:
                 self._render_directory(entry, prefix, current_prefix, level, is_last, current_rel_path, lines)
             else:
-                self._render_file(entry, prefix, current_prefix, is_last, lines)
+                self._render_file(entry, prefix, current_prefix, level, is_last, lines)
 
     def _render_partial_entries(
         self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
@@ -834,7 +841,7 @@ class TreeRenderer:
                     entry, prefix, current_prefix, level, is_last, str(Path(parent_rel_path) / entry.name), lines
                 )
             else:
-                self._render_file(entry, prefix, current_prefix, is_last, lines)
+                self._render_file(entry, prefix, current_prefix, level, is_last, lines)
 
     def _render_directory(
         self,
@@ -880,10 +887,12 @@ class TreeRenderer:
         new_prefix = f"{prefix}{indent_str}"
         self._render_tree(Path(entry.path), new_prefix, level + 1, current_rel_path, lines)
 
-    def _render_file(self, entry: os.DirEntry[str], prefix: str, current_prefix: str, is_last: bool, lines: list[str]) -> None:
+    def _render_file(
+        self, entry: os.DirEntry[str], prefix: str, current_prefix: str, level: int, is_last: bool, lines: list[str]
+    ) -> None:
         """Render a file node and optionally its contents if configured."""
 
-        self._update_progress(Path(entry.path), is_dir=False)
+        self._update_progress(Path(entry.path), level, is_dir=False)
         color, color_dim = self._get_file_color(entry)
 
         max_name_width = max(10, self.config.max_width - len(current_prefix)) if self.config.max_width > 0 else 0
@@ -1176,7 +1185,6 @@ def main() -> None:
         include_file_contents=inc_contents,
         max_content_lines=max_lines,
         indent=DEFAULT["indent"],
-        display_progress=(not ARGS.no_progress.exists),
     )
 
     into_file = DEFAULT["into_file"]
@@ -1206,7 +1214,6 @@ def main() -> None:
         max_content_lines=config.max_content_lines,
         indent=config.indent,
         max_width=0 if into_file else xx.console.get_width(),
-        display_progress=config.display_progress,
     )
 
     renderer = TreeRenderer(config)
@@ -1239,7 +1246,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print()
+        StyledText(S.RESET, "\x1b[F\x1b[K", S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except PermissionError:
         xx.console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as exc:
