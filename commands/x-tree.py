@@ -16,16 +16,19 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import ClassVar, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, ClassVar, NamedTuple, TypedDict
 import xulbux as xx
-from xulbux.ansi import AnyStyle, S, StyledText, _StyleGroup
-from xulbux.base.consts import COLOR
+from xulbux import S, StyledText, Throbber
+
+if TYPE_CHECKING:
+    from xulbux.ansi import AnyStyle, _StyleGroup
 
 ARGS = xx.console.get_args(
     {
         "base_dir": "before",
         "ignore_dirs": {"-i", "--ignore"},
         "include_file_contents": {"-c", "--content"},
+        "to_file": {"-f", "--file"},
         "interactive": {"-I", "--interactive"},
         "help": {"-h", "--help"},
     }
@@ -116,16 +119,18 @@ def print_help() -> None:
         (S.BOLD("Usage: "), S.BR.GREEN("x-tree "), S.BR.CYAN("<base_dir> "), S.BR.BLUE("[options]")),
         "",
         S.BOLD("Arguments:"),
-        ("  ", S.BR.CYAN("base_dir"), "               Base directory to generate tree from ", S.DIM("(default: CWD)")),
+        ("  ", S.BR.CYAN("base_dir"), "             Base directory to generate tree from ", S.DIM("(default: CWD)")),
         "",
         S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
-        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
+        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "       Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
+        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "      Include file contents, optionally truncated to N lines"),  # noqa: E501
+        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "         Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "    Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
         "",
@@ -742,24 +747,24 @@ class TreeRenderer:
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
 
-        xx.console.log(
-            "Rooting",
-            StyledText(
-                S.WHITE("Initializing tree from "), f"{self.chars.c_dir}{self.config.base_dir}", S.RESET, S.WHITE("...")
-            ),
-            title_bg_color=COLOR.BLUE,
-            start="\n",
-        )
-
         if not self.config.base_dir.is_dir():
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
 
-        self._pre_scan_parallel(str(self.config.base_dir))
+        with Throbber(
+            label=StyledText(S.WHITE("Rooting tree from "), S.CYAN(str(self.config.base_dir))),
+            format=[("  ", S.BR.BLUE("{a}")), "{l}"],
+            frames=("⊶", "⊷"),
+            sep="  ",
+        ).context():
+            self._pre_scan_parallel(str(self.config.base_dir))
+
+        print()
+
         lines: list[str] = []
         self._render_tree(str(self.config.base_dir), "", 0, "", lines)
         result_str = "".join(lines)
 
-        print("\x1b[F\x1b[K\x1b[F\x1b[K", end="")  # Clear the last progress output.
+        print("\x1b[F\x1b[K", end="")  # Clear the last progress output.
 
         time_taken = StyledText("took ", S.BR.CYAN(self._format_time(time.time() - self.stats.start_time)))
         tree_stats = StyledText(
@@ -827,7 +832,7 @@ class TreeRenderer:
 
         rel_path = current_name if len(current_name) <= max_rel_path_len else f"…{current_name[-max_rel_path_len:]}"
 
-        xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=COLOR.BLUE, start="\x1b[F\x1b[K")
+        xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
 
     def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
@@ -1247,10 +1252,12 @@ def get_user_inputs(config: TreeConfig) -> None:
     )
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     if ARGS.help.exists:
         print_help()
         return
+    else:
+        print()
 
     base_dir = Path(val) if (val := ARGS.base_dir.get(0)) else Path.cwd()
 
@@ -1280,22 +1287,31 @@ def main() -> None:
     )
 
     into_file = DEFAULT["into_file"]
+    target_path = Path.cwd() / "tree.txt"
+
+    if ARGS.to_file.exists:
+        into_file = True
+        if val := ARGS.to_file.get(0):
+            target_path = Path(val).resolve()
+            if target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
+                target_path = target_path / "tree.txt"
 
     if ARGS.interactive.exists:
         get_user_inputs(config)
 
-        into_file = (
-            xx.console.input(
-                StyledText(
-                    S.BOLD("Output tree to a file?\n"),
-                    (S.DIM("(Y)" if into_file else "(N)"), " > "),
-                ),
-                max_len=1,
-                allowed_chars="yYnN",
-                default_val="Y" if into_file else "N",
-            ).upper()
-            == "Y"
-        )
+        if not ARGS.to_file.exists:
+            into_file = (
+                xx.console.input(
+                    StyledText(
+                        S.BOLD("Output tree to a file?\n"),
+                        (S.DIM("(Y)" if into_file else "(N)"), " > "),
+                    ),
+                    max_len=1,
+                    allowed_chars="yYnN",
+                    default_val="Y" if into_file else "N",
+                ).upper()
+                == "Y"
+            )
 
     # Re-initialize config in case user changed indent/style properties:
     config = TreeConfig(
@@ -1312,22 +1328,31 @@ def main() -> None:
     result = renderer.generate()
 
     if into_file:
-        file = None
+        if not target_path.parent.exists():
+            xx.console.fail(
+                StyledText("Directory ", S.BR.CYAN(str(target_path.parent)), " does not exist."),
+                start="\x1b[F\x1b[K",
+                end="\n\n",
+            )
+
+        file, cls_line = None, ""
         try:
-            file = xx.file.create("tree.txt", result.raw)
+            file = xx.file.create(str(target_path), result.raw)
         except FileExistsError:
-            if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
-                file = xx.file.create("tree.txt", result.raw, force=True)
+            cls_line = "\x1b[F\x1b[K"
+            if xx.console.confirm(
+                StyledText("  ", S.WHITE(target_path.name), " already exists. Overwrite? "), start=cls_line, end=""
+            ):
+                file = xx.file.create(str(target_path), result.raw, force=True)
             else:
-                xx.console.exit()
+                xx.console.exit(start=cls_line, end="\n\n")
 
         if file:
-            xx.console.done(StyledText((S.WHITE | S.link(file))(file.name), " successfully created."), end="\n\n")
+            xx.console.done(StyledText("Generated tree to ", (S.WHITE | S.link(file))(file.name)), start=cls_line, end="\n\n")
         else:
-            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), end="\n\n")
+            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
 
     else:
-        print()
         result.print()
 
 
