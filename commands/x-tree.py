@@ -67,19 +67,40 @@ DEFAULT: ScriptDefaults = {
 }
 
 # fmt: off
-IMAGE_EXTS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".ico", ".tiff", ".ai"})
-ARCHIVE_EXTS = frozenset({".zip", ".tar", ".gz", ".rar", ".7z", ".bz2", ".xz", ".tgz"})
-VIDEO_EXTS = frozenset({".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"})
-AUDIO_EXTS = frozenset({".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"})
-EXEC_EXTS = frozenset({".exe", ".bat", ".cmd", ".com", ".appimage"})
-CODE_EXTS = frozenset({
-    ".bash", ".bat", ".c", ".cpp", ".css", ".go", ".h", ".hpp", ".html", ".java", ".js", ".json", ".md", ".php", ".ps1", ".py",
-    ".pyi", ".pyw", ".rb", ".rs", ".sh", ".ts", ".vbs", ".xml", ".yaml", ".yml", ".zsh"
+IMAGE_EXTS = frozenset({
+    ".ai", ".bmp", ".cr2", ".eps", ".gif", ".heic", ".ico", ".indd", ".jpeg", ".jpg", ".nef", ".orf", ".png", ".psd", ".raw",
+    ".sr2", ".svg", ".tif", ".tiff", ".webp", ".xcf"
 })
-BINARY_EXTENSIONS = frozenset({
-    ".7z", ".ai", ".avi", ".bin", ".cur", ".dat", ".db", ".dll", ".doc", ".docx", ".dylib", ".eps", ".exe", ".gif", ".gz",
-    ".ico", ".jpeg", ".jpg", ".mov", ".mp3", ".mp4", ".pdf", ".png", ".psd", ".rar", ".so", ".sqlite", ".svg", ".tar", ".tif",
-    ".tiff", ".webp", ".xls", ".xlsx", ".zip"
+ARCHIVE_EXTS = frozenset({
+    ".7z", ".apk", ".bz2", ".cab", ".deb", ".dmg", ".gz", ".iso", ".jar", ".lz", ".lzma", ".rar", ".rpm", ".tar", ".tgz",
+    ".xz", ".z", ".zip"
+})
+VIDEO_EXTS = frozenset({
+    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".mts", ".ogv", ".rm", ".rmvb",
+    ".ts", ".vob", ".webm", ".wmv"
+})
+AUDIO_EXTS = frozenset({
+    ".aac", ".aiff", ".alac", ".amr", ".au", ".flac", ".m4a", ".mid", ".midi", ".mp3", ".ogg", ".opus", ".voc", ".wav", ".wma"
+})
+EXEC_EXTS = frozenset({
+    ".appimage", ".bat", ".bin", ".cmd", ".com", ".exe", ".msi", ".run", ".sh"
+})
+CODE_EXTS = frozenset({
+    ".asm", ".bash", ".bat", ".c", ".cfg", ".cmake", ".conf", ".cpp", ".cs", ".css", ".csv", ".dart", ".diff", ".dockerfile",
+    ".ejs", ".env", ".erl", ".ex", ".exs", ".go", ".gql", ".graphql", ".h", ".hbs", ".hpp", ".hs", ".html", ".ini", ".ipynb",
+    ".j2", ".jade", ".java", ".jinja", ".jl", ".js", ".json", ".jsx", ".kt", ".less", ".log", ".lua", ".m", ".make", ".md",
+    ".patch", ".php", ".pl", ".pom", ".proto", ".ps1", ".pug", ".py", ".pyi", ".pyw", ".r", ".rb", ".rs", ".s", ".sass", ".sc",
+    ".scala", ".scss", ".sh", ".sql", ".styl", ".svelte", ".swift", ".toml", ".ts", ".tsx", ".tsv", ".txt", ".vbs", ".vue",
+    ".xml", ".yaml", ".yml", ".zsh"
+})
+BINARY_EXTS = frozenset({
+    ".7z", ".ai", ".apk", ".avi", ".bak", ".bin", ".blend", ".cab", ".class", ".cur", ".dat", ".db", ".db3", ".dbf", ".dcm",
+    ".dll", ".dmg", ".doc", ".docx", ".dylib", ".eps", ".exe", ".fbx", ".frm", ".gif", ".glb", ".gltf", ".gz", ".heic", ".ibd",
+    ".ico", ".iges", ".img", ".iso", ".jar", ".jpeg", ".jpg", ".mha", ".mhd", ".mkv", ".mobi", ".mov", ".mp3", ".mp4", ".msi",
+    ".myd", ".myi", ".ndf", ".nef", ".nhdr", ".nii", ".nrrd", ".o", ".obj", ".ods", ".odt", ".opt", ".orf", ".ova", ".ovf",
+    ".pdf", ".ply", ".png", ".ppt", ".pptx", ".psd", ".pyc", ".pyd", ".qcow2", ".rar", ".raw", ".rpm", ".rtf", ".so",
+    ".sqlite", ".sqlite3", ".sr2", ".step", ".stl", ".svg", ".tar", ".tif", ".tiff", ".vdi", ".vhdx", ".vmdk", ".vtp", ".vtu",
+    ".webp", ".xls", ".xlsx", ".zip"
 })
 
 
@@ -714,7 +735,7 @@ class TreeRenderer:
                 (S.DIM(" | "), S.WHITE(rel_path)),
             ),
             title_bg_color=COLOR.BLUE,
-            start="\033[F\033[K",
+            start="\x1b[F\x1b[K",
         )
 
     def _render_tree(self, dir_path: Path, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
@@ -744,8 +765,6 @@ class TreeRenderer:
 
         except Exception as exc:
             self._render_error(exc, prefix, lines)
-
-        print("\033[F\033[K", end="")  # Clear tree generation progress line.
 
     def _render_root(self, dir_path: Path, lines: list[str]) -> None:
         """Render the root directory at the top of the tree."""
@@ -1060,7 +1079,7 @@ class TreeRenderer:
     def _is_text_file(filepath: str) -> bool:
         """Determine if a file is a text file by inspecting its mime type or bytes."""
 
-        if Path(filepath).suffix.lower() in BINARY_EXTENSIONS:
+        if Path(filepath).suffix.lower() in BINARY_EXTS:
             return False
 
         try:
@@ -1198,7 +1217,7 @@ def main() -> None:
         try:
             file = xx.file.create("tree.txt", result.raw)
         except FileExistsError:
-            cls_line = "\033[F\033[K\n"
+            cls_line = "\x1b[F\x1b[K\n"
             if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
                 file = xx.file.create("tree.txt", result.raw, force=True)
             else:
