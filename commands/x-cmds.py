@@ -9,10 +9,9 @@ import re
 from pathlib import Path
 from typing import Literal, TypedDict, cast
 import requests
-from xulbux import Console, FileSys, FormatCodes, S, String, StyledText, System
+import xulbux as xx
+from xulbux import FormatCodes, LazyRegex, S, StyledText, Throbber
 from xulbux.base.types import ArgParseConfigs
-from xulbux.console import Throbber
-from xulbux.regex import LazyRegex
 
 """
 [1] WHICH FILES ARE CONSIDERED COMMANDS?
@@ -30,9 +29,9 @@ This is useful for shared helper/library files that should be auto-updated but a
 The first multi-line comment (triple quotes) at the start of the file is used as a short description.
 
 [5] COMMAND ARGUMENTS & OPTIONS
-The use of `Console.get_args()` will automatically be parsed and displayed correctly.
+The use of `get_args()` will automatically be parsed and displayed correctly.
 When getting args using `sys.argv`, add a comment to describe the arguments on the line `sys.argv` is used.
-The structure of the comment is similar to how the `**arg_parse_configs` kwargs are defined for `Console.get_args()`:
+The structure of the comment is similar to how the `**arg_parse_configs` kwargs are defined for `get_args()`:
 # [pos_arg1: before, arg2: {-a2, --arg2}, arg3: {-a3, --arg3}, pos_arg4: after]
 """
 
@@ -63,7 +62,7 @@ class ScriptConfig(TypedDict):
 
 
 CONFIG: ScriptConfig = {
-    "command_dir": FileSys.script_dir,
+    "command_dir": xx.file_sys.get_script_dir(),
     "github_updates": {
         "github_repo_urls": ["https://github.com/xulbux/python/tree/main/commands"],
         "check_for_new_commands": True,
@@ -71,7 +70,7 @@ CONFIG: ScriptConfig = {
     },
 }
 
-ARGS = Console.get_args({"list": {"-l", "--list"}, "update_check": {"-u", "--update"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({"list": {"-l", "--list"}, "update_check": {"-u", "--update"}, "help": {"-h", "--help"}})
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
@@ -79,7 +78,7 @@ PATTERNS = LazyRegex(
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)(?:#\s*(\[.+?\])\s*)?sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
-    get_args=r"(?m)Console\s*\.\s*get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
+    get_args=r"(?m)get_args\s*\(\s*(?:[\w]+\s*=\s*(['\"])[^\1]+\1\s*(?:,\s*)?)?(?:arg_parse_configs\s*=\s*)?\{(?P<brace>(?:[^{}\"']|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\{(?&brace)\})*)\}(?:\s*(?:,\s*)?(?:[\w]+\s*=\s*)?(['\"])[^\3]+\3)?\s*\)",
     arg=r"""\s*(['"])(\w+)\1\s*:\s*(.*)\s*,?""",
 )
 
@@ -260,7 +259,7 @@ def parse_file_args(content: str) -> ArgParseConfigs | None:
                 func_args = get_args_funcs[0]
             for arg in PATTERNS.arg.finditer(func_args):
                 if (key := arg.group(2)) and (val := arg.group(3)):
-                    arg_parse_configs[key.strip()] = String.to_type(val.strip().rstrip(","))
+                    arg_parse_configs[key.strip()] = xx.string.to_type(val.strip().rstrip(","))
 
         else:
             for comment in sys_argv_comments:
@@ -333,7 +332,7 @@ def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
         cmd_title_len = len(str(i)) + len(cmd_name) + 4
         cmds += (
             f"\n[b|br:white|bg:br:white]([[black]{i}[br:white]][in|black]("
-            f" {cmd_name} [bg:black]{'━' * (Console.width - cmd_title_len)}))"
+            f" {cmd_name} [bg:black]{'━' * (xx.console.get_width() - cmd_title_len)}))"
         )
 
         with open(CONFIG["command_dir"] / file, encoding="utf-8") as f:
@@ -499,7 +498,8 @@ def github_diffs_str(github_diffs: GithubDiffs) -> str:
 
     diffs_title_len = len(title) + 5
     diffs = (
-        f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( {title} [bg:black]{'━' * (Console.width - diffs_title_len)}))"
+        f"[b|magenta|bg:magenta]([[black]⇣[magenta]][in|black]( "
+        f"{title} [bg:black]{'━' * (xx.console.get_width() - diffs_title_len)}))"
     )
 
     if num_new_cmds:
@@ -528,7 +528,7 @@ def download_files(github_diffs: GithubDiffs) -> None:
     if total_operations == 0:
         return
 
-    if not Console.confirm(StyledText(S.BOLD("\nExecute these updates?")), end="\n", default_is_yes=True):
+    if not xx.console.confirm(StyledText(S.BOLD("\nExecute these updates?")), end="\n", default_is_yes=True):
         FormatCodes.print("[dim|magenta](✗ Not updating commands from GitHub)\n\n")
         return
 
@@ -542,13 +542,13 @@ def download_files(github_diffs: GithubDiffs) -> None:
 
             # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
             cmd_name = Path(filename).stem
-            file_path = CONFIG["command_dir"] / (filename if System.is_win else cmd_name)
+            file_path = CONFIG["command_dir"] / (filename if xx.system.is_win() else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
             # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
-            if not System.is_win:
+            if not xx.system.is_win():
                 Path(file_path).chmod(0o755)
 
             action = "Added" if cmd_name in github_diffs["new_commands"] else "Updated"
@@ -616,4 +616,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
