@@ -21,7 +21,7 @@ import xulbux as xx
 from xulbux import S, StyledText, Throbber
 
 if TYPE_CHECKING:
-    from xulbux.ansi import AnyStyle, _StyleGroup
+    from xulbux.ansi import AnyStyle
 
 ARGS = xx.console.get_args(
     {
@@ -150,20 +150,20 @@ def print_help() -> None:
 
 
 class TreeColorConfig(TypedDict):
-    line: AnyStyle | _StyleGroup
-    line_dull: AnyStyle | _StyleGroup
-    error: AnyStyle | _StyleGroup
-    dir: AnyStyle | _StyleGroup
-    dir_dull: AnyStyle | _StyleGroup
-    file: AnyStyle | _StyleGroup
-    symlink: AnyStyle | _StyleGroup
-    executable: AnyStyle | _StyleGroup
-    archive: AnyStyle | _StyleGroup
-    image: AnyStyle | _StyleGroup
-    video: AnyStyle | _StyleGroup
-    audio: AnyStyle | _StyleGroup
-    code: AnyStyle | _StyleGroup
-    content: AnyStyle | _StyleGroup
+    line: AnyStyle
+    line_dull: AnyStyle
+    error: AnyStyle
+    dir: AnyStyle
+    dir_dull: AnyStyle
+    file: AnyStyle
+    symlink: AnyStyle
+    executable: AnyStyle
+    archive: AnyStyle
+    image: AnyStyle
+    video: AnyStyle
+    audio: AnyStyle
+    code: AnyStyle
+    content: AnyStyle
 
 
 class TreeCharConfig(TypedDict):
