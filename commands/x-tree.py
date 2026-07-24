@@ -22,9 +22,9 @@ from xulbux.base.consts import COLOR
 ARGS = xx.console.get_args(
     {
         "base_dir": "before",
-        "ignore_dirs": {"-i", "--ignore", "--ignore-dirs"},
-        "use_all_defaults": {"-d", "--default"},
+        "ignore_dirs": {"-i", "--ignore"},
         "include_file_contents": {"-c", "--content"},
+        "interactive": {"-I", "--interactive"},
         "help": {"-h", "--help"},
     }
 )
@@ -117,17 +117,17 @@ def print_help() -> None:
         ("  ", S.BR.CYAN("base_dir"), "               Base directory to generate tree from ", S.DIM("(default: CWD)")),
         "",
         S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore-dirs", S.DIM("="), "S"), "    Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
+        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-d"), ", ", S.BR.BLUE("--default"), "          Use all default settings without prompts"),
+        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-d"), "                                        ", S.DIM("# ", S.ITALIC("Use all default settings without prompts"))),  # noqa: E501
         "",
-        (S.BOLD("Prompts: "), S.DIM("(interactive — press Enter for defaults, or use ", S.BR.BLUE("-d"), " to skip all)")),
+        (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
         ("  ", (S.ITALIC | S.DIM)("2"), "  Include file contents in tree"),
                 ("  ", (S.ITALIC | S.DIM)("3"), "  Indentation size"),
@@ -1189,7 +1189,7 @@ def main() -> None:
 
     into_file = DEFAULT["into_file"]
 
-    if not ARGS.use_all_defaults.exists:
+    if ARGS.interactive.exists:
         get_user_inputs(config)
 
         into_file = (
