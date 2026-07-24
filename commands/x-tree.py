@@ -475,13 +475,15 @@ class DirectoryScanner:
 
         all_ignores = ignore_dirs.copy()
         if auto_ignore:
-            all_ignores.extend(d.lower() for d in IGNORE.paths)
+            all_ignores.extend(path.lower() for path in IGNORE.paths)
 
         self.exact_names: set[str] = set()
         self.exact_paths: set[str] = set()
         self.wildcard_names: list[re.Pattern[str]] = []
         self.wildcard_paths: list[list[re.Pattern[str]]] = []
         self.wildcard_abs_paths: list[re.Pattern[str]] = []
+        self._scan_cache: dict[str, DirScanResult] = {}
+        self._ignore_cache: dict[str, bool] = {}
 
         for pattern in all_ignores:
             p = pattern.lower().replace("\\", "/")
@@ -509,25 +511,33 @@ class DirectoryScanner:
         if not path:
             return False
 
+        cached = self._ignore_cache.get(path)
+        if cached is not None:
+            return cached
+
         path_lower = path.lower().replace("\\", "/")
         name = path_lower.rsplit("/", 1)[-1]
 
         if name in self.exact_names:
+            self._ignore_cache[path] = True
             return True
 
         if self.exact_paths:
             for ep in self.exact_paths:
                 if (ep.startswith("/") and path_lower == ep[1:]) or ep in path_lower:
+                    self._ignore_cache[path] = True
                     return True
 
         if self.wildcard_names:
-            for w in self.wildcard_names:
-                if w.match(name):
+            for w_name in self.wildcard_names:
+                if w_name.match(name):
+                    self._ignore_cache[path] = True
                     return True
 
         if self.wildcard_abs_paths:
-            for w in self.wildcard_abs_paths:
-                if w.match(path_lower):
+            for w_name in self.wildcard_abs_paths:
+                if w_name.match(path_lower):
+                    self._ignore_cache[path] = True
                     return True
 
         if self.wildcard_paths:
@@ -536,8 +546,10 @@ class DirectoryScanner:
                 plen = len(pattern_parts)
                 for i in range(len(path_parts) - plen + 1):
                     if all(pattern_parts[j].match(path_parts[i + j]) for j in range(plen)):
+                        self._ignore_cache[path] = True
                         return True
 
+        self._ignore_cache[path] = False
         return False
 
     @staticmethod
@@ -549,13 +561,14 @@ class DirectoryScanner:
             return False
         if len(name) < 2:
             return bool(IGNORE.pattern.match(name))
-        if DirectoryScanner._UUID_ANYWHERE.search(name):
-            return True
 
         base = name.rsplit(".", 1)[0] if "." in name else name
-        return any(
+        # Cheap hex-segment check first; UUID regex (more expensive) only as fallback
+        if any(
             len(seg) >= 8 and DirectoryScanner._HEX_SEGMENT.match(seg) for seg in DirectoryScanner._SEP_SPLITTER.split(base)
-        )
+        ):
+            return True
+        return bool(DirectoryScanner._UUID_ANYWHERE.search(name))
 
     @staticmethod
     def _find_filename_patterns(names: list[str], min_pattern_length: int = 4) -> tuple[bool, float]:
@@ -568,7 +581,8 @@ class DirectoryScanner:
         suffixes: dict[str, int] = {}
 
         for name in names:
-            base = Path(name).stem
+            dot = name.rfind(".")
+            base = name[:dot] if dot > 0 else name
             for i in range(1, len(base) + 1):
                 if len(prefix := base[:i]) >= min_pattern_length:
                     prefixes[prefix] = prefixes.get(prefix, 0) + 1
@@ -581,25 +595,35 @@ class DirectoryScanner:
 
         return (max(best_prefix_count, best_suffix_count) >= 5 and pattern_ratio >= 0.7), pattern_ratio
 
-    @lru_cache(maxsize=1024)  # noqa: B019
     def scan_directory(self, dir_path: str) -> DirScanResult:  # noqa: C901
         """Scan a directory and decide if it should be auto-ignored or partially ignored."""
+
+        cached = self._scan_cache.get(dir_path)
+        if cached is not None:
+            return cached
 
         if not self.auto_ignore:
             try:
                 with os.scandir(dir_path) as it:
-                    return DirScanResult(False, 0, 0, False, tuple(it))
+                    result = DirScanResult(False, 0, 0, False, tuple(it))
             except Exception:
-                return DirScanResult(False, 0, 0, False, ())
+                result = DirScanResult(False, 0, 0, False, ())
+            self._scan_cache[dir_path] = result
+            return result
 
         try:
             with os.scandir(dir_path) as it:
                 entries = tuple(it)
 
             if not entries:
-                return DirScanResult(False, 0, 0, False, entries)
+                result = DirScanResult(False, 0, 0, False, entries)
+                self._scan_cache[dir_path] = result
+                return result
 
-            dir_name = Path(dir_path).name
+            slash = dir_path.rfind("/")
+            bslash = dir_path.rfind("\\")
+            sep_pos = max(slash, bslash)
+            dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
             total_count = len(entries)
 
             if total_count < 3:
@@ -622,18 +646,21 @@ class DirectoryScanner:
             has_pattern, _ = self._find_filename_patterns(filenames)
 
             if normal_count >= 3 and hash_count >= 5:
-                return DirScanResult(False, total_count, hash_count, True, entries)
-            if has_pattern and total_count > 5:
-                return DirScanResult(True, total_count, hash_count, False, entries)
-            if total_count > 5 and (hash_count / total_count) > 0.8:
-                return DirScanResult(True, total_count, hash_count, False, entries)
-            if self.is_likely_hash_name(dir_name):
-                return DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, False, entries)
+                result = DirScanResult(False, total_count, hash_count, True, entries)
+            elif (has_pattern and total_count > 5) or (total_count > 5 and (hash_count / total_count) > 0.8):
+                result = DirScanResult(True, total_count, hash_count, False, entries)
+            elif self.is_likely_hash_name(dir_name):
+                result = DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, False, entries)
+            else:
+                result = DirScanResult(False, total_count, hash_count, False, entries)
 
-            return DirScanResult(False, total_count, hash_count, False, entries)
+            self._scan_cache[dir_path] = result
+            return result
 
         except Exception:
-            return DirScanResult(False, 0, 0, False, ())
+            result = DirScanResult(False, 0, 0, False, ())
+            self._scan_cache[dir_path] = result
+            return result
 
 
 @dataclass
@@ -665,6 +692,8 @@ class TreeRenderer:
         self.stats = GenerationStats()
         self._progress_update_interval = 0.05
         self._last_progress_update: float = 0.0
+        self._progress_item_count: int = 0
+        self._console_width: int = xx.console.get_width()
 
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
@@ -675,7 +704,7 @@ class TreeRenderer:
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
 
         lines: list[str] = []
-        self._render_tree(self.config.base_dir, "", 0, "", lines)
+        self._render_tree(str(self.config.base_dir), "", 0, "", lines)
         result_str = "".join(lines)
 
         time_taken = StyledText("took ", S.BR.CYAN(self._format_time(time.time() - self.stats.start_time)))
@@ -719,16 +748,20 @@ class TreeRenderer:
 
         return "".join(parts) if parts else "0ms"
 
-    def _update_progress(self, current_dir: Path, level: int, is_dir: bool = True) -> None:
+    def _update_progress(self, current_name: str, level: int, is_dir: bool = True) -> None:
         """Update the generation progress display in terminal."""
 
         if is_dir:
             self.stats.processed_dirs += 1
         else:
             self.stats.processed_files += 1
+            # Only check wall-clock time every 64 files to avoid sys-call overhead:
+            self._progress_item_count += 1
+            if self._progress_item_count & 63:
+                return
 
-        self.stats.current_depth = level
-        self.stats.max_depth = max(self.stats.max_depth, self.stats.current_depth)
+        if level > self.stats.max_depth:
+            self.stats.max_depth = level
 
         current_time = time.time()
         if current_time - self._last_progress_update < self._progress_update_interval:
@@ -736,26 +769,27 @@ class TreeRenderer:
 
         self._last_progress_update = current_time
 
-        rel_path = current_dir.name
+        max_rel_path_len = max(10, self._console_width - 22)
 
-        max_rel_path_len = max(10, xx.console.get_width() - 22)
-
-        if len(rel_path) > max_rel_path_len:
-            rel_path = f"…{rel_path[-max_rel_path_len:]}"
+        rel_path = current_name if len(current_name) <= max_rel_path_len else f"…{current_name[-max_rel_path_len:]}"
 
         xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=COLOR.BLUE, start="\x1b[F\x1b[K")
 
-    def _render_tree(self, dir_path: Path, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
+    def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
 
-        self._update_progress(dir_path, level)
+        slash = dir_path.rfind("/")
+        bslash = dir_path.rfind("\\")
+        sep_pos = max(slash, bslash)
+        dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
+        self._update_progress(dir_name, level)
 
         try:
             if level == 0:
                 self._render_root(dir_path, lines)
                 parent_rel_path = ""
 
-            scan_result = self.scanner.scan_directory(str(dir_path))
+            scan_result = self.scanner.scan_directory(dir_path)
             entries = tuple(sorted(scan_result.entries, key=lambda e: (not e.is_dir(), e.name.lower())))
 
             if not entries:
@@ -773,10 +807,11 @@ class TreeRenderer:
         except Exception as exc:
             self._render_error(exc, prefix, lines)
 
-    def _render_root(self, dir_path: Path, lines: list[str]) -> None:
+    def _render_root(self, dir_path: str, lines: list[str]) -> None:
         """Render the root directory at the top of the tree."""
 
-        base_name = dir_path.name or dir_path.drive.rstrip(":\\")
+        path = Path(dir_path)
+        base_name = path.name or path.drive.rstrip(":\\")
         lines.append(f"{self.chars.c_dir}{base_name}{self.chars.c_reset}")
         lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
         lines.append(f"{self.chars.c_line}\n")
@@ -786,12 +821,13 @@ class TreeRenderer:
     ) -> None:
         """Render standard directory entries."""
 
+        last_idx = len(entries) - 1
         for idx, entry in enumerate(entries):
             is_dir = entry.is_dir()
-            is_last = idx == len(entries) - 1
+            is_last = idx == last_idx
             branch = self.chars.corners[0] if is_last else self.chars.branch_new
             current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
-            current_rel_path = str(Path(parent_rel_path) / entry.name)
+            current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
             should_ignore_entry = self.scanner.should_ignore_path(current_rel_path)
             if is_dir and not should_ignore_entry:
@@ -826,8 +862,8 @@ class TreeRenderer:
         if visible_entries and visible_entries[-1] is None:
             visible_entries.pop()
 
-        for idx, entry in enumerate(visible_entries):  # type: ignore
-            is_last = idx == len(visible_entries) - 1
+        for i, entry in enumerate(visible_entries):
+            is_last = bool(i == len(visible_entries) - 1)
 
             if entry is None:
                 self._render_ignored_branch(prefix, is_last, lines)
@@ -838,7 +874,13 @@ class TreeRenderer:
 
             if entry.is_dir():
                 self._render_directory(
-                    entry, prefix, current_prefix, level, is_last, str(Path(parent_rel_path) / entry.name), lines
+                    entry,
+                    prefix,
+                    current_prefix,
+                    level,
+                    is_last,
+                    f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name,
+                    lines,
                 )
             else:
                 self._render_file(entry, prefix, current_prefix, level, is_last, lines)
@@ -860,13 +902,15 @@ class TreeRenderer:
             if self.config.max_width > 0
             else 0
         )
+
         if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
             lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}\n")
+
         else:
-            w = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
-            lines.append(f"{current_prefix}{self.chars.c_dir}{w[0]}{self.chars.c_reset}\n")
+            chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
+            lines.append(f"{current_prefix}{self.chars.c_dir}{chunk[0]}{self.chars.c_reset}\n")
 
             branch = self.chars.corners[0] if is_last else self.chars.branch_new
             if is_last:
@@ -876,31 +920,33 @@ class TreeRenderer:
                 wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
             wrap_prefix = f"{prefix}{wrap_indent}"
 
-            for part in w[1:-1]:
+            for part in chunk[1:-1]:
                 lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}\n")
 
-            lines.append(f"{wrap_prefix}{self.chars.c_dir}{w[-1]}{self.chars.c_reset}")
+            lines.append(f"{wrap_prefix}{self.chars.c_dir}{chunk[-1]}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
             lines.append(f"{self.chars.c_line}\n")
 
         indent_str = " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}{' ' * (self.chars.indent_size - 1)}"
         new_prefix = f"{prefix}{indent_str}"
-        self._render_tree(Path(entry.path), new_prefix, level + 1, current_rel_path, lines)
+        self._render_tree(entry.path, new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(
         self, entry: os.DirEntry[str], prefix: str, current_prefix: str, level: int, is_last: bool, lines: list[str]
     ) -> None:
         """Render a file node and optionally its contents if configured."""
 
-        self._update_progress(Path(entry.path), level, is_dir=False)
+        self._update_progress(entry.name, level, is_dir=False)
         color, color_dim = self._get_file_color(entry)
 
         max_name_width = max(10, self.config.max_width - len(current_prefix)) if self.config.max_width > 0 else 0
+
         if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
             lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
+
         else:
-            w = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
-            lines.append(f"{current_prefix}{color}{w[0]}{self.chars.c_reset}{self.chars.c_line}\n")
+            chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
+            lines.append(f"{current_prefix}{color}{chunk[0]}{self.chars.c_reset}{self.chars.c_line}\n")
 
             branch = self.chars.corners[0] if is_last else self.chars.branch_new
             if is_last:
@@ -910,7 +956,7 @@ class TreeRenderer:
                 wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
             wrap_prefix = f"{prefix}{wrap_indent}"
 
-            for part in w[1:]:
+            for part in chunk[1:]:
                 lines.append(f"{wrap_prefix}{color}{part}{self.chars.c_reset}{self.chars.c_line}\n")
 
         if self.config.include_file_contents and self._is_text_file(entry.path):
@@ -954,8 +1000,8 @@ class TreeRenderer:
         content_prefix = f"{prefix}{indent_str}"
 
         try:
-            with open(filepath, encoding="utf-8", errors="replace") as f:
-                file_lines = f.readlines()
+            with open(filepath, encoding="utf-8", errors="replace") as file:
+                file_lines = file.readlines()
 
             if not file_lines:
                 return
@@ -986,11 +1032,11 @@ class TreeRenderer:
             wrapped_lines: list[str] = []
             for line in file_lines:
                 if self.config.max_width > 0 and len(line) > max_content_width:
-                    w = textwrap.wrap(line, width=max_content_width, drop_whitespace=True, break_long_words=True)
-                    if not w:
+                    chunk = textwrap.wrap(line, width=max_content_width, drop_whitespace=True, break_long_words=True)
+                    if not chunk:
                         wrapped_lines.append("")
                     else:
-                        wrapped_lines.extend(w)
+                        wrapped_lines.extend(chunk)
                 else:
                     wrapped_lines.append(line)
             file_lines = wrapped_lines
@@ -1075,8 +1121,8 @@ class TreeRenderer:
         if entry.is_file():
             try:
                 if entry.stat().st_size > 2:
-                    with open(entry.path, "rb") as f:
-                        if f.read(2) == b"#!":
+                    with open(entry.path, "rb") as file:
+                        if file.read(2) == b"#!":
                             return self.chars.c_executable, self.chars.c_executable_dim
             except Exception:
                 pass
@@ -1111,7 +1157,7 @@ def get_user_inputs(config: TreeConfig) -> None:
                 " > ",
             ),
         )
-        config.ignore_dirs = [d.strip() for d in ignore_input.split("|")]
+        config.ignore_dirs = [i_dir.strip() for i_dir in ignore_input.split("|")]
 
     config.auto_ignore = (
         xx.console.input(
@@ -1162,7 +1208,7 @@ def main() -> None:
     base_dir = Path(val) if (val := ARGS.base_dir.get(0)) else Path.cwd()
 
     if ARGS.ignore_dirs.exists:
-        ignore_dirs = [d.strip() for d in ARGS.ignore_dirs.values[0].split("|")] if ARGS.ignore_dirs.values else []
+        ignore_dirs = [i_dir.strip() for i_dir in ARGS.ignore_dirs.values[0].split("|")] if ARGS.ignore_dirs.values else []
     else:
         ignore_dirs = DEFAULT["ignore_dirs"].copy()
 
@@ -1171,10 +1217,9 @@ def main() -> None:
 
     if ARGS.include_file_contents.exists:
         inc_contents = True
-        v = ARGS.include_file_contents.get(0)
-        if v is not None:
+        if (flag_val := ARGS.include_file_contents.get(0)) is not None:
             try:
-                max_lines = max(0, int(v))
+                max_lines = max(0, int(flag_val))
             except ValueError:
                 max_lines = 0
 
