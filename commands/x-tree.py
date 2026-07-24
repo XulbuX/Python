@@ -10,7 +10,9 @@ import fnmatch
 import os
 import re
 import textwrap
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -577,23 +579,27 @@ class DirectoryScanner:
         if len(names) < 5:
             return False, 0.0
 
+        # A longer prefix always has a count <= its shorter sub-prefix, so the
+        # maximum match count is always found at exactly `min_pattern_length` chars.
         prefixes: dict[str, int] = {}
         suffixes: dict[str, int] = {}
 
         for name in names:
             dot = name.rfind(".")
             base = name[:dot] if dot > 0 else name
-            for i in range(1, len(base) + 1):
-                if len(prefix := base[:i]) >= min_pattern_length:
-                    prefixes[prefix] = prefixes.get(prefix, 0) + 1
-                if len(suffix := base[-i:]) >= min_pattern_length:
-                    suffixes[suffix] = suffixes.get(suffix, 0) + 1
+
+            if len(base) >= min_pattern_length:
+                prefix = base[:min_pattern_length]
+                prefixes[prefix] = prefixes.get(prefix, 0) + 1
+                suffix = base[-min_pattern_length:]
+                suffixes[suffix] = suffixes.get(suffix, 0) + 1
 
         best_prefix_count = max(prefixes.values()) if prefixes else 0
         best_suffix_count = max(suffixes.values()) if suffixes else 0
-        pattern_ratio = max(best_prefix_count, best_suffix_count) / len(names)
+        best = max(best_prefix_count, best_suffix_count)
+        pattern_ratio = best / len(names)
 
-        return (max(best_prefix_count, best_suffix_count) >= 5 and pattern_ratio >= 0.7), pattern_ratio
+        return (best >= 5 and pattern_ratio >= 0.7), pattern_ratio
 
     def scan_directory(self, dir_path: str) -> DirScanResult:  # noqa: C901
         """Scan a directory and decide if it should be auto-ignored or partially ignored."""
@@ -695,17 +701,65 @@ class TreeRenderer:
         self._progress_item_count: int = 0
         self._console_width: int = xx.console.get_width()
 
+    def _pre_scan_parallel(self, root_dir: str) -> None:
+        """Pre-populate the scan and ignore caches by scanning all subdirectories in
+        parallel before the single-threaded rendering pass. I/O calls release the GIL,
+        so a thread pool gives a large real-world speedup on any modern SSD."""
+        lock = threading.Lock()
+        done = threading.Event()
+        max_workers = min(32, (os.cpu_count() or 4) * 4)
+        active = [1]  # Number of in-flight tasks; pre-counted before each submit.
+
+        def _scan(abs_path: str, rel_path: str) -> None:
+            try:
+                result = self.scanner.scan_directory(abs_path)
+
+                if not result.should_ignore:
+                    new_items: list[tuple[str, str]] = []
+
+                    for entry in result.entries:
+                        if entry.is_dir():
+                            entry_rel = f"{rel_path}/{entry.name}" if rel_path else entry.name
+                            if not self.scanner.should_ignore_path(entry_rel):
+                                new_items.append((entry.path, entry_rel))
+
+                    if new_items:
+                        with lock:
+                            active[0] += len(new_items)
+                        for item in new_items:
+                            executor.submit(_scan, *item)
+
+            finally:
+                with lock:
+                    active[0] -= 1
+                    if active[0] == 0:
+                        done.set()
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            executor.submit(_scan, root_dir, "")
+            done.wait()
+
     def generate(self) -> StyledText:
         """Generate the entire directory tree."""
 
-        xx.console.info("starting tree generation...", start="\n")
+        xx.console.log(
+            "Rooting",
+            StyledText(
+                S.WHITE("Initializing tree from "), f"{self.chars.c_dir}{self.config.base_dir}", S.RESET, S.WHITE("...")
+            ),
+            title_bg_color=COLOR.BLUE,
+            start="\n",
+        )
 
         if not self.config.base_dir.is_dir():
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
 
+        self._pre_scan_parallel(str(self.config.base_dir))
         lines: list[str] = []
         self._render_tree(str(self.config.base_dir), "", 0, "", lines)
         result_str = "".join(lines)
+
+        print("\x1b[F\x1b[K\x1b[F\x1b[K", end="")  # Clear the last progress output.
 
         time_taken = StyledText("took ", S.BR.CYAN(self._format_time(time.time() - self.stats.start_time)))
         tree_stats = StyledText(
@@ -1092,7 +1146,7 @@ class TreeRenderer:
             f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
         )
 
-    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
+    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
         """Determine the color string for a file based on its type and extension."""
 
         if entry.is_symlink():
@@ -1104,7 +1158,9 @@ class TreeRenderer:
         except Exception:
             pass
 
-        ext = Path(entry.name).suffix.lower()
+        dot = (name := entry.name).rfind(".")
+        ext = name[dot:].lower() if dot > 0 else ""
+
         if ext in EXEC_EXTS:
             return self.chars.c_executable, self.chars.c_executable_dim
         elif ext in IMAGE_EXTS:
@@ -1117,15 +1173,6 @@ class TreeRenderer:
             return self.chars.c_video, self.chars.c_video_dim
         elif ext in AUDIO_EXTS:
             return self.chars.c_audio, self.chars.c_audio_dim
-
-        if entry.is_file():
-            try:
-                if entry.stat().st_size > 2:
-                    with open(entry.path, "rb") as file:
-                        if file.read(2) == b"#!":
-                            return self.chars.c_executable, self.chars.c_executable_dim
-            except Exception:
-                pass
 
         return self.chars.c_file, self.chars.c_file_dim
 
@@ -1265,22 +1312,19 @@ def main() -> None:
     result = renderer.generate()
 
     if into_file:
-        file, cls_line = None, ""
+        file = None
         try:
             file = xx.file.create("tree.txt", result.raw)
         except FileExistsError:
-            cls_line = "\x1b[F\x1b[K\n"
             if xx.console.confirm(StyledText("                 ", S.WHITE("tree.txt"), "already exists. Overwrite?"), end=""):
                 file = xx.file.create("tree.txt", result.raw, force=True)
             else:
                 xx.console.exit()
 
         if file:
-            xx.console.done(
-                StyledText((S.WHITE | S.link(file))(file.name), " successfully created."), start=cls_line, end="\n\n"
-            )
+            xx.console.done(StyledText((S.WHITE | S.link(file))(file.name), " successfully created."), end="\n\n")
         else:
-            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
+            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), end="\n\n")
 
     else:
         print()
