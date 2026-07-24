@@ -3,29 +3,36 @@
 
 """Quickly convert a 2-digit HEX value to a percentage."""
 
-from xulbux import Console, FormatCodes
+from xulbux import S, StyledText, console
 
-ARGS = Console.get_args({"hex_value": "before", "help": {"-h", "--help"}})
+ARGS = console.get_args({"hex_value": "before", "help": {"-h", "--help"}})
 
 
 def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Hex → Percent — Quickly convert a 2-digit HEX value to a percentage )
-
-[b](Usage:) [br:green](hex-percent) [br:cyan](<hex>)
-
-[b](Arguments:)
-  [br:cyan](hex)               2-digit HEX value to convert
-
-[b](Examples:)
-  [br:green](hex-percent) [br:cyan](FF)    [dim](# [i](100% opacity))
-  [br:green](hex-percent) [br:cyan](80)    [dim](# [i](~50% opacity))
-  [br:green](hex-percent) [br:cyan](00)    [dim](# [i](0% opacity))
-"""
-    FormatCodes.print(help_text)
+    title = ["  Hex → Percent", " — Quickly convert a 2-digit HEX value to a percentage  "]
+    StyledText(
+        "",
+        ("▄" * len("".join(title))),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (S.BOLD("Usage: "), S.BR.GREEN("hex-percent "), S.BR.CYAN("<hex>")),
+        "",
+        S.BOLD("Arguments:"),
+        ("  ", S.BR.CYAN("hex"), "    2-digit HEX value to convert"),
+        "",
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("hex-percent"), " ", S.BR.CYAN("FF"), "    ", S.DIM("# ", S.ITALIC("(100% opacity)"))),
+        ("  ", S.BR.GREEN("hex-percent"), " ", S.BR.CYAN("80"), "    ", S.DIM("# ", S.ITALIC("(~50% opacity)"))),
+        ("  ", S.BR.GREEN("hex-percent"), " ", S.BR.CYAN("00"), "    ", S.DIM("# ", S.ITALIC("(0% opacity)"))),
+        "",
+        sep="\n",
+    ).print()
 
 
 def hex_to_percent(hex_val: str) -> float:
+    """Convert a 2-digit HEX value to a percentage."""
+
     return round((int(hex_val, 16) / 255) * 100, 2)
 
 
@@ -34,8 +41,8 @@ def main() -> None:
         print_help()
         return
 
-    percent = hex_to_percent(ARGS.hex_value.values[0])
-    FormatCodes.print(f"\n  [dim|br:white](=)  [white][b]({percent})%[_]\n")
+    pct = hex_to_percent(ARGS.hex_value.values[0])
+    StyledText("", ((S.DIM | S.BR.WHITE)("  =  "), (S.WHITE | S.BOLD)(f"{pct}%")), "", sep="\n").print()
 
 
 if __name__ == "__main__":
@@ -44,4 +51,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        console.fail(exc, start="\n", end="\n\n")
