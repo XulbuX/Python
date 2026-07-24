@@ -191,6 +191,7 @@ class DirScanResult(NamedTuple):
     hash_count: int
     show_partial: bool
     entries: tuple[os.DirEntry[str], ...]
+    sorted_entries: tuple[os.DirEntry[str], ...]
 
 
 @dataclass
@@ -430,6 +431,9 @@ class TreeChars:
         self.indent_size = indent_size
         self.tab = " " * indent_size
         self.line_hor_str = f"{self.line_hor} "
+        # Pre-computed indent strings used in the hot render path:
+        self.indent_last = " " * indent_size
+        self.indent_cont = f"{self.line_ver}{' ' * (indent_size - 1)}"
 
         # Colors as ANSI strings:
         self.c_dim = StyledText(S.DIM).ansi
@@ -627,9 +631,11 @@ class DirectoryScanner:
         if self.auto_ignore_mode != 2:
             try:
                 with os.scandir(dir_path) as it:
-                    result = DirScanResult(False, 0, 0, False, tuple(it))
+                    raw = tuple(it)
+                sorted_raw = tuple(sorted(raw, key=lambda e: (not e.is_dir(), e.name.lower())))
+                result = DirScanResult(False, 0, 0, False, raw, sorted_raw)
             except Exception:
-                result = DirScanResult(False, 0, 0, False, ())
+                result = DirScanResult(False, 0, 0, False, (), ())
             self._scan_cache[dir_path] = result
             return result
 
@@ -638,9 +644,12 @@ class DirectoryScanner:
                 entries = tuple(it)
 
             if not entries:
-                result = DirScanResult(False, 0, 0, False, entries)
+                result = DirScanResult(False, 0, 0, False, entries, entries)
                 self._scan_cache[dir_path] = result
                 return result
+
+            # Pre-sort once here (parallel pre-scan phase) so render never needs to sort:
+            sorted_entries = tuple(sorted(entries, key=lambda e: (not e.is_dir(), e.name.lower())))
 
             slash = dir_path.rfind("/")
             bslash = dir_path.rfind("\\")
@@ -649,7 +658,7 @@ class DirectoryScanner:
             total_count = len(entries)
 
             if total_count < 3:
-                return DirScanResult(False, total_count, 0, False, entries)
+                return DirScanResult(False, total_count, 0, False, entries, sorted_entries)
 
             hash_count = normal_count = 0
             filenames: list[str] = []
@@ -668,19 +677,21 @@ class DirectoryScanner:
             has_pattern, _ = self._find_filename_patterns(filenames)
 
             if normal_count >= 3 and hash_count >= 5:
-                result = DirScanResult(False, total_count, hash_count, True, entries)
+                result = DirScanResult(False, total_count, hash_count, True, entries, sorted_entries)
             elif (has_pattern and total_count > 5) or (total_count > 5 and (hash_count / total_count) > 0.8):
-                result = DirScanResult(True, total_count, hash_count, False, entries)
+                result = DirScanResult(True, total_count, hash_count, False, entries, sorted_entries)
             elif self.is_likely_hash_name(dir_name):
-                result = DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, False, entries)
+                result = DirScanResult(
+                    (hash_count / total_count > 0.7), total_count, hash_count, False, entries, sorted_entries
+                )
             else:
-                result = DirScanResult(False, total_count, hash_count, False, entries)
+                result = DirScanResult(False, total_count, hash_count, False, entries, sorted_entries)
 
             self._scan_cache[dir_path] = result
             return result
 
         except Exception:
-            result = DirScanResult(False, 0, 0, False, ())
+            result = DirScanResult(False, 0, 0, False, (), ())
             self._scan_cache[dir_path] = result
             return result
 
@@ -723,7 +734,7 @@ class TreeRenderer:
         so a thread pool gives a large real-world speedup on any modern SSD."""
         lock = threading.Lock()
         done = threading.Event()
-        max_workers = min(32, (os.cpu_count() or 4) * 4)
+        max_workers = min(64, (os.cpu_count() or 4) * 8)
         active = [1]  # Number of in-flight tasks; pre-counted before each submit.
         canceled = [False]
 
@@ -844,13 +855,12 @@ class TreeRenderer:
             # Only check wall-clock time every 64 files to avoid sys-call overhead:
             self._progress_item_count += 1
             if self._progress_item_count & 63:
-                return
+                return  # Fast path: skip ALL remaining work for most file calls.
 
         if level > self.stats.max_depth:
             self.stats.max_depth = level
 
-        current_time = time.time()
-        if current_time - self._last_progress_update < self._progress_update_interval:
+        if (current_time := time.time()) - self._last_progress_update < self._progress_update_interval:
             return
 
         self._last_progress_update = current_time
@@ -880,9 +890,8 @@ class TreeRenderer:
                 parent_rel_path = ""
 
             scan_result = self.scanner.scan_directory(dir_path)
-            entries = tuple(sorted(scan_result.entries, key=lambda e: (not e.is_dir(), e.name.lower())))
 
-            if not entries:
+            if not (entries := scan_result.sorted_entries):
                 return
 
             if scan_result.should_ignore:
@@ -902,9 +911,11 @@ class TreeRenderer:
 
         path = Path(dir_path)
         base_name = path.name or path.drive.rstrip(":\\")
-        lines.append(f"{self.chars.c_dir}{base_name}{self.chars.c_reset}")
-        lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
-        lines.append(f"{self.chars.c_line}\n")
+        lines.append(
+            f"{self.chars.c_dir}{base_name}{self.chars.c_reset}"
+            f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
+            f"{self.chars.c_line}\n"
+        )
 
     def _render_all_entries(
         self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
@@ -994,9 +1005,11 @@ class TreeRenderer:
         )
 
         if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
-            lines.append(f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}")
-            lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
-            lines.append(f"{self.chars.c_line}\n")
+            lines.append(
+                f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}"
+                f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
+                f"{self.chars.c_line}\n"
+            )
 
         else:
             chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
@@ -1013,12 +1026,13 @@ class TreeRenderer:
             for part in chunk[1:-1]:
                 lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}\n")
 
-            lines.append(f"{wrap_prefix}{self.chars.c_dir}{chunk[-1]}{self.chars.c_reset}")
-            lines.append(f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}")
-            lines.append(f"{self.chars.c_line}\n")
+            lines.append(
+                f"{wrap_prefix}{self.chars.c_dir}{chunk[-1]}{self.chars.c_reset}"
+                f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
+                f"{self.chars.c_line}\n"
+            )
 
-        indent_str = " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}{' ' * (self.chars.indent_size - 1)}"
-        new_prefix = f"{prefix}{indent_str}"
+        new_prefix = f"{prefix}{self.chars.indent_last if is_last else self.chars.indent_cont}"
         self._render_tree(entry.path, new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(
@@ -1058,21 +1072,19 @@ class TreeRenderer:
         """Render a specifically ignored node with dimmed styling."""
 
         branch = self.chars.corners[0] if is_last else self.chars.branch_new
+        suffix = self.chars.dirname_end if is_dir else ""
 
         if is_last:
-            lines.append(f"{prefix}{self.chars.c_line_dull}{branch}")
+            lines.append(
+                f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
+            )
         else:
-            lines.append(f"{prefix}{branch}{self.chars.c_line_dull}")
-
-        lines.append(f"{self.chars.line_hor_str}{entry.name}")
-
-        if is_dir:
-            lines.append(self.chars.dirname_end)
-
-        lines.append(f"{self.chars.c_reset}{self.chars.c_line}\n")
+            lines.append(
+                f"{prefix}{branch}{self.chars.c_line_dull}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
+            )
 
         if is_dir:
-            ignored_prefix = f"{prefix}{self.chars.tab}" if is_last else f"{prefix}{self.chars.line_ver}{self.chars.tab[:-1]}"
+            ignored_prefix = f"{prefix}{self.chars.indent_last if is_last else self.chars.indent_cont}"
             self._render_ignored_branch(ignored_prefix, is_last=True, lines=lines)
 
     def _render_ignored_branch(self, prefix: str, is_last: bool, lines: list[str]) -> None:
