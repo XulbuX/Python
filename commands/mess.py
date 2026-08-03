@@ -31,10 +31,10 @@ def print_help() -> None:
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "      Stop the animation"),
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("mess"), "           ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
-        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("--fast"), "     ", S.DIM("# ", S.ITALIC("Show binary mess at maximum speed"))),
-        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("--color"), "    ", S.DIM("# ", S.ITALIC("Show colorful binary mess"))),
-        ("  ", S.BR.GREEN("mess"), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # noqa: E501
+        ("  ", S.BR.GREEN("mess"), "            ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
+        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--fast"), "     ", S.DIM("# ", S.ITALIC("Show binary mess at maximum speed"))),
+        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--color"), "    ", S.DIM("# ", S.ITALIC("Show colorful binary mess"))),
+        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # noqa: E501
         "",
         sep="\n",
     ).print()
@@ -44,54 +44,18 @@ def print_help() -> None:
 digits: list[str] = ["0", "1"]
 styles: list[AnyStyle] = [S.DIM, S.BOLD, S.INVERSE, S.UNDERLINE, S.STRIKETHROUGH, S.DOUBLE_UNDERLINE]
 
+# fmt: off
 if ARGS.color_mode.exists:
-    styles.extend(
-        [
-            S.BLACK,
-            S.RED,
-            S.GREEN,
-            S.YELLOW,
-            S.BLUE,
-            S.MAGENTA,
-            S.CYAN,
-            S.WHITE,
-            S.BR.BLACK,
-            S.BR.RED,
-            S.BR.GREEN,
-            S.BR.YELLOW,
-            S.BR.BLUE,
-            S.BR.MAGENTA,
-            S.BR.CYAN,
-            S.BR.WHITE,
-            S.BG.BLACK,
-            S.BG.RED,
-            S.BG.GREEN,
-            S.BG.YELLOW,
-            S.BG.BLUE,
-            S.BG.MAGENTA,
-            S.BG.CYAN,
-            S.BG.WHITE,
-            S.BG.BR.BLACK,
-            S.BG.BR.RED,
-            S.BG.BR.GREEN,
-            S.BG.BR.YELLOW,
-            S.BG.BR.BLUE,
-            S.BG.BR.MAGENTA,
-            S.BG.BR.CYAN,
-            S.BG.BR.WHITE,
-        ]
-    )
-
-
-def random_hexa() -> str:
-    return f"#{rnd.randint(0, 255):02X}{rnd.randint(0, 255):02X}{rnd.randint(0, 255):02X}"
+    styles.extend([
+        S.BLACK, S.RED, S.GREEN, S.YELLOW, S.BLUE, S.MAGENTA, S.CYAN, S.WHITE,
+        S.BR.BLACK, S.BR.RED, S.BR.GREEN, S.BR.YELLOW, S.BR.BLUE, S.BR.MAGENTA, S.BR.CYAN, S.BR.WHITE,
+        S.BG.BLACK, S.BG.RED, S.BG.GREEN, S.BG.YELLOW, S.BG.BLUE, S.BG.MAGENTA, S.BG.CYAN, S.BG.WHITE,
+        S.BG.BR.BLACK, S.BG.BR.RED, S.BG.BR.GREEN, S.BG.BR.YELLOW, S.BG.BR.BLUE, S.BG.BR.MAGENTA, S.BG.BR.CYAN, S.BG.BR.WHITE,
+    ])
+# fmt: on
 
 
 def binary_line() -> StyledText:
-    return StyledText(*(rnd.choice(digits) for _ in range(xx.console.get_width())))
-
-
-def color_binary_line() -> StyledText:
     return StyledText(*(rnd.choice(styles)(rnd.choice(digits)) for _ in range(xx.console.get_width())))
 
 
@@ -100,23 +64,13 @@ def main() -> None:
         print_help()
         return
 
-    if ARGS.color_mode.exists:
-        if ARGS.fast_mode.exists:
-            while True:
-                color_binary_line().print()
-        else:
-            while True:
-                color_binary_line().print()
-                time.sleep(0.025)
-
+    if ARGS.fast_mode.exists:
+        while True:
+            binary_line().print()
     else:
-        if ARGS.fast_mode.exists:
-            while True:
-                binary_line().print()
-        else:
-            while True:
-                binary_line().print()
-                time.sleep(0.025)
+        while True:
+            binary_line().print()
+            time.sleep(0.025)
 
 
 if __name__ == "__main__":

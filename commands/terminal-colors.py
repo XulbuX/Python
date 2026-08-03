@@ -4,13 +4,13 @@
 """Show the foreground and background colors
 from the current terminal color scheme."""
 
-from xulbux.ansi import S, StyledSegment, StyledText
+from xulbux.ansi import AnyStyle, S, StyledText
 from xulbux.console import get_args
 
 ARGS = get_args({"help": {"-h", "--help"}})
 
 # fmt: off
-SHELL_COLORS: list[list[StyledSegment]] = [
+SHELL_COLORS: list[list[AnyStyle]] = [
     [S.BLACK,   S.BR.BLACK,   S.WHITE | S.BG.BLACK,   S.WHITE | S.BG.BR.BLACK  ],
     [S.WHITE,   S.BR.WHITE,   S.BLACK | S.BG.WHITE,   S.BLACK | S.BG.BR.WHITE  ],
     [S.RED,     S.BR.RED,     S.BLACK | S.BG.RED,     S.BLACK | S.BG.BR.RED    ],
