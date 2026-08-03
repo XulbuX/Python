@@ -1,36 +1,42 @@
 #!/usr/bin/env python3
-# ruff: noqa: RUF001
 # [x-cmds]: UPDATE
 
 """Show a sine wave animation inside the terminal."""
 
 import math
 import time
-from xulbux import Console, FormatCodes
+from xulbux import S, StyledText, console
 
-ARGS = Console.get_args({"speed": {"-s", "--speed"}, "y_stretch": {"-y", "--y-stretch"}, "help": {"-h", "--help"}})
+ARGS = console.get_args({"speed": {"-s", "--speed"}, "y_stretch": {"-y", "--y-stretch"}, "help": {"-h", "--help"}})
 
 
+# fmt: off
 def print_help() -> None:
-    help_text = """\
-[b|in|bg:black]( Sine — Show a sine wave animation inside the terminal )
-
-[b](Usage:) [br:green](sine) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-s), [br:blue](--speed)        Animation speed multiplier [dim]((default: 1.0))
-  [br:blue](-y), [br:blue](--y-stretch)    Vertical stretch of wave cycles [dim]((default: 1.0))
-
-[b](Controls:)
-  [br:red](Ctrl(⌘)[dim](+)C)          Stop the animation
-
-[b](Examples:)
-  [br:green](sine)                  [dim](# [i](Default wave))
-  [br:green](sine) [br:blue](--speed[dim](=)2)        [dim](# [i](Scroll twice as fast))
-  [br:green](sine) [br:blue](--y-stretch[dim](=)3)    [dim](# [i](Cycles 3× more stretched out))
-  [br:green](sine) [br:blue](-s[dim](=)0.5) [br:blue](-y[dim](=)2)      [dim](# [i](Half speed, double stretch))
-"""
-    FormatCodes.print(help_text)
+    title = ["  Sine", " — Show a sine wave animation inside the terminal  "]
+    StyledText(
+        "",
+        ("▄" * len("".join(title))),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (S.BOLD("Usage: "), S.BR.GREEN("sine "), S.BR.BLUE("[options]")),
+        "",
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--speed"), "        Animation speed multiplier ", S.DIM("(default: 1.0)")),
+        ("  ", S.BR.BLUE("-y"), ", ", S.BR.BLUE("--y-stretch"), "    Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),  # noqa: E501
+        "",
+        S.BOLD("Controls:"),
+        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "          Stop the animation"),
+        "",
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("sine"), "                  ", S.DIM("# ", S.ITALIC("Default wave"))),
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--speed", S.DIM("="), "2"), "        ", S.DIM("# ", S.ITALIC("Scroll twice as fast"))),  # noqa: E501
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--y-stretch", S.DIM("="), "3"), "    ", S.DIM("# ", S.ITALIC("Cycles 3× more stretched out"))),  # noqa: E501, RUF001
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("-s", S.DIM("="), "0.5"), " ", S.BR.BLUE("-y", S.DIM("="), "0.5"), "    ", S.DIM("# ", S.ITALIC("Half speed, half stretch"))),  # noqa: E501
+        "",
+        sep="\n",
+    ).print()
+# fmt: on
 
 
 def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:
@@ -42,13 +48,13 @@ def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:
         return max(0, min(width - 1, int(half_w * math.sin(math.radians(step * speed[0])) + half_w)))
 
     while True:
-        x1 = wave_x(t)  # UPPER HALF OF THIS TERMINAL ROW
-        x2 = wave_x(t + 0.5)  # LOWER HALF OF THIS TERMINAL ROW
+        x1 = wave_x(t)  # Upper half of this terminal row.
+        x2 = wave_x(t + 0.5)  # Lower half of this terminal row.
 
-        # UPPER HALF: CONNECT FROM PREVIOUS POSITION TO x1
+        # Upper half: connect from previous position to x1:
         lo_u = min(prev_x, x1) if prev_x is not None else x1
         hi_u = max(prev_x, x1) if prev_x is not None else x1
-        # LOWER HALF: CONNECT FROM x1 TO x2
+        # Lower half: connect from x1 to x2:
         lo_l, hi_l = min(x1, x2), max(x1, x2)
 
         line: list[str] = []
@@ -74,8 +80,6 @@ def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:
 
 
 def main() -> None:
-    print()
-
     if ARGS.help.exists:
         print_help()
         return
@@ -83,7 +87,7 @@ def main() -> None:
     speed = max(0.1, float(ARGS.speed.values[0])) if ARGS.speed.exists else 1.0
     y_stretch = max(0.1, float(ARGS.y_stretch.values[0])) if ARGS.y_stretch.exists else 1.0
 
-    show_wave(width=Console.width - 1, speed=(2 / y_stretch, speed))
+    show_wave(width=console.get_width() - 1, speed=(2 / y_stretch, speed))
 
 
 if __name__ == "__main__":
@@ -92,4 +96,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        console.fail(exc, start="\n", end="\n\n")

@@ -9,9 +9,10 @@ import platform
 import subprocess
 from pathlib import Path
 from typing import cast
-from xulbux import Console, Data, S, StyledText
+import xulbux as xx
+from xulbux import S, StyledText
 
-ARGS = Console.get_args({"as_json": {"-j", "--json"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({"as_json": {"-j", "--json"}, "help": {"-h", "--help"}})
 
 
 # fmt: off
@@ -39,6 +40,7 @@ def print_help() -> None:
 
 def get_common_vscode_locations() -> list[tuple[str, str]]:
     """Returns a list of `(executable_name, path)` tuples for common VS Code locations."""
+
     locations: list[tuple[str, str]] = []
     system = platform.system()
 
@@ -75,7 +77,7 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
                 ]
             )
 
-    elif system == "Darwin":  # macOS
+    elif system == "Darwin":
         locations.extend(
             [
                 ("code", "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"),
@@ -129,18 +131,19 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
 def find_vscode_executable() -> tuple[str, str] | None:
     """Finds VS Code or VS Code Insiders executable.<br>
     Returns a tuple of `(variant_name, executable_path)` or `None` if not found."""
-    # FIRST, TRY TO FIND IN 'PATH' ENV VARIABLE
+
+    # First, try to find in `PATH` env variable:
     for variant in ["code", "code-insiders"]:
         try:
             command = "where" if platform.system() == "Windows" else "which"
             result = subprocess.run([command, variant], capture_output=True, check=True, text=True)
-            executable = result.stdout.strip().split("\n")[0]  # GET FIRST RESULT
+            executable = result.stdout.strip().split("\n")[0]  # Get first result.
             if executable:
                 return (variant, executable)
         except subprocess.CalledProcessError:
             continue
 
-    # IF NOT IN 'PATH' ENV-VAR, CHECK COMMON INSTALLATION LOCATIONS
+    # If not in `PATH` env-var, check common installation locations:
     for variant, location in get_common_vscode_locations():
         if Path(location).is_file():
             return (variant, location)
@@ -153,7 +156,7 @@ def get_vscode_extensions(executable: str) -> list[str] | None:
         result = subprocess.run([executable, "--list-extensions"], capture_output=True, text=True, shell=True)
         return result.stdout.strip().splitlines()
     except subprocess.CalledProcessError as e:
-        Console.fail(f"Failed to get extensions: {e.stderr}")
+        xx.console.fail(f"Failed to get extensions: {e.stderr}")
 
 
 def main() -> None:
@@ -170,17 +173,19 @@ def main() -> None:
 
     extensions = cast("list[str]", get_vscode_extensions(executable))
 
+    title = StyledText(
+        (S.INVERSE | S.BG.BLACK)("  Found ", S.BOLD(str(len(extensions))), f" installed {variant_display} extensions  ")
+    )
+
     StyledText(
         "",
-        "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
-        (S.INVERSE | S.BG.BLACK)("  Found ", S.BOLD(str(len(extensions))), f" installed {variant_display} extensions  "),
-        "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀",
+        "▄" * len(title.raw),
+        title.ansi,
+        "▀" * len(title.raw),
         "",
-        S.WHITE(
-            Data.render(extensions, indent=2, as_json=True, syntax_highlighting=True).raw
-            if ARGS.as_json.exists
-            else "\n".join(extensions)
-        ),
+        xx.data.render(extensions, indent=2, as_json=True, syntax_highlighting=True).ansi
+        if ARGS.as_json.exists
+        else S.WHITE("\n".join(extensions)),
         "",
         sep="\n",
     ).print()
@@ -192,4 +197,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
