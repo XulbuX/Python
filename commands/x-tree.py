@@ -75,44 +75,49 @@ DEFAULT: ScriptDefaults = {
 
 # fmt: off
 IMAGE_EXTS = frozenset({
-    ".ai", ".bmp", ".cr2", ".eps", ".gif", ".heic", ".ico", ".indd", ".jpeg", ".jpg", ".nef", ".orf", ".png", ".psd", ".raw",
-    ".sr2", ".svg", ".tif", ".tiff", ".webp", ".xcf"
+    ".ai", ".arw", ".avif", ".bmp", ".cr2", ".cur", ".dng", ".eps", ".gif", ".heic", ".ico", ".icns", ".indd", ".jpeg", ".jpg",
+    ".jxl", ".kra", ".nef", ".orf", ".png", ".psd", ".raw", ".rw2", ".sr2", ".svg", ".tif", ".tiff", ".webp", ".xcf"
 })
 ARCHIVE_EXTS = frozenset({
-    ".7z", ".apk", ".bz2", ".cab", ".deb", ".dmg", ".gz", ".iso", ".jar", ".lz", ".lzma", ".rar", ".rpm", ".tar", ".tgz",
-    ".xz", ".z", ".zip"
+    ".7z", ".apk", ".bz2", ".cab", ".deb", ".dmg", ".ear", ".gz", ".iso", ".jar", ".lz", ".lzma", ".pak", ".rar", ".rpm",
+    ".snap", ".tar", ".tgz", ".war", ".whl", ".xz", ".z", ".zip", ".zst"
 })
 VIDEO_EXTS = frozenset({
-    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".mts", ".ogv", ".rm", ".rmvb",
-    ".ts", ".vob", ".webm", ".wmv"
+    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".dv", ".f4v", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".mts", ".ogv",
+    ".rm", ".rmvb", ".ts", ".vob", ".webm", ".wmv"
 })
 AUDIO_EXTS = frozenset({
-    ".aac", ".aiff", ".alac", ".amr", ".au", ".flac", ".m4a", ".mid", ".midi", ".mp3", ".ogg", ".opus", ".voc", ".wav", ".wma"
+    ".aac", ".aif", ".aiff", ".alac", ".amr", ".ape", ".au", ".caf", ".flac", ".m4a", ".mid", ".midi", ".mka", ".mp3", ".oga",
+    ".ogg", ".opus", ".voc", ".wav", ".wma"
 })
 EXEC_EXTS = frozenset({
     ".appimage", ".bat", ".bin", ".cmd", ".com", ".exe", ".msi", ".run", ".sh"
 })
 CODE_EXTS = frozenset({
-    ".asm", ".bash", ".bat", ".c", ".cfg", ".cmake", ".conf", ".cpp", ".cs", ".css", ".csv", ".dart", ".diff", ".dockerfile",
-    ".ejs", ".env", ".erl", ".ex", ".exs", ".go", ".gql", ".graphql", ".h", ".hbs", ".hpp", ".hs", ".html", ".ini", ".ipynb",
-    ".j2", ".jade", ".java", ".jinja", ".jl", ".js", ".json", ".jsx", ".kt", ".less", ".log", ".lua", ".m", ".make", ".md",
-    ".patch", ".php", ".pl", ".pom", ".proto", ".ps1", ".pug", ".py", ".pyi", ".pyw", ".r", ".rb", ".rs", ".s", ".sass", ".sc",
-    ".scala", ".scss", ".sh", ".sql", ".styl", ".svelte", ".swift", ".toml", ".ts", ".tsx", ".tsv", ".txt", ".vbs", ".vue",
-    ".xml", ".yaml", ".yml", ".zsh"
+    ".asm", ".astro", ".awk", ".bash", ".bat", ".bib", ".bicep", ".c", ".cfg", ".clj", ".cljs", ".cljc", ".cmake", ".conf",
+    ".cpp", ".cr", ".cs", ".csh", ".css", ".d", ".dart", ".diff", ".dockerfile", ".edn", ".ejs", ".el", ".env", ".erb", ".erl",
+    ".ex", ".exs", ".f90", ".f95", ".fish", ".fs", ".fsi", ".fsx", ".gd", ".gleam", ".go", ".gradle", ".gql", ".graphql",
+    ".groovy", ".h", ".hbs", ".hcl", ".hpp", ".hs", ".html", ".http", ".hx", ".ini", ".ipynb", ".j2", ".jade", ".java",
+    ".jinja", ".jl", ".js", ".json", ".jsonc", ".jsonl", ".jsx", ".ksh", ".kt", ".kts", ".less", ".lisp", ".liquid", ".lock",
+    ".lua", ".m", ".make", ".md", ".mdx", ".ml", ".mli", ".mod", ".nim", ".nims", ".nix", ".odin", ".org", ".pas", ".patch",
+    ".php", ".pl", ".plist", ".po", ".pom", ".pot", ".prisma", ".properties", ".proto", ".ps1", ".pug", ".py", ".pyi", ".pyw",
+    ".r", ".rb", ".ron", ".rs", ".rst", ".s", ".sass", ".sc", ".scala", ".scss", ".sh", ".sol", ".sql", ".styl", ".svelte",
+    ".swift", ".tcl", ".tex", ".tf", ".tfvars", ".tmpl", ".toml", ".ts", ".tsx", ".v", ".vbs", ".vue", ".xml", ".yaml", ".yml",
+    ".zig", ".zsh"
 })
 BINARY_EXTS = frozenset({
     ".7z", ".ai", ".apk", ".avi", ".bak", ".bin", ".blend", ".cab", ".class", ".cur", ".dat", ".db", ".db3", ".dbf", ".dcm",
     ".dll", ".dmg", ".doc", ".docx", ".dylib", ".eps", ".exe", ".fbx", ".frm", ".gif", ".glb", ".gltf", ".gz", ".heic", ".ibd",
     ".ico", ".iges", ".img", ".iso", ".jar", ".jpeg", ".jpg", ".mha", ".mhd", ".mkv", ".mobi", ".mov", ".mp3", ".mp4", ".msi",
     ".myd", ".myi", ".ndf", ".nef", ".nhdr", ".nii", ".nrrd", ".o", ".obj", ".ods", ".odt", ".opt", ".orf", ".ova", ".ovf",
-    ".pdf", ".ply", ".png", ".ppt", ".pptx", ".psd", ".pyc", ".pyd", ".qcow2", ".rar", ".raw", ".rpm", ".rtf", ".so",
+    ".pak", ".pdf", ".ply", ".png", ".ppt", ".pptx", ".psd", ".pyc", ".pyd", ".qcow2", ".rar", ".raw", ".rpm", ".rtf", ".so",
     ".sqlite", ".sqlite3", ".sr2", ".step", ".stl", ".svg", ".tar", ".tif", ".tiff", ".vdi", ".vhdx", ".vmdk", ".vtp", ".vtu",
     ".webp", ".xls", ".xlsx", ".zip"
 })
 
 TEXT_TRANS = str.maketrans({
     0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ",
-    0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " ",
+    0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " "
 })
 
 
@@ -1205,11 +1210,12 @@ class TreeRenderer:
         elif ext in AUDIO_EXTS:
             return self.chars.c_audio, self.chars.c_audio_dim
 
-        try:
-            if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                return self.chars.c_executable, self.chars.c_executable_dim
-        except Exception:
-            pass
+        if not ext:
+            try:
+                if entry.stat(follow_symlinks=False).st_mode & 0o111:
+                    return self.chars.c_executable, self.chars.c_executable_dim
+            except Exception:
+                pass
 
         return self.chars.c_file, self.chars.c_file_dim
 
