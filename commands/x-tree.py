@@ -28,6 +28,7 @@ ARGS = xx.console.get_args(
         "base_dir": "before",
         "ignore_dirs": {"-i", "--ignore"},
         "auto_ignore_mode": {"-a", "--auto-ignore"},
+        "truncate_similar": {"-nt", "--no-truncate"},
         "include_file_contents": {"-c", "--content"},
         "to_file": {"-f", "--file"},
         "interactive": {"-I", "--interactive"},
@@ -65,6 +66,7 @@ CHARS: TreeCharConfig = {
 DEFAULT: ScriptDefaults = {
     "ignore_dirs": [],
     "auto_ignore_mode": 2,
+    "truncate_similar": True,
     "include_file_contents": False,
     "max_content_lines": 0,
     "indent": 2,
@@ -127,6 +129,7 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
         ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "           Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive chunks of similar files"),  # noqa: E501
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
@@ -179,6 +182,7 @@ class TreeCharConfig(TypedDict):
 class ScriptDefaults(TypedDict):
     ignore_dirs: list[str]
     auto_ignore_mode: Literal[0, 1, 2]
+    truncate_similar: bool
     include_file_contents: bool
     max_content_lines: int
     indent: int
@@ -189,7 +193,6 @@ class DirScanResult(NamedTuple):
     should_ignore: bool
     total_count: int
     hash_count: int
-    show_partial: bool
     entries: tuple[os.DirEntry[str], ...]
     sorted_entries: tuple[os.DirEntry[str], ...]
 
@@ -388,8 +391,8 @@ class IGNORE:
         "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",  # noqa: E501
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
-        "rand_short": rf"(?![A-Z][a-z]{{4,}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4,12}}(?:{sep}|{ext})",
-        "rand_long": rf"(?![A-Z][a-z]{{4,}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{13,64}}(?:{sep}|{ext})",
+        "rand_short": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{4,12}}(?:{sep}|{ext})",  # noqa: E501
+        "rand_long": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{13,64}}(?:{sep}|{ext})",  # noqa: E501
     }
     standalones: ClassVar[dict[str, str]] = {
         "hex2": r"[a-fA-F0-9]{2}",
@@ -440,6 +443,7 @@ class TreeChars:
         self.c_error = StyledText(self.c_reset, COLORS["error"]).ansi
         self.c_dir = StyledText(self.c_reset, COLORS["dir"]).ansi
         self.c_dir_dull = StyledText(self.c_reset, COLORS["dir_dull"]).ansi
+        self.c_dir_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"]).ansi
         self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
         self.c_file_dim = StyledText(self.c_reset, S.DIM, COLORS["file"]).ansi
         self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
@@ -585,36 +589,7 @@ class DirectoryScanner:
 
         return bool(DirectoryScanner._UUID_ANYWHERE.search(name))
 
-    @staticmethod
-    def _find_filename_patterns(names: list[str], min_pattern_length: int = 4) -> tuple[bool, float]:
-        """Analyze filenames to detect patterns indicating localization, versioning etc."""
-
-        if len(names) < 5:
-            return False, 0.0
-
-        # A longer prefix always has a count <= its shorter sub-prefix, so the
-        # maximum match count is always found at exactly `min_pattern_length` chars.
-        prefixes: dict[str, int] = {}
-        suffixes: dict[str, int] = {}
-
-        for name in names:
-            dot = name.rfind(".")
-            base = name[:dot] if dot > 0 else name
-
-            if len(base) >= min_pattern_length:
-                prefix = base[:min_pattern_length]
-                prefixes[prefix] = prefixes.get(prefix, 0) + 1
-                suffix = base[-min_pattern_length:]
-                suffixes[suffix] = suffixes.get(suffix, 0) + 1
-
-        best_prefix_count = max(prefixes.values()) if prefixes else 0
-        best_suffix_count = max(suffixes.values()) if suffixes else 0
-        best = max(best_prefix_count, best_suffix_count)
-        pattern_ratio = best / len(names)
-
-        return (best >= 5 and pattern_ratio >= 0.7), pattern_ratio
-
-    def scan_directory(self, dir_path: str) -> DirScanResult:  # noqa: C901
+    def scan_directory(self, dir_path: str) -> DirScanResult:
         """Scan a directory and decide if it should be auto-ignored or partially ignored."""
 
         cached = self._scan_cache.get(dir_path)
@@ -626,9 +601,9 @@ class DirectoryScanner:
                 with os.scandir(dir_path) as it:
                     raw = tuple(it)
                 sorted_raw = tuple(sorted(raw, key=lambda e: (not e.is_dir(), e.name.lower())))
-                result = DirScanResult(False, 0, 0, False, raw, sorted_raw)
+                result = DirScanResult(False, 0, 0, raw, sorted_raw)
             except Exception:
-                result = DirScanResult(False, 0, 0, False, (), ())
+                result = DirScanResult(False, 0, 0, (), ())
             self._scan_cache[dir_path] = result
             return result
 
@@ -637,7 +612,7 @@ class DirectoryScanner:
                 entries = tuple(it)
 
             if not entries:
-                result = DirScanResult(False, 0, 0, False, entries, entries)
+                result = DirScanResult(False, 0, 0, entries, entries)
                 self._scan_cache[dir_path] = result
                 return result
 
@@ -651,7 +626,7 @@ class DirectoryScanner:
             total_count = len(entries)
 
             if total_count < 3:
-                return DirScanResult(False, total_count, 0, False, entries, sorted_entries)
+                return DirScanResult(False, total_count, 0, entries, sorted_entries)
 
             hash_count = normal_count = 0
             filenames: list[str] = []
@@ -667,24 +642,18 @@ class DirectoryScanner:
                 else:
                     normal_count += 1
 
-            has_pattern, _ = self._find_filename_patterns(filenames)
-
-            if normal_count >= 3 and hash_count >= 5:
-                result = DirScanResult(False, total_count, hash_count, True, entries, sorted_entries)
-            elif (has_pattern and total_count > 5) or (total_count > 5 and (hash_count / total_count) > 0.8):
-                result = DirScanResult(True, total_count, hash_count, False, entries, sorted_entries)
+            if total_count > 5 and (hash_count / total_count) > 0.8:
+                result = DirScanResult(True, total_count, hash_count, entries, sorted_entries)
             elif self.is_likely_hash_name(dir_name):
-                result = DirScanResult(
-                    (hash_count / total_count > 0.7), total_count, hash_count, False, entries, sorted_entries
-                )
+                result = DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, entries, sorted_entries)
             else:
-                result = DirScanResult(False, total_count, hash_count, False, entries, sorted_entries)
+                result = DirScanResult(False, total_count, hash_count, entries, sorted_entries)
 
             self._scan_cache[dir_path] = result
             return result
 
         except Exception:
-            result = DirScanResult(False, 0, 0, False, (), ())
+            result = DirScanResult(False, 0, 0, (), ())
             self._scan_cache[dir_path] = result
             return result
 
@@ -695,6 +664,7 @@ class TreeConfig:
     max_width: int = 0
     ignore_dirs: list[str] = field(default_factory=lambda: [])
     auto_ignore_mode: Literal[0, 1, 2] = 2
+    truncate_similar: bool = True
     include_file_contents: bool = False
     max_content_lines: int = 0
     indent: int = 2
@@ -891,10 +861,7 @@ class TreeRenderer:
                 self._render_ignored_branch(prefix, is_last=True, lines=lines)
                 return
 
-            if scan_result.show_partial:
-                self._render_partial_entries(entries, prefix, level, parent_rel_path, lines)
-            else:
-                self._render_all_entries(entries, prefix, level, parent_rel_path, lines)
+            self._render_entries(entries, prefix, level, parent_rel_path, lines)
 
         except Exception as exc:
             self._render_error(exc, prefix, lines)
@@ -910,16 +877,93 @@ class TreeRenderer:
             f"{self.chars.c_line}\n"
         )
 
-    def _render_all_entries(
-        self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
-    ) -> None:
-        """Render standard directory entries."""
+    @staticmethod
+    def _get_shape(name: str) -> str:
+        """Calculate a structural shape signature for a filename."""
+        if DirectoryScanner.is_likely_hash_name(name):
+            return "[HASH]"
 
-        last_idx = len(entries) - 1
-        for idx, entry in enumerate(entries):
-            is_dir = entry.is_dir()
-            is_last = idx == last_idx
+        stem, ext = os.path.splitext(name)
+        sig = re.sub(r"\d+", "#", stem)
+        sig = re.sub(r"[a-zA-Z]", "a", sig)
+
+        return sig + ext.lower()
+
+    def _get_visible_entries(self, entries: tuple[os.DirEntry[str], ...]) -> list[os.DirEntry[str] | tuple[int, str, bool]]:
+        """Filter entries for inline similarity truncation."""
+
+        if not self.config.truncate_similar or len(entries) < 8:
+            return list(entries)
+
+        chunks: list[list[os.DirEntry[str]]] = []
+        current_chunk: list[os.DirEntry[str]] = []
+        current_shape = ""
+
+        for entry in entries:
+            shape = self._get_shape(entry.name)
+            if not current_chunk:
+                current_shape = shape
+                current_chunk.append(entry)
+            elif shape == current_shape:
+                current_chunk.append(entry)
+            else:
+                chunks.append(current_chunk)
+                current_chunk = [entry]
+                current_shape = shape
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        visible_entries: list[os.DirEntry[str] | tuple[int, str, bool]] = []
+        for chunk in chunks:
+            if len(chunk) < 8:
+                visible_entries.extend(chunk)
+            else:
+                visible_entries.extend(chunk[:2])
+
+                base_color = self._get_file_color(chunk[0])[1]
+                for entry in chunk[1:]:
+                    if self._get_file_color(entry)[1] != base_color:
+                        base_color = self.chars.c_line_dull
+                        break
+
+                visible_entries.append((len(chunk) - 4, base_color, chunk[0].is_dir()))
+                visible_entries.extend(chunk[-2:])
+
+        return visible_entries
+
+    def _render_entries(
+        self,
+        entries: tuple[os.DirEntry[str], ...],
+        prefix: str,
+        level: int,
+        parent_rel_path: str,
+        lines: list[str],
+    ) -> None:
+        """Render directory entries with optional inline similarity truncation."""
+
+        visible_entries = self._get_visible_entries(entries)
+
+        last_idx = len(visible_entries) - 1
+        for i, item in enumerate(visible_entries):
+            is_last = i == last_idx
             branch = self.chars.corners[0] if is_last else self.chars.branch_new
+
+            if isinstance(item, tuple):
+                count, color, is_chunk_dir = item
+                if is_chunk_dir:
+                    self.stats.processed_dirs += count
+                else:
+                    self.stats.processed_files += count
+
+                lines.append(
+                    f"{prefix}{branch}{self.chars.line_hor_str}{color}{self.chars.c_italic}"
+                    f"{count} more{self.chars.c_reset}{self.chars.c_line}\n"
+                )
+                continue
+
+            entry = item
+            is_dir = entry.is_dir()
             current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
             current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
@@ -933,49 +977,6 @@ class TreeRenderer:
 
             if is_dir:
                 self._render_directory(entry, prefix, current_prefix, level, is_last, current_rel_path, lines)
-            else:
-                self._render_file(entry, prefix, current_prefix, level, is_last, lines)
-
-    def _render_partial_entries(
-        self, entries: tuple[os.DirEntry[str], ...], prefix: str, level: int, parent_rel_path: str, lines: list[str]
-    ) -> None:
-        """Render entries with some hash names collapsed into an ignored marker."""
-
-        visible_entries: list[os.DirEntry[str] | None] = []
-        last_was_ignored = False
-
-        for entry in entries:
-            if not self.scanner.is_likely_hash_name(entry.name):
-                if last_was_ignored:
-                    visible_entries.append(None)
-                visible_entries.append(entry)
-                last_was_ignored = False
-            else:
-                last_was_ignored = True
-
-        if visible_entries and visible_entries[-1] is None:
-            visible_entries.pop()
-
-        for i, entry in enumerate(visible_entries):
-            is_last = bool(i == len(visible_entries) - 1)
-
-            if entry is None:
-                self._render_ignored_branch(prefix, is_last, lines)
-                continue
-
-            branch = self.chars.corners[0] if is_last else self.chars.branch_new
-            current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
-
-            if entry.is_dir():
-                self._render_directory(
-                    entry,
-                    prefix,
-                    current_prefix,
-                    level,
-                    is_last,
-                    f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name,
-                    lines,
-                )
             else:
                 self._render_file(entry, prefix, current_prefix, level, is_last, lines)
 
@@ -1029,7 +1030,13 @@ class TreeRenderer:
         self._render_tree(entry.path, new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(
-        self, entry: os.DirEntry[str], prefix: str, current_prefix: str, level: int, is_last: bool, lines: list[str]
+        self,
+        entry: os.DirEntry[str],
+        prefix: str,
+        current_prefix: str,
+        level: int,
+        is_last: bool,
+        lines: list[str],
     ) -> None:
         """Render a file node and optionally its contents if configured."""
 
@@ -1190,6 +1197,9 @@ class TreeRenderer:
     def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
         """Determine the color string for a file based on its type and extension."""
 
+        if entry.is_dir():
+            return self.chars.c_dir, self.chars.c_dir_dim
+
         if entry.is_symlink():
             return self.chars.c_symlink, self.chars.c_symlink_dim
 
@@ -1262,6 +1272,20 @@ def get_user_inputs(config: TreeConfig) -> None:
         ),
     )
 
+    if not ARGS.truncate_similar.exists:
+        config.truncate_similar = (
+            xx.console.input(
+                StyledText(
+                    S.BOLD("Truncate similar sequential items inline?\n"),
+                    (S.DIM("(Y)" if config.truncate_similar else "(N)"), " > "),
+                ),
+                max_len=1,
+                allowed_chars="yYnN",
+                default_val="Y" if config.truncate_similar else "N",
+            ).upper()
+            == "Y"
+        )
+
     if not ARGS.include_file_contents.exists:
         content_input = xx.console.input(
             StyledText(
@@ -1328,6 +1352,7 @@ def main() -> None:  # noqa: C901
         base_dir=base_dir,
         ignore_dirs=ignore_dirs,
         auto_ignore_mode=auto_ignore_mode,
+        truncate_similar=not ARGS.truncate_similar.exists,
         include_file_contents=inc_contents,
         max_content_lines=max_lines,
         indent=DEFAULT["indent"],
@@ -1363,9 +1388,10 @@ def main() -> None:  # noqa: C901
     # Re-initialize config in case user changed indent/style properties:
     config = TreeConfig(
         base_dir=config.base_dir,
-        max_width=0 if into_file else xx.console.get_width(),
+        max_width=200 if into_file else xx.console.get_width(),
         ignore_dirs=config.ignore_dirs,
         auto_ignore_mode=config.auto_ignore_mode,
+        truncate_similar=config.truncate_similar,
         include_file_contents=config.include_file_contents,
         max_content_lines=config.max_content_lines,
         indent=config.indent,
