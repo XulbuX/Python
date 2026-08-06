@@ -110,6 +110,11 @@ BINARY_EXTS = frozenset({
     ".webp", ".xls", ".xlsx", ".zip"
 })
 
+TEXT_TRANS = str.maketrans({
+    0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ",
+    0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " ",
+})
+
 
 def print_help() -> None:
     title = ["  Tree Generator", " — Quickly generate advanced and good looking directory trees  "]
@@ -127,15 +132,16 @@ def print_help() -> None:
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
         ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
+        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive chunks of similar items"),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
         ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "           Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
-        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive chunks of similar files"),  # noqa: E501
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--auto-ignore", S.DIM("="), "1"), "                           ", S.DIM("# ", S.ITALIC("Set auto-ignore mode to hardcoded only"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-truncate"), "                             ", S.DIM("# ", S.ITALIC("Disable truncation of repetitive chunks"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # noqa: E501
@@ -143,9 +149,10 @@ def print_help() -> None:
         (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
         ("  ", (S.ITALIC | S.DIM)("2"), "  Auto-ignore mode"),
-        ("  ", (S.ITALIC | S.DIM)("3"), "  Include file contents in tree"),
-        ("  ", (S.ITALIC | S.DIM)("4"), "  Indentation size"),
-        ("  ", (S.ITALIC | S.DIM)("5"), "  Output tree to file"),
+        ("  ", (S.ITALIC | S.DIM)("3"), "  Truncate repetitive chunks of similar items"),
+        ("  ", (S.ITALIC | S.DIM)("4"), "  Include file contents"),
+        ("  ", (S.ITALIC | S.DIM)("5"), "  Indentation size"),
+        ("  ", (S.ITALIC | S.DIM)("6"), "  Output tree to file"),
         "",
         sep="\n",
     ).print()
@@ -430,6 +437,8 @@ class TreeChars:
         # Pre-computed indent strings used in the hot render path:
         self.indent_last = " " * indent_size
         self.indent_cont = f"{self.line_ver}{' ' * (indent_size - 1)}"
+        self.wrap_indent_last = " " * (len(self.corners[0]) + len(self.line_hor_str))
+        self.wrap_indent_cont = f"{self.line_ver}{' ' * (len(self.branch_new) + len(self.line_hor_str) - len(self.line_ver))}"
 
         # Colors as ANSI strings:
         self.c_dim = StyledText(S.DIM).ansi
@@ -470,22 +479,6 @@ class DirectoryScanner:
     _UUID_ANYWHERE = re.compile(r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}")
     _SEP_SPLITTER = re.compile(r"[-_~@\s]+")
 
-    _TEXT_TRANS = str.maketrans(
-        {
-            0x2000: " ",
-            0x2001: " ",
-            0x2002: " ",
-            0x2003: " ",
-            0x2004: " ",
-            0x2005: " ",
-            0x2006: " ",
-            0x2007: " ",
-            0x2008: " ",
-            0x2009: " ",
-            0x200A: " ",
-        }
-    )
-
     def __init__(self, ignore_dirs: list[str], auto_ignore_mode: Literal[0, 1, 2]):
         """Initialize the directory scanner with ignore sets and rules."""
 
@@ -496,12 +489,16 @@ class DirectoryScanner:
             all_ignores.extend(path.lower() for path in IGNORE.paths)
 
         self.exact_names: set[str] = set()
-        self.exact_paths: set[str] = set()
+        self.exact_paths: tuple[str, ...] = ()
+        self.absolute_paths: tuple[str, ...] = ()
         self.wildcard_names: list[re.Pattern[str]] = []
         self.wildcard_paths: list[list[re.Pattern[str]]] = []
         self.wildcard_abs_paths: list[re.Pattern[str]] = []
         self._scan_cache: dict[str, DirScanResult] = {}
         self._ignore_cache: dict[str, bool] = {}
+
+        exact_paths_list: list[str] = []
+        absolute_paths_list: list[str] = []
 
         for pattern in all_ignores:
             p = pattern.lower().replace("\\", "/")
@@ -510,7 +507,10 @@ class DirectoryScanner:
 
             if "*" not in p and "[" not in p:
                 if "/" in p:
-                    self.exact_paths.add(p)
+                    if p.startswith("/"):
+                        absolute_paths_list.append(p)
+                    else:
+                        exact_paths_list.append(p)
                 else:
                     self.exact_names.add(p)
             else:
@@ -523,6 +523,9 @@ class DirectoryScanner:
                 else:
                     self.wildcard_names.append(re.compile(fnmatch.translate(p)))
 
+        self.exact_paths = tuple(exact_paths_list)
+        self.absolute_paths = tuple(absolute_paths_list)
+
     def should_ignore_path(self, path: str) -> bool:  # noqa: C901
         """Check if a relative path matches any user-specified or default ignore pattern."""
 
@@ -533,16 +536,22 @@ class DirectoryScanner:
         if cached is not None:
             return cached
 
-        path_lower = path.lower().replace("\\", "/")
+        path_lower = path.lower()
         name = path_lower.rsplit("/", 1)[-1]
 
         if name in self.exact_names:
             self._ignore_cache[path] = True
             return True
 
+        if self.absolute_paths:
+            for ep in self.absolute_paths:
+                if path_lower == ep[1:] or ep in path_lower:
+                    self._ignore_cache[path] = True
+                    return True
+
         if self.exact_paths:
             for ep in self.exact_paths:
-                if (ep.startswith("/") and path_lower == ep[1:]) or ep in path_lower:
+                if ep in path_lower:
                     self._ignore_cache[path] = True
                     return True
 
@@ -645,7 +654,9 @@ class DirectoryScanner:
             if total_count > 5 and (hash_count / total_count) > 0.8:
                 result = DirScanResult(True, total_count, hash_count, entries, sorted_entries)
             elif self.is_likely_hash_name(dir_name):
-                result = DirScanResult((hash_count / total_count > 0.7), total_count, hash_count, entries, sorted_entries)
+                result = DirScanResult(
+                    (total_count > 0 and hash_count / total_count > 0.7), total_count, hash_count, entries, sorted_entries
+                )
             else:
                 result = DirScanResult(False, total_count, hash_count, entries, sorted_entries)
 
@@ -678,6 +689,9 @@ class TreeConfig:
 
 class TreeRenderer:
     """Orchestrates directory traversal and formats the tree output."""
+
+    _RE_DIGIT = re.compile(r"\d+")
+    _RE_ALPHA = re.compile(r"[a-zA-Z]")
 
     def __init__(self, config: TreeConfig):
         """Initialize the renderer with config, styling, and scanner."""
@@ -782,11 +796,17 @@ class TreeRenderer:
                 len(time_taken.raw) + len(tree_stats.raw) + 2,
             )
 
+        space_len = max_width - len(time_taken.raw) - len(tree_stats.raw) - 2
+        if space_len >= 2:
+            footer = (" ", time_taken.ansi, " " * space_len, tree_stats.ansi)
+        else:
+            footer = (" ", time_taken.ansi, "\n", " " * max(1, max_width - len(tree_stats.raw)), tree_stats.ansi)
+
         return StyledText(
             (COLORS["line"], result_str),
             "\n",
             (S.RESET, S.DIM("─" * max_width), "\n"),
-            (" ", time_taken.ansi, " " * max(2, max_width - len(time_taken.raw) - len(tree_stats.raw) - 2), tree_stats.ansi),
+            footer,
             "\n",
         )
 
@@ -880,12 +900,13 @@ class TreeRenderer:
     @staticmethod
     def _get_shape(name: str) -> str:
         """Calculate a structural shape signature for a filename."""
+
         if DirectoryScanner.is_likely_hash_name(name):
             return "[HASH]"
 
         stem, ext = os.path.splitext(name)
-        sig = re.sub(r"\d+", "#", stem)
-        sig = re.sub(r"[a-zA-Z]", "a", sig)
+        sig = TreeRenderer._RE_DIGIT.sub("#", stem)
+        sig = TreeRenderer._RE_ALPHA.sub("a", sig)
 
         return sig + ext.lower()
 
@@ -957,8 +978,7 @@ class TreeRenderer:
                     self.stats.processed_files += count
 
                 lines.append(
-                    f"{prefix}{branch}{self.chars.line_hor_str}{color}{self.chars.c_italic}"
-                    f"{count} more{self.chars.c_reset}{self.chars.c_line}\n"
+                    f"{prefix}{branch}{self.chars.line_hor_str}{color}[{count} more]{self.chars.c_reset}{self.chars.c_line}\n"
                 )
                 continue
 
@@ -1007,18 +1027,12 @@ class TreeRenderer:
 
         else:
             chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
-            lines.append(f"{current_prefix}{self.chars.c_dir}{chunk[0]}{self.chars.c_reset}\n")
+            lines.append(f"{current_prefix}{self.chars.c_dir}{chunk[0]}{self.chars.c_reset}{self.chars.c_line}\n")
 
-            branch = self.chars.corners[0] if is_last else self.chars.branch_new
-            if is_last:
-                wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
-            else:
-                indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
-                wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
-            wrap_prefix = f"{prefix}{wrap_indent}"
+            wrap_prefix = f"{prefix}{self.chars.wrap_indent_last if is_last else self.chars.wrap_indent_cont}"
 
             for part in chunk[1:-1]:
-                lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}\n")
+                lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}{self.chars.c_line}\n")
 
             lines.append(
                 f"{wrap_prefix}{self.chars.c_dir}{chunk[-1]}{self.chars.c_reset}"
@@ -1052,13 +1066,7 @@ class TreeRenderer:
             chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
             lines.append(f"{current_prefix}{color}{chunk[0]}{self.chars.c_reset}{self.chars.c_line}\n")
 
-            branch = self.chars.corners[0] if is_last else self.chars.branch_new
-            if is_last:
-                wrap_indent = " " * (len(branch) + len(self.chars.line_hor_str))
-            else:
-                indent_len = len(branch) + len(self.chars.line_hor_str) - len(self.chars.line_ver)
-                wrap_indent = f"{self.chars.line_ver}{' ' * indent_len}"
-            wrap_prefix = f"{prefix}{wrap_indent}"
+            wrap_prefix = f"{prefix}{self.chars.wrap_indent_last if is_last else self.chars.wrap_indent_cont}"
 
             for part in chunk[1:]:
                 lines.append(f"{wrap_prefix}{color}{part}{self.chars.c_reset}{self.chars.c_line}\n")
@@ -1108,26 +1116,7 @@ class TreeRenderer:
             if not file_lines:
                 return
 
-            file_lines = [
-                line.replace("\t", "    ")
-                .translate(
-                    {
-                        0x2000: " ",
-                        0x2001: " ",
-                        0x2002: " ",
-                        0x2003: " ",
-                        0x2004: " ",
-                        0x2005: " ",
-                        0x2006: " ",
-                        0x2007: " ",
-                        0x2008: " ",
-                        0x2009: " ",
-                        0x200A: " ",
-                    }
-                )
-                .rstrip()
-                for line in file_lines
-            ]
+            file_lines = [line.replace("\t", "    ").translate(TEXT_TRANS).rstrip() for line in file_lines]
 
             max_content_width = max(10, self.config.max_width - len(content_prefix) - 4) if self.config.max_width > 0 else 0
 
@@ -1203,12 +1192,6 @@ class TreeRenderer:
         if entry.is_symlink():
             return self.chars.c_symlink, self.chars.c_symlink_dim
 
-        try:
-            if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                return self.chars.c_executable, self.chars.c_executable_dim
-        except Exception:
-            pass
-
         dot = (name := entry.name).rfind(".")
         ext = name[dot:].lower() if dot > 0 else ""
 
@@ -1224,6 +1207,12 @@ class TreeRenderer:
             return self.chars.c_video, self.chars.c_video_dim
         elif ext in AUDIO_EXTS:
             return self.chars.c_audio, self.chars.c_audio_dim
+
+        try:
+            if entry.stat(follow_symlinks=False).st_mode & 0o111:
+                return self.chars.c_executable, self.chars.c_executable_dim
+        except Exception:
+            pass
 
         return self.chars.c_file, self.chars.c_file_dim
 
