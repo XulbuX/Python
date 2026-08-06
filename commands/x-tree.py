@@ -49,12 +49,11 @@ COLORS: TreeColorConfig = {
     "audio": S.BR.CYAN,
     "code": S.BR.YELLOW,
     "data": S.YELLOW,
-    "doc": S.CYAN,
+    "doc": S.BR.BLUE,
     "exec": S.BR.GREEN,
     "font": S.BLUE,
     "image": S.BR.MAGENTA,
     "stale": S.DIM | S.BR.WHITE,
-    "symlink": S.BR.BLUE | S.UNDERLINE,
     "video": S.MAGENTA,
 }
 
@@ -88,30 +87,34 @@ AUDIO_EXTS = frozenset({
     "opus", "voc", "wav", "wma"
 })
 CODE_EXTS = frozenset({
-    "access", "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bat", "bib", "bicep", "blocklist",
-    "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets", "code-workspace", "code_snippets",
-    "code_workspace", "colors", "conf", "config", "cpp", "cr", "cs", "csh", "css", "cts", "cu", "d", "dart", "def", "defs",
-    "desktop", "diff", "dirs", "dockerfile", "edn", "ejs", "el", "env", "erb", "erl", "ex", "exs", "f", "f90", "f95", "fbs",
-    "filters", "fish", "flow", "frag", "fs", "fsi", "fst", "fsx", "g4", "gd", "gleam", "glsl", "glslfx", "go", "gql", "gradle",
-    "graphql", "groovy", "h", "hbs", "hcl", "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini",
-    "ipynb", "j2", "jade", "java", "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "ksh", "kt", "kts", "lark",
-    "less", "library-ms", "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make", "mdl", "mdx",
-    "meta", "metal", "mjs", "ml", "mli", "mm", "mod", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake", "odin",
-    "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs", "preset",
-    "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml", "psd1", "psm1", "pug", "pxd",
-    "pxi", "py", "pyf", "pyi", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron", "rs", "rsp", "rules", "s", "sass",
-    "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql", "srx", "sty", "styl", "sum",
-    "svelte", "swift", "tcl", "template", "tex", "tex[-_]*", "tf", "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl",
-    "ts", "tsx", "typed", "url", "v", "vader", "vbs", "vcxproj", "vert", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl",
-    "xslt", "yaml", "yml", "zig", "zsh"
+    "access", "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bash_logout", "bash_profile",
+    "bashrc", "bat", "bib", "bicep", "blocklist", "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets",
+    "code-workspace", "code_snippets", "code_workspace", "colors", "conf", "config", "cpp", "cr", "cs", "csh", "css", "cts",
+    "cu", "d", "dart", "def", "defs", "desktop", "diff", "directory", "dirs", "dockerfile", "editorconfig", "edn", "ejs", "el",
+    "env", "erb", "erl", "eslintignore", "ex", "example", "exs", "f", "f90", "f95", "fbs", "filters", "fish", "flow", "frag",
+    "fs", "fsi", "fst", "fsx", "g4", "gd", "gitattributes", "gitconfig", "gitignore", "gitkeep", "gitmodules", "gleam", "glsl",
+    "glslfx", "go", "gql", "gradle", "graphql", "groovy", "gtkrc-2.0", "gtkrc-3.0", "gyp", "gypi", "h", "hbs", "hcl", "hintrc",
+    "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini", "install", "ipynb", "j2", "jade", "java",
+    "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "kml", "ksh", "kt", "kts", "lark", "less", "library-ms",
+    "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make", "mdl", "mdx", "menu", "meta",
+    "metal", "mjs", "ml", "mli", "mm", "mod", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake", "npmignore",
+    "odin", "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs",
+    "preset", "prettierignore", "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml",
+    "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron", "rs",
+    "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql",
+    "srcinfo", "srx", "sty", "styl", "sum", "svelte", "swift", "tcl", "template", "tern-project", "tex", "tex[-_]*", "tf",
+    "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx", "typed", "url", "v", "vader", "vbs", "vcxproj",
+    "vert", "vimrc", "vscodeignore", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf", "yml", "zig",
+    "zprofile", "zsh", "zshrc"
 })
 DATA_EXTS = frozenset({
     "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "certs", "cff", "comp", "count", "crt", "csv",
     "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl", "deflate", "dpb1",
     "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind", "index",
     "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage",
-    "localstorage[-_]*", "mdb", "nbt", "ocio", "ofx", "ograf", "pb", "pem", "plugin", "ppk", "prin", "ptb", "pub", "rdb",
-    "real", "salt", "sdb", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "token", "tsv", "usda", "vscdb"
+    "localstorage[-_]*", "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut", "pb", "pem", "plugin", "ppk", "prin",
+    "ptb", "pub", "rdb", "real", "salt", "sdb", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "tflite", "token", "tsv",
+    "usda", "vscdb"
 })
 DOC_EXTS = frozenset({
     "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
@@ -127,13 +130,14 @@ FONT_EXTS = frozenset({
     "afm", "bdf", "eot", "fnt", "fon", "otf", "pcf", "pfa", "pfb", "sfd", "ttf", "woff", "woff2"
 })
 IMAGE_EXTS = frozenset({
-    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "emf", "eps", "ggr", "gif", "heic", "icns", "ico", "indd", "jpeg", "jpg",
-    "jxl", "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp",
-    "xbm", "xcf"
+    "ai", "arw", "avif", "bmp", "cr2", "cur", "diricon", "dng", "emf", "eps", "ggr", "gif", "heic", "icns", "ico", "indd",
+    "jpeg", "jpg", "jxl", "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif",
+    "tiff", "webp", "xbm", "xcf"
 })
 STALE_EXTS = frozenset({
-    "backup", "bak", "bck", "beta", "bkp", "disabled", "gotemp", "keep", "last", "log", "msbak", "obsolete", "off", "old",
-    "orig", "stderr", "stderr.beta", "tbcache", "trashinfo"
+    "backup", "bak", "bash_history", "bck", "beta", "bkp", "disabled", "gotemp", "keep", "last", "log", "msbak", "obsolete",
+    "off", "old", "orig", "python_history", "stderr", "stderr.beta", "tbcache", "trashinfo", "tsbuildinfo", "viminfo",
+    "zsh_history"
 })
 VIDEO_EXTS = frozenset({
     "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "rm",
@@ -149,12 +153,26 @@ BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
     "ndf", "nhdr", "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "otf",
     "ova", "ovf", "pages", "pb", "pcf", "pdf", "pfb", "ply", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt",
     "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "rnd", "rtf", "salt",
-    "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step", "stl", "tga",
-    "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw",
-    "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx",
-    "xlt", "xltm", "xltx", "xlw"
+    "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step", "stl",
+    "tflite", "tga", "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst",
+    "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb",
+    "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
 })
 # fmt: on
+
+ALL_EXTS = (
+    ARCHIVE_EXTS
+    | AUDIO_EXTS
+    | CODE_EXTS
+    | DATA_EXTS
+    | DOC_EXTS
+    | EXEC_EXTS
+    | FONT_EXTS
+    | IMAGE_EXTS
+    | STALE_EXTS
+    | VIDEO_EXTS
+    | BINARY_EXTS
+)
 
 _EXT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (re.compile(fnmatch.translate(entry)), cat)
@@ -252,7 +270,6 @@ class TreeColorConfig(TypedDict):
     font: AnyStyle
     image: AnyStyle
     stale: AnyStyle
-    symlink: AnyStyle
     video: AnyStyle
 
 
@@ -537,44 +554,22 @@ class TreeChars:
         self.c_dir = StyledText(self.c_reset, COLORS["dir"]).ansi
         self.c_dir_dull = StyledText(self.c_reset, COLORS["dir_dull"]).ansi
         self.c_dir_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"]).ansi
+        self.c_dir_symlink = StyledText(self.c_reset, COLORS["dir"], S.UNDERLINE).ansi
+        self.c_dir_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"], S.UNDERLINE).ansi
         self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
         self.c_file_dim = StyledText(self.c_reset, S.DIM, COLORS["file"]).ansi
+        self.c_file_symlink = StyledText(self.c_reset, COLORS["file"], S.UNDERLINE).ansi
+        self.c_file_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["file"], S.UNDERLINE).ansi
         self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
 
-        self.c_archive = StyledText(self.c_reset, COLORS["archive"]).ansi
-        self.c_archive_dim = StyledText(self.c_reset, S.DIM, COLORS["archive"]).ansi
-        self.c_audio = StyledText(self.c_reset, COLORS["audio"]).ansi
-        self.c_audio_dim = StyledText(self.c_reset, S.DIM, COLORS["audio"]).ansi
-        self.c_code = StyledText(self.c_reset, COLORS["code"]).ansi
-        self.c_code_dim = StyledText(self.c_reset, S.DIM, COLORS["code"]).ansi
-        self.c_data = StyledText(self.c_reset, COLORS["data"]).ansi
-        self.c_data_dim = StyledText(self.c_reset, S.DIM, COLORS["data"]).ansi
-        self.c_doc = StyledText(self.c_reset, COLORS["doc"]).ansi
-        self.c_doc_dim = StyledText(self.c_reset, S.DIM, COLORS["doc"]).ansi
-        self.c_executable = StyledText(self.c_reset, COLORS["exec"]).ansi
-        self.c_executable_dim = StyledText(self.c_reset, S.DIM, COLORS["exec"]).ansi
-        self.c_font = StyledText(self.c_reset, COLORS["font"]).ansi
-        self.c_font_dim = StyledText(self.c_reset, S.DIM, COLORS["font"]).ansi
-        self.c_image = StyledText(self.c_reset, COLORS["image"]).ansi
-        self.c_image_dim = StyledText(self.c_reset, S.DIM, COLORS["image"]).ansi
-        self.c_stale = StyledText(self.c_reset, COLORS["stale"]).ansi
-        self.c_stale_dim = StyledText(self.c_reset, COLORS["stale"]).ansi
-        self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
-        self.c_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["symlink"]).ansi
-        self.c_video = StyledText(self.c_reset, COLORS["video"]).ansi
-        self.c_video_dim = StyledText(self.c_reset, S.DIM, COLORS["video"]).ansi
-
-        self.category_colors: dict[str, tuple[str, str]] = {
-            "archive": (self.c_archive, self.c_archive_dim),
-            "audio": (self.c_audio, self.c_audio_dim),
-            "code": (self.c_code, self.c_code_dim),
-            "data": (self.c_data, self.c_data_dim),
-            "doc": (self.c_doc, self.c_doc_dim),
-            "exec": (self.c_executable, self.c_executable_dim),
-            "font": (self.c_font, self.c_font_dim),
-            "image": (self.c_image, self.c_image_dim),
-            "stale": (self.c_stale, self.c_stale_dim),
-            "video": (self.c_video, self.c_video_dim),
+        self.category_colors: dict[str, tuple[str, str, str, str]] = {
+            cat: (
+                StyledText(self.c_reset, COLORS[cat]).ansi,
+                StyledText(self.c_reset, S.DIM, COLORS[cat]).ansi,
+                StyledText(self.c_reset, COLORS[cat], S.UNDERLINE).ansi,
+                StyledText(self.c_reset, S.DIM, COLORS[cat], S.UNDERLINE).ansi,
+            )
+            for cat in ("archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video")
         }
 
 
@@ -1087,15 +1082,17 @@ class TreeRenderer:
             current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
             should_ignore_entry = self.scanner.should_ignore_path(current_rel_path)
-            if is_dir and not should_ignore_entry:
-                should_ignore_entry = self.scanner.scan_directory(entry.path).should_ignore
-
-            if should_ignore_entry:
-                self._render_ignored_entry(entry, prefix, is_last, is_dir, lines)
-                continue
 
             if is_dir:
+                if not should_ignore_entry:
+                    should_ignore_entry = self.scanner.scan_directory(entry.path).should_ignore
+
+                if should_ignore_entry:
+                    self._render_ignored_entry(entry, prefix, is_last, is_dir, lines)
+                    continue
+
                 self._render_directory(entry, prefix, current_prefix, level, is_last, current_rel_path, lines)
+
             else:
                 self._render_file(entry, prefix, current_prefix, level, is_last, lines)
 
@@ -1276,48 +1273,63 @@ class TreeRenderer:
     def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
         """Determine the color string for a file based on its type and extension."""
 
+        is_symlink = entry.is_symlink()
+
         if entry.is_dir():
+            if is_symlink:
+                return self.chrs.c_dir_symlink, self.chrs.c_dir_symlink_dim
             return self.chrs.c_dir, self.chrs.c_dir_dim
 
-        if entry.is_symlink():
-            return self.chrs.c_symlink, self.chrs.c_symlink_dim
-
         dot = (name := entry.name).rfind(".")
-        ext = name[dot + 1 :].lower() if dot > 0 else ""
+        ext = name[dot + 1 :].lower() if dot >= 0 else ""
 
+        if name.startswith(".") and (dotfile_ext := name[1:].lower()) in ALL_EXTS:
+            ext = dotfile_ext
+
+        cat = None
         if ext in ARCHIVE_EXTS:
-            return self.chrs.c_archive, self.chrs.c_archive_dim
+            cat = "archive"
         elif ext in AUDIO_EXTS:
-            return self.chrs.c_audio, self.chrs.c_audio_dim
+            cat = "audio"
         elif ext in CODE_EXTS:
-            return self.chrs.c_code, self.chrs.c_code_dim
+            cat = "code"
         elif ext in DATA_EXTS:
-            return self.chrs.c_data, self.chrs.c_data_dim
+            cat = "data"
         elif ext in DOC_EXTS:
-            return self.chrs.c_doc, self.chrs.c_doc_dim
+            cat = "doc"
         elif ext in EXEC_EXTS:
-            return self.chrs.c_executable, self.chrs.c_executable_dim
+            cat = "exec"
         elif ext in FONT_EXTS:
-            return self.chrs.c_font, self.chrs.c_font_dim
+            cat = "font"
         elif ext in IMAGE_EXTS:
-            return self.chrs.c_image, self.chrs.c_image_dim
+            cat = "image"
         elif ext in STALE_EXTS:
-            return self.chrs.c_stale, self.chrs.c_stale_dim
+            cat = "stale"
         elif ext in VIDEO_EXTS:
-            return self.chrs.c_video, self.chrs.c_video_dim
+            cat = "video"
 
-        if ext:
+        if cat is None and ext:
             for pattern, category in _EXT_PATTERNS:
                 if pattern.fullmatch(ext):
-                    return self.chrs.category_colors[category]
-        else:
+                    cat = category
+                    break
+
+        if cat is None and not ext:
             try:
                 if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                    return self.chrs.c_executable, self.chrs.c_executable_dim
+                    cat = "exec"
             except Exception:
                 pass
 
-        return self.chrs.c_file, self.chrs.c_file_dim
+        if cat is not None:
+            colors = self.chrs.category_colors[cat]
+            return (colors[2], colors[3]) if is_symlink else (colors[0], colors[1])
+
+        return (
+            (self.chrs.c_file_symlink, self.chrs.c_file_symlink_dim)
+            if is_symlink
+            else (self.chrs.c_file, self.chrs.c_file_dim)
+        )
 
     @staticmethod
     @lru_cache(maxsize=1024)
