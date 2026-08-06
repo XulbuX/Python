@@ -38,7 +38,7 @@ ARGS = xx.console.get_args(
 COLORS: TreeColorConfig = {
     "line": S.BR.BLACK,
     "line_dull": S.BR.BLACK,
-    "error": S.RED,
+    "error": S.BOLD | S.RED,
     "dir": S.BOLD | S.BR.WHITE,
     "dir_dull": S.BR.WHITE,
     "file": S.WHITE,
@@ -211,17 +211,19 @@ class IGNORE:
 
     paths: ClassVar[set[str]] = {
         "__pycache__",
+        "__pypackages__",
         "__tests__",
         "_locales",
         "_site",
         ".adobe",
         ".angular",
         ".archive-unpack",
+        ".cache",
         ".codeium",
         ".coverage",
-        ".docker",
         ".ds_store",
-        ".env",
+        ".eslintcache",
+        ".fleet",
         ".git",
         ".gitlab",
         ".gradle",
@@ -243,6 +245,7 @@ class IGNORE:
         ".ruff_*",
         ".scannerwork",
         ".sonar",
+        ".styleLintCache",
         ".svn",
         ".terraform",
         ".tmp.*",
@@ -251,19 +254,22 @@ class IGNORE:
         ".vs",
         ".webpack",
         ".yarn",
+        "*.map",
+        "*.min.css",
+        "*.min.js",
         "*.noindex",
+        "*.temp",
+        "*.tmp",
         "*[-_.@]cache",
         "*[-_.@]indexed",
         "*[-_.@]temp",
         "$recycle.bin",
-        "addons-l10n",
         "adobe/common/ptx",
         "adobe/typeQuest",
         "aggregatedCache",
         "artifacts",
         "autofillStates",
         "backstageInAppNavCache",
-        "bin",
         "blob_storage",
         "bower_components",
         "build",
@@ -286,16 +292,13 @@ class IGNORE:
         "dawnCache",
         "dawnGraphiteCache",
         "dawnWebGPUCache",
-        "debug",
         "debugbar",
         "dim-1/mw$default",
         "dim1/mw$default",
         "dist-newstyle",
         "dist",
-        "docker",
         "docs/_build",
-        "env",
-        "GPUCache",
+        "gpuCache",
         "graphicsCache",
         "graphiteDawnCache",
         "grShaderCache",
@@ -317,7 +320,6 @@ class IGNORE:
         "meta/assets/indexes",
         "meta/assets/objects",
         "metadataIndexer",
-        "migrations",
         "node_modules",
         "node",
         "npm",
@@ -329,25 +331,20 @@ class IGNORE:
         "office/*/usageMetricsStore",
         "office/*/wef",
         "officeFileCache",
-        "out",
         "packages",
         "patch64",
-        "pods",
         "program64",
         "pythonLocator",
         "recent/automaticDestinations",
         "recent/customDestinations",
-        "release",
         "reports",
         "rsa",
         "scriptCache",
         "session storage",
         "shaderCache",
-        "site-packages",
         "slCache",
         "spotify/data",
         "spotify/users",
-        "ssr/assets",
         "steamLink/avatars",
         "storage/framework",
         "tapCache",
@@ -375,8 +372,9 @@ class IGNORE:
     pre: str = rf"^(?![a-zA-Z]+\.[a-zA-Z])(?:[a-zA-Z0-9]+{sep})*?"
     date = r"[12][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])"
 
+    # All patterns sorted from least to most resource-intensive for efficiency:
     reoccurring: ClassVar[dict[str, str]] = {
-        "delimited_number": r"_[0-9]{1,2}",
+        "delimited_number": r"[-_][0-9]{1,2}",
         "num5-rand12": r"[0-9]{5}-[a-zA-Z0-9]{12}",
         "min_hex32": r"\.min_[a-fA-F0-9]{32}",
         "lower32_num1,2.hex64": r"[a-z]{32}_[0-9]{1,2}\.[a-fA-F0-9]{64}",
@@ -385,18 +383,13 @@ class IGNORE:
         "date": date,
         "version.date": r"(?:[0-9]\.){3}" + date,
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
-        "number": r"-?[a-fA-F0-9]{4,}",
         "base64": r"[+/0-9A-Za-z]{8,}={1,2}",
-        "hex": r"(?:[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",
+        "hex": r"(?:[a-fA-F0-9]{7,8}|[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",  # noqa: E501
         "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",  # noqa: E501
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
-        "rand4": rf"(?![A-Z][a-z]{{3}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4}}{ext}",
-        "rand5": rf"(?![A-Z][a-z]{{4}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{5}}{ext}",
-        "rand11": rf"(?![A-Z][a-zA-Z]{{10}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{11}}(?:{sep}|{ext})",
-        "rand25": rf"(?![A-Z][a-zA-Z]{{24}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{25}}(?:{sep}|{ext})",
-        "rand32": rf"(?![A-Z][a-zA-Z]{{31}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{32}}(?:{sep}|{ext})",
-        "rand59": rf"(?![A-Z][a-zA-Z]{{58}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{59}}(?:{sep}|{ext})",
+        "rand_short": rf"(?![A-Z][a-z]{{4,}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{4,12}}(?:{sep}|{ext})",
+        "rand_long": rf"(?![A-Z][a-z]{{4,}})(?:(?=.*[A-Z])(?=.*[a-z])|(?=.*[0-9]))[a-zA-Z0-9]{{13,64}}(?:{sep}|{ext})",
     }
     standalones: ClassVar[dict[str, str]] = {
         "hex2": r"[a-fA-F0-9]{2}",
@@ -469,7 +462,6 @@ class TreeChars:
 class DirectoryScanner:
     """Handles scanning directories and applying ignore rules."""
 
-    _HASH_NAME_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/=")
     _HEX_SEGMENT = re.compile(r"^[a-fA-F0-9]{8,}$")
     _UUID_ANYWHERE = re.compile(r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}")
     _SEP_SPLITTER = re.compile(r"[-_~@\s]+")
@@ -579,10 +571,10 @@ class DirectoryScanner:
     def is_likely_hash_name(name: str) -> bool:
         """Determine if a filename or directory name is likely a hash or unique identifier."""
 
-        if name.strip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/="):
+        if name.strip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/=") or len(name) < 2:
             return False
-        if len(name) < 2:
-            return bool(IGNORE.pattern.match(name))
+        elif bool(IGNORE.pattern.match(name)):
+            return True
 
         base = name.rsplit(".", 1)[0] if "." in name else name
         # Cheap hex-segment check first; UUID regex (more expensive) only as fallback
@@ -590,6 +582,7 @@ class DirectoryScanner:
             len(seg) >= 8 and DirectoryScanner._HEX_SEGMENT.match(seg) for seg in DirectoryScanner._SEP_SPLITTER.split(base)
         ):
             return True
+
         return bool(DirectoryScanner._UUID_ANYWHERE.search(name))
 
     @staticmethod
