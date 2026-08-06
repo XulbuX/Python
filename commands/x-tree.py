@@ -635,7 +635,9 @@ class DirectoryScanner:
             total_count = len(entries)
 
             if total_count < 3:
-                return DirScanResult(False, total_count, 0, entries, sorted_entries)
+                result = DirScanResult(False, total_count, 0, entries, sorted_entries)
+                self._scan_cache[dir_path] = result
+                return result
 
             hash_count = normal_count = 0
             filenames: list[str] = []
@@ -692,6 +694,7 @@ class TreeRenderer:
 
     _RE_DIGIT = re.compile(r"\d+")
     _RE_ALPHA = re.compile(r"[a-zA-Z]")
+    _RE_ANSI = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
     def __init__(self, config: TreeConfig):
         """Initialize the renderer with config, styling, and scanner."""
@@ -754,7 +757,6 @@ class TreeRenderer:
                 pass
         except KeyboardInterrupt:
             canceled[0] = True
-            executor.shutdown(wait=False)
             raise
         finally:
             executor.shutdown(wait=False)
@@ -792,7 +794,7 @@ class TreeRenderer:
             max_width = self.config.max_width
         else:
             max_width = max(
-                max((len(re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", line)) for line in result_str.split("\n")), default=80) + 1,
+                max((len(TreeRenderer._RE_ANSI.sub("", line)) for line in result_str.split("\n")), default=80) + 1,
                 len(time_taken.raw) + len(tree_stats.raw) + 2,
             )
 
@@ -1082,14 +1084,9 @@ class TreeRenderer:
         branch = self.chars.corners[0] if is_last else self.chars.branch_new
         suffix = self.chars.dirname_end if is_dir else ""
 
-        if is_last:
-            lines.append(
-                f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
-            )
-        else:
-            lines.append(
-                f"{prefix}{branch}{self.chars.c_line_dull}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
-            )
+        lines.append(
+            f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
+        )
 
         if is_dir:
             ignored_prefix = f"{prefix}{self.chars.indent_last if is_last else self.chars.indent_cont}"
@@ -1246,20 +1243,21 @@ def get_user_inputs(config: TreeConfig) -> None:
         )
         config.ignore_dirs = [i_dir.strip() for i_dir in ignore_input.split("|")]
 
-    config.auto_ignore_mode = cast(
-        "Literal[0, 1, 2]",
-        xx.console.input(
-            StyledText(
-                S.BOLD("Auto-ignore unimportant directories?\n"),
-                "0 = None, 1 = Hardcoded only, 2 = Smart\n",
-                (S.DIM(f"({config.auto_ignore_mode})"), " > "),
+    if not ARGS.auto_ignore_mode.exists:
+        config.auto_ignore_mode = cast(
+            "Literal[0, 1, 2]",
+            xx.console.input(
+                StyledText(
+                    S.BOLD("Auto-ignore unimportant directories?\n"),
+                    "0 = None, 1 = Hardcoded only, 2 = Smart\n",
+                    (S.DIM(f"({config.auto_ignore_mode})"), " > "),
+                ),
+                max_len=1,
+                allowed_chars="012",
+                default_val=config.auto_ignore_mode,
+                output_type=int,
             ),
-            max_len=1,
-            allowed_chars="012",
-            default_val=config.auto_ignore_mode,
-            output_type=int,
-        ),
-    )
+        )
 
     if not ARGS.truncate_similar.exists:
         config.truncate_similar = (
@@ -1352,7 +1350,9 @@ def main() -> None:  # noqa: C901
 
     if (into_file := ARGS.to_file.exists) and (val := ARGS.to_file.get(0)) is not None:
         target_path = Path(val).resolve()
-        if target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
+        if not (target_path.is_dir() or target_path.parent.exists()):
+            xx.console.fail(StyledText("Directory ", S.BR.CYAN(str(target_path.parent)), " does not exist."), end="\n\n")
+        elif target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
             target_path = target_path / "tree.txt"
 
     if ARGS.interactive.exists:
@@ -1390,13 +1390,6 @@ def main() -> None:  # noqa: C901
     result = renderer.generate()
 
     if into_file:
-        if not target_path.parent.exists():
-            xx.console.fail(
-                StyledText("Directory ", S.BR.CYAN(str(target_path.parent)), " does not exist."),
-                start="\x1b[F\x1b[K",
-                end="\n\n",
-            )
-
         file, cls_line = None, ""
         try:
             file = xx.file.create(str(target_path), result.raw)
