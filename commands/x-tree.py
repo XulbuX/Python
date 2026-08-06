@@ -84,8 +84,8 @@ ARCHIVE_EXTS = frozenset({
     "rpm", "snap", "squashfs", "tar", "tgz", "war", "whl", "xz", "z", "zip", "zst"
 })
 AUDIO_EXTS = frozenset({
-    "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg", "opus",
-    "voc", "wav", "wma"
+    "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "cfa", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg",
+    "opus", "voc", "wav", "wma"
 })
 CODE_EXTS = frozenset({
     "access", "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bat", "bib", "bicep", "blocklist",
@@ -101,25 +101,24 @@ CODE_EXTS = frozenset({
     "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml", "psd1", "psm1", "pug", "pxd",
     "pxi", "py", "pyf", "pyi", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron", "rs", "rsp", "rules", "s", "sass",
     "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql", "srx", "sty", "styl", "sum",
-    "svelte", "swift", "tcl", "template", "tex", "tf", "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx",
-    "typed", "url", "v", "vader", "vbs", "vcxproj", "vert", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt",
-    "yaml", "yml", "zig", "zsh"
+    "svelte", "swift", "tcl", "template", "tex", "tex[-_]*", "tf", "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl",
+    "ts", "tsx", "typed", "url", "v", "vader", "vbs", "vcxproj", "vert", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl",
+    "xslt", "yaml", "yml", "zig", "zsh"
 })
 DATA_EXTS = frozenset({
-    "accdb", "aegraphic", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "certs", "cff", "comp", "count",
-    "crt", "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl",
-    "deflate", "dpb1", "dpx", "drfx", "drp", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb",
-    "ilut", "ind", "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb",
-    "localstorage", "localstorage[-_]*", "mdb", "nbt", "ocio", "ofx", "ograf", "pb", "pem", "plugin", "ppk", "prin", "prproj",
-    "ptb", "pub", "rdb", "real", "salt", "sb3", "sdb", "spi1d", "sprite3", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "token",
-    "tsv", "usda", "vscdb"
+    "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "certs", "cff", "comp", "count", "crt", "csv",
+    "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl", "deflate", "dpb1",
+    "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind", "index",
+    "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage",
+    "localstorage[-_]*", "mdb", "nbt", "ocio", "ofx", "ograf", "pb", "pem", "plugin", "ppk", "prin", "ptb", "pub", "rdb",
+    "real", "salt", "sdb", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "token", "tsv", "usda", "vscdb"
 })
 DOC_EXTS = frozenset({
     "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
     "gmap", "gsheet", "gsite", "gslides", "gtable", "md", "mkd", "mpp", "mpt", "odt", "one", "onepkg", "org", "pages", "pdf",
-    "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "rst", "rtf", "sldm", "sldx", "txt", "vdx",
-    "vsd", "vsdx", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtx", "wbk", "xla", "xlam", "xll", "xls", "xlsb", "xlsm",
-    "xlsx", "xlt", "xltm", "xltx", "xlw"
+    "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "rst", "rtf", "sldm", "sldx", "txt", "vdx", "vsd",
+    "vsdx", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtx", "wbk", "xla", "xlam", "xll", "xls", "xlsb", "xlsm", "xlsx",
+    "xlt", "xltm", "xltx", "xlw"
 })
 EXEC_EXTS = frozenset({
     "appimage", "bin", "cmd", "com", "exe", "msi", "run", "vsix"
@@ -128,33 +127,38 @@ FONT_EXTS = frozenset({
     "afm", "bdf", "eot", "fnt", "fon", "otf", "pcf", "pfa", "pfb", "sfd", "ttf", "woff", "woff2"
 })
 IMAGE_EXTS = frozenset({
-    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "eps", "ggr", "gif", "heic", "icns", "ico", "indd", "jpeg", "jpg", "jxl",
-    "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp", "xbm",
-    "xcf"
+    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "emf", "eps", "ggr", "gif", "heic", "icns", "ico", "indd", "jpeg", "jpg",
+    "jxl", "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp",
+    "xbm", "xcf"
 })
 STALE_EXTS = frozenset({
     "backup", "bak", "bck", "beta", "bkp", "disabled", "gotemp", "keep", "last", "log", "msbak", "obsolete", "off", "old",
     "orig", "stderr", "stderr.beta", "tbcache", "trashinfo"
 })
 VIDEO_EXTS = frozenset({
-    "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mts", "ogv", "rm", "rmvb",
-    "ts", "vob", "webm", "wmv"
+    "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "rm",
+    "rmvb", "vob", "webm", "wmv"
 })
 BINARY_EXTS = frozenset({
-    "7z", "accdb", "aegraphic", "ai", "aishm", "ani", "apk", "asar", "avi", "bak", "bdic", "bin", "binarypb", "binpb", "blend",
-    "blf", "cab", "class", "cur", "dat", "data", "db", "db3", "dbf", "dcm", "deflate", "dll", "dmg", "doc", "docb", "docm",
-    "docx", "dot", "dotm", "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx", "dylib", "eot", "eps", "exe", "fbx", "fdb", "flt",
-    "fnt", "fon", "frm", "fudict", "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gif", "gjam", "glb", "glox", "gltf",
-    "gmap", "gpg", "gsheet", "gsite", "gslides", "gtable", "gz", "hdr", "heic", "ibd", "ico", "id", "idb", "iges", "img",
-    "iso", "jar", "jfc", "jpeg", "jpg", "jsxbin", "keyring", "keystore", "knsregistry", "kwl", "ldb", "lib", "mdb", "mha",
-    "mhd", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4", "mpp", "mpt", "msg", "msi", "myd", "myi", "nbt", "ndf", "nef", "nhdr",
-    "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "orf", "otf", "ova", "ovf",
-    "pages", "pak", "pb", "pcf", "pdf", "pfb", "phar", "ply", "png", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx",
-    "ppt", "pptm", "pptx", "prfpset", "pri", "prproj", "psd", "ptb", "pyc", "pyd", "pyo", "qcow2", "rar", "raw", "rdb", "rnd",
-    "rpm", "rtf", "salt", "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3",
-    "squashfs", "sr2", "step", "stl", "svg", "tar", "tga", "thmx", "tif", "tiff", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb",
-    "vsd", "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "webp", "woff",
-    "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw", "zip"
+    "3g2", "3gp", "7z", "a", "aac", "accdb", "aegraphic", "ai", "aif", "aiff", "aishm", "alac", "amr", "amv", "ani", "ape",
+    "apk", "appimage", "arw", "asar", "asf", "au", "avi", "avif", "bak", "bdic", "bin", "binarypb", "binpb", "blend", "blf",
+    "bmp", "bz2", "cab", "caf", "cfa", "cff", "class", "com", "cr2", "cur", "dat", "data", "db", "db3", "dbf", "dcm", "deb",
+    "deflate", "dll", "dmg", "dng", "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx",
+    "dv", "dylib", "ear", "emf", "eot", "eps", "exe", "f4v", "fbx", "fdb", "flac", "flt", "flv", "fnt", "fon", "frm", "fudict",
+    "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "ggr", "gif", "gjam", "glb", "glox", "gltf", "gmap", "gpg", "gsheet",
+    "gsite", "gslides", "gtable", "gz", "hdr", "heic", "ibd", "icns", "ico", "id", "idb", "iges", "img", "indd", "iso", "jar",
+    "jfc", "jpeg", "jpg", "jsxbin", "jxl", "keyring", "keystore", "knsregistry", "ko", "kra", "kwl", "ldb", "lib", "lz",
+    "lzma", "m2ts", "m4a", "m4v", "mdb", "mha", "mhd", "mid", "midi", "mka", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4",
+    "mpeg", "mpg", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd", "myi", "nbt", "ndf", "nef", "nhdr", "nii", "node", "npy",
+    "npz", "nrrd", "o", "obj", "ods", "odt", "ofx", "oga", "ogg", "ograf", "ogv", "one", "onepkg", "opt", "opus", "orf", "otf",
+    "ova", "ovf", "pages", "pak", "pb", "pbm", "pcf", "pdf", "pfb", "pgm", "phar", "ply", "png", "pot", "potm", "potx", "ppam",
+    "ppm", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "psd", "psp", "ptb", "pyc", "pyd",
+    "pyo", "qcow2", "rar", "raw", "rdb", "rm", "rmvb", "rnd", "rpm", "rtf", "rw2", "salt", "sb3", "schem", "sdb", "sfd",
+    "sldm", "sldx", "snap", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "squashfs", "sr2", "step", "stl", "svg",
+    "tar", "tga", "tgz", "thmx", "tif", "tiff", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vob", "voc", "vscdb", "vsd",
+    "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "war", "wasm", "wav", "wbk", "webm",
+    "webp", "whl", "wma", "wmv", "woff", "woff2", "xbm", "xcf", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx",
+    "xlt", "xltm", "xltx", "xlw", "xz", "z", "zip", "zst"
 })
 # fmt: on
 
