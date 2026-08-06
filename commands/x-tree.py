@@ -43,14 +43,18 @@ COLORS: TreeColorConfig = {
     "dir": S.BOLD | S.BR.WHITE,
     "dir_dull": S.BR.WHITE,
     "file": S.WHITE,
-    "symlink": S.BR.BLUE,
-    "executable": S.BR.GREEN,
+    "content": S.DIM | S.WHITE,
+    # File type colors:
     "archive": S.BR.RED,
-    "image": S.BR.MAGENTA,
-    "video": S.MAGENTA,
     "audio": S.BR.CYAN,
     "code": S.BR.YELLOW,
-    "content": S.DIM | S.WHITE,
+    "data": S.YELLOW,
+    "exec": S.BR.GREEN,
+    "font": S.BLUE,
+    "image": S.BR.MAGENTA,
+    "stale": S.DIM | S.BR.WHITE,
+    "symlink": S.BR.BLUE | S.UNDERLINE,
+    "video": S.MAGENTA,
 }
 
 CHARS: TreeCharConfig = {
@@ -74,53 +78,96 @@ DEFAULT: ScriptDefaults = {
 }
 
 # fmt: off
-IMAGE_EXTS = frozenset({
-    ".ai", ".arw", ".avif", ".bmp", ".cr2", ".cur", ".dng", ".eps", ".gif", ".heic", ".ico", ".icns", ".indd", ".jpeg", ".jpg",
-    ".jxl", ".kra", ".nef", ".orf", ".png", ".psd", ".raw", ".rw2", ".sr2", ".svg", ".tif", ".tiff", ".webp", ".xcf"
-})
 ARCHIVE_EXTS = frozenset({
-    ".7z", ".apk", ".bz2", ".cab", ".deb", ".dmg", ".ear", ".gz", ".iso", ".jar", ".lz", ".lzma", ".pak", ".rar", ".rpm",
-    ".snap", ".tar", ".tgz", ".war", ".whl", ".xz", ".z", ".zip", ".zst"
-})
-VIDEO_EXTS = frozenset({
-    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".dv", ".f4v", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".mts", ".ogv",
-    ".rm", ".rmvb", ".ts", ".vob", ".webm", ".wmv"
+    "7z", "apk", "asar", "bz2", "cab", "deb", "dmg", "ear", "gz", "iso", "jar", "lz", "lzma", "npz", "pak", "phar", "rar",
+    "rpm", "snap", "tar", "tgz", "war", "whl", "xz", "z", "zip", "zst"
 })
 AUDIO_EXTS = frozenset({
-    ".aac", ".aif", ".aiff", ".alac", ".amr", ".ape", ".au", ".caf", ".flac", ".m4a", ".mid", ".midi", ".mka", ".mp3", ".oga",
-    ".ogg", ".opus", ".voc", ".wav", ".wma"
-})
-EXEC_EXTS = frozenset({
-    ".appimage", ".bat", ".bin", ".cmd", ".com", ".exe", ".msi", ".run", ".sh"
+    "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg", "opus",
+    "voc", "wav", "wma"
 })
 CODE_EXTS = frozenset({
-    ".asm", ".astro", ".awk", ".bash", ".bat", ".bib", ".bicep", ".c", ".cfg", ".clj", ".cljs", ".cljc", ".cmake", ".conf",
-    ".cpp", ".cr", ".cs", ".csh", ".css", ".d", ".dart", ".diff", ".dockerfile", ".edn", ".ejs", ".el", ".env", ".erb", ".erl",
-    ".ex", ".exs", ".f90", ".f95", ".fish", ".fs", ".fsi", ".fsx", ".gd", ".gleam", ".go", ".gradle", ".gql", ".graphql",
-    ".groovy", ".h", ".hbs", ".hcl", ".hpp", ".hs", ".html", ".http", ".hx", ".ini", ".ipynb", ".j2", ".jade", ".java",
-    ".jinja", ".jl", ".js", ".json", ".jsonc", ".jsonl", ".jsx", ".ksh", ".kt", ".kts", ".less", ".lisp", ".liquid", ".lock",
-    ".lua", ".m", ".make", ".md", ".mdx", ".ml", ".mli", ".mod", ".nim", ".nims", ".nix", ".odin", ".org", ".pas", ".patch",
-    ".php", ".pl", ".plist", ".po", ".pom", ".pot", ".prisma", ".properties", ".proto", ".ps1", ".pug", ".py", ".pyi", ".pyw",
-    ".r", ".rb", ".ron", ".rs", ".rst", ".s", ".sass", ".sc", ".scala", ".scss", ".sh", ".sol", ".sql", ".styl", ".svelte",
-    ".swift", ".tcl", ".tex", ".tf", ".tfvars", ".tmpl", ".toml", ".ts", ".tsx", ".v", ".vbs", ".vue", ".xml", ".yaml", ".yml",
-    ".zig", ".zsh"
+    "apache", "asm", "asp", "aspx", "astro", "awk", "bash", "bat", "bib", "bicep", "c", "cfg", "clj", "cljs", "cljc", "cmake",
+    "conf", "config", "cpp", "cr", "cs", "csh", "css", "d", "dart", "def", "diff", "dockerfile", "edn", "ejs", "el", "env",
+    "erb", "erl", "ex", "exs", "f", "f90", "f95", "fbs", "fish", "fs", "fsi", "fsx", "g4", "gd", "gleam", "go", "gradle",
+    "gql", "graphql", "groovy", "h", "hbs", "hcl", "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc",
+    "ini", "ipynb", "j2", "jade", "java", "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "ksh", "kt", "kts",
+    "lark", "less", "library-ms", "lisp", "liquid", "lock", "lua", "m", "make", "md", "mdx", "ml", "mli", "mod", "nim", "nims",
+    "nix", "nmake", "odin", "org", "pas", "patch", "pc", "php", "pl", "plist", "pm", "po", "pod", "pom", "pot", "prf", "prefs",
+    "prisma", "profile", "properties", "proto", "ps", "ps1", "ps1xml", "psd1", "psm1", "pug", "py", "pyf", "pyi", "pyw", "pyx",
+    "pxd", "pxi", "r", "rb", "rc", "ron", "rs", "rst", "s", "sass", "sc", "scala", "scss", "sct", "sh", "sol", "sql", "srx",
+    "sty", "styl", "svelte", "swift", "tcl", "tex", "tf", "tfvars", "tmpl", "toml", "ts", "tsx", "v", "vbs", "vue", "winprf",
+    "xbel", "xml", "xsl", "xslt", "yaml", "yml", "zig", "zsh"
+})
+DATA_EXTS = frozenset({
+    "accdb", "csv", "dat", "dat[-_]*", "data", "db", "db[-_]*", "db3", "fdb", "fingerprint", "gdb", "idb", "index", "ldb",
+    "mdb", "nbt", "rdb", "sdb", "sqlite", "sqlite[-_]*", "sqlite3", "tsv", "xls", "xlsm", "xlsx"
+})
+EXEC_EXTS = frozenset({
+    "appimage", "bat", "bin", "cmd", "com", "exe", "msi", "run", "sh"
+})
+FONT_EXTS = frozenset({
+    "afm", "bdf", "eot", "fnt", "fon", "otf", "pfa", "pfb", "pcf", "sfd", "ttf", "woff", "woff2"
+})
+IMAGE_EXTS = frozenset({
+    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "eps", "ggr", "gif", "heic", "ico", "icns", "indd", "jpeg", "jpg", "jxl",
+    "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp", "xcf",
+    "xbm"
+})
+STALE_EXTS = frozenset({
+    "bak", "backup", "bck", "bkp", "disabled", "msbak", "off", "old", "orig"
+})
+VIDEO_EXTS = frozenset({
+    "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mts", "ogv", "rm", "rmvb",
+    "ts", "vob", "webm", "wmv"
 })
 BINARY_EXTS = frozenset({
-    ".7z", ".ai", ".apk", ".avi", ".bak", ".bin", ".blend", ".cab", ".class", ".cur", ".dat", ".db", ".db3", ".dbf", ".dcm",
-    ".dll", ".dmg", ".doc", ".docx", ".dylib", ".eps", ".exe", ".fbx", ".frm", ".gif", ".glb", ".gltf", ".gz", ".heic", ".ibd",
-    ".ico", ".iges", ".img", ".iso", ".jar", ".jpeg", ".jpg", ".mha", ".mhd", ".mkv", ".mobi", ".mov", ".mp3", ".mp4", ".msi",
-    ".myd", ".myi", ".ndf", ".nef", ".nhdr", ".nii", ".nrrd", ".o", ".obj", ".ods", ".odt", ".opt", ".orf", ".ova", ".ovf",
-    ".pak", ".pdf", ".ply", ".png", ".ppt", ".pptx", ".psd", ".pyc", ".pyd", ".qcow2", ".rar", ".raw", ".rpm", ".rtf", ".so",
-    ".sqlite", ".sqlite3", ".sr2", ".step", ".stl", ".svg", ".tar", ".tif", ".tiff", ".vdi", ".vhdx", ".vmdk", ".vtp", ".vtu",
-    ".webp", ".xls", ".xlsx", ".zip"
+    "7z", "accdb", "ai", "apk", "asar", "avi", "bak", "bdic", "bin", "binarypb", "blend", "blf", "cab", "class", "cur", "dat",
+    "data", "db", "db3", "dbf", "dcm", "dll", "dmg", "doc", "docx", "dotm", "dotx", "dpapi", "dylib", "eot", "eps", "exe",
+    "fbx", "fdb", "fnt", "fon", "frm", "gdb", "gif", "glb", "glox", "gltf", "gz", "heic", "ibd", "idb", "ico", "iges", "img",
+    "iso", "jar", "jpeg", "jpg", "jsxbin", "ldb", "lib", "mdb", "mha", "mhd", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4",
+    "msi", "msg", "myd", "myi", "nbt", "ndf", "nef", "nhdr", "nii", "npy", "nrrd", "o", "obj", "ods", "odt", "opt", "orf",
+    "otf", "ova", "ovf", "pak", "pb", "pcf", "pdf", "pfb", "phar", "ply", "png", "ppt", "pptx", "pri", "prfpset", "prproj",
+    "psd", "pyc", "pyd", "pyo", "qcow2", "rar", "raw", "rdb", "rnd", "rpm", "rtf", "sdb", "schem", "sfd", "so", "sqlite",
+    "sqlite3", "sr2", "step", "stl", "svg", "tar", "thmx", "tif", "tiff", "ttf", "vdi", "vhdx", "vmdk", "vtp", "vtu", "wasm",
+    "webp", "woff", "woff2", "xls", "xlb", "xlsb", "xlsx", "zip"
 })
+# fmt: on
 
-TEXT_TRANS = str.maketrans({
-    0x2000: " ", 0x2001: " ", 0x2002: " ", 0x2003: " ", 0x2004: " ", 0x2005: " ",
-    0x2006: " ", 0x2007: " ", 0x2008: " ", 0x2009: " ", 0x200A: " "
-})
+_EXT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+    (re.compile(fnmatch.translate(entry)), cat)
+    for cat, exts in (
+        ("archive", ARCHIVE_EXTS),
+        ("audio", AUDIO_EXTS),
+        ("code", CODE_EXTS),
+        ("data", DATA_EXTS),
+        ("exec", EXEC_EXTS),
+        ("font", FONT_EXTS),
+        ("image", IMAGE_EXTS),
+        ("video", VIDEO_EXTS),
+    )
+    for entry in exts
+    if any(c in entry for c in "*?[")
+)
+
+TEXT_TRANS = str.maketrans(
+    {
+        0x2000: " ",
+        0x2001: " ",
+        0x2002: " ",
+        0x2003: " ",
+        0x2004: " ",
+        0x2005: " ",
+        0x2006: " ",
+        0x2007: " ",
+        0x2008: " ",
+        0x2009: " ",
+        0x200A: " ",
+    }
+)
 
 
+# fmt: off
 def print_help() -> None:
     title = ["  Tree Generator", " — Quickly generate advanced and good looking directory trees  "]
     StyledText(
@@ -171,14 +218,17 @@ class TreeColorConfig(TypedDict):
     dir: AnyStyle
     dir_dull: AnyStyle
     file: AnyStyle
-    symlink: AnyStyle
-    executable: AnyStyle
+    content: AnyStyle
     archive: AnyStyle
-    image: AnyStyle
-    video: AnyStyle
     audio: AnyStyle
     code: AnyStyle
-    content: AnyStyle
+    data: AnyStyle
+    exec: AnyStyle
+    font: AnyStyle
+    image: AnyStyle
+    stale: AnyStyle
+    symlink: AnyStyle
+    video: AnyStyle
 
 
 class TreeCharConfig(TypedDict):
@@ -460,21 +510,40 @@ class TreeChars:
         self.c_dir_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"]).ansi
         self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
         self.c_file_dim = StyledText(self.c_reset, S.DIM, COLORS["file"]).ansi
-        self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
-        self.c_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["symlink"]).ansi
-        self.c_executable = StyledText(self.c_reset, COLORS["executable"]).ansi
-        self.c_executable_dim = StyledText(self.c_reset, S.DIM, COLORS["executable"]).ansi
+        self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
+
         self.c_archive = StyledText(self.c_reset, COLORS["archive"]).ansi
         self.c_archive_dim = StyledText(self.c_reset, S.DIM, COLORS["archive"]).ansi
-        self.c_image = StyledText(self.c_reset, COLORS["image"]).ansi
-        self.c_image_dim = StyledText(self.c_reset, S.DIM, COLORS["image"]).ansi
-        self.c_video = StyledText(self.c_reset, COLORS["video"]).ansi
-        self.c_video_dim = StyledText(self.c_reset, S.DIM, COLORS["video"]).ansi
         self.c_audio = StyledText(self.c_reset, COLORS["audio"]).ansi
         self.c_audio_dim = StyledText(self.c_reset, S.DIM, COLORS["audio"]).ansi
         self.c_code = StyledText(self.c_reset, COLORS["code"]).ansi
         self.c_code_dim = StyledText(self.c_reset, S.DIM, COLORS["code"]).ansi
-        self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
+        self.c_data = StyledText(self.c_reset, COLORS["data"]).ansi
+        self.c_data_dim = StyledText(self.c_reset, S.DIM, COLORS["data"]).ansi
+        self.c_executable = StyledText(self.c_reset, COLORS["exec"]).ansi
+        self.c_executable_dim = StyledText(self.c_reset, S.DIM, COLORS["exec"]).ansi
+        self.c_font = StyledText(self.c_reset, COLORS["font"]).ansi
+        self.c_font_dim = StyledText(self.c_reset, S.DIM, COLORS["font"]).ansi
+        self.c_image = StyledText(self.c_reset, COLORS["image"]).ansi
+        self.c_image_dim = StyledText(self.c_reset, S.DIM, COLORS["image"]).ansi
+        self.c_stale = StyledText(self.c_reset, COLORS["stale"]).ansi
+        self.c_stale_dim = StyledText(self.c_reset, COLORS["stale"]).ansi
+        self.c_symlink = StyledText(self.c_reset, COLORS["symlink"]).ansi
+        self.c_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["symlink"]).ansi
+        self.c_video = StyledText(self.c_reset, COLORS["video"]).ansi
+        self.c_video_dim = StyledText(self.c_reset, S.DIM, COLORS["video"]).ansi
+
+        self.category_colors: dict[str, tuple[str, str]] = {
+            "archive": (self.c_archive, self.c_archive_dim),
+            "audio": (self.c_audio, self.c_audio_dim),
+            "code": (self.c_code, self.c_code_dim),
+            "data": (self.c_data, self.c_data_dim),
+            "exec": (self.c_executable, self.c_executable_dim),
+            "font": (self.c_font, self.c_font_dim),
+            "image": (self.c_image, self.c_image_dim),
+            "stale": (self.c_stale, self.c_stale_dim),
+            "video": (self.c_video, self.c_video_dim),
+        }
 
 
 class DirectoryScanner:
@@ -984,8 +1053,10 @@ class TreeRenderer:
                 else:
                     self.stats.processed_files += count
 
+                suffix = self.chars.dirname_end if is_chunk_dir else ""
                 lines.append(
-                    f"{prefix}{branch}{self.chars.line_hor_str}{color}[{count} more]{self.chars.c_reset}{self.chars.c_line}\n"
+                    f"{prefix}{branch}{self.chars.line_hor_str}{color}"
+                    f"[{count} more]{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
                 )
                 continue
 
@@ -1185,7 +1256,7 @@ class TreeRenderer:
             f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
         )
 
-    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
+    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
         """Determine the color string for a file based on its type and extension."""
 
         if entry.is_dir():
@@ -1195,22 +1266,32 @@ class TreeRenderer:
             return self.chars.c_symlink, self.chars.c_symlink_dim
 
         dot = (name := entry.name).rfind(".")
-        ext = name[dot:].lower() if dot > 0 else ""
+        ext = name[dot + 1 :].lower() if dot > 0 else ""
 
-        if ext in EXEC_EXTS:
-            return self.chars.c_executable, self.chars.c_executable_dim
-        elif ext in IMAGE_EXTS:
-            return self.chars.c_image, self.chars.c_image_dim
-        elif ext in ARCHIVE_EXTS:
+        if ext in ARCHIVE_EXTS:
             return self.chars.c_archive, self.chars.c_archive_dim
-        elif ext in CODE_EXTS:
-            return self.chars.c_code, self.chars.c_code_dim
-        elif ext in VIDEO_EXTS:
-            return self.chars.c_video, self.chars.c_video_dim
         elif ext in AUDIO_EXTS:
             return self.chars.c_audio, self.chars.c_audio_dim
+        elif ext in CODE_EXTS:
+            return self.chars.c_code, self.chars.c_code_dim
+        elif ext in DATA_EXTS:
+            return self.chars.c_data, self.chars.c_data_dim
+        elif ext in EXEC_EXTS:
+            return self.chars.c_executable, self.chars.c_executable_dim
+        elif ext in FONT_EXTS:
+            return self.chars.c_font, self.chars.c_font_dim
+        elif ext in IMAGE_EXTS:
+            return self.chars.c_image, self.chars.c_image_dim
+        elif ext in STALE_EXTS:
+            return self.chars.c_stale, self.chars.c_stale_dim
+        elif ext in VIDEO_EXTS:
+            return self.chars.c_video, self.chars.c_video_dim
 
-        if not ext:
+        if ext:
+            for pattern, category in _EXT_PATTERNS:
+                if pattern.fullmatch(ext):
+                    return self.chars.category_colors[category]
+        else:
             try:
                 if entry.stat(follow_symlinks=False).st_mode & 0o111:
                     return self.chars.c_executable, self.chars.c_executable_dim
@@ -1224,7 +1305,7 @@ class TreeRenderer:
     def _is_text_file(filepath: str) -> bool:
         """Determine if a file is a text file by inspecting its mime type or bytes."""
 
-        if Path(filepath).suffix.lower() in BINARY_EXTS:
+        if Path(filepath).suffix.lower()[1:] in BINARY_EXTS:
             return False
 
         try:
