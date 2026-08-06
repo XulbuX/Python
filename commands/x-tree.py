@@ -139,26 +139,20 @@ VIDEO_EXTS = frozenset({
     "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "rm",
     "rmvb", "vob", "webm", "wmv"
 })
-BINARY_EXTS = frozenset({
-    "3g2", "3gp", "7z", "a", "aac", "accdb", "aegraphic", "ai", "aif", "aiff", "aishm", "alac", "amr", "amv", "ani", "ape",
-    "apk", "appimage", "arw", "asar", "asf", "au", "avi", "avif", "bak", "bdic", "bin", "binarypb", "binpb", "blend", "blf",
-    "bmp", "bz2", "cab", "caf", "cfa", "cff", "class", "com", "cr2", "cur", "dat", "data", "db", "db3", "dbf", "dcm", "deb",
-    "deflate", "dll", "dmg", "dng", "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx",
-    "dv", "dylib", "ear", "emf", "eot", "eps", "exe", "f4v", "fbx", "fdb", "flac", "flt", "flv", "fnt", "fon", "frm", "fudict",
-    "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "ggr", "gif", "gjam", "glb", "glox", "gltf", "gmap", "gpg", "gsheet",
-    "gsite", "gslides", "gtable", "gz", "hdr", "heic", "ibd", "icns", "ico", "id", "idb", "iges", "img", "indd", "iso", "jar",
-    "jfc", "jpeg", "jpg", "jsxbin", "jxl", "keyring", "keystore", "knsregistry", "ko", "kra", "kwl", "ldb", "lib", "lz",
-    "lzma", "m2ts", "m4a", "m4v", "mdb", "mha", "mhd", "mid", "midi", "mka", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4",
-    "mpeg", "mpg", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd", "myi", "nbt", "ndf", "nef", "nhdr", "nii", "node", "npy",
-    "npz", "nrrd", "o", "obj", "ods", "odt", "ofx", "oga", "ogg", "ograf", "ogv", "one", "onepkg", "opt", "opus", "orf", "otf",
-    "ova", "ovf", "pages", "pak", "pb", "pbm", "pcf", "pdf", "pfb", "pgm", "phar", "ply", "png", "pot", "potm", "potx", "ppam",
-    "ppm", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "psd", "psp", "ptb", "pyc", "pyd",
-    "pyo", "qcow2", "rar", "raw", "rdb", "rm", "rmvb", "rnd", "rpm", "rtf", "rw2", "salt", "sb3", "schem", "sdb", "sfd",
-    "sldm", "sldx", "snap", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "squashfs", "sr2", "step", "stl", "svg",
-    "tar", "tga", "tgz", "thmx", "tif", "tiff", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vob", "voc", "vscdb", "vsd",
-    "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "war", "wasm", "wav", "wbk", "webm",
-    "webp", "whl", "wma", "wmv", "woff", "woff2", "xbm", "xcf", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx",
-    "xlt", "xltm", "xltx", "xlw", "xz", "z", "zip", "zst"
+BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
+    "a", "accdb", "aegraphic", "aishm", "ani", "appimage", "bak", "bdic", "bin", "binarypb", "binpb", "blend", "blf", "cff",
+    "class", "com", "dat", "data", "db", "db3", "dbf", "dcm", "deflate", "dll", "doc", "docb", "docm", "docx", "dot", "dotm",
+    "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx", "dylib", "eot", "exe", "fbx", "fdb", "flt", "fnt", "fon", "frm", "fudict",
+    "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam", "glb", "glox", "gltf", "gmap", "gpg", "gsheet", "gsite",
+    "gslides", "gtable", "hdr", "ibd", "id", "idb", "iges", "img", "jfc", "jsxbin", "keyring", "keystore", "knsregistry", "ko",
+    "kwl", "ldb", "lib", "mdb", "mha", "mhd", "mobi", "mogrt", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd", "myi", "nbt",
+    "ndf", "nhdr", "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "otf",
+    "ova", "ovf", "pages", "pb", "pcf", "pdf", "pfb", "ply", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt",
+    "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "rnd", "rtf", "salt",
+    "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step", "stl", "tga",
+    "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw",
+    "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx",
+    "xlt", "xltm", "xltx", "xlw"
 })
 # fmt: on
 
