@@ -104,7 +104,7 @@ DATA_EXTS = frozenset({
     "mdb", "nbt", "rdb", "sdb", "sqlite", "sqlite[-_]*", "sqlite3", "tsv", "xls", "xlsm", "xlsx"
 })
 EXEC_EXTS = frozenset({
-    "appimage", "bat", "bin", "cmd", "com", "exe", "msi", "run", "sh"
+    "appimage", "bin", "cmd", "com", "exe", "msi", "run"
 })
 FONT_EXTS = frozenset({
     "afm", "bdf", "eot", "fnt", "fon", "otf", "pfa", "pfb", "pcf", "sfd", "ttf", "woff", "woff2"
@@ -619,7 +619,8 @@ class DirectoryScanner:
 
         if self.absolute_paths:
             for ep in self.absolute_paths:
-                if path_lower == ep[1:] or ep in path_lower:
+                rel = ep[1:]
+                if path_lower == rel or path_lower.startswith(rel + "/"):
                     self._ignore_cache[path] = True
                     return True
 
@@ -713,19 +714,15 @@ class DirectoryScanner:
                 self._scan_cache[dir_path] = result
                 return result
 
-            hash_count = normal_count = 0
-            filenames: list[str] = []
+            hash_count = 0
 
             for entry in entries:
                 name = entry.name
                 if name.startswith("."):
                     total_count -= 1
                     continue
-                filenames.append(name)
-                if self.is_likely_hash_name(name):
+                elif self.is_likely_hash_name(name):
                     hash_count += 1
-                else:
-                    normal_count += 1
 
             if total_count > 5 and (hash_count / total_count) > 0.8:
                 result = DirScanResult(True, total_count, hash_count, entries, sorted_entries)
@@ -946,7 +943,6 @@ class TreeRenderer:
         try:
             if level == 0:
                 self._render_root(dir_path, lines)
-                parent_rel_path = ""
 
             scan_result = self.scanner.scan_directory(dir_path)
 
