@@ -49,6 +49,7 @@ COLORS: TreeColorConfig = {
     "audio": S.BR.CYAN,
     "code": S.BR.YELLOW,
     "data": S.YELLOW,
+    "doc": S.CYAN,
     "exec": S.BR.GREEN,
     "font": S.BLUE,
     "image": S.BR.MAGENTA,
@@ -80,57 +81,80 @@ DEFAULT: ScriptDefaults = {
 # fmt: off
 ARCHIVE_EXTS = frozenset({
     "7z", "apk", "asar", "bz2", "cab", "deb", "dmg", "ear", "gz", "iso", "jar", "lz", "lzma", "npz", "pak", "phar", "rar",
-    "rpm", "snap", "tar", "tgz", "war", "whl", "xz", "z", "zip", "zst"
+    "rpm", "snap", "squashfs", "tar", "tgz", "war", "whl", "xz", "z", "zip", "zst"
 })
 AUDIO_EXTS = frozenset({
     "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg", "opus",
     "voc", "wav", "wma"
 })
 CODE_EXTS = frozenset({
-    "apache", "asm", "asp", "aspx", "astro", "awk", "bash", "bat", "bib", "bicep", "c", "cfg", "clj", "cljs", "cljc", "cmake",
-    "conf", "config", "cpp", "cr", "cs", "csh", "css", "d", "dart", "def", "diff", "dockerfile", "edn", "ejs", "el", "env",
-    "erb", "erl", "ex", "exs", "f", "f90", "f95", "fbs", "fish", "fs", "fsi", "fsx", "g4", "gd", "gleam", "go", "gradle",
-    "gql", "graphql", "groovy", "h", "hbs", "hcl", "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc",
-    "ini", "ipynb", "j2", "jade", "java", "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "ksh", "kt", "kts",
-    "lark", "less", "library-ms", "lisp", "liquid", "lock", "lua", "m", "make", "md", "mdx", "ml", "mli", "mod", "nim", "nims",
-    "nix", "nmake", "odin", "org", "pas", "patch", "pc", "php", "pl", "plist", "pm", "po", "pod", "pom", "pot", "prf", "prefs",
-    "prisma", "profile", "properties", "proto", "ps", "ps1", "ps1xml", "psd1", "psm1", "pug", "py", "pyf", "pyi", "pyw", "pyx",
-    "pxd", "pxi", "r", "rb", "rc", "ron", "rs", "rst", "s", "sass", "sc", "scala", "scss", "sct", "sh", "sol", "sql", "srx",
-    "sty", "styl", "svelte", "swift", "tcl", "tex", "tf", "tfvars", "tmpl", "toml", "ts", "tsx", "v", "vbs", "vue", "winprf",
-    "xbel", "xml", "xsl", "xslt", "yaml", "yml", "zig", "zsh"
+    "access", "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bat", "bib", "bicep", "blocklist",
+    "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets", "code-workspace", "code_snippets",
+    "code_workspace", "colors", "conf", "config", "cpp", "cr", "cs", "csh", "css", "cts", "cu", "d", "dart", "def", "defs",
+    "desktop", "diff", "dirs", "dockerfile", "edn", "ejs", "el", "env", "erb", "erl", "ex", "exs", "f", "f90", "f95", "fbs",
+    "filters", "fish", "flow", "frag", "fs", "fsi", "fst", "fsx", "g4", "gd", "gleam", "glsl", "glslfx", "go", "gql", "gradle",
+    "graphql", "groovy", "h", "hbs", "hcl", "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini",
+    "ipynb", "j2", "jade", "java", "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "ksh", "kt", "kts", "lark",
+    "less", "library-ms", "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make", "mdl", "mdx",
+    "meta", "metal", "mjs", "ml", "mli", "mm", "mod", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake", "odin",
+    "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs", "preset",
+    "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml", "psd1", "psm1", "pug", "pxd",
+    "pxi", "py", "pyf", "pyi", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron", "rs", "rsp", "rules", "s", "sass",
+    "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql", "srx", "sty", "styl", "sum",
+    "svelte", "swift", "tcl", "template", "tex", "tf", "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx",
+    "typed", "url", "v", "vader", "vbs", "vcxproj", "vert", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt",
+    "yaml", "yml", "zig", "zsh"
 })
 DATA_EXTS = frozenset({
-    "accdb", "csv", "dat", "dat[-_]*", "data", "db", "db[-_]*", "db3", "fdb", "fingerprint", "gdb", "idb", "index", "ldb",
-    "mdb", "nbt", "rdb", "sdb", "sqlite", "sqlite[-_]*", "sqlite3", "tsv", "xls", "xlsm", "xlsx"
+    "accdb", "aegraphic", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "certs", "cff", "comp", "count",
+    "crt", "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl",
+    "deflate", "dpb1", "dpx", "drfx", "drp", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb",
+    "ilut", "ind", "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb",
+    "localstorage", "localstorage[-_]*", "mdb", "nbt", "ocio", "ofx", "ograf", "pb", "pem", "plugin", "ppk", "prin", "prproj",
+    "ptb", "pub", "rdb", "real", "salt", "sb3", "sdb", "spi1d", "sprite3", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "token",
+    "tsv", "usda", "vscdb"
+})
+DOC_EXTS = frozenset({
+    "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
+    "gmap", "gsheet", "gsite", "gslides", "gtable", "md", "mkd", "mpp", "mpt", "odt", "one", "onepkg", "org", "pages", "pdf",
+    "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "rst", "rtf", "sldm", "sldx", "txt", "vdx",
+    "vsd", "vsdx", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtx", "wbk", "xla", "xlam", "xll", "xls", "xlsb", "xlsm",
+    "xlsx", "xlt", "xltm", "xltx", "xlw"
 })
 EXEC_EXTS = frozenset({
-    "appimage", "bin", "cmd", "com", "exe", "msi", "run"
+    "appimage", "bin", "cmd", "com", "exe", "msi", "run", "vsix"
 })
 FONT_EXTS = frozenset({
-    "afm", "bdf", "eot", "fnt", "fon", "otf", "pfa", "pfb", "pcf", "sfd", "ttf", "woff", "woff2"
+    "afm", "bdf", "eot", "fnt", "fon", "otf", "pcf", "pfa", "pfb", "sfd", "ttf", "woff", "woff2"
 })
 IMAGE_EXTS = frozenset({
-    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "eps", "ggr", "gif", "heic", "ico", "icns", "indd", "jpeg", "jpg", "jxl",
-    "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp", "xcf",
-    "xbm"
+    "ai", "arw", "avif", "bmp", "cr2", "cur", "dng", "eps", "ggr", "gif", "heic", "icns", "ico", "indd", "jpeg", "jpg", "jxl",
+    "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif", "tiff", "webp", "xbm",
+    "xcf"
 })
 STALE_EXTS = frozenset({
-    "bak", "backup", "bck", "bkp", "disabled", "msbak", "off", "old", "orig"
+    "backup", "bak", "bck", "beta", "bkp", "disabled", "gotemp", "keep", "last", "log", "msbak", "obsolete", "off", "old",
+    "orig", "stderr", "stderr.beta", "tbcache", "trashinfo"
 })
 VIDEO_EXTS = frozenset({
     "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mts", "ogv", "rm", "rmvb",
     "ts", "vob", "webm", "wmv"
 })
 BINARY_EXTS = frozenset({
-    "7z", "accdb", "ai", "apk", "asar", "avi", "bak", "bdic", "bin", "binarypb", "blend", "blf", "cab", "class", "cur", "dat",
-    "data", "db", "db3", "dbf", "dcm", "dll", "dmg", "doc", "docx", "dotm", "dotx", "dpapi", "dylib", "eot", "eps", "exe",
-    "fbx", "fdb", "fnt", "fon", "frm", "gdb", "gif", "glb", "glox", "gltf", "gz", "heic", "ibd", "idb", "ico", "iges", "img",
-    "iso", "jar", "jpeg", "jpg", "jsxbin", "ldb", "lib", "mdb", "mha", "mhd", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4",
-    "msi", "msg", "myd", "myi", "nbt", "ndf", "nef", "nhdr", "nii", "npy", "nrrd", "o", "obj", "ods", "odt", "opt", "orf",
-    "otf", "ova", "ovf", "pak", "pb", "pcf", "pdf", "pfb", "phar", "ply", "png", "ppt", "pptx", "pri", "prfpset", "prproj",
-    "psd", "pyc", "pyd", "pyo", "qcow2", "rar", "raw", "rdb", "rnd", "rpm", "rtf", "sdb", "schem", "sfd", "so", "sqlite",
-    "sqlite3", "sr2", "step", "stl", "svg", "tar", "thmx", "tif", "tiff", "ttf", "vdi", "vhdx", "vmdk", "vtp", "vtu", "wasm",
-    "webp", "woff", "woff2", "xls", "xlb", "xlsb", "xlsx", "zip"
+    "7z", "accdb", "aegraphic", "ai", "aishm", "ani", "apk", "asar", "avi", "bak", "bdic", "bin", "binarypb", "binpb", "blend",
+    "blf", "cab", "class", "cur", "dat", "data", "db", "db3", "dbf", "dcm", "deflate", "dll", "dmg", "doc", "docb", "docm",
+    "docx", "dot", "dotm", "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx", "dylib", "eot", "eps", "exe", "fbx", "fdb", "flt",
+    "fnt", "fon", "frm", "fudict", "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gif", "gjam", "glb", "glox", "gltf",
+    "gmap", "gpg", "gsheet", "gsite", "gslides", "gtable", "gz", "hdr", "heic", "ibd", "ico", "id", "idb", "iges", "img",
+    "iso", "jar", "jfc", "jpeg", "jpg", "jsxbin", "keyring", "keystore", "knsregistry", "kwl", "ldb", "lib", "mdb", "mha",
+    "mhd", "mkv", "mobi", "mogrt", "mov", "mp3", "mp4", "mpp", "mpt", "msg", "msi", "myd", "myi", "nbt", "ndf", "nef", "nhdr",
+    "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "orf", "otf", "ova", "ovf",
+    "pages", "pak", "pb", "pcf", "pdf", "pfb", "phar", "ply", "png", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx",
+    "ppt", "pptm", "pptx", "prfpset", "pri", "prproj", "psd", "ptb", "pyc", "pyd", "pyo", "qcow2", "rar", "raw", "rdb", "rnd",
+    "rpm", "rtf", "salt", "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3",
+    "squashfs", "sr2", "step", "stl", "svg", "tar", "tga", "thmx", "tif", "tiff", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb",
+    "vsd", "vsdx", "vsix", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "webp", "woff",
+    "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw", "zip"
 })
 # fmt: on
 
@@ -141,6 +165,7 @@ _EXT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
         ("audio", AUDIO_EXTS),
         ("code", CODE_EXTS),
         ("data", DATA_EXTS),
+        ("doc", DOC_EXTS),
         ("exec", EXEC_EXTS),
         ("font", FONT_EXTS),
         ("image", IMAGE_EXTS),
@@ -219,10 +244,12 @@ class TreeColorConfig(TypedDict):
     dir_dull: AnyStyle
     file: AnyStyle
     content: AnyStyle
+    # File type colors:
     archive: AnyStyle
     audio: AnyStyle
     code: AnyStyle
     data: AnyStyle
+    doc: AnyStyle
     exec: AnyStyle
     font: AnyStyle
     image: AnyStyle
@@ -524,6 +551,8 @@ class TreeChars:
         self.c_code_dim = StyledText(self.c_reset, S.DIM, COLORS["code"]).ansi
         self.c_data = StyledText(self.c_reset, COLORS["data"]).ansi
         self.c_data_dim = StyledText(self.c_reset, S.DIM, COLORS["data"]).ansi
+        self.c_doc = StyledText(self.c_reset, COLORS["doc"]).ansi
+        self.c_doc_dim = StyledText(self.c_reset, S.DIM, COLORS["doc"]).ansi
         self.c_executable = StyledText(self.c_reset, COLORS["exec"]).ansi
         self.c_executable_dim = StyledText(self.c_reset, S.DIM, COLORS["exec"]).ansi
         self.c_font = StyledText(self.c_reset, COLORS["font"]).ansi
@@ -542,6 +571,7 @@ class TreeChars:
             "audio": (self.c_audio, self.c_audio_dim),
             "code": (self.c_code, self.c_code_dim),
             "data": (self.c_data, self.c_data_dim),
+            "doc": (self.c_doc, self.c_doc_dim),
             "exec": (self.c_executable, self.c_executable_dim),
             "font": (self.c_font, self.c_font_dim),
             "image": (self.c_image, self.c_image_dim),
@@ -1265,6 +1295,8 @@ class TreeRenderer:
             return self.chrs.c_code, self.chrs.c_code_dim
         elif ext in DATA_EXTS:
             return self.chrs.c_data, self.chrs.c_data_dim
+        elif ext in DOC_EXTS:
+            return self.chrs.c_doc, self.chrs.c_doc_dim
         elif ext in EXEC_EXTS:
             return self.chrs.c_executable, self.chrs.c_executable_dim
         elif ext in FONT_EXTS:
