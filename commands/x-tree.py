@@ -745,7 +745,7 @@ class DirectoryScanner:
 @dataclass
 class TreeConfig:
     base_dir: Path
-    max_width: int = 0
+    max_width: int
     ignore_dirs: list[str] = field(default_factory=lambda: [])
     auto_ignore_mode: Literal[0, 1, 2] = 2
     truncate_similar: bool = True
@@ -765,7 +765,6 @@ class TreeRenderer:
 
     _RE_DIGIT = re.compile(r"\d+")
     _RE_ALPHA = re.compile(r"[a-zA-Z]")
-    _RE_ANSI = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
     def __init__(self, config: TreeConfig):
         """Initialize the renderer with config, styling, and scanner."""
@@ -803,11 +802,13 @@ class TreeRenderer:
                 if not result.should_ignore and not canceled[0]:
                     new_items: list[tuple[str, str]] = []
 
-                    for entry in result.entries:
-                        if entry.is_dir():
-                            entry_rel = f"{rel_path}/{entry.name}" if rel_path else entry.name
-                            if not self.scanner.should_ignore_path(entry_rel):
-                                new_items.append((entry.path, entry_rel))
+                    # `sorted_entries` has dirs first; break on the first non-dir.
+                    for entry in result.sorted_entries:
+                        if not entry.is_dir():
+                            break
+                        entry_rel = f"{rel_path}/{entry.name}" if rel_path else entry.name
+                        if not self.scanner.should_ignore_path(entry_rel):
+                            new_items.append((entry.path, entry_rel))
 
                     if new_items and not canceled[0]:
                         with lock:
@@ -861,24 +862,16 @@ class TreeRenderer:
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
         )
 
-        if self.config.max_width > 0:
-            max_width = self.config.max_width
-        else:
-            max_width = max(
-                max((len(TreeRenderer._RE_ANSI.sub("", line)) for line in result_str.split("\n")), default=80) + 1,
-                len(time_taken.raw) + len(tree_stats.raw) + 2,
-            )
-
-        space_len = max_width - len(time_taken.raw) - len(tree_stats.raw) - 2
+        space_len = self.config.max_width - len(time_taken.raw) - len(tree_stats.raw) - 2
         if space_len >= 2:
             footer = (" ", time_taken.ansi, " " * space_len, tree_stats.ansi)
         else:
-            footer = (" ", time_taken.ansi, "\n", " " * max(1, max_width - len(tree_stats.raw)), tree_stats.ansi)
+            footer = (" ", time_taken.ansi, "\n", " " * max(1, self.config.max_width - len(tree_stats.raw)), tree_stats.ansi)
 
         return StyledText(
             (COLORS["line"], result_str),
             "\n",
-            (S.RESET, S.DIM("─" * max_width), "\n"),
+            (S.RESET, S.DIM("─" * self.config.max_width), "\n"),
             footer,
             "\n",
         )
@@ -926,10 +919,12 @@ class TreeRenderer:
         rel_path = current_name if len(current_name) <= max_rel_path_len else f".{current_name[-max_rel_path_len:]}"
         rel_path = rel_path or " "
 
-        if is_dir:
-            xx.console.log("Sprouting", f"{self.chars.c_dir}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
-        else:
-            xx.console.log("Sprouting", f"{self.chars.c_file}{rel_path}", title_bg_color=S.BG.BR.BLUE, start="\x1b[F\x1b[K")
+        xx.console.log(
+            "Sprouting",
+            f"{self.chars.c_dir}{rel_path}" if is_dir else f"{self.chars.c_file}{rel_path}",
+            title_bg_color=S.BG.BR.BLUE,
+            start="\x1b[F\x1b[K",
+        )
 
     def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
@@ -1008,17 +1003,15 @@ class TreeRenderer:
             chunks.append(current_chunk)
 
         visible_entries: list[os.DirEntry[str] | tuple[int, str, bool]] = []
+
         for chunk in chunks:
             if len(chunk) < 8:
                 visible_entries.extend(chunk)
             else:
                 visible_entries.extend(chunk[:2])
 
+                # All entries share the same shape => same extension => same color:
                 base_color = self._get_file_color(chunk[0])[1]
-                for entry in chunk[1:]:
-                    if self._get_file_color(entry)[1] != base_color:
-                        base_color = self.chars.c_line_dull
-                        break
 
                 visible_entries.append((len(chunk) - 4, base_color, chunk[0].is_dir()))
                 visible_entries.extend(chunk[-2:])
@@ -1086,13 +1079,9 @@ class TreeRenderer:
     ) -> None:
         """Render a single directory node and recursively process its children."""
 
-        max_name_width = (
-            max(10, self.config.max_width - len(current_prefix) - len(self.chars.dirname_end))
-            if self.config.max_width > 0
-            else 0
-        )
+        max_name_width = max(10, self.config.max_width - len(current_prefix) - len(self.chars.dirname_end))
 
-        if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
+        if len(entry.name) <= max_name_width:
             lines.append(
                 f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}"
                 f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
@@ -1131,9 +1120,9 @@ class TreeRenderer:
         self._update_progress(entry.name, level, is_dir=False)
         color, color_dim = self._get_file_color(entry)
 
-        max_name_width = max(10, self.config.max_width - len(current_prefix)) if self.config.max_width > 0 else 0
+        max_name_width = max(10, self.config.max_width - len(current_prefix))
 
-        if self.config.max_width <= 0 or len(entry.name) <= max_name_width:
+        if len(entry.name) <= max_name_width:
             lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
 
         else:
@@ -1187,11 +1176,11 @@ class TreeRenderer:
 
             file_lines = [line.replace("\t", "    ").translate(TEXT_TRANS).rstrip() for line in file_lines]
 
-            max_content_width = max(10, self.config.max_width - len(content_prefix) - 4) if self.config.max_width > 0 else 0
-
+            max_content_width = max(10, self.config.max_width - len(content_prefix) - 4)
             wrapped_lines: list[str] = []
+
             for line in file_lines:
-                if self.config.max_width > 0 and len(line) > max_content_width:
+                if len(line) > max_content_width:
                     chunk = textwrap.wrap(line, width=max_content_width, drop_whitespace=True, break_long_words=True)
                     if not chunk:
                         wrapped_lines.append("")
@@ -1420,6 +1409,7 @@ def main() -> None:  # noqa: C901
 
     config = TreeConfig(
         base_dir=base_dir,
+        max_width=0,  # Set to actual max-width on re-initialization after user input.
         ignore_dirs=ignore_dirs,
         auto_ignore_mode=auto_ignore_mode,
         truncate_similar=not ARGS.truncate_similar.exists,
@@ -1457,7 +1447,7 @@ def main() -> None:  # noqa: C901
 
         print()
 
-    # Re-initialize config in case user changed indent/style properties:
+    # Re-initialize config in case user changed properties:
     config = TreeConfig(
         base_dir=config.base_dir,
         max_width=200 if into_file else xx.console.get_width(),
