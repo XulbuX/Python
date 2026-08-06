@@ -186,7 +186,7 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
         ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive chunks of similar items"),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "P"), "           Output tree to file P ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("P"), " is omitted)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # noqa: E501
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Examples:"),
@@ -275,8 +275,11 @@ class IGNORE:
     directories/files to auto-ignore during tree generation."""
 
     paths: ClassVar[set[str]] = {
+        "__pycache__.*",
         "__pycache__",
+        "__pypackages__.*",
         "__pypackages__",
+        "__tests__.*",
         "__tests__",
         "_locales",
         "_site",
@@ -306,6 +309,7 @@ class IGNORE:
         ".nvm",
         ".nx",
         ".output",
+        ".pnpm",
         ".pytest_*",
         ".ruff_*",
         ".scannerwork",
@@ -398,6 +402,7 @@ class IGNORE:
         "officeFileCache",
         "packages",
         "patch64",
+        "pnpm/store/links",
         "program64",
         "pythonLocator",
         "recent/automaticDestinations",
@@ -477,14 +482,13 @@ class TreeChars:
     def __init__(self, indent_size: int):
         """Initialize tree styling options and compile required ANSI characters."""
 
-        preset = CHARS
-        self.line_ver = preset["line_ver"]
-        self.line_hor = preset["line_hor"]
-        self.branch_new = preset["branch_new"]
-        self.corners = preset["corners"]
-        self.error = preset["error"]
-        self.ignored = preset["ignored"]
-        self.dirname_end = preset["dirname_end"]
+        self.line_ver = CHARS["line_ver"]
+        self.line_hor = CHARS["line_hor"]
+        self.branch_new = CHARS["branch_new"]
+        self.corners = CHARS["corners"]
+        self.error = CHARS["error"]
+        self.ignored = CHARS["ignored"]
+        self.dirname_end = CHARS["dirname_end"]
 
         self.indent_size = indent_size
         self.tab = " " * indent_size
@@ -770,7 +774,7 @@ class TreeRenderer:
         """Initialize the renderer with config, styling, and scanner."""
 
         self.config = config
-        self.chars = TreeChars(config.indent_size)
+        self.chrs = TreeChars(config.indent_size)
         self.scanner = DirectoryScanner(config.ignore_dirs, config.auto_ignore_mode)
         self.stats = GenerationStats()
         self._progress_update_interval = 0.05
@@ -921,7 +925,7 @@ class TreeRenderer:
 
         xx.console.log(
             "Sprouting",
-            f"{self.chars.c_dir}{rel_path}" if is_dir else f"{self.chars.c_file}{rel_path}",
+            f"{self.chrs.c_dir}{rel_path}" if is_dir else f"{self.chrs.c_file}{rel_path}",
             title_bg_color=S.BG.BR.BLUE,
             start="\x1b[F\x1b[K",
         )
@@ -959,9 +963,9 @@ class TreeRenderer:
         path = Path(dir_path)
         base_name = path.name or path.drive.rstrip(":\\")
         lines.append(
-            f"{self.chars.c_dir}{base_name}{self.chars.c_reset}"
-            f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
-            f"{self.chars.c_line}\n"
+            f"{self.chrs.c_dir}{base_name}{self.chrs.c_reset}"
+            f"{self.chrs.c_dir_dull}{self.chrs.dirname_end}{self.chrs.c_reset}"
+            f"{self.chrs.c_line}\n"
         )
 
     @staticmethod
@@ -1033,7 +1037,7 @@ class TreeRenderer:
         last_idx = len(visible_entries) - 1
         for i, item in enumerate(visible_entries):
             is_last = i == last_idx
-            branch = self.chars.corners[0] if is_last else self.chars.branch_new
+            branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
 
             if isinstance(item, tuple):
                 count, color, is_chunk_dir = item
@@ -1042,16 +1046,16 @@ class TreeRenderer:
                 else:
                     self.stats.processed_files += count
 
-                suffix = self.chars.dirname_end if is_chunk_dir else ""
+                suffix = f"{self.chrs.c_dir_dull}{self.chrs.c_dim}{self.chrs.dirname_end}" if is_chunk_dir else ""
                 lines.append(
-                    f"{prefix}{branch}{self.chars.line_hor_str}{color}"
-                    f"[{count} more]{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
+                    f"{prefix}{branch}{self.chrs.line_hor_str}{color}"
+                    f"[{count} more]{self.chrs.c_reset}{suffix}{self.chrs.c_reset}{self.chrs.c_line}\n"
                 )
                 continue
 
             entry = item
             is_dir = entry.is_dir()
-            current_prefix = f"{prefix}{branch}{self.chars.line_hor_str}"
+            current_prefix = f"{prefix}{branch}{self.chrs.line_hor_str}"
             current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
             should_ignore_entry = self.scanner.should_ignore_path(current_rel_path)
@@ -1079,31 +1083,31 @@ class TreeRenderer:
     ) -> None:
         """Render a single directory node and recursively process its children."""
 
-        max_name_width = max(10, self.config.max_width - len(current_prefix) - len(self.chars.dirname_end))
+        max_name_width = max(10, self.config.max_width - len(current_prefix) - len(self.chrs.dirname_end))
 
         if len(entry.name) <= max_name_width:
             lines.append(
-                f"{current_prefix}{self.chars.c_dir}{entry.name}{self.chars.c_reset}"
-                f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
-                f"{self.chars.c_line}\n"
+                f"{current_prefix}{self.chrs.c_dir}{entry.name}{self.chrs.c_reset}"
+                f"{self.chrs.c_dir_dull}{self.chrs.dirname_end}{self.chrs.c_reset}"
+                f"{self.chrs.c_line}\n"
             )
 
         else:
             chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
-            lines.append(f"{current_prefix}{self.chars.c_dir}{chunk[0]}{self.chars.c_reset}{self.chars.c_line}\n")
+            lines.append(f"{current_prefix}{self.chrs.c_dir}{chunk[0]}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
-            wrap_prefix = f"{prefix}{self.chars.wrap_indent_last if is_last else self.chars.wrap_indent_cont}"
+            wrap_prefix = f"{prefix}{self.chrs.wrap_indent_last if is_last else self.chrs.wrap_indent_cont}"
 
             for part in chunk[1:-1]:
-                lines.append(f"{wrap_prefix}{self.chars.c_dir}{part}{self.chars.c_reset}{self.chars.c_line}\n")
+                lines.append(f"{wrap_prefix}{self.chrs.c_dir}{part}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
             lines.append(
-                f"{wrap_prefix}{self.chars.c_dir}{chunk[-1]}{self.chars.c_reset}"
-                f"{self.chars.c_line}{self.chars.c_dir_dull}{self.chars.dirname_end}{self.chars.c_reset}"
-                f"{self.chars.c_line}\n"
+                f"{wrap_prefix}{self.chrs.c_dir}{chunk[-1]}{self.chrs.c_reset}"
+                f"{self.chrs.c_dir_dull}{self.chrs.dirname_end}{self.chrs.c_reset}"
+                f"{self.chrs.c_line}\n"
             )
 
-        new_prefix = f"{prefix}{self.chars.indent_last if is_last else self.chars.indent_cont}"
+        new_prefix = f"{prefix}{self.chrs.indent_last if is_last else self.chrs.indent_cont}"
         self._render_tree(entry.path, new_prefix, level + 1, current_rel_path, lines)
 
     def _render_file(
@@ -1123,16 +1127,16 @@ class TreeRenderer:
         max_name_width = max(10, self.config.max_width - len(current_prefix))
 
         if len(entry.name) <= max_name_width:
-            lines.append(f"{current_prefix}{color}{entry.name}{self.chars.c_reset}{self.chars.c_line}\n")
+            lines.append(f"{current_prefix}{color}{entry.name}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
         else:
             chunk = textwrap.wrap(entry.name, width=max_name_width, break_long_words=True, drop_whitespace=True)
-            lines.append(f"{current_prefix}{color}{chunk[0]}{self.chars.c_reset}{self.chars.c_line}\n")
+            lines.append(f"{current_prefix}{color}{chunk[0]}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
-            wrap_prefix = f"{prefix}{self.chars.wrap_indent_last if is_last else self.chars.wrap_indent_cont}"
+            wrap_prefix = f"{prefix}{self.chrs.wrap_indent_last if is_last else self.chrs.wrap_indent_cont}"
 
             for part in chunk[1:]:
-                lines.append(f"{wrap_prefix}{color}{part}{self.chars.c_reset}{self.chars.c_line}\n")
+                lines.append(f"{wrap_prefix}{color}{part}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
         if self.config.include_file_contents and self._is_text_file(entry.path):
             self._render_file_contents(entry.path, prefix, is_last, color_dim, lines)
@@ -1142,29 +1146,29 @@ class TreeRenderer:
     ) -> None:
         """Render a specifically ignored node with dimmed styling."""
 
-        branch = self.chars.corners[0] if is_last else self.chars.branch_new
-        suffix = self.chars.dirname_end if is_dir else ""
+        branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
+        suffix = self.chrs.dirname_end if is_dir else ""
 
         lines.append(
-            f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{entry.name}{suffix}{self.chars.c_reset}{self.chars.c_line}\n"
+            f"{prefix}{self.chrs.c_line_dull}{branch}{self.chrs.line_hor_str}{entry.name}{suffix}{self.chrs.c_reset}{self.chrs.c_line}\n"
         )
 
         if is_dir:
-            ignored_prefix = f"{prefix}{self.chars.indent_last if is_last else self.chars.indent_cont}"
+            ignored_prefix = f"{prefix}{self.chrs.indent_last if is_last else self.chrs.indent_cont}"
             self._render_ignored_branch(ignored_prefix, is_last=True, lines=lines)
 
     def _render_ignored_branch(self, prefix: str, is_last: bool, lines: list[str]) -> None:
         """Render a branch indicating collapsed or ignored files."""
 
-        branch = self.chars.corners[0] if is_last else self.chars.branch_new
+        branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
         lines.append(
-            f"{prefix}{self.chars.c_line_dull}{branch}{self.chars.line_hor_str}{self.chars.ignored}{self.chars.c_reset}{self.chars.c_line}\n"
+            f"{prefix}{self.chrs.c_line_dull}{branch}{self.chrs.line_hor_str}{self.chrs.ignored}{self.chrs.c_reset}{self.chrs.c_line}\n"
         )
 
     def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, border_color: str, lines: list[str]) -> None:
         """Read and render the contents of a text file into the tree view."""
 
-        indent_str = " " * self.chars.indent_size if is_last else f"{self.chars.line_ver}{' ' * (self.chars.indent_size - 1)}"
+        indent_str = " " * self.chrs.indent_size if is_last else f"{self.chrs.line_ver}{' ' * (self.chrs.indent_size - 1)}"
         content_prefix = f"{prefix}{indent_str}"
 
         try:
@@ -1200,90 +1204,90 @@ class TreeRenderer:
             if truncation_msg:
                 content_width = max(content_width, len(truncation_msg))
 
-            hor_border = self.chars.line_hor * (content_width + 2)
+            hor_border = self.chrs.line_hor * (content_width + 2)
 
             lines.append(
-                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.branch_new}{hor_border}{self.chars.corners[2]}\n"
+                f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.branch_new}{hor_border}{self.chrs.corners[2]}\n"
             )
 
             for line in file_lines:
                 padding = " " * (content_width - len(line))
                 lines.append(
-                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} {line}"
-                    f"{self.chars.c_reset}{border_color}{padding} {self.chars.line_ver}\n"
+                    f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.line_ver} {line}"
+                    f"{self.chrs.c_reset}{border_color}{padding} {self.chrs.line_ver}\n"
                 )
 
             if truncation_msg:
                 padding = " " * (content_width - len(truncation_msg))
                 lines.append(
-                    f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.line_ver} "
-                    f"{padding}{self.chars.c_italic}{truncation_msg}"
-                    f"{self.chars.c_reset}{border_color} {self.chars.line_ver}\n"
+                    f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.line_ver} "
+                    f"{padding}{self.chrs.c_italic}{truncation_msg}"
+                    f"{self.chrs.c_reset}{border_color} {self.chrs.line_ver}\n"
                 )
 
             lines.append(
-                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.corners[0]}{hor_border}{self.chars.corners[1]}{self.chars.c_reset}{self.chars.c_line}\n"
+                f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.corners[0]}{hor_border}{self.chrs.corners[1]}{self.chrs.c_reset}{self.chrs.c_line}\n"
             )
 
         except Exception:
             lines.append(
-                f"{self.chars.c_line}{content_prefix}{border_color}{self.chars.corners[0]}{self.chars.line_hor}"
-                f"{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
-                f"Error reading file contents. {self.chars.c_reset}\n{self.chars.c_line}"
+                f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.corners[0]}{self.chrs.line_hor}"
+                f"{self.chrs.c_bold_in}{self.chrs.c_error} {self.chrs.error} "
+                f"Error reading file contents. {self.chrs.c_reset}\n{self.chrs.c_line}"
             )
 
     def _render_error(self, exc: Exception, prefix: str, lines: list[str]) -> None:
         """Render an error message node when a path cannot be accessed."""
 
-        error_prefix = f"{prefix}{self.chars.corners[0]}{self.chars.line_hor * (self.chars.indent_size - 1)}"
+        error_prefix = f"{prefix}{self.chrs.corners[0]}{self.chrs.line_hor * (self.chrs.indent_size - 1)}"
         lines.append(
-            f"{error_prefix}{self.chars.c_bold_in}{self.chars.c_error} {self.chars.error} "
-            f"{exc!s} {self.chars.c_reset}\n{self.chars.c_line}"
+            f"{error_prefix}{self.chrs.c_bold_in}{self.chrs.c_error} {self.chrs.error} "
+            f"{exc!s} {self.chrs.c_reset}\n{self.chrs.c_line}"
         )
 
     def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
         """Determine the color string for a file based on its type and extension."""
 
         if entry.is_dir():
-            return self.chars.c_dir, self.chars.c_dir_dim
+            return self.chrs.c_dir, self.chrs.c_dir_dim
 
         if entry.is_symlink():
-            return self.chars.c_symlink, self.chars.c_symlink_dim
+            return self.chrs.c_symlink, self.chrs.c_symlink_dim
 
         dot = (name := entry.name).rfind(".")
         ext = name[dot + 1 :].lower() if dot > 0 else ""
 
         if ext in ARCHIVE_EXTS:
-            return self.chars.c_archive, self.chars.c_archive_dim
+            return self.chrs.c_archive, self.chrs.c_archive_dim
         elif ext in AUDIO_EXTS:
-            return self.chars.c_audio, self.chars.c_audio_dim
+            return self.chrs.c_audio, self.chrs.c_audio_dim
         elif ext in CODE_EXTS:
-            return self.chars.c_code, self.chars.c_code_dim
+            return self.chrs.c_code, self.chrs.c_code_dim
         elif ext in DATA_EXTS:
-            return self.chars.c_data, self.chars.c_data_dim
+            return self.chrs.c_data, self.chrs.c_data_dim
         elif ext in EXEC_EXTS:
-            return self.chars.c_executable, self.chars.c_executable_dim
+            return self.chrs.c_executable, self.chrs.c_executable_dim
         elif ext in FONT_EXTS:
-            return self.chars.c_font, self.chars.c_font_dim
+            return self.chrs.c_font, self.chrs.c_font_dim
         elif ext in IMAGE_EXTS:
-            return self.chars.c_image, self.chars.c_image_dim
+            return self.chrs.c_image, self.chrs.c_image_dim
         elif ext in STALE_EXTS:
-            return self.chars.c_stale, self.chars.c_stale_dim
+            return self.chrs.c_stale, self.chrs.c_stale_dim
         elif ext in VIDEO_EXTS:
-            return self.chars.c_video, self.chars.c_video_dim
+            return self.chrs.c_video, self.chrs.c_video_dim
 
         if ext:
             for pattern, category in _EXT_PATTERNS:
                 if pattern.fullmatch(ext):
-                    return self.chars.category_colors[category]
+                    return self.chrs.category_colors[category]
         else:
             try:
                 if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                    return self.chars.c_executable, self.chars.c_executable_dim
+                    return self.chrs.c_executable, self.chrs.c_executable_dim
             except Exception:
                 pass
 
-        return self.chars.c_file, self.chars.c_file_dim
+        return self.chrs.c_file, self.chrs.c_file_dim
 
     @staticmethod
     @lru_cache(maxsize=1024)
