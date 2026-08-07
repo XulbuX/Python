@@ -73,22 +73,22 @@ DEFAULT: ScriptDefaults = {
     "truncate_similar": True,
     "include_file_contents": False,
     "max_content_lines": 0,
-    "indent": 2,
+    "indent_size": 2,
     "into_file": False,
 }
 
 # fmt: off
 ARCHIVE_EXTS = frozenset({
-    "7z", "apk", "asar", "bz2", "cab", "deb", "dmg", "ear", "gz", "iso", "jar", "lz", "lzma", "npz", "pak", "phar", "rar",
-    "rpm", "snap", "squashfs", "tar", "tgz", "war", "whl", "xz", "z", "zip", "zst"
+    "7z", "apk", "asar", "bz2", "cab", "cpio", "deb", "dmg", "ear", "gz", "iso", "jar", "lz", "lz4", "lzma", "npz", "pak",
+    "phar", "rar", "rpm", "snap", "squashfs", "tar", "tbz2", "tgz", "txz", "tzst", "war", "whl", "xz", "z", "zip", "zst"
 })
 AUDIO_EXTS = frozenset({
     "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "cfa", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg",
-    "opus", "voc", "wav", "wma"
+    "opus", "voc", "wav", "wma", "wv"
 })
 CODE_EXTS = frozenset({
-    "access", "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bash_logout", "bash_profile",
-    "bashrc", "bat", "bib", "bicep", "blocklist", "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets",
+    "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bash_logout", "bash_profile", "bashrc",
+    "bat", "bib", "bicep", "blocklist", "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets",
     "code-workspace", "code_snippets", "code_workspace", "colors", "conf", "config", "cpp", "cr", "cs", "csh", "css", "cts",
     "cu", "d", "dart", "def", "defs", "desktop", "diff", "directory", "dirs", "dockerfile", "editorconfig", "edn", "ejs", "el",
     "env", "erb", "erl", "eslintignore", "ex", "example", "exs", "f", "f90", "f95", "fbs", "filters", "fish", "flow", "frag",
@@ -97,24 +97,24 @@ CODE_EXTS = frozenset({
     "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini", "install", "ipynb", "j2", "jade", "java",
     "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "kml", "ksh", "kt", "kts", "lark", "less", "library-ms",
     "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make", "mdl", "mdx", "menu", "meta",
-    "metal", "mjs", "ml", "mli", "mm", "mod", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake", "npmignore",
-    "odin", "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs",
-    "preset", "prettierignore", "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml",
-    "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pypirc", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron",
-    "rs", "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql",
-    "srcinfo", "srx", "sty", "styl", "sum", "svelte", "swift", "tcl", "template", "tern-project", "tex", "tex[-_]*", "tf",
-    "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx", "typed", "url", "v", "vader", "vbs", "vcxproj",
-    "vert", "vimrc", "vscodeignore", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf", "yml", "zig",
-    "zprofile", "zsh", "zshrc"
+    "metal", "mjs", "ml", "mli", "mm", "mod", "mojo", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake",
+    "npmignore", "odin", "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom",
+    "pot", "prefs", "preset", "prettierignore", "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1",
+    "ps1xml", "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pypirc", "pyw", "pyx", "qml", "qmltypes", "r", "rb",
+    "rc", "ron", "rs", "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol",
+    "spdx", "sql", "srcinfo", "srx", "sty", "styl", "sum", "svelte", "swift", "tcl", "template", "tern-project", "tex", "tf",
+    "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx", "typ", "typed", "url", "v", "vader", "vbs", "vcxproj",
+    "vert", "vimrc", "vscodeignore", "vue", "wgsl", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf",
+    "yml", "zig", "zprofile", "zsh", "zshrc"
 })
 DATA_EXTS = frozenset({
     "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "blf", "certs", "cff", "comp", "count", "crt",
-    "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl", "deflate",
-    "dpb1", "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind",
-    "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage",
-    "localstorage[-_]*", "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut", "pb", "pem", "plugin", "ppk", "prin",
-    "ptb", "pub", "rdb", "real", "regtrans-ms", "salt", "sdb", "search-ms", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag",
-    "tflite", "token", "tsv", "usda", "*_reporting_data", "vscdb"
+    "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat-shm", "dat-wal", "data", "db", "db-shm", "db-wal", "db3",
+    "dctl", "deflate", "dpb1", "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb",
+    "ilut", "ind", "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb",
+    "localstorage", "localstorage-shm", "localstorage-wal", "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut",
+    "pb", "pem", "plugin", "ppk", "prin", "ptb", "pub", "rdb", "real", "regtrans-ms", "salt", "sdb", "search-ms", "spi1d",
+    "sqlite", "sqlite-shm", "sqlite-wal", "sqlite3", "tag", "tflite", "token", "tsv", "usda", "vscdb"
 })
 DOC_EXTS = frozenset({
     "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
@@ -137,8 +137,7 @@ IMAGE_EXTS = frozenset({
 STALE_EXTS = frozenset({
     "backup", "bak", "bash_history", "bck", "beta", "bkp", "cache", "disabled", "gotemp", "keep", "last", "lesshst", "log",
     "log0", "log1", "log2", "log3", "log4", "log5", "log6", "log7", "log8", "log9", "msbak", "node_repl_history", "obsolete",
-    "off", "old", "orig", "python_history", "stderr", "stderr.beta", "tbcache", "tmp", "trashinfo", "tsbuildinfo", "viminfo",
-    "zsh_history"
+    "off", "old", "orig", "python_history", "stderr", "tbcache", "tmp", "trashinfo", "tsbuildinfo", "viminfo", "zsh_history"
 })
 VIDEO_EXTS = frozenset({
     "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "rm",
@@ -155,13 +154,14 @@ BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
     "ova", "ovf", "pages", "pb", "pcf", "pdf", "pfb", "ply", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt",
     "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "regtrans-ms", "rnd",
     "rtf", "salt", "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step",
-    "stl", "tflite", "tga", "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx",
-    "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls",
-    "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
+    "stl", "tflite", "tga", "thmx", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst",
+    "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb",
+    "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
 })
 # fmt: on
 
 type category = Literal["archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video"]
+
 ALL_CATEGORIES: dict[category, frozenset[str]] = {
     "archive": ARCHIVE_EXTS,
     "audio": AUDIO_EXTS,
@@ -174,13 +174,7 @@ ALL_CATEGORIES: dict[category, frozenset[str]] = {
     "stale": STALE_EXTS,
     "video": VIDEO_EXTS,
 }
-
-EXT_PATTERNS: tuple[tuple[re.Pattern[str], category], ...] = tuple(
-    (re.compile(fnmatch.translate(entry)), cat)
-    for cat, exts in ALL_CATEGORIES.items()
-    for entry in exts
-    if any(c in entry for c in "*?[")
-)
+EXT_TO_CAT: dict[str, category] = {ext: cat for cat, exts in ALL_CATEGORIES.items() for ext in exts}
 
 TEXT_TRANS = str.maketrans(
     {
@@ -280,7 +274,7 @@ class ScriptDefaults(TypedDict):
     truncate_similar: bool
     include_file_contents: bool
     max_content_lines: int
-    indent: int
+    indent_size: int
     into_file: bool
 
 
@@ -385,10 +379,9 @@ class TreeChars:
         self.dirname_end = CHARS["dirname_end"]
 
         self.indent_size = indent_size
-        self.tab = " " * indent_size
+        self.indent = " " * indent_size
         self.line_hor_str = f"{self.line_hor} "
         # Pre-computed indent strings used in the hot render path:
-        self.indent_last = " " * indent_size
         self.indent_cont = f"{self.line_ver}{' ' * (indent_size - 1)}"
         self.wrap_indent_last = " " * (len(self.corners[0]) + len(self.line_hor_str))
         self.wrap_indent_cont = f"{self.line_ver}{' ' * (len(self.branch_new) + len(self.line_hor_str) - len(self.line_ver))}"
@@ -484,13 +477,10 @@ class DirectoryScanner:
 
         if not path:
             return False
-
-        cached = self._ignore_cache.get(path)
-        if cached is not None:
+        elif (cached := self._ignore_cache.get(path)) is not None:
             return cached
 
-        path_lower = path.lower()
-        name = path_lower.rsplit("/", 1)[-1]
+        name = (path_lower := path.lower()).rsplit("/", 1)[-1]
 
         if name in self.exact_names:
             self._ignore_cache[path] = True
@@ -498,8 +488,7 @@ class DirectoryScanner:
 
         if self.abs_folder_paths:
             for ep in self.abs_folder_paths:
-                rel = ep[1:]
-                if path_lower == rel or path_lower.startswith(rel + "/"):
+                if path_lower == (rel := ep[1:]) or path_lower.startswith(rel + "/"):
                     self._ignore_cache[path] = True
                     return True
 
@@ -524,8 +513,7 @@ class DirectoryScanner:
         if self.wildcard_paths:
             path_parts = path_lower.split("/")
             for pattern_parts in self.wildcard_paths:
-                plen = len(pattern_parts)
-                for i in range(len(path_parts) - plen + 1):
+                for i in range(len(path_parts) - (plen := len(pattern_parts)) + 1):
                     if all(pattern_parts[j].match(path_parts[i + j]) for j in range(plen)):
                         self._ignore_cache[path] = True
                         return True
@@ -543,10 +531,10 @@ class DirectoryScanner:
         elif bool(IGNORE.pattern.match(name)):
             return True
 
-        base = name.rsplit(".", 1)[0] if "." in name else name
         # Cheap hex-segment check first; UUID regex (more expensive) only as fallback
         if any(
-            len(seg) >= 8 and DirectoryScanner._HEX_SEGMENT.match(seg) for seg in DirectoryScanner._SEP_SPLITTER.split(base)
+            len(seg) >= 8 and DirectoryScanner._HEX_SEGMENT.match(seg)
+            for seg in DirectoryScanner._SEP_SPLITTER.split(name.rsplit(".", 1)[0] if "." in name else name)
         ):
             return True
 
@@ -555,18 +543,17 @@ class DirectoryScanner:
     def scan_directory(self, dir_path: str) -> DirScanResult:
         """Scan a directory and decide if it should be auto-ignored or partially ignored."""
 
-        cached = self._scan_cache.get(dir_path)
-        if cached is not None:
+        if (cached := self._scan_cache.get(dir_path)) is not None:
             return cached
 
         if self.auto_ignore_mode != 2:
             try:
                 with os.scandir(dir_path) as it:
                     raw = tuple(it)
-                sorted_raw = tuple(sorted(raw, key=lambda e: (not e.is_dir(), e.name.lower())))
-                result = DirScanResult(False, 0, 0, raw, sorted_raw)
+                result = DirScanResult(False, 0, 0, raw, tuple(sorted(raw, key=lambda e: (not e.is_dir(), e.name.lower()))))
             except Exception:
                 result = DirScanResult(False, 0, 0, (), ())
+
             self._scan_cache[dir_path] = result
             return result
 
@@ -582,13 +569,7 @@ class DirectoryScanner:
             # Pre-sort once here (parallel pre-scan phase) so render never needs to sort:
             sorted_entries = tuple(sorted(entries, key=lambda e: (not e.is_dir(), e.name.lower())))
 
-            slash = dir_path.rfind("/")
-            bslash = dir_path.rfind("\\")
-            sep_pos = max(slash, bslash)
-            dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
-            total_count = len(entries)
-
-            if total_count < 3:
+            if (total_count := len(entries)) < 3:
                 result = DirScanResult(False, total_count, 0, entries, sorted_entries)
                 self._scan_cache[dir_path] = result
                 return result
@@ -596,12 +577,14 @@ class DirectoryScanner:
             hash_count = 0
 
             for entry in entries:
-                name = entry.name
-                if name.startswith("."):
+                if (name := entry.name).startswith("."):
                     total_count -= 1
                     continue
                 elif self.is_likely_hash_name(name):
                     hash_count += 1
+
+            sep_pos = max(dir_path.rfind("/"), dir_path.rfind("\\"))
+            dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
 
             if total_count > 5 and (hash_count / total_count) > 0.8:
                 result = DirScanResult(True, total_count, hash_count, entries, sorted_entries)
@@ -630,13 +613,13 @@ class TreeConfig:
     truncate_similar: bool = True
     include_file_contents: bool = False
     max_content_lines: int = 0
-    indent: int = 2
+    indent_size: int = 2
 
     def __post_init__(self):
         """Resolve base directory and set derived properties."""
 
         self.base_dir = self.base_dir.resolve()
-        self.indent_size = self.indent + 1
+        self.indent_size = self.indent_size + 1
 
 
 class TreeRenderer:
@@ -663,7 +646,6 @@ class TreeRenderer:
         so a thread pool gives a large real-world speedup on any modern SSD."""
         lock = threading.Lock()
         done = threading.Event()
-        max_workers = min(64, (os.cpu_count() or 4) * 8)
         active = [1]  # Number of in-flight tasks; pre-counted before each submit.
         canceled = [False]
 
@@ -676,17 +658,16 @@ class TreeRenderer:
                 return
 
             try:
-                result = self.scanner.scan_directory(abs_path)
-
-                if not result.should_ignore and not canceled[0]:
+                if not (result := self.scanner.scan_directory(abs_path)).should_ignore and not canceled[0]:
                     new_items: list[tuple[str, str]] = []
 
                     # `sorted_entries` has dirs first; break on the first non-dir.
                     for entry in result.sorted_entries:
                         if not entry.is_dir():
                             break
-                        entry_rel = f"{rel_path}/{entry.name}" if rel_path else entry.name
-                        if not self.scanner.should_ignore_path(entry_rel):
+                        elif not self.scanner.should_ignore_path(
+                            entry_rel := f"{rel_path}/{entry.name}" if rel_path else entry.name
+                        ):
                             new_items.append((entry.path, entry_rel))
 
                     if new_items and not canceled[0]:
@@ -701,7 +682,7 @@ class TreeRenderer:
                     if active[0] == 0:
                         done.set()
 
-        executor = ThreadPoolExecutor(max_workers=max_workers)
+        executor = ThreadPoolExecutor(max_workers=min(64, (os.cpu_count() or 4) * 8))
         try:
             executor.submit(_scan, root_dir, "")
             while not done.wait(0.1):
@@ -741,8 +722,7 @@ class TreeRenderer:
             (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
         )
 
-        space_len = self.config.max_width - len(time_taken.raw) - len(tree_stats.raw) - 2
-        if space_len >= 2:
+        if (space_len := self.config.max_width - len(time_taken.raw) - len(tree_stats.raw) - 2) >= 2:
             footer = (" ", time_taken.ansi, " " * space_len, tree_stats.ansi)
         else:
             footer = (" ", time_taken.ansi, "\n", " " * max(1, self.config.max_width - len(tree_stats.raw)), tree_stats.ansi)
@@ -794,9 +774,7 @@ class TreeRenderer:
         self._last_progress_update = current_time
 
         max_rel_path_len = max(10, self._console_width - 22)
-
-        rel_path = current_name if len(current_name) <= max_rel_path_len else f".{current_name[-max_rel_path_len:]}"
-        rel_path = rel_path or " "
+        rel_path = (current_name if len(current_name) <= max_rel_path_len else f".{current_name[-max_rel_path_len:]}") or " "
 
         xx.console.log(
             "Sprouting",
@@ -808,9 +786,7 @@ class TreeRenderer:
     def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
         """Recursively traverse and render the directory tree."""
 
-        slash = dir_path.rfind("/")
-        bslash = dir_path.rfind("\\")
-        sep_pos = max(slash, bslash)
+        sep_pos = max(dir_path.rfind("/"), dir_path.rfind("\\"))
         dir_name = dir_path[sep_pos + 1 :] if sep_pos >= 0 else dir_path
         self._update_progress(dir_name or dir_path, level)
 
@@ -818,12 +794,9 @@ class TreeRenderer:
             if level == 0:
                 self._render_root(dir_path, lines)
 
-            scan_result = self.scanner.scan_directory(dir_path)
-
-            if not (entries := scan_result.sorted_entries):
+            if not (entries := (scan_result := self.scanner.scan_directory(dir_path)).sorted_entries):
                 return
-
-            if scan_result.should_ignore:
+            elif scan_result.should_ignore:
                 self._render_ignored_branch(prefix, is_last=True, lines=lines)
                 return
 
@@ -835,10 +808,8 @@ class TreeRenderer:
     def _render_root(self, dir_path: str, lines: list[str]) -> None:
         """Render the root directory at the top of the tree."""
 
-        path = Path(dir_path)
-        base_name = path.name or path.drive.rstrip(":\\")
         lines.append(
-            f"{self.chrs.c_dir}{base_name}{self.chrs.c_reset}"
+            f"{self.chrs.c_dir}{(path := Path(dir_path)).name or path.drive.rstrip(':\\')}{self.chrs.c_reset}"
             f"{self.chrs.c_dir_dull}{self.chrs.dirname_end}{self.chrs.c_reset}"
             f"{self.chrs.c_line}\n"
         )
@@ -851,10 +822,7 @@ class TreeRenderer:
             return "[HASH]"
 
         stem, ext = os.path.splitext(name)
-        sig = TreeRenderer._RE_DIGIT.sub("#", stem)
-        sig = TreeRenderer._RE_ALPHA.sub("a", sig)
-
-        return sig + ext.lower()
+        return f"{TreeRenderer._RE_ALPHA.sub('a', TreeRenderer._RE_DIGIT.sub('#', stem))}{ext.lower()}"
 
     def _get_visible_entries(self, entries: tuple[os.DirEntry[str], ...]) -> list[os.DirEntry[str] | tuple[int, str]]:
         """Filter entries for inline similarity truncation."""
@@ -915,12 +883,10 @@ class TreeRenderer:
     ) -> None:
         """Render directory entries with optional inline similarity truncation."""
 
-        visible_entries = self._get_visible_entries(entries)
+        last_idx = len(visible_entries := self._get_visible_entries(entries)) - 1
 
-        last_idx = len(visible_entries) - 1
         for i, item in enumerate(visible_entries):
-            is_last = i == last_idx
-            branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
+            branch = self.chrs.corners[0] if (is_last := i == last_idx) else self.chrs.branch_new
 
             if isinstance(item, tuple):
                 count, color = item
@@ -931,23 +897,21 @@ class TreeRenderer:
                 )
                 continue
 
-            entry = item
-            is_dir = entry.is_dir()
             current_prefix = f"{prefix}{branch}{self.chrs.line_hor_str}"
-            current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
-            if is_dir:
+            if item.is_dir():
+                current_rel_path = f"{parent_rel_path}/{item.name}" if parent_rel_path else item.name
                 if not (should_ignore_entry := self.scanner.should_ignore_path(current_rel_path)):
-                    should_ignore_entry = self.scanner.scan_directory(entry.path).should_ignore
+                    should_ignore_entry = self.scanner.scan_directory(item.path).should_ignore
 
                 if should_ignore_entry:
-                    self._render_ignored_entry(entry, prefix, is_last, lines)
+                    self._render_ignored_entry(item, prefix, is_last, lines)
                     continue
 
-                self._render_directory(entry, prefix, current_prefix, level, is_last, current_rel_path, lines)
+                self._render_directory(item, prefix, current_prefix, level, is_last, current_rel_path, lines)
 
             else:
-                self._render_file(entry, prefix, current_prefix, level, is_last, lines)
+                self._render_file(item, prefix, current_prefix, level, is_last, lines)
 
     def _render_directory(
         self,
@@ -961,9 +925,9 @@ class TreeRenderer:
     ) -> None:
         """Render a single directory node and recursively process its children."""
 
-        max_name_width = max(10, self.config.max_width - len(current_prefix) - len(self.chrs.dirname_end))
-
-        if len(entry.name) <= max_name_width:
+        if len(entry.name) <= (
+            max_name_width := max(10, self.config.max_width - len(current_prefix) - len(self.chrs.dirname_end))
+        ):
             lines.append(
                 f"{current_prefix}{self.chrs.c_dir}{entry.name}{self.chrs.c_reset}"
                 f"{self.chrs.c_dir_dull}{self.chrs.dirname_end}{self.chrs.c_reset}"
@@ -985,8 +949,13 @@ class TreeRenderer:
                 f"{self.chrs.c_line}\n"
             )
 
-        new_prefix = f"{prefix}{self.chrs.indent_last if is_last else self.chrs.indent_cont}"
-        self._render_tree(entry.path, new_prefix, level + 1, current_rel_path, lines)
+        self._render_tree(
+            entry.path,
+            f"{prefix}{self.chrs.indent if is_last else self.chrs.indent_cont}",
+            level + 1,
+            current_rel_path,
+            lines,
+        )
 
     def _render_file(
         self,
@@ -1002,9 +971,7 @@ class TreeRenderer:
         self._update_progress(entry.name, level, is_dir=False)
         color, color_dim = self._get_file_color(entry)
 
-        max_name_width = max(10, self.config.max_width - len(current_prefix))
-
-        if len(entry.name) <= max_name_width:
+        if len(entry.name) <= (max_name_width := max(10, self.config.max_width - len(current_prefix))):
             lines.append(f"{current_prefix}{color}{entry.name}{self.chrs.c_reset}{self.chrs.c_line}\n")
 
         else:
@@ -1024,7 +991,7 @@ class TreeRenderer:
 
         if is_last:
             branch = self.chrs.corners[0]
-            ignored_prefix = f"{prefix}{self.chrs.indent_last}"
+            ignored_prefix = f"{prefix}{self.chrs.indent}"
         else:
             branch = self.chrs.branch_new
             ignored_prefix = f"{prefix}{self.chrs.indent_cont}"
@@ -1038,9 +1005,9 @@ class TreeRenderer:
     def _render_ignored_branch(self, prefix: str, is_last: bool, lines: list[str]) -> None:
         """Render a branch indicating collapsed or ignored files."""
 
-        branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
         lines.append(
-            f"{prefix}{self.chrs.c_line_dull}{branch}{self.chrs.line_hor_str}{self.chrs.ignored}{self.chrs.c_reset}{self.chrs.c_line}\n"
+            f"{prefix}{self.chrs.c_line_dull}{self.chrs.corners[0] if is_last else self.chrs.branch_new}"
+            f"{self.chrs.line_hor_str}{self.chrs.ignored}{self.chrs.c_reset}{self.chrs.c_line}\n"
         )
 
     def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, border_color: str, lines: list[str]) -> None:
@@ -1057,7 +1024,6 @@ class TreeRenderer:
                 return
 
             file_lines = [line.replace("\t", "    ").translate(TEXT_TRANS).rstrip() for line in file_lines]
-
             max_content_width = max(10, self.config.max_width - len(content_prefix) - 4)
             wrapped_lines: list[str] = []
 
@@ -1070,15 +1036,17 @@ class TreeRenderer:
                         wrapped_lines.extend(chunk)
                 else:
                     wrapped_lines.append(line)
-            file_lines = wrapped_lines
 
+            file_lines = wrapped_lines
             truncation_msg = ""
+
             if self.config.max_content_lines > 0 and len(file_lines) > self.config.max_content_lines:
                 remaining = len(file_lines) - self.config.max_content_lines
                 file_lines = file_lines[: self.config.max_content_lines]
                 truncation_msg = f"{remaining} more"
 
             content_width = max((len(line) for line in file_lines), default=0)
+
             if truncation_msg:
                 content_width = max(content_width, len(truncation_msg))
 
@@ -1089,17 +1057,15 @@ class TreeRenderer:
             )
 
             for line in file_lines:
-                padding = " " * (content_width - len(line))
                 lines.append(
                     f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.line_ver} {line}"
-                    f"{self.chrs.c_reset}{border_color}{padding} {self.chrs.line_ver}\n"
+                    f"{self.chrs.c_reset}{border_color}{' ' * (content_width - len(line))} {self.chrs.line_ver}\n"
                 )
 
             if truncation_msg:
-                padding = " " * (content_width - len(truncation_msg))
                 lines.append(
                     f"{self.chrs.c_line}{content_prefix}{border_color}{self.chrs.line_ver} "
-                    f"{padding}{self.chrs.c_italic}{truncation_msg}"
+                    f"{' ' * (content_width - len(truncation_msg))}{self.chrs.c_italic}{truncation_msg}"
                     f"{self.chrs.c_reset}{border_color} {self.chrs.line_ver}\n"
                 )
 
@@ -1117,10 +1083,9 @@ class TreeRenderer:
     def _render_error(self, exc: Exception, prefix: str, lines: list[str]) -> None:
         """Render an error message node when a path cannot be accessed."""
 
-        error_prefix = f"{prefix}{self.chrs.corners[0]}{self.chrs.line_hor * (self.chrs.indent_size - 1)}"
         lines.append(
-            f"{error_prefix}{self.chrs.c_bold_in}{self.chrs.c_error} {self.chrs.error} "
-            f"{exc!s} {self.chrs.c_reset}\n{self.chrs.c_line}"
+            f"{prefix}{self.chrs.corners[0]}{self.chrs.line_hor * (self.chrs.indent_size - 1)}{self.chrs.c_bold_in}"
+            f"{self.chrs.c_error} {self.chrs.error} {exc!s} {self.chrs.c_reset}\n{self.chrs.c_line}"
         )
 
     def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
@@ -1132,26 +1097,22 @@ class TreeRenderer:
         cat: category | None = None
 
         if name.startswith("."):
-            cat = next((c for c, exts in ALL_CATEGORIES.items() if (dotfile_ext := name[1:].lower()) in exts), None)
+            dotfile_ext = name[1:].lower()
+            cat = EXT_TO_CAT.get(dotfile_ext)
             if cat is not None:
                 ext = dotfile_ext
 
         if cat is None:
-            cat = next((c for c, exts in ALL_CATEGORIES.items() if ext in exts), None)
+            cat = EXT_TO_CAT.get(ext)
 
-            if ext:
-                for pattern, category in EXT_PATTERNS:
-                    if pattern.fullmatch(ext):
-                        cat = category
-                        break
-            else:
-                try:
-                    if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                        cat = "exec"
-                except Exception:
-                    pass
+        if cat is None and not ext:
+            try:
+                if entry.stat(follow_symlinks=False).st_mode & 0o111:
+                    cat = "exec"
+            except Exception:
+                pass
 
-        else:
+        if cat is not None:
             colors = self.chrs.category_colors[cat]
             return (colors[2], colors[3]) if entry.is_symlink() else (colors[0], colors[1])
 
@@ -1237,14 +1198,14 @@ def get_user_inputs(config: TreeConfig) -> None:
             except ValueError:
                 config.include_file_contents = False
 
-    config.indent = xx.console.input(
+    config.indent_size = xx.console.input(
         StyledText(
             S.BOLD("What should the indentation size be?\n"),
-            (S.DIM(f"({config.indent})"), " > "),
+            (S.DIM(f"({config.indent_size})"), " > "),
         ),
         max_len=2,
         allowed_chars="0123456789",
-        default_val=config.indent,
+        default_val=config.indent_size,
         output_type=int,
     )
 
@@ -1290,7 +1251,7 @@ def main() -> None:  # noqa: C901
         truncate_similar=not ARGS.truncate_similar.exists,
         include_file_contents=inc_contents,
         max_content_lines=max_lines,
-        indent=DEFAULT["indent"],
+        indent_size=DEFAULT["indent_size"],
     )
 
     into_file = DEFAULT["into_file"]
@@ -1331,7 +1292,7 @@ def main() -> None:  # noqa: C901
         truncate_similar=config.truncate_similar,
         include_file_contents=config.include_file_contents,
         max_content_lines=config.max_content_lines,
-        indent=config.indent,
+        indent_size=config.indent_size,
     )
 
     renderer = TreeRenderer(config)
