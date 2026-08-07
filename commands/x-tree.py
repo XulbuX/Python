@@ -436,7 +436,7 @@ class DirectoryScanner:
 
         self.exact_names: set[str] = set()
         self.exact_folder_paths: tuple[str, ...] = ()
-        self.abs_folder_paths: tuple[str, ...] = ()
+        self.abs_folder_paths: tuple[tuple[str, str], ...] = ()
         self.wildcard_names: list[re.Pattern[str]] = []
         self.wildcard_paths: list[list[re.Pattern[str]]] = []
         self.wildcard_abs_paths: list[re.Pattern[str]] = []
@@ -470,7 +470,7 @@ class DirectoryScanner:
                     self.wildcard_names.append(re.compile(fnmatch.translate(pattern)))
 
         self.exact_folder_paths = tuple(exact_folder_paths_list)
-        self.abs_folder_paths = tuple(abs_folder_paths_list)
+        self.abs_folder_paths = tuple((pattern[1:], pattern[1:] + "/") for pattern in abs_folder_paths_list)
 
     def should_ignore_path(self, path: str) -> bool:  # noqa: C901
         """Check if a relative path matches any user-specified or default ignore pattern."""
@@ -487,8 +487,8 @@ class DirectoryScanner:
             return True
 
         if self.abs_folder_paths:
-            for ep in self.abs_folder_paths:
-                if path_lower == (rel := ep[1:]) or path_lower.startswith(rel + "/"):
+            for exact_rel, prefix_rel in self.abs_folder_paths:
+                if path_lower == exact_rel or path_lower.startswith(prefix_rel):
                     self._ignore_cache[path] = True
                     return True
 
@@ -531,7 +531,7 @@ class DirectoryScanner:
         elif bool(IGNORE.pattern.match(name)):
             return True
 
-        # Cheap hex-segment check first; UUID regex (more expensive) only as fallback
+        # Cheap hex-segment check first; UUID regex (more expensive) only as fallback:
         if any(
             len(seg) >= 8 and DirectoryScanner._HEX_SEGMENT.match(seg)
             for seg in DirectoryScanner._SEP_SPLITTER.split(name.rsplit(".", 1)[0] if "." in name else name)
@@ -557,9 +557,12 @@ class DirectoryScanner:
             self._scan_cache[dir_path] = result
             return result
 
-        try:
-            with os.scandir(dir_path) as it:
-                entries = tuple(it)
+        else:
+            try:
+                with os.scandir(dir_path) as it:
+                    entries = tuple(it)
+            except Exception:
+                entries = ()
 
             if not entries:
                 result = DirScanResult(False, 0, 0, entries, entries)
@@ -595,11 +598,6 @@ class DirectoryScanner:
             else:
                 result = DirScanResult(False, total_count, hash_count, entries, sorted_entries)
 
-            self._scan_cache[dir_path] = result
-            return result
-
-        except Exception:
-            result = DirScanResult(False, 0, 0, (), ())
             self._scan_cache[dir_path] = result
             return result
 
@@ -644,6 +642,7 @@ class TreeRenderer:
         """Pre-populate the scan and ignore caches by scanning all subdirectories in
         parallel before the single-threaded rendering pass. I/O calls release the GIL,
         so a thread pool gives a large real-world speedup on any modern SSD."""
+
         lock = threading.Lock()
         done = threading.Event()
         active = [1]  # Number of in-flight tasks; pre-counted before each submit.
@@ -760,10 +759,11 @@ class TreeRenderer:
             self.stats.processed_dirs += 1
         else:
             self.stats.processed_files += 1
-            # Only check wall-clock time every 64 files to avoid sys-call overhead:
-            self._progress_item_count += 1
-            if self._progress_item_count & 63:
-                return  # Fast path: skip ALL remaining work for most file calls.
+
+        # Only check wall-clock time every 64 items to avoid sys-call overhead:
+        self._progress_item_count += 1
+        if self._progress_item_count & 63:
+            return  # Fast path: skip ALL remaining work for most calls.
 
         if level > self.stats.max_depth:
             self.stats.max_depth = level
