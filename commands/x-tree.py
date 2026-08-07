@@ -161,33 +161,23 @@ BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
 })
 # fmt: on
 
-ALL_EXTS = (
-    ARCHIVE_EXTS
-    | AUDIO_EXTS
-    | CODE_EXTS
-    | DATA_EXTS
-    | DOC_EXTS
-    | EXEC_EXTS
-    | FONT_EXTS
-    | IMAGE_EXTS
-    | STALE_EXTS
-    | VIDEO_EXTS
-    | BINARY_EXTS
-)
+type category = Literal["archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video"]
+ALL_CATEGORIES: dict[category, frozenset[str]] = {
+    "archive": ARCHIVE_EXTS,
+    "audio": AUDIO_EXTS,
+    "code": CODE_EXTS,
+    "data": DATA_EXTS,
+    "doc": DOC_EXTS,
+    "exec": EXEC_EXTS,
+    "font": FONT_EXTS,
+    "image": IMAGE_EXTS,
+    "stale": STALE_EXTS,
+    "video": VIDEO_EXTS,
+}
 
-_EXT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+EXT_PATTERNS: tuple[tuple[re.Pattern[str], category], ...] = tuple(
     (re.compile(fnmatch.translate(entry)), cat)
-    for cat, exts in (
-        ("archive", ARCHIVE_EXTS),
-        ("audio", AUDIO_EXTS),
-        ("code", CODE_EXTS),
-        ("data", DATA_EXTS),
-        ("doc", DOC_EXTS),
-        ("exec", EXEC_EXTS),
-        ("font", FONT_EXTS),
-        ("image", IMAGE_EXTS),
-        ("video", VIDEO_EXTS),
-    )
+    for cat, exts in ALL_CATEGORIES.items()
     for entry in exts
     if any(c in entry for c in "*?[")
 )
@@ -308,7 +298,6 @@ class GenerationStats:
 
     processed_dirs: int = 0
     processed_files: int = 0
-    current_depth: int = 0
     max_depth: int = 0
     start_time: float = field(default_factory=time.time)
 
@@ -320,20 +309,19 @@ class IGNORE:
     # fmt: off
     folder_paths: ClassVar[set[str]] = {
         "__pycache__.*", "__pycache__", "__pypackages__.*", "__pypackages__", "__tests__.*", "__tests__", "_locales", "_site",
-        ".adobe", ".angular", ".archive-unpack", ".cache", ".codeium", ".coverage", ".ds_store", ".eslintcache", ".fleet",
-        ".git", ".gitlab", ".gradle", ".hg", ".idea", ".ipynb_checkpoints", ".kube", ".minecraft/assets/objects",
-        ".minecraft/assets/skins", ".mvn", ".mypy_*", ".next", ".npm", ".nuxt", ".nvm", ".nx", ".output", ".pnpm", ".pytest_*",
-        ".ruff_*", ".scannerwork", ".sonar", ".styleLintCache", ".svn", ".terraform", ".tmp.*", ".tox", ".venv", ".vs",
-        ".webpack", ".yarn", "*.map", "*.min.css", "*.min.js", "*.noindex", "*.temp", "*.tmp", "*[-_.@]cache",
-        "*[-_.@]indexed", "*[-_.@]temp", "$recycle.bin", "adobe/common/ptx", "adobe/typeQuest", "aggregatedCache", "artifacts",
-        "autofillStates", "backstageInAppNavCache", "blob_storage", "bower_components", "build", "cache", "cache[-_.@]*",
-        "cache[0-9]*", "cacheStorage", "celeryBeat-schedule", "code cache", "code_tracker", "composer/files",
+        ".adobe", ".angular", ".archive-unpack", ".cache", ".codeium", ".coverage", ".fleet", ".git", ".gitlab", ".gradle",
+        ".hg", ".idea", ".ipynb_checkpoints", ".kube", ".minecraft/assets/objects", ".minecraft/assets/skins", ".mvn",
+        ".mypy_*", ".next", ".npm", ".nuxt", ".nvm", ".nx", ".output", ".pnpm", ".pytest_*", ".ruff_*", ".scannerwork",
+        ".sonar", ".styleLintCache", ".svn", ".terraform", ".tmp.*", ".tox", ".venv", ".vs", ".webpack", ".yarn",
+        "*[-_.@]cache", "*[-_.@]indexed", "*[-_.@]temp", "$recycle.bin", "adobe/common/ptx", "adobe/typeQuest",
+        "aggregatedCache", "artifacts", "autofillStates", "backstageInAppNavCache", "blob_storage", "bower_components",
+        "build", "cache", "cache[-_.@]*", "cache[0-9]*", "cacheStorage", "code cache", "code_tracker", "composer/files",
         "coreSync/cloudNative", "coreSync/plugins", "coverage-reports", "coverage", "crlCache", "cvs", "D3DSCache",
         "data/emojis", "dawnCache", "dawnGraphiteCache", "dawnWebGPUCache", "debugbar", "dim-1/mw$default", "dim1/mw$default",
         "dist-newstyle", "dist", "docs/_build", "gpuCache", "graphicsCache", "graphiteDawnCache", "grShaderCache", "htmlCache",
         "htmlCov", "hyphen-data", "identityCache", "indexed[-_.@]*", "indexedDB", "indexes", "jspm_packages", "junit",
         "lib/encodings", "local storage", "locales", "log", "logs", "media cache files", "meta/assets/indexes",
-        "meta/assets/objects", "metadataIndexer", "node_modules", "node", "npm", "null", "nvm", "obj", "office/*/aggMru",
+        "meta/assets/objects", "metadataIndexer", "node_modules", "node", "npm", "nvm", "obj", "office/*/aggMru",
         "office/*/dts", "office/*/usageMetricsStore", "office/*/wef", "officeFileCache", "packages", "patch64",
         "pnpm/store/links", "program64", "pythonLocator", "recent/automaticDestinations", "recent/customDestinations",
         "reports", "rsa", "scriptCache", "session storage", "shaderCache", "slCache", "spotify/data", "spotify/users",
@@ -426,14 +414,14 @@ class TreeChars:
         self.c_file_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["file"], S.UNDERLINE).ansi
         self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
 
-        self.category_colors: dict[str, tuple[str, str, str, str]] = {
+        self.category_colors: dict[category, tuple[str, str, str, str]] = {
             cat: (
                 StyledText(self.c_reset, COLORS[cat]).ansi,
                 StyledText(self.c_reset, S.DIM, COLORS[cat]).ansi,
                 StyledText(self.c_reset, COLORS[cat], S.UNDERLINE).ansi,
                 StyledText(self.c_reset, S.DIM, COLORS[cat], S.UNDERLINE).ansi,
             )
-            for cat in ("archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video")
+            for cat in ALL_CATEGORIES
         }
 
 
@@ -948,14 +936,12 @@ class TreeRenderer:
             current_prefix = f"{prefix}{branch}{self.chrs.line_hor_str}"
             current_rel_path = f"{parent_rel_path}/{entry.name}" if parent_rel_path else entry.name
 
-            should_ignore_entry = self.scanner.should_ignore_path(current_rel_path)
-
             if is_dir:
-                if not should_ignore_entry:
+                if not (should_ignore_entry := self.scanner.should_ignore_path(current_rel_path)):
                     should_ignore_entry = self.scanner.scan_directory(entry.path).should_ignore
 
                 if should_ignore_entry:
-                    self._render_ignored_entry(entry, prefix, is_last, is_dir, lines)
+                    self._render_ignored_entry(entry, prefix, is_last, lines)
                     continue
 
                 self._render_directory(entry, prefix, current_prefix, level, is_last, current_rel_path, lines)
@@ -1033,21 +1019,21 @@ class TreeRenderer:
         if self.config.include_file_contents and self._is_text_file(entry.path):
             self._render_file_contents(entry.path, prefix, is_last, color_dim, lines)
 
-    def _render_ignored_entry(
-        self, entry: os.DirEntry[str], prefix: str, is_last: bool, is_dir: bool, lines: list[str]
-    ) -> None:
+    def _render_ignored_entry(self, entry: os.DirEntry[str], prefix: str, is_last: bool, lines: list[str]) -> None:
         """Render a specifically ignored node with dimmed styling."""
 
-        branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
-        suffix = self.chrs.dirname_end if is_dir else ""
+        if is_last:
+            branch = self.chrs.corners[0]
+            ignored_prefix = f"{prefix}{self.chrs.indent_last}"
+        else:
+            branch = self.chrs.branch_new
+            ignored_prefix = f"{prefix}{self.chrs.indent_cont}"
 
         lines.append(
-            f"{prefix}{self.chrs.c_line_dull}{branch}{self.chrs.line_hor_str}{entry.name}{suffix}{self.chrs.c_reset}{self.chrs.c_line}\n"
+            f"{prefix}{self.chrs.c_line_dull}{branch}{self.chrs.line_hor_str}{entry.name}{self.chrs.dirname_end}{self.chrs.c_reset}{self.chrs.c_line}\n"
         )
 
-        if is_dir:
-            ignored_prefix = f"{prefix}{self.chrs.indent_last if is_last else self.chrs.indent_cont}"
-            self._render_ignored_branch(ignored_prefix, is_last=True, lines=lines)
+        self._render_ignored_branch(ignored_prefix, is_last=True, lines=lines)
 
     def _render_ignored_branch(self, prefix: str, is_last: bool, lines: list[str]) -> None:
         """Render a branch indicating collapsed or ignored files."""
@@ -1137,69 +1123,45 @@ class TreeRenderer:
             f"{exc!s} {self.chrs.c_reset}\n{self.chrs.c_line}"
         )
 
-    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:  # noqa: C901
+    def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
         """Determine the color string for a file based on its type and extension."""
-
-        is_symlink = entry.is_symlink()
-
-        if entry.is_dir():
-            if is_symlink:
-                return self.chrs.c_dir_symlink, self.chrs.c_dir_symlink_dim
-            return self.chrs.c_dir, self.chrs.c_dir_dim
 
         dot = (name := entry.name).rfind(".")
         ext = name[dot + 1 :].lower() if dot >= 0 else ""
 
-        if name.startswith(".") and (dotfile_ext := name[1:].lower()) in ALL_EXTS:
-            ext = dotfile_ext
+        cat: category | None = None
 
-        cat = None
-        if ext in ARCHIVE_EXTS:
-            cat = "archive"
-        elif ext in AUDIO_EXTS:
-            cat = "audio"
-        elif ext in CODE_EXTS:
-            cat = "code"
-        elif ext in DATA_EXTS:
-            cat = "data"
-        elif ext in DOC_EXTS:
-            cat = "doc"
-        elif ext in EXEC_EXTS:
-            cat = "exec"
-        elif ext in FONT_EXTS:
-            cat = "font"
-        elif ext in IMAGE_EXTS:
-            cat = "image"
-        elif ext in STALE_EXTS:
-            cat = "stale"
-        elif ext in VIDEO_EXTS:
-            cat = "video"
+        if name.startswith("."):
+            cat = next((c for c, exts in ALL_CATEGORIES.items() if (dotfile_ext := name[1:].lower()) in exts), None)
+            if cat is not None:
+                ext = dotfile_ext
 
-        if cat is None and ext:
-            for pattern, category in _EXT_PATTERNS:
-                if pattern.fullmatch(ext):
-                    cat = category
-                    break
+        if cat is None:
+            cat = next((c for c, exts in ALL_CATEGORIES.items() if ext in exts), None)
 
-        if cat is None and not ext:
-            try:
-                if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                    cat = "exec"
-            except Exception:
-                pass
+            if ext:
+                for pattern, category in EXT_PATTERNS:
+                    if pattern.fullmatch(ext):
+                        cat = category
+                        break
+            else:
+                try:
+                    if entry.stat(follow_symlinks=False).st_mode & 0o111:
+                        cat = "exec"
+                except Exception:
+                    pass
 
-        if cat is not None:
+        else:
             colors = self.chrs.category_colors[cat]
-            return (colors[2], colors[3]) if is_symlink else (colors[0], colors[1])
+            return (colors[2], colors[3]) if entry.is_symlink() else (colors[0], colors[1])
 
         return (
             (self.chrs.c_file_symlink, self.chrs.c_file_symlink_dim)
-            if is_symlink
+            if entry.is_symlink()
             else (self.chrs.c_file, self.chrs.c_file_dim)
         )
 
     @staticmethod
-    @lru_cache(maxsize=1024)
     def _is_text_file(filepath: str) -> bool:
         """Determine if a file is a text file by inspecting its mime type or bytes."""
 
