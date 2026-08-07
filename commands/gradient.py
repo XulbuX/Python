@@ -6,19 +6,22 @@ specified color channel with a specified number of steps."""
 
 import colorsys
 from typing import Literal, cast
+
 import xulbux as xx
 from xulbux import hexa, rgba
 from xulbux.ansi import RenderSegment, S, StyledText
 
-ARGS = xx.console.get_args({
-    "color_points": "before",
-    "steps": {"-s", "--steps"},
-    "hsv": {"-H", "--hsv"},
-    "oklch": {"-O", "--oklch"},
-    "list": {"-l", "--list"},
-    "numerate": {"-n", "--numerate"},
-    "help": {"-h", "--help"},
-})
+ARGS = xx.console.get_args(
+    {
+        "color_points": "before",
+        "steps": {"-s", "--steps"},
+        "hsv": {"-H", "--hsv"},
+        "oklch": {"-O", "--oklch"},
+        "list": {"-l", "--list"},
+        "numerate": {"-n", "--numerate"},
+        "help": {"-h", "--help"},
+    }
+)
 
 
 # fmt: off
@@ -61,7 +64,10 @@ def print_help() -> None:
 
 
 def interpolate_oklch(
-    color_1: rgba, color_2: rgba, t: float, hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest"
+    color_1: rgba,
+    color_2: rgba,
+    t: float,
+    hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
 ) -> rgba:
     """Interpolate between two colors using OKLCH color space for perceptual uniformity.\n
     ---------------------------------------------------------------------------------------
@@ -75,8 +81,15 @@ def interpolate_oklch(
         from colorspacious import cspace_convert  # type: ignore[no-stubs]
     except ImportError as e:
         raise ImportError(
-            "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.\n"
-            "Please use [br:blue](--hsv) mode instead, or downgrade your Python to a version that supports these packages."
+            StyledText(
+                "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.",
+                (
+                    "Please use ",
+                    S.BR.BLUE("--hsv"),
+                    " mode instead, or downgrade your Python to a version that supports these packages.",
+                ),
+                sep="\n",
+            )
         ) from e
 
     # CONVERT RGB (0-255) TO SRGB (0-1)
@@ -118,7 +131,9 @@ def interpolate_oklch(
 
     # CONVERT BACK TO SRGB
     oklch_interpolated = np.array([L, C, h])
-    rgb_interpolated = cast("np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
+    rgb_interpolated = cast(
+        "np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1")
+    )
 
     # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
     rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
@@ -130,7 +145,10 @@ def interpolate_oklch(
 
 
 def interpolate_hsv(
-    color_1: rgba, color_2: rgba, t: float, hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest"
+    color_1: rgba,
+    color_2: rgba,
+    t: float,
+    hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
 ) -> rgba:
     """Interpolate between two colors using HSV color space with directional hue rotation.\n
     ---------------------------------------------------------------------------------------
@@ -140,8 +158,12 @@ def interpolate_hsv(
     - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
     # CONVERT RGB TO HSV (HUE 0-1, SATURATION 0-1, VALUE 0-1)
-    h1, s1, v1 = colorsys.rgb_to_hsv(color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0)
-    h2, s2, v2 = colorsys.rgb_to_hsv(color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0)
+    h1, s1, v1 = colorsys.rgb_to_hsv(
+        color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0
+    )
+    h2, s2, v2 = colorsys.rgb_to_hsv(
+        color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0
+    )
 
     # CONVERT HUE TO DEGREES (0-360)
     h1_deg = h1 * 360
@@ -218,7 +240,11 @@ def generate_multi_gradient(
         seg_steps = steps_per_segment + (1 if seg_idx < remainder else 0)
 
         segment = generate_gradient(
-            color_1=colors[seg_idx], color_2=colors[seg_idx + 1], steps=seg_steps, mode=mode, hue_direction=directions[seg_idx]
+            color_1=colors[seg_idx],
+            color_2=colors[seg_idx + 1],
+            steps=seg_steps,
+            mode=mode,
+            hue_direction=directions[seg_idx],
         )
 
         if seg_idx == 0:
@@ -272,7 +298,11 @@ def generate_gradient(
 
 
 def display_gradient(
-    gradient: tuple[hexa, ...], source_colors: list[hexa], width: int, list_colors: bool = False, numerate: bool = False
+    gradient: tuple[hexa, ...],
+    source_colors: list[hexa],
+    width: int,
+    list_colors: bool = False,
+    numerate: bool = False,
 ) -> None:
     """Display gradient using half-block char to fit 2 colors per character position.\n
     ---------------------------------------------------------------------------------------
@@ -299,12 +329,14 @@ def display_gradient(
         fg_color = gradient[left_idx]
         bg_color = gradient[right_idx]
 
-        gradient_parts.append((S.hex(str(fg_color)) | S.BG.hex(str(bg_color)))("▌"))
+        gradient_parts.append((S.hex(fg_color) | S.BG.hex(bg_color))("▌"))
 
     gradient_str = StyledText(*gradient_parts, "\n").ansi * 4
 
     color_segments = [
-        StyledText((S.BOLD | S.hex(str(xx.color.text_color_for_on_bg(str(color)))) | S.BG.hex(str(color)))(f" {color} ")).ansi
+        (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(
+            f" {color} "
+        )
         for color in source_colors
     ]
     summary = StyledText(
@@ -312,7 +344,9 @@ def display_gradient(
         StyledText((S.DIM | S.WHITE | S.BG.BLACK)("›")).ansi.join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
         (S.WHITE | S.BG.BLACK)(" in ", S.BOLD(str(total_colors)), " steps "),
     )
-    summary = StyledText(S.BLACK("▄" * len(summary.raw)), summary.ansi, S.BLACK("▀" * len(summary.raw)), sep="\n")
+    summary = StyledText(
+        S.BLACK("▄" * len(summary)), summary, S.BLACK("▀" * len(summary)), sep="\n"
+    )
 
     if not list_colors:
         print(f"\n{gradient_str}\n{summary}")
@@ -325,14 +359,23 @@ def display_gradient(
                 " ",
                 S.ITALIC,
                 (S.DIM | S.WHITE)(f"{i:>{num_width}}  "),
-                (S.BOLD | S.hex(str(xx.color.text_color_for_on_bg(color))) | S.BG.hex(str(color)))(f" {color} "),
+                (
+                    S.BOLD
+                    | S.hex(xx.color.text_color_for_on_bg(color))
+                    | S.BG.hex(color)
+                )(f" {color} "),
             ).ansi
             for i, color in enumerate(gradient, 1)
         )
     else:
         color_list = "\n".join(
             StyledText(
-                (S.BOLD | S.ITALIC | S.hex(str(xx.color.text_color_for_on_bg(color))) | S.BG.hex(str(color)))(f" {color} ")
+                (
+                    S.BOLD
+                    | S.ITALIC
+                    | S.hex(xx.color.text_color_for_on_bg(color))
+                    | S.BG.hex(color)
+                )(f" {color} ")
             ).ansi
             for color in gradient
         )
@@ -362,10 +405,12 @@ def parse_color_args(
                         " or ",
                         S.BR.BLUE("--oklch"),
                         " modes",
-                    ).ansi
+                    )
                 )
             if len(colors) == 0:
-                raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
+                raise ValueError(
+                    f"Direction arrow '{arg}' cannot appear before the first color"
+                )
 
             # ADD DIRECTION FOR PREVIOUS SEGMENT
             if arg == ">":
@@ -380,16 +425,26 @@ def parse_color_args(
             try:
                 if (hex_color := hexa(arg)).has_alpha():
                     raise ValueError(
-                        StyledText("Color ", S.BR.CYAN(arg), " includes alpha channel, which is not supported").ansi
+                        StyledText(
+                            "Color ",
+                            S.BR.CYAN(arg),
+                            " includes alpha channel, which is not supported",
+                        )
                     )
                 colors.append(hex_color.to_rgba())
             except Exception as exc:
                 raise ValueError(
                     StyledText(
                         ("Invalid color format ", S.BR.CYAN(arg), ":"),
-                        ("Expected opaque hex color (e.g., ", S.BR.CYAN("F00"), " or ", S.BR.CYAN("FF0000"), ")"),
+                        (
+                            "Expected opaque hex color (e.g., ",
+                            S.BR.CYAN("F00"),
+                            " or ",
+                            S.BR.CYAN("FF0000"),
+                            ")",
+                        ),
                         sep="\n",
-                    ).ansi
+                    )
                 ) from exc
 
             # IF THIS ISN'T THE FIRST COLOR AND WE DON'T HAVE A DIRECTION YET FOR THIS SEGMENT
@@ -402,21 +457,38 @@ def parse_color_args(
 
 
 def main() -> None:
-    if ARGS.help.exists or not (ARGS.color_points.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
+    if ARGS.help.exists or not (
+        ARGS.color_points.exists
+        or ARGS.steps.exists
+        or ARGS.hsv.exists
+        or ARGS.oklch.exists
+    ):
         print_help()
         return
 
     # DETERMINE INTERPOLATION MODE
     if ARGS.hsv.exists and ARGS.oklch.exists:
         raise ValueError(
-            StyledText("Cannot use both ", S.BR.BLUE("--hsv"), " and ", S.BR.BLUE("--oklch"), " options together").ansi
+            StyledText(
+                "Cannot use both ",
+                S.BR.BLUE("--hsv"),
+                " and ",
+                S.BR.BLUE("--oklch"),
+                " options together",
+            )
         )
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
     color_args = " ".join(ARGS.color_points.values).split()
 
     if len(color_args) < 2:
-        raise ValueError(StyledText("Please provide at least 2 colors in hex format (e.g., ", S.BR.CYAN("F00 00F"), ")").ansi)
+        raise ValueError(
+            StyledText(
+                "Please provide at least 2 colors in hex format (e.g., ",
+                S.BR.CYAN("F00 00F"),
+                ")",
+            )
+        )
 
     # PARSE COLORS AND DIRECTIONS
     colors, directions = parse_color_args(color_args, mode)
@@ -432,9 +504,13 @@ def main() -> None:
     if (sv := ARGS.steps.get(0)) and int(sv) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
+    total_steps = (
+        int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
+    )
 
-    gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
+    gradient = generate_multi_gradient(
+        colors=colors, directions=directions, steps=total_steps, mode=mode
+    )
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],

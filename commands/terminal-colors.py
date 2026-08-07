@@ -44,10 +44,10 @@ def show_shell_colors() -> None:
     for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:
         output += "  "
         for fmt in fgs:
-            output += StyledText(fmt("Aa"), " ")
+            output += (fmt("Aa"), " ")
         output += "  "
         for fmt in bgs:
-            output += StyledText(fmt(" Aa "))
+            output += fmt(" Aa ")
         output += "\n"
 
     output.print()
