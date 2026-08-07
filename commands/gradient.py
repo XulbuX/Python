@@ -6,10 +6,11 @@ specified color channel with a specified number of steps."""
 
 import colorsys
 from typing import Literal, cast
-from xulbux import Color, Console, FormatCodes
-from xulbux.color import hexa, rgba
+import xulbux as xx
+from xulbux import hexa, rgba
+from xulbux.ansi import RenderSegment, S, StyledText
 
-ARGS = Console.get_args(
+ARGS = xx.console.get_args(
     {
         "color_points": "before",
         "steps": {"-s", "--steps"},
@@ -22,36 +23,43 @@ ARGS = Console.get_args(
 )
 
 
+# fmt: off
 def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Gradient — Generate and preview advanced color gradients )
-
-[b](Usage:) [br:green](gradient) [br:cyan](<color_1> [direction] <color_2> ...) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](color)             Hex colors to create gradient between [dim]((at least 2 required))
-
-[b](Direction:) [dim]((only with [br:blue](--hsv) or [br:blue](--oklch) modes))
-  [br:cyan](>)                 Rotate hue clockwise
-  [br:cyan](<)                 Rotate hue counterclockwise
-  [dim](no arrow)          Use shortest hue path [dim]((default))
-
-[b](Options:)
-  [br:blue](-s), [br:blue](--steps[dim](=)N)     Number of gradient steps [dim]((total across all color segments))
-  [br:blue](-H), [br:blue](--hsv)         Use HSV interpolation with hue rotation
-  [br:blue](-O), [br:blue](--oklch)       Use perceptually uniform OKLCH interpolation with hue rotation
-  [br:blue](-l), [br:blue](--list)        Show list of all gradient colors
-  [br:blue](-n), [br:blue](--numerate)    Show step numbers alongside listed colors [dim]((implies [br:blue](-l)))
-
-[b](Examples:)
-  [br:green](gradient) [br:cyan](F00 00F)                 [dim](# [i](Linear RGB interpolation))
-  [br:green](gradient) [br:cyan](F00 00F 0F0)             [dim](# [i](Multicolor linear gradient))
-  [br:green](gradient) [br:cyan](F00 00F) [br:blue](--steps[dim](=)5)       [dim](# [i](5 steps total across segments))
-  [br:green](gradient) [br:cyan](F00 00F 0F0) [br:blue](-O)          [dim](# [i](OKLCH, shortest hue path))
-  [br:green](gradient) [br:cyan]("F00 > 00F") [br:blue](-H)          [dim](# [i](HSV, clockwise hue rotation))
-  [br:green](gradient) [br:cyan]("F00 > 00F < 0F0") [br:blue](-H)    [dim](# [i](HSV, mixed hue directions))
-"""
-    FormatCodes.print(help_text)
+    title = ["  Gradient", " — Generate and preview advanced color gradients  "]
+    StyledText(
+        "",
+        ("▄" * len("".join(title))),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (S.BOLD("Usage: "), S.BR.GREEN("gradient "), S.BR.CYAN("<color_1> [direction] <color_2> ... "), S.BR.BLUE("[options]")),  # noqa: E501
+        "",
+        S.BOLD("Arguments:"),
+        ("  ", S.BR.CYAN("color"), "             Hex colors to create gradient between ", S.DIM("(at least 2 required)")),
+        "",
+        (S.BOLD("Direction: "), S.DIM("(only with ", S.BR.BLUE("--hsv"), " or ", S.BR.BLUE("--oklch"), " modes)")),
+        ("  ", S.BR.CYAN(">"), "                 Rotate hue clockwise"),
+        ("  ", S.BR.CYAN("<"), "                 Rotate hue counterclockwise"),
+        ("  ", S.DIM("no arrow"), "          Use shortest hue path ", S.DIM("(default)")),
+        "",
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--steps", S.DIM("="), "N"), "     Number of gradient steps ", S.DIM("(total across all color segments)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--hsv"), "         Use HSV interpolation with hue rotation"),
+        ("  ", S.BR.BLUE("-O"), ", ", S.BR.BLUE("--oklch"), "       Use perceptually uniform OKLCH interpolation with hue rotation"),  # noqa: E501
+        ("  ", S.BR.BLUE("-l"), ", ", S.BR.BLUE("--list"), "        Show list of all gradient colors"),
+        ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--numerate"), "    Show step numbers alongside listed colors ", S.DIM("(implies ", S.BR.BLUE("-l"), ")")),  # noqa: E501
+        "",
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), "                 ", S.DIM("# ", S.ITALIC("Linear RGB interpolation"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), "             ", S.DIM("# ", S.ITALIC("Multicolor linear gradient"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), " ", S.BR.BLUE("--steps", S.DIM("="), "5"), "       ", S.DIM("# ", S.ITALIC("5 steps total across segments"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), " ", S.BR.BLUE("-O"), "          ", S.DIM("# ", S.ITALIC("OKLCH, shortest hue path"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F"'), " ", S.BR.BLUE("-H"), "          ", S.DIM("# ", S.ITALIC("HSV, clockwise hue rotation"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F < 0F0"'), " ", S.BR.BLUE("-H"), "    ", S.DIM("# ", S.ITALIC("HSV, mixed hue directions"))),  # noqa: E501
+        "",
+        sep="\n",
+    ).print()
+# fmt: on
 
 
 def interpolate_oklch(
@@ -278,7 +286,7 @@ def display_gradient(
     """
     # EACH ▌ SHOWS 2 COLORS (FG + BG), SO WE FILL total_width POSITIONS
     # WE NEED TO MAP total_colors ACROSS total_width * 2 HALF-POSITIONS
-    gradient_parts: list[str] = []
+    gradient_parts: list[RenderSegment] = []
     total_colors = len(gradient)
 
     for i in range(width):
@@ -293,27 +301,45 @@ def display_gradient(
         fg_color = gradient[left_idx]
         bg_color = gradient[right_idx]
 
-        gradient_parts.append(f"[{fg_color}|bg:{bg_color}]▌")
+        gradient_parts.append((S.hex(str(fg_color)) | S.BG.hex(str(bg_color)))("▌"))
 
-    gradient_str = f"{''.join(gradient_parts)}[_]\n" * 4
+    gradient_str = StyledText(*gradient_parts, "\n").ansi * 4
 
-    color_segments = [f"[b|i|{c}|bg:{c}](`[bg:{Color.text_color_for_on_bg(c)}]{c}[bg:{c}]`)" for c in source_colors]
-    summary = f"[in] FROM {' TO '.join(color_segments)} IN [b]({total_colors}) STEPS [_]"
+    color_segments = [
+        StyledText((S.BOLD | S.hex(str(xx.color.text_color_for_on_bg(str(color)))) | S.BG.hex(str(color)))(f" {color} ")).ansi
+        for color in source_colors
+    ]
+    summary = StyledText(
+        S.BG.BLACK(" "),
+        StyledText((S.DIM | S.WHITE | S.BG.BLACK)("›")).ansi.join(color_segments),  # noqa: RUF001
+        (S.WHITE | S.BG.BLACK)(" in ", S.BOLD(str(total_colors)), " steps "),
+    )
+    summary = StyledText(S.BLACK("▄" * len(summary.raw)), summary.ansi, S.BLACK("▀" * len(summary.raw)), sep="\n")
 
     if not list_colors:
-        FormatCodes.print(f"\n{gradient_str}\n{summary}")
+        print(f"\n{gradient_str}\n{summary}")
         return
 
     if numerate:
         num_width = len(str(len(gradient)))
         color_list = "\n".join(
-            f" [i][dim]({i:>{num_width}})  [b|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )"
-            for i, c in enumerate(gradient, 1)
+            StyledText(
+                " ",
+                S.ITALIC,
+                (S.DIM | S.WHITE)(f"{i:>{num_width}}  "),
+                (S.BOLD | S.hex(str(xx.color.text_color_for_on_bg(color))) | S.BG.hex(str(color)))(f" {color} "),
+            ).ansi
+            for i, color in enumerate(gradient, 1)
         )
     else:
-        color_list = "\n".join(f"[b|i|{Color.text_color_for_on_bg(c)}|bg:{c}]( {c} )" for c in gradient)
+        color_list = "\n".join(
+            StyledText(
+                (S.BOLD | S.ITALIC | S.hex(str(xx.color.text_color_for_on_bg(color))) | S.BG.hex(str(color)))(f" {color} ")
+            ).ansi
+            for color in gradient
+        )
 
-    FormatCodes.print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
+    print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
 
 
 def parse_color_args(
@@ -330,7 +356,15 @@ def parse_color_args(
         if arg in (">", "<"):
             if mode == "linear":
                 raise ValueError(
-                    "Direction arrows ([br:cyan](< >)) are only supported with [br:blue](--hsv) or [br:blue](--oklch) modes"
+                    StyledText(
+                        "Direction arrows (",
+                        S.BR.CYAN("< >"),
+                        ") are only supported with ",
+                        S.BR.BLUE("--hsv"),
+                        " or ",
+                        S.BR.BLUE("--oklch"),
+                        " modes",
+                    ).ansi
                 )
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
@@ -347,12 +381,17 @@ def parse_color_args(
             # IT'S A COLOR
             try:
                 if (hex_color := hexa(arg)).has_alpha():
-                    raise ValueError(f"Color [br:cyan]({arg}) includes alpha channel, which is not supported")
+                    raise ValueError(
+                        StyledText("Color ", S.BR.CYAN(arg), " includes alpha channel, which is not supported").ansi
+                    )
                 colors.append(hex_color.to_rgba())
             except Exception as exc:
                 raise ValueError(
-                    f"Invalid color format [br:cyan]({arg}):\n"
-                    "Expected opaque hex color (e.g. [br:cyan](F00) or [br:cyan](FF0000))"
+                    StyledText(
+                        ("Invalid color format ", S.BR.CYAN(arg), ":"),
+                        ("Expected opaque hex color (e.g., ", S.BR.CYAN("F00"), " or ", S.BR.CYAN("FF0000"), ")"),
+                        sep="\n",
+                    ).ansi
                 ) from exc
 
             # IF THIS ISN'T THE FIRST COLOR AND WE DON'T HAVE A DIRECTION YET FOR THIS SEGMENT
@@ -371,13 +410,15 @@ def main() -> None:
 
     # DETERMINE INTERPOLATION MODE
     if ARGS.hsv.exists and ARGS.oklch.exists:
-        raise ValueError("Cannot use both [br:blue](--hsv) and [br:blue](--oklch) options together")
+        raise ValueError(
+            StyledText("Cannot use both ", S.BR.BLUE("--hsv"), " and ", S.BR.BLUE("--oklch"), " options together").ansi
+        )
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
     color_args = " ".join(ARGS.color_points.values).split()
 
     if len(color_args) < 2:
-        raise ValueError("Please provide at least 2 colors in hex format (e.g. [br:cyan](F00 00F))")
+        raise ValueError(StyledText("Please provide at least 2 colors in hex format (e.g., ", S.BR.CYAN("F00 00F"), ")").ansi)
 
     # PARSE COLORS AND DIRECTIONS
     colors, directions = parse_color_args(color_args, mode)
@@ -393,13 +434,13 @@ def main() -> None:
     if (sv := ARGS.steps.get(0)) and int(sv) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else Console.width * 2
+    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
 
     gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],
-        width=Console.width,
+        width=xx.console.get_width(),
         list_colors=ARGS.list.exists or ARGS.numerate.exists,
         numerate=ARGS.numerate.exists,
     )
@@ -413,4 +454,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

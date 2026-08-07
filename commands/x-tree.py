@@ -160,9 +160,9 @@ BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
 })
 # fmt: on
 
-type category = Literal["archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video"]
+type Category = Literal["archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video"]
 
-ALL_CATEGORIES: dict[category, frozenset[str]] = {
+ALL_CATEGORIES: dict[Category, frozenset[str]] = {
     "archive": ARCHIVE_EXTS,
     "audio": AUDIO_EXTS,
     "code": CODE_EXTS,
@@ -174,7 +174,7 @@ ALL_CATEGORIES: dict[category, frozenset[str]] = {
     "stale": STALE_EXTS,
     "video": VIDEO_EXTS,
 }
-EXT_TO_CAT: dict[str, category] = {ext: cat for cat, exts in ALL_CATEGORIES.items() for ext in exts}
+EXT_TO_CAT: dict[str, Category] = {ext: cat for cat, exts in ALL_CATEGORIES.items() for ext in exts}
 
 TEXT_TRANS = str.maketrans(
     {
@@ -407,7 +407,7 @@ class TreeChars:
         self.c_file_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["file"], S.UNDERLINE).ansi
         self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
 
-        self.category_colors: dict[category, tuple[str, str, str, str]] = {
+        self.category_colors: dict[Category, tuple[str, str, str, str]] = {
             cat: (
                 StyledText(self.c_reset, COLORS[cat]).ansi,
                 StyledText(self.c_reset, S.DIM, COLORS[cat]).ansi,
@@ -1094,7 +1094,7 @@ class TreeRenderer:
         dot = (name := entry.name).rfind(".")
         ext = name[dot + 1 :].lower() if dot >= 0 else ""
 
-        cat: category | None = None
+        cat: Category | None = None
 
         if name.startswith("."):
             dotfile_ext = name[1:].lower()

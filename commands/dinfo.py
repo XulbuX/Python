@@ -9,11 +9,11 @@ import re
 import stat
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes, ProgressBar, Throbber
 from xulbux.base.types import ProgressUpdater
-from xulbux.console import ProgressBar, Throbber
 
-ARGS = Console.get_args(
+ARGS = xx.console.get_args(
     {
         "recursive": {"-r", "--recursive"},
         "exclude_info": {"-e", "--exclude"},
@@ -281,12 +281,12 @@ def main() -> None:
             files_count, files_scope, files_size = calc_files_scope(files, lambda current=None, label=None: None)
 
     files_size = format_bytes_size(files_size)
-    info_parts = [f"[b|bg:black]([in]( TOTAL FILES: ) {files_count:,} )"]
+    info_parts = [f"[b|bg:black]([in]( Total Files: ) {files_count:,} )"]
 
     if "scope" not in EXCLUDE:
-        info_parts.append(f"[b|bg:black]([in]( FILES SCOPE: ) {files_scope:,} lines )")
+        info_parts.append(f"[b|bg:black]([in]( Files Scope: ) {files_scope:,} lines )")
     if "size" not in EXCLUDE:
-        info_parts.append(f"[b|bg:black]([in]( FILES SIZE: ) {files_size} )")
+        info_parts.append(f"[b|bg:black]([in]( Files Size: ) {files_size} )")
     info = "".join(info_parts)
 
     FormatCodes.print(f"\033[2K\r{info}\n")
@@ -298,4 +298,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\033[2K\r[b|br:red](✗)\n")
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
