@@ -100,21 +100,21 @@ CODE_EXTS = frozenset({
     "metal", "mjs", "ml", "mli", "mm", "mod", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake", "npmignore",
     "odin", "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs",
     "preset", "prettierignore", "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1", "ps1xml",
-    "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron", "rs",
-    "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql",
+    "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pypirc", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc", "ron",
+    "rs", "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol", "spdx", "sql",
     "srcinfo", "srx", "sty", "styl", "sum", "svelte", "swift", "tcl", "template", "tern-project", "tex", "tex[-_]*", "tf",
     "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx", "typed", "url", "v", "vader", "vbs", "vcxproj",
     "vert", "vimrc", "vscodeignore", "vue", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf", "yml", "zig",
     "zprofile", "zsh", "zshrc"
 })
 DATA_EXTS = frozenset({
-    "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "certs", "cff", "comp", "count", "crt", "csv",
-    "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl", "deflate", "dpb1",
-    "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind", "index",
-    "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage",
+    "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "blf", "certs", "cff", "comp", "count", "crt",
+    "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat[-_]*", "data", "db", "db3", "db[-_]*", "dctl", "deflate",
+    "dpb1", "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind",
+    "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage",
     "localstorage[-_]*", "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut", "pb", "pem", "plugin", "ppk", "prin",
-    "ptb", "pub", "rdb", "real", "salt", "sdb", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag", "tflite", "token", "tsv",
-    "usda", "vscdb"
+    "ptb", "pub", "rdb", "real", "regtrans-ms", "salt", "sdb", "search-ms", "spi1d", "sqlite", "sqlite3", "sqlite[-_]*", "tag",
+    "tflite", "token", "tsv", "usda", "*_reporting_data", "vscdb"
 })
 DOC_EXTS = frozenset({
     "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
@@ -135,8 +135,9 @@ IMAGE_EXTS = frozenset({
     "tiff", "webp", "xbm", "xcf"
 })
 STALE_EXTS = frozenset({
-    "backup", "bak", "bash_history", "bck", "beta", "bkp", "disabled", "gotemp", "keep", "last", "log", "msbak", "obsolete",
-    "off", "old", "orig", "python_history", "stderr", "stderr.beta", "tbcache", "trashinfo", "tsbuildinfo", "viminfo",
+    "backup", "bak", "bash_history", "bck", "beta", "bkp", "cache", "disabled", "gotemp", "keep", "last", "lesshst", "log",
+    "log0", "log1", "log2", "log3", "log4", "log5", "log6", "log7", "log8", "log9", "msbak", "node_repl_history", "obsolete",
+    "off", "old", "orig", "python_history", "stderr", "stderr.beta", "tbcache", "tmp", "trashinfo", "tsbuildinfo", "viminfo",
     "zsh_history"
 })
 VIDEO_EXTS = frozenset({
@@ -152,11 +153,11 @@ BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
     "kwl", "ldb", "lib", "mdb", "mha", "mhd", "mobi", "mogrt", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd", "myi", "nbt",
     "ndf", "nhdr", "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "otf",
     "ova", "ovf", "pages", "pb", "pcf", "pdf", "pfb", "ply", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt",
-    "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "rnd", "rtf", "salt",
-    "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step", "stl",
-    "tflite", "tga", "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst",
-    "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb",
-    "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
+    "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "regtrans-ms", "rnd",
+    "rtf", "salt", "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step",
+    "stl", "tflite", "tga", "thmx", "ts", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx",
+    "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls",
+    "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
 })
 # fmt: on
 
@@ -225,7 +226,7 @@ def print_help() -> None:
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
         ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
-        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive chunks of similar items"),  # noqa: E501
+        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive similar-filename chunks"),  # noqa: E501
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
         ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # noqa: E501
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
@@ -242,7 +243,7 @@ def print_help() -> None:
         (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
         ("  ", (S.ITALIC | S.DIM)("2"), "  Auto-ignore mode"),
-        ("  ", (S.ITALIC | S.DIM)("3"), "  Truncate repetitive chunks of similar items"),
+        ("  ", (S.ITALIC | S.DIM)("3"), "  Truncate repetitive chunks of similarly named files"),
         ("  ", (S.ITALIC | S.DIM)("4"), "  Include file contents"),
         ("  ", (S.ITALIC | S.DIM)("5"), "  Indentation size"),
         ("  ", (S.ITALIC | S.DIM)("6"), "  Output tree to file"),
@@ -316,168 +317,31 @@ class IGNORE:
     """Contains patterns and logic for determining which
     directories/files to auto-ignore during tree generation."""
 
-    paths: ClassVar[set[str]] = {
-        "__pycache__.*",
-        "__pycache__",
-        "__pypackages__.*",
-        "__pypackages__",
-        "__tests__.*",
-        "__tests__",
-        "_locales",
-        "_site",
-        ".adobe",
-        ".angular",
-        ".archive-unpack",
-        ".cache",
-        ".codeium",
-        ".coverage",
-        ".ds_store",
-        ".eslintcache",
-        ".fleet",
-        ".git",
-        ".gitlab",
-        ".gradle",
-        ".hg",
-        ".idea",
-        ".ipynb_checkpoints",
-        ".kube",
-        ".minecraft/assets/objects",
-        ".minecraft/assets/skins",
-        ".mvn",
-        ".mypy_*",
-        ".next",
-        ".npm",
-        ".nuxt",
-        ".nvm",
-        ".nx",
-        ".output",
-        ".pnpm",
-        ".pytest_*",
-        ".ruff_*",
-        ".scannerwork",
-        ".sonar",
-        ".styleLintCache",
-        ".svn",
-        ".terraform",
-        ".tmp.*",
-        ".tox",
-        ".venv",
-        ".vs",
-        ".webpack",
-        ".yarn",
-        "*.map",
-        "*.min.css",
-        "*.min.js",
-        "*.noindex",
-        "*.temp",
-        "*.tmp",
-        "*[-_.@]cache",
-        "*[-_.@]indexed",
-        "*[-_.@]temp",
-        "$recycle.bin",
-        "adobe/common/ptx",
-        "adobe/typeQuest",
-        "aggregatedCache",
-        "artifacts",
-        "autofillStates",
-        "backstageInAppNavCache",
-        "blob_storage",
-        "bower_components",
-        "build",
-        "cache",
-        "cache[-_.@]*",
-        "cache[0-9]*",
-        "cacheStorage",
-        "celeryBeat-schedule",
-        "code cache",
-        "code_tracker",
-        "composer/files",
-        "coreSync/cloudNative",
-        "coreSync/plugins",
-        "coverage-reports",
-        "coverage",
-        "crlCache",
-        "cvs",
-        "D3DSCache",
-        "data/emojis",
-        "dawnCache",
-        "dawnGraphiteCache",
-        "dawnWebGPUCache",
-        "debugbar",
-        "dim-1/mw$default",
-        "dim1/mw$default",
-        "dist-newstyle",
-        "dist",
-        "docs/_build",
-        "gpuCache",
-        "graphicsCache",
-        "graphiteDawnCache",
-        "grShaderCache",
-        "htmlCache",
-        "htmlCov",
-        "hyphen-data",
-        "identityCache",
-        "indexed[-_.@]*",
-        "indexedDB",
-        "indexes",
-        "jspm_packages",
-        "junit",
-        "lib/encodings",
-        "local storage",
-        "locales",
-        "log",
-        "logs",
-        "media cache files",
-        "meta/assets/indexes",
-        "meta/assets/objects",
-        "metadataIndexer",
-        "node_modules",
-        "node",
-        "npm",
-        "null",
-        "nvm",
-        "obj",
-        "office/*/aggMru",
-        "office/*/dts",
-        "office/*/usageMetricsStore",
-        "office/*/wef",
-        "officeFileCache",
-        "packages",
-        "patch64",
-        "pnpm/store/links",
-        "program64",
-        "pythonLocator",
-        "recent/automaticDestinations",
-        "recent/customDestinations",
-        "reports",
-        "rsa",
-        "scriptCache",
-        "session storage",
-        "shaderCache",
-        "slCache",
-        "spotify/data",
-        "spotify/users",
-        "steamLink/avatars",
-        "storage/framework",
-        "tapCache",
-        "target",
-        "temp",
-        "temp[-_.@]*",
-        "test-results",
-        "tmp",
-        "user/history",
-        "user/webStorage",
-        "uxp/plugins/external",
-        "vendor",
-        "venv",
-        "virtualBkgnd_*",
-        "vscode.git/askPass",
-        "webCache2",
-        "wheels",
-        "x64",
-        "x86",
-        "xcuserdata",
+    # fmt: off
+    folder_paths: ClassVar[set[str]] = {
+        "__pycache__.*", "__pycache__", "__pypackages__.*", "__pypackages__", "__tests__.*", "__tests__", "_locales", "_site",
+        ".adobe", ".angular", ".archive-unpack", ".cache", ".codeium", ".coverage", ".ds_store", ".eslintcache", ".fleet",
+        ".git", ".gitlab", ".gradle", ".hg", ".idea", ".ipynb_checkpoints", ".kube", ".minecraft/assets/objects",
+        ".minecraft/assets/skins", ".mvn", ".mypy_*", ".next", ".npm", ".nuxt", ".nvm", ".nx", ".output", ".pnpm", ".pytest_*",
+        ".ruff_*", ".scannerwork", ".sonar", ".styleLintCache", ".svn", ".terraform", ".tmp.*", ".tox", ".venv", ".vs",
+        ".webpack", ".yarn", "*.map", "*.min.css", "*.min.js", "*.noindex", "*.temp", "*.tmp", "*[-_.@]cache",
+        "*[-_.@]indexed", "*[-_.@]temp", "$recycle.bin", "adobe/common/ptx", "adobe/typeQuest", "aggregatedCache", "artifacts",
+        "autofillStates", "backstageInAppNavCache", "blob_storage", "bower_components", "build", "cache", "cache[-_.@]*",
+        "cache[0-9]*", "cacheStorage", "celeryBeat-schedule", "code cache", "code_tracker", "composer/files",
+        "coreSync/cloudNative", "coreSync/plugins", "coverage-reports", "coverage", "crlCache", "cvs", "D3DSCache",
+        "data/emojis", "dawnCache", "dawnGraphiteCache", "dawnWebGPUCache", "debugbar", "dim-1/mw$default", "dim1/mw$default",
+        "dist-newstyle", "dist", "docs/_build", "gpuCache", "graphicsCache", "graphiteDawnCache", "grShaderCache", "htmlCache",
+        "htmlCov", "hyphen-data", "identityCache", "indexed[-_.@]*", "indexedDB", "indexes", "jspm_packages", "junit",
+        "lib/encodings", "local storage", "locales", "log", "logs", "media cache files", "meta/assets/indexes",
+        "meta/assets/objects", "metadataIndexer", "node_modules", "node", "npm", "null", "nvm", "obj", "office/*/aggMru",
+        "office/*/dts", "office/*/usageMetricsStore", "office/*/wef", "officeFileCache", "packages", "patch64",
+        "pnpm/store/links", "program64", "pythonLocator", "recent/automaticDestinations", "recent/customDestinations",
+        "reports", "rsa", "scriptCache", "session storage", "shaderCache", "slCache", "spotify/data", "spotify/users",
+        "steamLink/avatars", "storage/framework", "tapCache", "target", "temp", "temp[-_.@]*", "test-results", "tmp",
+        "user/history", "user/webStorage", "uxp/plugins/external", "vendor", "venv", "virtualBkgnd_*", "vscode.git/askPass",
+        "webCache2", "wheels", "x64", "x86", "xcuserdata"
     }
+    # fmt: on
 
     sep: str = r"[-_~x@\s]+"
     ext: str = r"(?:\.[-_a-zA-Z0-9]+)*?$"
@@ -585,47 +449,47 @@ class DirectoryScanner:
 
         self.auto_ignore_mode = auto_ignore_mode
 
-        all_ignores = ignore_dirs.copy()
+        all_folder_ignores = ignore_dirs.copy()
         if auto_ignore_mode > 0:
-            all_ignores.extend(path.lower() for path in IGNORE.paths)
+            all_folder_ignores.extend(path.lower() for path in IGNORE.folder_paths)
 
         self.exact_names: set[str] = set()
-        self.exact_paths: tuple[str, ...] = ()
-        self.absolute_paths: tuple[str, ...] = ()
+        self.exact_folder_paths: tuple[str, ...] = ()
+        self.abs_folder_paths: tuple[str, ...] = ()
         self.wildcard_names: list[re.Pattern[str]] = []
         self.wildcard_paths: list[list[re.Pattern[str]]] = []
         self.wildcard_abs_paths: list[re.Pattern[str]] = []
         self._scan_cache: dict[str, DirScanResult] = {}
         self._ignore_cache: dict[str, bool] = {}
 
-        exact_paths_list: list[str] = []
-        absolute_paths_list: list[str] = []
+        exact_folder_paths_list: list[str] = []
+        abs_folder_paths_list: list[str] = []
 
-        for pattern in all_ignores:
-            p = pattern.lower().replace("\\", "/")
-            if Path(p).is_absolute():
-                p = f"/{p.lstrip('/')}"
+        for pattern in all_folder_ignores:
+            if Path(pattern := pattern.lower().replace("\\", "/")).is_absolute():
+                pattern = f"/{pattern.lstrip('/')}"
 
-            if "*" not in p and "[" not in p:
-                if "/" in p:
-                    if p.startswith("/"):
-                        absolute_paths_list.append(p)
+            if "*" not in pattern and "[" not in pattern:
+                if "/" in pattern:
+                    if pattern.startswith("/"):
+                        abs_folder_paths_list.append(pattern)
                     else:
-                        exact_paths_list.append(p)
+                        exact_folder_paths_list.append(pattern)
                 else:
-                    self.exact_names.add(p)
+                    self.exact_names.add(pattern)
+
             else:
-                if "/" in p:
-                    if p.startswith("/"):
-                        self.wildcard_abs_paths.append(re.compile(fnmatch.translate(p[1:])))
+                if "/" in pattern:
+                    if pattern.startswith("/"):
+                        self.wildcard_abs_paths.append(re.compile(fnmatch.translate(pattern[1:])))
                     else:
-                        parts = [re.compile(fnmatch.translate(part)) for part in p.split("/")]
+                        parts = [re.compile(fnmatch.translate(part)) for part in pattern.split("/")]
                         self.wildcard_paths.append(parts)
                 else:
-                    self.wildcard_names.append(re.compile(fnmatch.translate(p)))
+                    self.wildcard_names.append(re.compile(fnmatch.translate(pattern)))
 
-        self.exact_paths = tuple(exact_paths_list)
-        self.absolute_paths = tuple(absolute_paths_list)
+        self.exact_folder_paths = tuple(exact_folder_paths_list)
+        self.abs_folder_paths = tuple(abs_folder_paths_list)
 
     def should_ignore_path(self, path: str) -> bool:  # noqa: C901
         """Check if a relative path matches any user-specified or default ignore pattern."""
@@ -644,15 +508,15 @@ class DirectoryScanner:
             self._ignore_cache[path] = True
             return True
 
-        if self.absolute_paths:
-            for ep in self.absolute_paths:
+        if self.abs_folder_paths:
+            for ep in self.abs_folder_paths:
                 rel = ep[1:]
                 if path_lower == rel or path_lower.startswith(rel + "/"):
                     self._ignore_cache[path] = True
                     return True
 
-        if self.exact_paths:
-            for ep in self.exact_paths:
+        if self.exact_folder_paths:
+            for ep in self.exact_folder_paths:
                 if ep in path_lower:
                     self._ignore_cache[path] = True
                     return True
@@ -1004,7 +868,7 @@ class TreeRenderer:
 
         return sig + ext.lower()
 
-    def _get_visible_entries(self, entries: tuple[os.DirEntry[str], ...]) -> list[os.DirEntry[str] | tuple[int, str, bool]]:
+    def _get_visible_entries(self, entries: tuple[os.DirEntry[str], ...]) -> list[os.DirEntry[str] | tuple[int, str]]:
         """Filter entries for inline similarity truncation."""
 
         if not self.config.truncate_similar or len(entries) < 8:
@@ -1015,6 +879,14 @@ class TreeRenderer:
         current_shape = ""
 
         for entry in entries:
+            if entry.is_dir():
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = []
+                    current_shape = ""
+                chunks.append([entry])
+                continue
+
             shape = self._get_shape(entry.name)
             if not current_chunk:
                 current_shape = shape
@@ -1029,7 +901,7 @@ class TreeRenderer:
         if current_chunk:
             chunks.append(current_chunk)
 
-        visible_entries: list[os.DirEntry[str] | tuple[int, str, bool]] = []
+        visible_entries: list[os.DirEntry[str] | tuple[int, str]] = []
 
         for chunk in chunks:
             if len(chunk) < 8:
@@ -1040,7 +912,7 @@ class TreeRenderer:
                 # All entries share the same shape => same extension => same color:
                 base_color = self._get_file_color(chunk[0])[1]
 
-                visible_entries.append((len(chunk) - 4, base_color, chunk[0].is_dir()))
+                visible_entries.append((len(chunk) - 4, base_color))
                 visible_entries.extend(chunk[-2:])
 
         return visible_entries
@@ -1063,16 +935,11 @@ class TreeRenderer:
             branch = self.chrs.corners[0] if is_last else self.chrs.branch_new
 
             if isinstance(item, tuple):
-                count, color, is_chunk_dir = item
-                if is_chunk_dir:
-                    self.stats.processed_dirs += count
-                else:
-                    self.stats.processed_files += count
+                count, color = item
+                self.stats.processed_files += count
 
-                suffix = f"{self.chrs.c_dir_dull}{self.chrs.c_dim}{self.chrs.dirname_end}" if is_chunk_dir else ""
                 lines.append(
-                    f"{prefix}{branch}{self.chrs.line_hor_str}{color}"
-                    f"[{count} more]{self.chrs.c_reset}{suffix}{self.chrs.c_reset}{self.chrs.c_line}\n"
+                    f"{prefix}{branch}{self.chrs.line_hor_str}{color}[{count} more]{self.chrs.c_reset}{self.chrs.c_line}\n"
                 )
                 continue
 
@@ -1381,7 +1248,7 @@ def get_user_inputs(config: TreeConfig) -> None:
         config.truncate_similar = (
             xx.console.input(
                 StyledText(
-                    S.BOLD("Truncate similar sequential items inline?\n"),
+                    S.BOLD("Truncate repetitive chunks of similarly named files?\n"),
                     (S.DIM("(Y)" if config.truncate_similar else "(N)"), " > "),
                 ),
                 max_len=1,
