@@ -18,7 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple, TypedDict, cast
 import xulbux as xx
-from xulbux import S, StyledText, Throbber
+from xulbux import S, StyledText, Term, Throbber
 
 if TYPE_CHECKING:
     from xulbux.ansi import AnyStyle
@@ -225,6 +225,9 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
         ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # noqa: E501
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
+        "",
+        S.BOLD("Controls:"),
+        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "              Cancel and exit"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
@@ -710,10 +713,8 @@ class TreeRenderer:
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
 
         with Throbber(
-            label=StyledText(S.WHITE("Rooting tree from "), S.CYAN(str(self.config.base_dir))),
-            format=[("  ", S.BR.BLUE("{a}")), "{l}"],
-            frames=("⊶", "⊷"),
-            sep="  ",
+            label=StyledText(S.WHITE("Rooting tree from "), S.MAGENTA(str(self.config.base_dir))),
+            format=[("  ", S.BR.MAGENTA("{a}")), "{l}"],
         ).context():
             self._pre_scan_parallel(str(self.config.base_dir))
 
@@ -723,13 +724,13 @@ class TreeRenderer:
         self._render_tree(str(self.config.base_dir), "", 0, "", lines)
         result_str = "".join(lines)
 
-        print("\x1b[F\x1b[K", end="")  # Clear the last progress output.
+        print(Term.prev_line() + Term.CLEAR_LINE, end="")  # Clear the last progress output.
 
-        time_taken = StyledText("took ", S.BR.CYAN(self._format_time(time.time() - self.stats.start_time)))
+        time_taken = StyledText("took ", S.BR.MAGENTA(self._format_time(time.time() - self.stats.start_time)))
         tree_stats = StyledText(
-            ("max depth ", S.BR.CYAN(str(self.stats.max_depth))),
-            (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_dirs:,}"), " dirs"),
-            (S.DIM(" | "), S.BR.CYAN(f"{self.stats.processed_files:,}"), " files"),
+            ("max depth ", S.BR.MAGENTA(str(self.stats.max_depth))),
+            (S.DIM(" | "), S.BR.MAGENTA(f"{self.stats.processed_dirs:,}"), " dirs"),
+            (S.DIM(" | "), S.BR.MAGENTA(f"{self.stats.processed_files:,}"), " files"),
         )
 
         if (space_len := self.config.max_width - len(time_taken.raw) - len(tree_stats.raw) - 2) >= 2:
@@ -790,8 +791,8 @@ class TreeRenderer:
         xx.console.log(
             "Sprouting",
             f"{self.chrs.c_dir}{rel_path}" if is_dir else f"{self.chrs.c_file}{rel_path}",
-            title_bg_color=S.BG.BR.BLUE,
-            start="\x1b[F\x1b[K",
+            title_bg_color=S.BG.BR.MAGENTA,
+            start=Term.prev_line() + Term.CLEAR_LINE,
         )
 
     def _render_tree(self, dir_path: str, prefix: str, level: int, parent_rel_path: str, lines: list[str]) -> None:
@@ -1318,7 +1319,7 @@ def main() -> None:  # noqa: C901
         try:
             file = xx.file.create(str(target_path), result.raw)
         except FileExistsError:
-            cls_line = "\x1b[F\x1b[K"
+            cls_line = Term.prev_line() + Term.CLEAR_LINE
             if xx.console.confirm(
                 StyledText("  ", S.WHITE(target_path.name), " already exists. Overwrite? "), start=cls_line, end=""
             ):
@@ -1339,7 +1340,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        StyledText(S.RESET, "\x1b[F\x1b[K", S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
+        StyledText(S.RESET, Term.prev_line(), Term.CLEAR_LINE, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except PermissionError:
         xx.console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as exc:

@@ -7,11 +7,11 @@ import math
 import os
 import re
 import stat
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import xulbux as xx
-from xulbux import FormatCodes, ProgressBar, Throbber
-from xulbux.base.types import ProgressUpdater
+from xulbux import S, StyledText, Term, Throbber
 
 ARGS = xx.console.get_args(
     {
@@ -27,52 +27,66 @@ EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
 
 
+# fmt: off
 def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Directory Info — Get details about files in the current directory )
+    title = ["  Directory Info", " — Get details about files in the current directory  "]
+    StyledText(
+        "",
+        ("▄" * len("".join(title))),
+        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
+        ("▀" * len("".join(title))),
+        "",
+        (S.BOLD("Usage: "), S.BR.GREEN("dinfo "), S.BR.BLUE("[options]")),
+        "",
+        S.BOLD("Options:"),
+        ("  ", S.BR.BLUE("-r"), ", ", S.BR.BLUE("--recursive"), "      Also scan all subdirectories recursively"),
+        ("  ", S.BR.BLUE("-e"), ", ", S.BR.BLUE("--exclude", S.DIM("="), "S"), "      Exclude parts of the info ", S.DIM("(", S.ITALIC("size"), ", ", S.ITALIC("lines"), "; count is always included)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--skip-hidden"), "    Skip hidden, system, and protected items"),
+        ("  ", S.BR.BLUE("-G"), ", ", S.BR.BLUE("--gitignore"), "      Apply ", S.WHITE(".gitignore"), " rules when scanning files"),  # noqa: E501
+        "",
+        S.BOLD("Controls:"),
+        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel and exit"),
+        "",
+        S.BOLD("Examples:"),
+        ("  ", S.BR.GREEN("dinfo"), "                    ", S.DIM("# ", S.ITALIC("Get all directory info, not ignoring any items"))),  # noqa: E501
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("-e", S.DIM("="), '"size lines"'), "    ", S.DIM("# ", S.ITALIC("Only show file count, excluding size and line count"))),  # noqa: E501
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--skip-hidden"), "      ", S.DIM("# ", S.ITALIC("Skip hidden and system items"))),  # noqa: E501
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--gitignore"), "        ", S.DIM("# ", S.ITALIC("Apply .gitignore rules when scanning files"))),  # noqa: E501
+        "",
+        sep="\n",
+    ).print()
+# fmt: on
 
-[b](Usage:) [br:green](dinfo) [br:blue]([options])
 
-[b](Options:)
-  [br:blue](-r), [br:blue](--recursive)      Also scan all subdirectories recursively
-  [br:blue](-e), [br:blue](--exclude[dim](=)S)      Exclude parts of the info [dim]((scope, size — count is always included))
-  [br:blue](-H), [br:blue](--skip-hidden)    Skip hidden, system, and protected items
-  [br:blue](-G), [br:blue](--gitignore)      Apply .gitignore rules when scanning files
-
-[b](Examples:)
-  [br:green](dinfo)                    [dim](# [i](Get all directory info, not ignoring any items))
-  [br:green](dinfo) [br:blue](-e[dim](=)"scope size")    [dim](# [i](Only show file count, excluding scope and size))
-  [br:green](dinfo) [br:blue](--skip-hidden)      [dim](# [i](Skip hidden and system items))
-  [br:green](dinfo) [br:blue](--gitignore)        [dim](# [i](Apply .gitignore rules when scanning files))
-"""
-    FormatCodes.print(help_text)
-
-
-def is_hidden(path: str) -> bool:
+def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
     """Check if a file or directory is hidden, system, or protected."""
+
     if os.name == "nt":
         try:
-            attrs = Path(path).stat().st_file_attributes
-            if attrs & stat.FILE_ATTRIBUTE_DIRECTORY:
+            attrs = entry.stat(follow_symlinks=False).st_file_attributes
+            if entry.is_dir(follow_symlinks=False):
                 return bool(attrs & stat.FILE_ATTRIBUTE_HIDDEN)
             return bool(attrs & (stat.FILE_ATTRIBUTE_HIDDEN | stat.FILE_ATTRIBUTE_SYSTEM))
         except (AttributeError, OSError):
             pass
 
     else:
+        path = entry.path
         system_dirs = {"/proc", "/sys", "/dev", "/tmp"}
         return path in system_dirs or any(path.startswith(d) for d in system_dirs)
 
     return False
 
 
-def should_skip_path(path: str) -> bool:
-    """Check if a path should be skipped based on skip options."""
-    return bool(ARGS.skip_hidden.exists and is_hidden(path))
+def should_skip_entry(entry: os.DirEntry[str]) -> bool:
+    """Check if an entry should be skipped based on skip options."""
+
+    return bool(ARGS.skip_hidden.exists and is_hidden_entry(entry))
 
 
 def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]]:
     """Load and pre-compile .gitignore patterns from the given directory and parent directories."""
+
     patterns: list[tuple[re.Pattern[str], bool]] = []
     current_dir = Path(directory).resolve()
 
@@ -105,6 +119,7 @@ def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]
 
 def is_gitignored(file_path: str, patterns: list[tuple[re.Pattern[str], bool]]) -> bool:
     """Check if a file should be ignored based on pre-compiled .gitignore patterns."""
+
     if not patterns:
         return False
 
@@ -124,34 +139,9 @@ def is_gitignored(file_path: str, patterns: list[tuple[re.Pattern[str], bool]]) 
     return False
 
 
-def get_dir_files(directory: str) -> list[str]:
-    """Get the paths of all files in a directory, optionally recursively."""
-    files: list[str] = []
-    gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
-
-    try:
-        for root, dirs, filenames in Path(directory).walk():
-            if not ARGS.recursive.exists:
-                dirs.clear()
-            else:
-                dirs[:] = [dir for dir in dirs if not should_skip_path(str(root / dir))]
-                if ARGS.apply_gitignore.exists:
-                    dirs[:] = [dir for dir in dirs if not is_gitignored(str(root / dir), gitignore_patterns)]
-
-            for filename in filenames:
-                if should_skip_path(file_path := str(root / filename)):
-                    continue
-                if ARGS.apply_gitignore.exists and is_gitignored(file_path, gitignore_patterns):
-                    continue
-                files.append(file_path)
-
-    except PermissionError:
-        pass
-
-    return files
-
-
 def count_lines(file_path: str) -> int:
+    """Count the number of lines in a file, returning 0 for binary files or errors."""
+
     try:
         with open(file_path, "rb") as file:
             if (file_size := Path(file_path).stat().st_size) == 0:
@@ -193,67 +183,120 @@ def count_lines(file_path: str) -> int:
         return 0
 
 
-def process_file(file_path: str) -> tuple[int, int, int]:
+def scan_and_calc_scope(directory: str) -> tuple[int, int, int]:  # noqa: C901
+    """Recursively scan directory and calculate total files, lines, and size in bytes in parallel."""
+
+    total_files = 0
+    total_lines = 0
+    total_size = 0
+
+    gitignore_patterns = load_gitignore_patterns(directory) if ARGS.apply_gitignore.exists else []
+
+    lock = threading.Lock()
+    done = threading.Event()
+    active = [1]
+    canceled = [False]
+
+    def _count_lines_task(file_path: str) -> None:
+        if not canceled[0]:
+            lines = count_lines(file_path)
+            with lock:
+                nonlocal total_lines
+                total_lines += lines
+        with lock:
+            active[0] -= 1
+            if active[0] == 0:
+                done.set()
+
+    def _scan(dir_path: str) -> None:  # noqa: C901
+        if canceled[0]:
+            with lock:
+                active[0] -= 1
+                if active[0] == 0:
+                    done.set()
+            return
+
+        try:
+            with os.scandir(dir_path) as it:
+                entries = list(it)
+        except OSError:
+            entries = []
+
+        new_dirs: list[str] = []
+        local_files = 0
+        local_size = 0
+        lines_tasks: list[str] = []
+
+        for entry in entries:
+            if should_skip_entry(entry):
+                continue
+
+            entry_path = entry.path
+
+            if ARGS.apply_gitignore.exists and is_gitignored(entry_path, gitignore_patterns):
+                continue
+
+            if entry.is_dir(follow_symlinks=False):
+                if ARGS.recursive.exists:
+                    new_dirs.append(entry_path)
+            elif entry.is_file(follow_symlinks=False):
+                local_files += 1
+
+                try:
+                    size = entry.stat(follow_symlinks=False).st_size
+                except OSError:
+                    size = 0
+
+                if "size" not in EXCLUDE:
+                    local_size += size
+
+                if "lines" not in EXCLUDE and size > 0:
+                    lines_tasks.append(entry_path)
+
+        with lock:
+            nonlocal total_files, total_size
+            total_files += local_files
+            total_size += local_size
+
+            active[0] += len(new_dirs) + len(lines_tasks)
+
+        for d in new_dirs:
+            executor.submit(_scan, d)
+
+        for f in lines_tasks:
+            executor.submit(_count_lines_task, f)
+
+        with lock:
+            active[0] -= 1
+            if active[0] == 0:
+                done.set()
+
+    max_workers = min(64, (os.cpu_count() or 4) * 8)
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
     try:
-        if "size" in EXCLUDE and "scope" in EXCLUDE:
-            return 1, 0, 0
-
-        size = Path(file_path).stat().st_size
-
-        lines = 0 if "scope" in EXCLUDE or size == 0 else count_lines(file_path)
-
-        return 1, lines, 0 if "size" in EXCLUDE else size
-
-    except Exception:
-        return 1, 0, 0
-
-
-def calc_files_scope(files: list[str], update_progress: ProgressUpdater) -> tuple[int, int, int]:
-    if not files:
-        return 0, 0, 0
-
-    cpu_count = os.cpu_count() or 4
-
-    max_workers = min(len(files), cpu_count) if len(files) < 50 else min(cpu_count * 3, len(files), 128)
-
-    try:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_index = {executor.submit(process_file, file_path): i for i, file_path in enumerate(files)}
-            total_files = 0
-            total_lines = 0
-            total_size = 0
-            completed = 0
-
-            try:
-                for future in as_completed(future_to_index):
-                    file_count, lines, size = future.result()
-                    total_files += file_count
-                    total_lines += lines
-                    total_size += size
-                    completed += 1
-
-                    if completed % 1221 == 0 or completed == len(files):
-                        update_progress(completed)
-
-            except KeyboardInterrupt:
-                for future in future_to_index:
-                    future.cancel()
-                raise
-
+        executor.submit(_scan, directory)
+        while not done.wait(0.1):
+            pass
     except KeyboardInterrupt:
+        canceled[0] = True
         raise
+    finally:
+        executor.shutdown(wait=False)
 
     return total_files, total_lines, total_size
 
 
 def format_bytes_size(bytes: int) -> str:
+    """Format bytes into a human-readable string."""
+
     if bytes <= 0:
         return "0 B"
+
     size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-    i = int(math.log(bytes, 1024))
-    p = math.pow(1024, i)
-    s = round(bytes / p, 2)
-    return f"{s} {size_name[i]}"
+    size_idx = int(math.log(bytes, 1024))
+
+    return f"{round(bytes / math.pow(1024, size_idx), 2)} {size_name[size_idx]}"
 
 
 def main() -> None:
@@ -263,39 +306,28 @@ def main() -> None:
 
     print()
 
-    with Throbber(label="Searching items").context():
-        files = get_dir_files(str(Path.cwd()))
+    with Throbber(label="Scanning directory tree...").context():
+        files_count, files_line_count, files_size = scan_and_calc_scope(str(Path.cwd()))
 
-    if "scope" in EXCLUDE and "size" in EXCLUDE:
-        files_count = len(files)
-        files_scope = 0
-        files_size = 0
+    info_parts = StyledText((S.INVERSE | S.BG.BLACK)("  ", S.BOLD(f"{files_count:,}"), " total files"))
 
-    else:
-        if len(files) >= 100:
-            with ProgressBar().progress_context(len(files), "Calculating scope...") as update_progress:
-                update_progress(0)
-                files_count, files_scope, files_size = calc_files_scope(files, update_progress)
-
-        else:
-            files_count, files_scope, files_size = calc_files_scope(files, lambda current=None, label=None: None)
-
-    files_size = format_bytes_size(files_size)
-    info_parts = [f"[b|bg:black]([in]( Total Files: ) {files_count:,} )"]
-
-    if "scope" not in EXCLUDE:
-        info_parts.append(f"[b|bg:black]([in]( Files Scope: ) {files_scope:,} lines )")
     if "size" not in EXCLUDE:
-        info_parts.append(f"[b|bg:black]([in]( Files Size: ) {files_size} )")
-    info = "".join(info_parts)
+        info_parts += (S.INVERSE | S.BG.BLACK)("  ", S.BOLD(format_bytes_size(files_size)), " total size")
+    if "lines" not in EXCLUDE:
+        info_parts += (S.INVERSE | S.BG.BLACK)("  ", S.BOLD(f"{files_line_count:,}"), " total lines")
 
-    FormatCodes.print(f"\033[2K\r{info}\n")
+    StyledText(
+        (Term.CLEAR_LINE, "▄" * (len(info_parts) + 2)),
+        (info_parts, S.INVERSE("  ")),
+        ("▀" * (len(info_parts) + 2)),
+        sep="\n",
+    ).print(end="\n\n")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        FormatCodes.print("\033[2K\r[b|br:red](✗)\n")
+        StyledText(Term.CLEAR_LINE, S.RESET, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except Exception as exc:
         xx.console.fail(exc, start="\n", end="\n\n")
