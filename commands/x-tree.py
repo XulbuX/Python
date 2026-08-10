@@ -80,84 +80,95 @@ DEFAULT: ScriptDefaults = {
 # fmt: off
 ARCHIVE_EXTS = frozenset({
     "7z", "apk", "asar", "bz2", "cab", "cpio", "deb", "dmg", "ear", "gz", "iso", "jar", "lz", "lz4", "lzma", "npz", "pak",
-    "phar", "rar", "rpm", "snap", "squashfs", "tar", "tbz2", "tgz", "txz", "tzst", "war", "whl", "xz", "z", "zip", "zst"
+    "phar", "rar", "rpm", "sigzip", "snap", "squashfs", "tar", "tbz2", "tgz", "txz", "tzst", "war", "whl", "xz", "z", "zip",
+    "zst"
 })
 AUDIO_EXTS = frozenset({
     "aac", "aif", "aiff", "alac", "amr", "ape", "au", "caf", "cfa", "flac", "m4a", "mid", "midi", "mka", "mp3", "oga", "ogg",
     "opus", "voc", "wav", "wma", "wv"
 })
 CODE_EXTS = frozenset({
-    "ahk", "apache", "applescript", "asm", "asp", "aspx", "astro", "awk", "bash", "bash_logout", "bash_profile", "bashrc",
-    "bat", "bib", "bicep", "blocklist", "bsd", "c", "cfg", "cjs", "clj", "cljc", "cljs", "cmake", "code-snippets",
-    "code-workspace", "code_snippets", "code_workspace", "colors", "conf", "config", "cpp", "cr", "cs", "csh", "css", "cts",
-    "cu", "d", "dart", "def", "defs", "desktop", "diff", "directory", "dirs", "dockerfile", "editorconfig", "edn", "ejs", "el",
-    "env", "erb", "erl", "eslintignore", "ex", "example", "exs", "f", "f90", "f95", "fbs", "filters", "fish", "flow", "frag",
-    "fs", "fsi", "fst", "fsx", "g4", "gd", "gitattributes", "gitconfig", "gitignore", "gitkeep", "gitmodules", "gleam", "glsl",
-    "glslfx", "go", "gql", "gradle", "graphql", "groovy", "gtkrc-2.0", "gtkrc-3.0", "gyp", "gypi", "h", "hbs", "hcl", "hintrc",
-    "hjson", "hpp", "hs", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini", "install", "ipynb", "j2", "jade", "java",
-    "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "kml", "ksh", "kt", "kts", "lark", "less", "library-ms",
-    "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make", "mdl", "mdx", "menu", "meta",
-    "metal", "mjs", "ml", "mli", "mm", "mod", "mojo", "msrv", "mtlx", "mts", "ndjson", "nim", "nims", "nix", "nmake",
-    "npmignore", "odin", "osl", "pas", "patch", "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom",
-    "pot", "prefs", "preset", "prettierignore", "prf", "prisma", "pro", "profile", "proj", "properties", "proto", "ps", "ps1",
-    "ps1xml", "psd1", "psm1", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pypirc", "pyw", "pyx", "qml", "qmltypes", "r", "rb",
-    "rc", "ron", "rs", "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "setting", "sh", "sln", "sol",
-    "spdx", "sql", "srcinfo", "srx", "sty", "styl", "sum", "svelte", "swift", "tcl", "template", "tern-project", "tex", "tf",
-    "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "ts", "tsx", "typ", "typed", "url", "v", "vader", "vbs", "vcxproj",
-    "vert", "vimrc", "vscodeignore", "vue", "wgsl", "winprf", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf",
-    "yml", "zig", "zprofile", "zsh", "zshrc"
+    "ahk", "apache", "applescript", "appxmanifest", "asm", "asp", "aspx", "astro", "awk", "bash", "bash_logout",
+    "bash_profile", "bashrc", "bat", "bib", "bicep", "blocklist", "browserslistrc", "bsd", "c", "cfg", "cjs", "clj", "cljc",
+    "cljs", "cmake", "code-snippets", "code-workspace", "code_snippets", "code_workspace", "colors", "conf", "config", "cpp",
+    "cr", "cs", "csh", "csproj", "css", "cts", "cu", "cursorignore", "d", "dart", "def", "defs", "desktop", "diff",
+    "directory", "dirs", "dockerfile", "dockerignore", "editorconfig", "edn", "ejs", "el", "env", "env.example", "env.local",
+    "env.staging", "env.testing", "erb", "erl", "eslintignore", "ex", "exs", "f", "f90", "f95", "fbs", "filters", "fish",
+    "flow", "frag", "fs", "fsi", "fst", "fsx", "g4", "gd", "gitattributes", "gitconfig", "gitignore", "gitkeep", "gitmodules",
+    "gleam", "glsl", "glslfx", "go", "gql", "gradle", "graphql", "groovy", "gtkrc-2.0", "gtkrc-3.0", "gyp", "gypi", "h", "hbs",
+    "hcl", "hintrc", "hjson", "hpp", "hs", "htaccess", "htm", "html", "html5", "http", "hx", "idl", "inc", "ini", "install",
+    "ipynb", "j2", "jade", "java", "jinja", "jl", "js", "json", "json5", "jsonc", "jsonl", "jsx", "kml", "ksh", "kt", "kts",
+    "lark", "less", "library-ms", "licence", "license", "liquid", "lisp", "list", "locale", "lock", "lua", "m", "make",
+    "manifest", "mdc", "mdl", "mdx", "menu", "meta", "metal", "mjs", "ml", "mli", "mm", "mod", "mojo", "msrv", "mtlx", "mts",
+    "ndjson", "nim", "nims", "nix", "nmake", "npmignore", "npmrc", "nvmrc", "nxignore", "odin", "osl", "pas", "patch",
+    "pbxproj", "pc", "php", "pl", "plist", "pm", "po", "pod", "policy", "pom", "pot", "prefs", "preset", "prettierignore",
+    "prettierrc", "prf", "prisma", "pro", "profile", "proj", "properties", "props", "proto", "ps", "ps1", "ps1xml", "psd1",
+    "psm1", "pubxml", "pug", "pxd", "pxi", "py", "pyf", "pyi", "pypirc", "pyw", "pyx", "qml", "qmltypes", "r", "rb", "rc",
+    "ron", "rs", "rsp", "rules", "s", "sass", "sc", "scala", "scss", "sct", "security", "sed", "setting", "sh", "sln", "sol",
+    "spdx", "sql", "srcinfo", "srx", "sty", "styl", "sum", "svelte", "svg", "swift", "tcl", "template", "tern-project", "tex",
+    "tf", "tfvars", "theme", "tmLanguage", "tmpl", "toml", "tpl", "translation_io", "ts", "tsx", "typ", "typed", "url", "v",
+    "vader", "vbs", "vcxproj", "vert", "vimrc", "vscodeignore", "vue", "webmanifest", "wgsl", "winprf", "wixproj", "wxs",
+    "xaml", "xbel", "xml", "xmp", "xsd", "xsl", "xslt", "yaml", "yapf", "yml", "zig", "zprofile", "zsh", "zshrc"
 })
 DATA_EXTS = frozenset({
-    "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "blf", "certs", "cff", "comp", "count", "crt",
-    "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat-shm", "dat-wal", "data", "db", "db-shm", "db-wal", "db3",
-    "dctl", "deflate", "dpb1", "dpx", "drfx", "fdb", "file", "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb",
-    "ilut", "ind", "index", "inf", "inp", "int", "iolut", "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb",
-    "localstorage", "localstorage-shm", "localstorage-wal", "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut",
-    "pb", "pem", "plugin", "ppk", "prin", "ptb", "pub", "rdb", "real", "regtrans-ms", "salt", "sdb", "search-ms", "spi1d",
-    "sqlite", "sqlite-shm", "sqlite-wal", "sqlite3", "tag", "tflite", "token", "tsv", "usda", "vscdb"
+    "accdb", "aishm", "ani", "arm", "arm64", "bdic", "bf", "binarypb", "binpb", "blf", "certs", "cff", "cnpf", "comp", "count",
+    "crt", "csv", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat-shaperlut", "dat_shaperlut", "dat-shm", "dat-wal",
+    "data", "db", "db-journal", "db-shm", "db-wal", "db3", "dctl", "deflate", "dpb1", "dpx", "drfx", "drp", "fdb", "file",
+    "fingerprint", "fudict", "fuse", "gdb", "gpg", "hdr", "id", "idb", "ilut", "ind", "index", "inf", "inp", "int", "iolut",
+    "jfc", "key", "keyring", "keystore", "knsregistry", "kwl", "ldb", "localstorage", "localstorage-shm", "localstorage-wal",
+    "map", "mdb", "metainfo", "nbt", "ocio", "ofx", "ograf", "olut", "parquet", "pb", "pem", "plugin", "ppk", "prin", "pt",
+    "ptb", "pth", "pub", "rdb", "real", "regtrans-ms", "safetensors", "salt", "sdb", "search-ms", "spi1d", "sqlite",
+    "sqlite-journal", "sqlite-shm", "sqlite-wal", "sqlite3", "tag", "tflite", "token", "tsv", "usda", "vscdb"
 })
 DOC_EXTS = frozenset({
-    "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam",
-    "gmap", "gsheet", "gsite", "gslides", "gtable", "md", "mkd", "mpp", "mpt", "odt", "one", "onepkg", "org", "pages", "pdf",
-    "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "rst", "rtf", "sldm", "sldx", "txt", "vdx", "vsd",
-    "vsdx", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtx", "wbk", "xla", "xlam", "xll", "xls", "xlsb", "xlsm", "xlsx",
-    "xlt", "xltm", "xltx", "xlw"
+    "azw", "azw3", "djvu", "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dq", "eml", "epub", "gddoc", "gdoc", "gdraw",
+    "gdslides", "gform", "gjam", "gmap", "gsheet", "gsite", "gslides", "gtable", "md", "mkd", "mobi", "mpp", "mpt", "odt",
+    "one", "onepkg", "org", "pages", "pdf", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "rst", "rtf",
+    "sldm", "sldx", "txt", "vdx", "vsd", "vsdx", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtx", "wbk", "xla", "xlam",
+    "xll", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
 })
 EXEC_EXTS = frozenset({
     "appimage", "bin", "cmd", "com", "exe", "msi", "run", "vsix"
 })
 FONT_EXTS = frozenset({
-    "afm", "bdf", "eot", "fnt", "fon", "otf", "pcf", "pfa", "pfb", "sfd", "ttf", "woff", "woff2"
+    "afm", "bdf", "eot", "fnt", "fon", "otf", "pcf", "pfa", "pfb", "sfd", "ttf", "ufm", "woff", "woff2"
 })
 IMAGE_EXTS = frozenset({
-    "ai", "arw", "avif", "bmp", "cr2", "cur", "diricon", "dng", "emf", "eps", "ggr", "gif", "heic", "icns", "ico", "indd",
-    "jpeg", "jpg", "jxl", "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "svg", "tif",
+    "ai", "arw", "avif", "bmp", "cr2", "cur", "diricon", "dng", "emf", "eps", "exr", "ggr", "gif", "heic", "icns", "ico",
+    "indd", "jpeg", "jpg", "jxl", "kra", "nef", "orf", "pbm", "pgm", "png", "ppm", "psd", "psp", "raw", "rw2", "sr2", "tif",
     "tiff", "webp", "xbm", "xcf"
 })
 STALE_EXTS = frozenset({
-    "backup", "bak", "bash_history", "bck", "beta", "bkp", "cache", "disabled", "gotemp", "keep", "last", "lesshst", "log",
-    "log0", "log1", "log2", "log3", "log4", "log5", "log6", "log7", "log8", "log9", "msbak", "node_repl_history", "obsolete",
-    "off", "old", "orig", "python_history", "stderr", "tbcache", "tmp", "trashinfo", "tsbuildinfo", "viminfo", "zsh_history"
+    "alt", "backup", "bak", "bash_history", "bck", "beta", "bkp", "cache", "disabled", "gotemp", "keep", "last", "lesshst",
+    "log", "log0", "log1", "log2", "log3", "log4", "log5", "log6", "log7", "log8", "log9", "msbak", "node_repl_history",
+    "obsolete", "off", "old", "orig", "pacnew", "pacsave", "python_history", "stderr", "swo", "swp", "tbcache", "tmp", "temp",
+    "trashinfo", "tsbuildinfo", "viminfo", "winprf_backup", "zsh_history"
 })
 VIDEO_EXTS = frozenset({
-    "3g2", "3gp", "amv", "asf", "avi", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "rm",
-    "rmvb", "vob", "webm", "wmv"
+    "3g2", "3gp", "amv", "asf", "avi", "braw", "dv", "f4v", "flv", "m2ts", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv",
+    "r3d", "rm", "rmvb", "vob", "webm", "wmv"
 })
-BINARY_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
-    "a", "accdb", "aegraphic", "aishm", "ani", "appimage", "bak", "bdic", "bin", "binarypb", "binpb", "blend", "blf", "cff",
-    "class", "com", "dat", "data", "db", "db3", "dbf", "dcm", "deflate", "dll", "doc", "docb", "docm", "docx", "dot", "dotm",
-    "dotx", "dpapi", "dpb1", "dpx", "dq", "drfx", "dylib", "eot", "exe", "fbx", "fdb", "flt", "fnt", "fon", "frm", "fudict",
-    "gdb", "gddoc", "gdoc", "gdraw", "gdslides", "gform", "gjam", "glb", "glox", "gltf", "gmap", "gpg", "gsheet", "gsite",
-    "gslides", "gtable", "hdr", "ibd", "id", "idb", "iges", "img", "jfc", "jsxbin", "keyring", "keystore", "knsregistry", "ko",
-    "kwl", "ldb", "lib", "mdb", "mha", "mhd", "mobi", "mogrt", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd", "myi", "nbt",
-    "ndf", "nhdr", "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "one", "onepkg", "opt", "otf",
-    "ova", "ovf", "pages", "pb", "pcf", "pdf", "pfb", "ply", "pot", "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt",
-    "pptm", "pptx", "prfpset", "pri", "prin", "prproj", "ptb", "pyc", "pyd", "pyo", "qcow2", "rdb", "regtrans-ms", "rnd",
-    "rtf", "salt", "sb3", "schem", "sdb", "sfd", "sldm", "sldx", "so", "so.*", "spi1d", "sprite3", "sqlite", "sqlite3", "step",
-    "stl", "tflite", "tga", "thmx", "ttf", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx", "vsix", "vss", "vssx", "vst",
-    "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam", "xlb", "xll", "xls", "xlsb",
-    "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw"
+NON_TEXT_EXTS = ARCHIVE_EXTS | AUDIO_EXTS | IMAGE_EXTS | VIDEO_EXTS | frozenset({
+    "3ds", "a", "accdb", "aegraphic", "aishm", "ani", "appimage", "azw", "azw3", "bak", "bdic", "beam", "bin", "binarypb",
+    "binpb", "blend", "blf", "cff", "class", "cnpf", "com", "cube", "cube-shaperlut", "cube_shaperlut", "dat", "dat-shaperlut",
+    "dat-shm", "dat-wal", "dat_shaperlut", "data", "db", "db-journal", "db-shm", "db-wal", "db3", "dbf", "dcm", "deflate",
+    "der", "desklink", "djvu", "dll", "doc", "docb", "docm", "docx", "dot", "dotm", "dotx", "dpapi", "dpb1", "dpx", "dq",
+    "drfx", "drp", "dylib", "elc", "eot", "epub", "exe", "fbx", "fdb", "flt", "fnt", "fon", "frm", "fudict", "gch", "gdb",
+    "glb", "glox", "gltf", "gpg", "hdr", "ibd", "idb", "iges", "ilut", "img", "iolut", "jfc", "jks", "jsxbin", "keyring",
+    "keystore", "knsregistry", "ko", "kwl", "ldb", "lib", "lnk", "localstorage", "localstorage-shm", "localstorage-wal",
+    "lock", "luac", "map", "max", "mb", "mdb", "mha", "mhd", "mobi", "mogrt", "mpp", "mpt", "msg", "msi", "mts", "mwb", "myd",
+    "myi", "nbt", "ndf", "nii", "node", "npy", "nrrd", "o", "obj", "ods", "odt", "ofx", "ograf", "olut", "one", "onepkg",
+    "opt", "otf", "ova", "ovf", "p12", "pages", "parquet", "pb", "pcf", "pch", "pdb", "pdf", "pfb", "pfx", "ply", "pot",
+    "potm", "potx", "ppam", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "prfpset", "prin", "prproj", "pt", "ptb", "pth",
+    "pyc", "pyd", "pyo", "qcow2", "rdb", "regtrans-ms", "rnd", "rtf", "safetensors", "salt", "sb3", "schem", "sdb", "sfd",
+    "sldm", "sldx", "so", "so.0", "so.1", "so.2", "so.3", "so.4", "so.5", "so.6", "so.7", "so.8", "so.9", "spi1d", "sprite3",
+    "sqlite", "sqlite-journal", "sqlite-shm", "sqlite-wal", "sqlite3", "step", "stl", "swo", "swp", "tflite", "tga", "thmx",
+    "tlb", "ttf", "uasset", "ufm", "umap", "usda", "usdc", "usdz", "vdi", "vdx", "vhdx", "vmdk", "vscdb", "vsd", "vsdx",
+    "vsix", "vss", "vssx", "vst", "vstx", "vsw", "vsx", "vtp", "vtu", "vtx", "wasm", "wbk", "woff", "woff2", "xla", "xlam",
+    "xlb", "xll", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xlw", "zwc"
 })
+"""Extensions of true binaries and verbose, machine-generated text formats<br>
+(like lock files or 3D assets) that are not meant to be read or edited by hand."""
 # fmt: on
 
 type Category = Literal["archive", "audio", "code", "data", "doc", "exec", "font", "image", "stale", "video"]
@@ -314,14 +325,14 @@ class IGNORE:
         "data/emojis", "dawnCache", "dawnGraphiteCache", "dawnWebGPUCache", "debugbar", "dim-1/mw$default", "dim1/mw$default",
         "dist-newstyle", "dist", "docs/_build", "gpuCache", "graphicsCache", "graphiteDawnCache", "grShaderCache", "htmlCache",
         "htmlCov", "hyphen-data", "identityCache", "indexed[-_.@]*", "indexedDB", "indexes", "jspm_packages", "junit",
-        "lib/encodings", "local storage", "locales", "log", "logs", "media cache files", "meta/assets/indexes",
-        "meta/assets/objects", "metadataIndexer", "node_modules", "node", "npm", "nvm", "obj", "office/*/aggMru",
-        "office/*/dts", "office/*/usageMetricsStore", "office/*/wef", "officeFileCache", "packages", "patch64",
-        "pnpm/store/links", "program64", "pythonLocator", "recent/automaticDestinations", "recent/customDestinations",
-        "reports", "rsa", "scriptCache", "session storage", "shaderCache", "slCache", "spotify/data", "spotify/users",
-        "steamLink/avatars", "storage/framework", "tapCache", "target", "temp", "temp[-_.@]*", "test-results", "tmp",
-        "user/history", "user/webStorage", "uxp/plugins/external", "vendor", "venv", "virtualBkgnd_*", "vscode.git/askPass",
-        "webCache2", "wheels", "x64", "x86", "xcuserdata"
+        "legacy_web_files/ul_dir", "legacy_web_files/result", "lib/encodings", "local storage", "locales", "log", "logs",
+        "media cache files", "meta/assets/indexes", "meta/assets/objects", "metadataIndexer", "node_modules", "node", "npm",
+        "nvm", "obj", "office/*/aggMru", "office/*/dts", "office/*/usageMetricsStore", "office/*/wef", "officeFileCache",
+        "packages", "patch64", "pnpm/store/links", "program64", "pythonLocator", "recent/automaticDestinations",
+        "recent/customDestinations", "reports", "rsa", "scriptCache", "session storage", "shaderCache", "slCache",
+        "spotify/data", "spotify/users", "steamLink/avatars", "storage/framework", "tapCache", "target", "temp", "temp[-_.@]*",
+        "test-results", "tmp", "user/history", "user/webStorage", "uxp/plugins/external", "vendor", "venv", "virtualBkgnd_*",
+        "vscode.git/askPass", "webCache2", "wheels", "x64", "x86", "xcuserdata"
     }
     # fmt: on
 
@@ -1091,26 +1102,30 @@ class TreeRenderer:
     def _get_file_color(self, entry: os.DirEntry[str]) -> tuple[str, str]:
         """Determine the color string for a file based on its type and extension."""
 
-        dot = (name := entry.name).rfind(".")
-        ext = name[dot + 1 :].lower() if dot >= 0 else ""
-
         cat: Category | None = None
+        name = entry.name
 
-        if name.startswith("."):
-            dotfile_ext = name[1:].lower()
-            cat = EXT_TO_CAT.get(dotfile_ext)
-            if cat is not None:
-                ext = dotfile_ext
+        if name.endswith("~"):  # Editor backup files.
+            cat = "stale"
 
-        if cat is None:
-            cat = EXT_TO_CAT.get(ext)
+        else:
+            ext = name[dot + 1 :].lower() if (dot := name.rfind(".")) >= 0 else ""
 
-        if cat is None and not ext:
-            try:
-                if entry.stat(follow_symlinks=False).st_mode & 0o111:
-                    cat = "exec"
-            except Exception:
-                pass
+            if name.startswith("."):
+                dotfile_ext = name[1:].lower()
+                cat = EXT_TO_CAT.get(dotfile_ext)
+                if cat is not None:
+                    ext = dotfile_ext
+
+            if cat is None:
+                cat = EXT_TO_CAT.get(ext)
+
+            if cat is None and not ext:
+                try:
+                    if entry.stat(follow_symlinks=False).st_mode & 0o111:
+                        cat = "exec"
+                except Exception:
+                    pass
 
         if cat is not None:
             colors = self.chrs.category_colors[cat]
@@ -1126,7 +1141,7 @@ class TreeRenderer:
     def _is_text_file(filepath: str) -> bool:
         """Determine if a file is a text file by inspecting its mime type or bytes."""
 
-        if Path(filepath).suffix.lower()[1:] in BINARY_EXTS:
+        if Path(filepath).suffix.lower()[1:] in NON_TEXT_EXTS:
             return False
 
         try:
