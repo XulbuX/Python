@@ -8,23 +8,25 @@ This directory contains lots of small, useful desktop apps built with [**Python*
 
 ### Apps in this collection
 
-- [**Film Credits Tagger**](#film-credits-tagger)
-- [**Video Trimmer**](#video-trimmer)
+-   [**Film Credits Tagger**](#film-credits-tagger)
+-   [**Video Trimmer**](#video-trimmer)
 
 ### General requirements
 
-- Python 3.10+
-- Python packages:
-    ```shell
+-   Python 3.10+
+-   Python packages:
+
+    ```bash
     pip install customtkinter reportlab pymupdf pillow svglib
     ```
-- (*Other app-specific requirements noted in each app's section below.*)
+
+-   (*Other app-specific requirements noted in each app's section below.*)
 
 ### Launching an app
 
-- On **Windows**, double-click the app's `.vbs` file (*e.g.* `film-credits-tagger.vbs`).
-- On **macOS/Linux**, right-click the app's `.sh` file (*e.g.* `film-credits-tagger.sh`) and choose «Run in terminal».
-- (*Or manually run the app's* `src/<app-name>/app.pyw` *with Python.*)
+-   On **Windows**, double-click the app's `.vbs` file (*e.g.* `film-credits-tagger.vbs`).
+-   On **macOS/Linux**, right-click the app's `.sh` file (*e.g.* `film-credits-tagger.sh`) and choose «Run in terminal».
+-   (*Or manually run the app's* `src/<app-name>/app.pyw` *with Python.*)
 
 <br>
 <br>
@@ -36,20 +38,20 @@ A small desktop app for tagging film credits and metadata into video files – p
 
 ### Features
 
-- **Write metadata** into `.mp4`, `.mov`, `.m4v`, `.m4a`, `.3gp`, and `.3g2` files.
-- **Batch processing** – Select multiple files and apply the same tags to all at once.
-- **Editable fields** – Edit a variety of properties covering general info, credits, and descriptions.
-- **Cover art** – Select an image, preview it in-app, and embed it as front-cover art.
-- **JSON templates** – Save the current field values to a `.json` file and reload them later.
-- **Load from video** – Reads existing metadata and cover art back out of a file and populates the fields.
-- **Clear-empty toggle** – When enabled, fields left blank actively *delete* the corresponding tags<br>
+-   **Write metadata** into `.mp4`, `.mov`, `.m4v`, `.m4a`, `.3gp`, and `.3g2` files.
+-   **Batch processing** – Select multiple files and apply the same tags to all at once.
+-   **Editable fields** – Edit a variety of properties covering general info, credits, and descriptions.
+-   **Cover art** – Select an image, preview it in-app, and embed it as front-cover art.
+-   **JSON templates** – Save the current field values to a `.json` file and reload them later.
+-   **Load from video** – Reads existing metadata and cover art back out of a file and populates the fields.
+-   **Clear-empty toggle** – When enabled, fields left blank actively *delete* the corresponding tags<br>
     from the file instead of leaving them untouched.
-- **Cross-platform tags** – Writes both iTunes/QuickTime atoms (*recognized by macOS, VLC, mpv*)<br>
+-   **Cross-platform tags** – Writes both iTunes/QuickTime atoms (*recognized by macOS, VLC, mpv*)<br>
     and Windows-specific tags (*recognized by Windows Explorer and WMP*) simultaneously.
 
 ### Requires
 
-- [**ExifTool**](https://exiftool.org) installed and available on `PATH`
+-   [**ExifTool**](https://exiftool.org) installed and available on `PATH`
     <!-- winget install -e --id OliverBetz.ExifTool -->
 
 <br>
@@ -63,18 +65,18 @@ A small desktop app for trimming the start and/or end off a video file – power
 
 ### Features
 
-- **Lossless trimming** – Uses FFmpeg's stream-copy mode (`-c copy`), so trimming is fast<br>
+-   **Lossless trimming** – Uses FFmpeg's stream-copy mode (`-c copy`), so trimming is fast<br>
     and doesn't re-encode or recompress the video or audio.
-- **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g. `1:23.5`).
-- **Frame-number mode** – Toggle between time and frame-number input for precise, frame-accurate trim points.
-- **Optional bounds** – Leave start blank to trim from the beginning; leave end blank to trim to the end of the file.
-- **Interactive timeline** – Drag the start/end handles or use the stepper buttons to adjust trim points.
-- **Frame previews** – Live thumbnails show the exact start and end frames as you adjust the trim points.
-- **Smart output path** – Defaults to the input file's folder with a `_trim` suffix; or pick your own.
+-   **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g. `1:23.5`).
+-   **Frame-number mode** – Toggle between time and frame-number input for precise, frame-accurate trim points.
+-   **Optional bounds** – Leave start blank to trim from the beginning; leave end blank to trim to the end of the file.
+-   **Interactive timeline** – Drag the start/end handles or use the stepper buttons to adjust trim points.
+-   **Frame previews** – Live thumbnails show the exact start and end frames as you adjust the trim points.
+-   **Smart output path** – Defaults to the input file's folder with a `_trim` suffix; or pick your own.
 
 ### Requires
 
-- [**FFmpeg**](https://ffmpeg.org) (`ffmpeg` and `ffprobe`) installed and available on `PATH`
+-   [**FFmpeg**](https://ffmpeg.org) (`ffmpeg` and `ffprobe`) installed and available on `PATH`
     <!-- winget install -e --id Gyan.FFmpeg -->
 
 <br>

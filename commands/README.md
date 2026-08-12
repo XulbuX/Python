@@ -56,13 +56,13 @@ Before the scripts can run, you need to install their required Python packages. 
 1.  Open your terminal.
 2.  Navigate to your *commands-directory* using the `cd` command.
 
-    ```shell
+    ```bash
     cd "/path/to/your/commands-directory"
     ```
 
 3.  Install the dependencies using pip:
 
-    ```shell
+    ```bash
     py -m pip install --upgrade -r "requirements.txt"
     ```
 
@@ -94,7 +94,7 @@ This makes your commands available from any location in your terminal. ⚙️
     (*Note: This is already done for you in all the repository's files.*)
 *   **Make the files executable:** Open your terminal and run the following command, replacing the path with your own:
 
-    ```shell
+    ```bash
     chmod +x "/path/to/your/commands-directory/*"
     ```
 
@@ -103,7 +103,7 @@ This makes your commands available from any location in your terminal. ⚙️
     2.  For most **Linux** distributions, edit `~/.bashrc`.
     3.  Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
 
-        ```shell
+        ```bash
         export PATH="$PATH:/path/to/your/commands-directory"
         ```
 
