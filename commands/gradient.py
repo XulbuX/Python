@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Quickly generate and preview a color gradient for a
 specified color channel with a specified number of steps."""
@@ -10,17 +10,15 @@ import xulbux as xx
 from xulbux import hexa, rgba
 from xulbux.ansi import RenderSegment, S, StyledText
 
-ARGS = xx.console.get_args(
-    {
-        "color_points": "before",
-        "steps": {"-s", "--steps"},
-        "hsv": {"-H", "--hsv"},
-        "oklch": {"-O", "--oklch"},
-        "list": {"-l", "--list"},
-        "numerate": {"-n", "--numerate"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = xx.console.get_args({
+    "color_points": "before",
+    "steps": {"-s", "--steps"},
+    "hsv": {"-H", "--hsv"},
+    "oklch": {"-O", "--oklch"},
+    "list": {"-l", "--list"},
+    "numerate": {"-n", "--numerate"},
+    "help": {"-h", "--help"},
+})
 
 
 # fmt: off
@@ -32,7 +30,7 @@ def print_help() -> None:
         (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
         ("▀" * len("".join(title))),
         "",
-        (S.BOLD("Usage: "), S.BR.GREEN("gradient "), S.BR.CYAN("<color_1> [direction] <color_2> ... "), S.BR.BLUE("[options]")),  # noqa: E501
+        (S.BOLD("Usage: "), S.BR.GREEN("gradient "), S.BR.CYAN("<color_1> [direction] <color_2> ... "), S.BR.BLUE("[options]")),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Arguments:"),
         ("  ", S.BR.CYAN("color"), "             Hex colors to create gradient between ", S.DIM("(at least 2 required)")),
@@ -43,19 +41,19 @@ def print_help() -> None:
         ("  ", S.DIM("no arrow"), "          Use shortest hue path ", S.DIM("(default)")),
         "",
         S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--steps", S.DIM("="), "N"), "     Number of gradient steps ", S.DIM("(total across all color segments)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--steps", S.DIM("="), "N"), "     Number of gradient steps ", S.DIM("(total across all color segments)")),  # ruff:ignore[line-too-long]
         ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--hsv"), "         Use HSV interpolation with hue rotation"),
-        ("  ", S.BR.BLUE("-O"), ", ", S.BR.BLUE("--oklch"), "       Use perceptually uniform OKLCH interpolation with hue rotation"),  # noqa: E501
+        ("  ", S.BR.BLUE("-O"), ", ", S.BR.BLUE("--oklch"), "       Use perceptually uniform OKLCH interpolation with hue rotation"),  # ruff:ignore[line-too-long]
         ("  ", S.BR.BLUE("-l"), ", ", S.BR.BLUE("--list"), "        Show list of all gradient colors"),
-        ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--numerate"), "    Show step numbers alongside listed colors ", S.DIM("(implies ", S.BR.BLUE("-l"), ")")),  # noqa: E501
+        ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--numerate"), "    Show step numbers alongside listed colors ", S.DIM("(implies ", S.BR.BLUE("-l"), ")")),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), "                 ", S.DIM("# ", S.ITALIC("Linear RGB interpolation"))),  # noqa: E501
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), "             ", S.DIM("# ", S.ITALIC("Multicolor linear gradient"))),  # noqa: E501
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), " ", S.BR.BLUE("--steps", S.DIM("="), "5"), "       ", S.DIM("# ", S.ITALIC("5 steps total across segments"))),  # noqa: E501
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), " ", S.BR.BLUE("-O"), "          ", S.DIM("# ", S.ITALIC("OKLCH, shortest hue path"))),  # noqa: E501
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F"'), " ", S.BR.BLUE("-H"), "          ", S.DIM("# ", S.ITALIC("HSV, clockwise hue rotation"))),  # noqa: E501
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F < 0F0"'), " ", S.BR.BLUE("-H"), "    ", S.DIM("# ", S.ITALIC("HSV, mixed hue directions"))),  # noqa: E501
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), "                 ", S.DIM("# ", S.ITALIC("Linear RGB interpolation"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), "             ", S.DIM("# ", S.ITALIC("Multicolor linear gradient"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), " ", S.BR.BLUE("--steps", S.DIM("="), "5"), "       ", S.DIM("# ", S.ITALIC("5 steps total across segments"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), " ", S.BR.BLUE("-O"), "          ", S.DIM("# ", S.ITALIC("OKLCH, shortest hue path"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F"'), " ", S.BR.BLUE("-H"), "          ", S.DIM("# ", S.ITALIC("HSV, clockwise hue rotation"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F < 0F0"'), " ", S.BR.BLUE("-H"), "    ", S.DIM("# ", S.ITALIC("HSV, mixed hue directions"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()
@@ -311,7 +309,7 @@ def display_gradient(
     ]
     summary = StyledText(
         S.BG.BLACK(" "),
-        StyledText((S.DIM | S.WHITE | S.BG.BLACK)("›")).ansi.join(color_segments),  # noqa: RUF001
+        StyledText((S.DIM | S.WHITE | S.BG.BLACK)("›")).ansi.join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
         (S.WHITE | S.BG.BLACK)(" in ", S.BOLD(str(total_colors)), " steps "),
     )
     summary = StyledText(S.BLACK("▄" * len(summary.raw)), summary.ansi, S.BLACK("▀" * len(summary.raw)), sep="\n")

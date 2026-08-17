@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Calculate the value of π to a specified number of decimal places."""
 
@@ -7,10 +7,9 @@ import math
 import sys
 import time
 from collections.abc import Iterator
-from xulbux import Console, FormatCodes
-from xulbux.console import Throbber
+from xulbux import FormatCodes, Throbber, console
 
-ARGS = Console.get_args({"decimal_places": "before", "help": {"-h", "--help"}})
+ARGS = console.get_args({"decimal_places": "before", "help": {"-h", "--help"}})
 
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
@@ -202,7 +201,7 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
     return parts[0]
 
 
-def p() -> Iterator[int]:
+def pi_generator() -> Iterator[int]:
     q, r, t, j = 1, 180, 60, 2
     while True:
         u, y = 3 * (3 * j + 1) * (3 * j + 2), (q * (27 * j - 12) + 5 * r) // (5 * t)
@@ -211,8 +210,8 @@ def p() -> Iterator[int]:
 
 
 def pi(decimals: int = 10) -> str:
-    _p = p()
-    return "3." + "".join(str(next(_p)) for _ in range(decimals + 1))[1:]
+    pi_gen = pi_generator()
+    return "3." + "".join(str(next(pi_gen)) for _ in range(decimals + 1))[1:]
 
 
 def main() -> None:

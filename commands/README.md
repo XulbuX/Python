@@ -153,10 +153,10 @@ with a short description (*if provided*) and their params (*if found*).
 
 The update system is designed to keep managed commands up-to-date while protecting your custom files:
 
-*   **Managed Commands:** Only files with the comment `#[x-cmds]: UPDATE` at the top (*after the shebang*) are checked for updates.<br>
+*   **Managed Commands:** Only files with the comment `# x-cmds:file[update]` at the top (*after the shebang*) are checked for updates.<br>
     These commands can be automatically updated or deleted if they're removed from the repository.
 
-*   **User Commands:** Files **without** the `#[x-cmds]: UPDATE` marker are considered user-created and<br>
+*   **User Commands:** Files **without** the `# x-cmds:file[update]` marker are considered user-created and<br>
     will **never** be modified or deleted by the update system, keeping your own custom commands safe.
 
 *   **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>

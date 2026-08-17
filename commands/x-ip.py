@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Get local and public IP addresses with optional geolocation information."""
 
@@ -10,14 +10,12 @@ import subprocess
 from typing import Any
 from xulbux import Console, Data, FormatCodes
 
-ARGS = Console.get_args(
-    {
-        "get_geo": {"-g", "--geo", "--location"},
-        "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
-        "json_output": {"-j", "--json"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "get_geo": {"-g", "--geo", "--location"},
+    "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
+    "json_output": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:
@@ -112,7 +110,7 @@ class IPInfo:
         except ImportError:
             return self._get_interfaces_fallback()
 
-    def _get_interfaces_fallback(self) -> dict[str, dict[str, str]]:  # noqa: C901
+    def _get_interfaces_fallback(self) -> dict[str, dict[str, str]]:  # ruff:ignore[complex-structure]
         """Fallback method to get interfaces using system commands."""
         interfaces: dict[str, dict[str, str]] = {}
 
@@ -265,7 +263,7 @@ class IPInfo:
             result["geolocation"] = self.geo_info
         return result
 
-    def display(self) -> None:  # noqa: C901
+    def display(self) -> None:  # ruff:ignore[complex-structure]
         """Display IP information in formatted output."""
         print()
 

@@ -53,7 +53,7 @@ class TrimExporter:
             with contextlib.suppress(Exception):
                 proc.kill()
 
-    ######################################## INTERNAL ########################################
+    # **************************************** INTERNAL ****************************************
 
     def _build_cmd(self, src: str, dst: str, start_s: float, end_s: float | None) -> list[str]:
         # INPUT SEEK TO ~2s BEFORE THE TARGET REDUCES DECODING COST FOR LONG INPUTS.

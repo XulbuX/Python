@@ -1,36 +1,56 @@
 # pyright: basic
+import ctypes
+import io
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import webbrowser
+from contextlib import suppress
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TYPE_CHECKING, Optional
-from PIL import Image
+from typing import TYPE_CHECKING
 import customtkinter as ctk
-import subprocess
-import webbrowser
-import threading
-import tempfile
-import ctypes
-import shutil
-import json
-import sys
-import time
-import io
+from PIL import Image
 
-# MAKE THE _shared PACKAGE (apps/src/_shared) IMPORTABLE WHEN RUNNING THIS SCRIPT DIRECTLY
+# Make the `_shared` package (apps/src/_shared) importable when running this script directly:
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
-from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
-from _shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon  # type: ignore[missing-import]
-from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
-if TYPE_CHECKING:
-    from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
-    from .._shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
-    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
+# Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
+from _shared.consts import COLORS  # type: ignore[missing-import]
+from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
+from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon  # type: ignore[missing-import]
+from _shared.widgets import (  # type: ignore[missing-import]
+    SegmentedButton,
+    SingleLineEntry,
+    SpinnerButton,
+    ToolTip,
+    render_svg_icon,
+)
 
+if TYPE_CHECKING:
+    from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.consts import POPEN_FLAGS as _POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.helpers import (  # ruff:ignore[runtime-import-in-type-checking-block]
+        get_system_theme,
+        resolve_mono_font,
+        setup_window_icon,
+    )
+    from .._shared.widgets import (  # ruff:ignore[runtime-import-in-type-checking-block]
+        SegmentedButton,
+        SingleLineEntry,
+        SpinnerButton,
+        ToolTip,
+        render_svg_icon,
+    )
+
+from consts import APP_ICON_PNG, VIDEO_FILE_TYPES
 from exporter import TrimExporter
-from helpers import parse_time, format_time, frame_to_time, time_to_frame
+from helpers import format_time, frame_to_time, parse_time, time_to_frame
 from widgets import TrimTimeline
-from consts import VIDEO_FILE_TYPES, APP_ICON_PNG
 
 # CONFIG FOR THE PREVIEW THUMBNAILS SHOWN ABOVE THE TIMELINE
 _THUMB_W: int = 266
@@ -48,7 +68,6 @@ _TRIM_SUFFIX: str = "_trim"
 
 
 class VideoTrimmerApp(ctk.CTk):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -62,45 +81,45 @@ class VideoTrimmerApp(ctk.CTk):
         self.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
 
         # SET WINDOW/TASKBAR ICON
-        self._temp_ico_path: Optional[Path] = setup_window_icon(self, APP_ICON_PNG)
+        self._temp_ico_path: Path | None = setup_window_icon(self, APP_ICON_PNG)
 
         # CHECK FOR FFMPEG / FFPROBE
-        self.ffmpeg_path: Optional[str] = shutil.which("ffmpeg")
-        self.ffprobe_path: Optional[str] = shutil.which("ffprobe")
+        self.ffmpeg_path: str | None = shutil.which("ffmpeg")
+        self.ffprobe_path: str | None = shutil.which("ffprobe")
 
-        self.selected_file: Optional[str] = None
-        self.duration: Optional[float] = None  # IN SECONDS
-        self.fps: Optional[float] = None
-        self.output_path: Optional[str] = None
+        self.selected_file: str | None = None
+        self.duration: float | None = None  # IN SECONDS
+        self.fps: float | None = None
+        self.output_path: str | None = None
 
         self._start_sec: float = 0.0  # INTERNAL START POINT (ALWAYS IN SECONDS)
-        self._end_sec: Optional[float] = None  # INTERNAL END POINT; None = END OF FILE
+        self._end_sec: float | None = None  # INTERNAL END POINT; None = END OF FILE
 
         self._input_mode: str = "time"  # "time" OR "frame"
         self._current_theme: str = get_system_theme()
         self._trimming: bool = False
 
-        self._preview_start_job: Optional[str] = None
-        self._preview_end_job: Optional[str] = None
-        self._preview_pending_sec: dict[str, Optional[float]] = {"start": None, "end": None}
-        self._preview_latest_sec: dict[str, Optional[float]] = {"start": None, "end": None}
+        self._preview_start_job: str | None = None
+        self._preview_end_job: str | None = None
+        self._preview_pending_sec: dict[str, float | None] = {"start": None, "end": None}
+        self._preview_latest_sec: dict[str, float | None] = {"start": None, "end": None}
         self._preview_last_fire_ms: dict[str, float] = {"start": 0.0, "end": 0.0}
-        self._start_preview_image: Optional[ctk.CTkImage] = None
-        self._end_preview_image: Optional[ctk.CTkImage] = None
+        self._start_preview_image: ctk.CTkImage | None = None
+        self._end_preview_image: ctk.CTkImage | None = None
         self._preview_generation: int = 0
 
         # LOW-RES THUMBNAIL STRIP FOR SCRUB FEEDBACK
         self._thumb_strip: list[Image.Image] = []
         self._thumb_strip_generation: int = -1
-        self._strip_proc: Optional[subprocess.Popen] = None  # IN-FLIGHT FFMPEG INDEX PROCESS
+        self._strip_proc: subprocess.Popen | None = None  # IN-FLIGHT FFMPEG INDEX PROCESS
 
-        ################################################## UI LAYOUT ##################################################
+        # ************************************************** UI LAYOUT **************************************************
         PAD: int = 16
 
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True, padx=PAD, pady=PAD)
 
-        #################### SELECT FILE SECTION ####################
+        # ******************** SELECT FILE SECTION ********************
         self.sec_file = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.sec_file.pack(fill="x")
         self.sec_file.grid_columnconfigure(1, weight=1)
@@ -125,7 +144,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_file = ctk.CTkLabel(self.sec_file, text="No file selected", anchor="w")
         self.lbl_file.grid(row=1, column=1, padx=(10, 0), sticky="ew")
 
-        #################### TRIM RANGE SECTION ####################
+        # ******************** TRIM RANGE SECTION ********************
         self.sec_trim = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.sec_trim.pack(fill="x", pady=(PAD, 0))
 
@@ -251,7 +270,7 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.lbl_hint.pack(anchor="w", pady=(6, 0))
 
-        #################### OUTPUT SECTION ####################
+        # ******************** OUTPUT SECTION ********************
         self.sec_out = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.sec_out.pack(fill="x", pady=(PAD, 0))
         self.sec_out.grid_columnconfigure(1, weight=1)
@@ -268,10 +287,10 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_select_out.grid(row=1, column=0, sticky="w")
 
-        self.lbl_out = ctk.CTkLabel(self.sec_out, text=f"(auto: same folder, suffix \"{_TRIM_SUFFIX}\")", anchor="w")
+        self.lbl_out = ctk.CTkLabel(self.sec_out, text=f'(auto: same folder, suffix "{_TRIM_SUFFIX}")', anchor="w")
         self.lbl_out.grid(row=1, column=1, padx=(10, 0), sticky="ew")
 
-        #################### APPLY BUTTON –OR– FFMPEG NOT FOUND BANNER ####################
+        # ******************** Apply Button -OR- FFmpeg Not Found Banner ********************
         if self.ffmpeg_path and self.ffprobe_path:
             self._apply_bottom = ctk.CTkFrame(self.main_frame, fg_color="transparent")
             self._apply_bottom.pack(fill="x", side="bottom", pady=(PAD, 0))
@@ -282,7 +301,7 @@ class VideoTrimmerApp(ctk.CTk):
             self.progress_bar.grid(row=0, column=0, pady=(0, 10), sticky="ew")
             self.progress_bar.set(0)
             self.progress_bar.grid_remove()
-            self._progress_anim_id: Optional[str] = None
+            self._progress_anim_id: str | None = None
             self._progress_anim_current: float = 0.0
         else:
             self.btn_apply = None
@@ -294,7 +313,7 @@ class VideoTrimmerApp(ctk.CTk):
                 text="FFmpeg is not installed or not in PATH",
                 font=ctk.CTkFont(size=13, weight="bold"),
                 wraplength=ww - 2 * PAD - 20,
-                justify="left"
+                justify="left",
             )
             lbl_title.pack(anchor="w", padx=10, pady=(2, 0))
             self._banner_labels.append((lbl_title, "destructive_foreground"))
@@ -302,7 +321,7 @@ class VideoTrimmerApp(ctk.CTk):
                 self._banner,
                 text="FFmpeg (and FFprobe) are required to trim video files. Please install them and restart the app.",
                 wraplength=ww - 2 * PAD - 20,
-                justify="left"
+                justify="left",
             )
             lbl_desc.pack(anchor="w", padx=10, pady=(4, 0))
             self._banner_labels.append((lbl_desc, "destructive_muted"))
@@ -341,7 +360,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         self.destroy()
 
-    ########################################################## FILE SELECTION ##########################################################
+    # ************************************************** FILE SELECTION **************************************************
 
     def select_file(self) -> None:
         if not (filename := filedialog.askopenfilename(title="Select Video File", filetypes=VIDEO_FILE_TYPES)):
@@ -367,16 +386,16 @@ class VideoTrimmerApp(ctk.CTk):
         self.trim_timeline.set_range(0.0, 1.0)
         self.trim_timeline.set_enabled(False)
 
-        threading.Thread(target=self._probe_duration, args=(filename, ), daemon=True).start()
+        threading.Thread(target=self._probe_duration, args=(filename,), daemon=True).start()
 
-    def _probe_duration(self, filename: str) -> None:
+    def _probe_duration(self, filename: str) -> None:  # ruff:ignore[complex-structure]
         """Probe the file's duration and FPS via FFprobe; called in a background thread."""
         if not self.ffprobe_path:
             return
 
         cmd = [self.ffprobe_path, "-v", "error", "-print_format", "json", "-show_format", "-show_streams", filename]
-        duration: Optional[float] = None
-        fps: Optional[float] = None
+        duration: float | None = None
+        fps: float | None = None
 
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, **_POPEN_FLAGS)
@@ -387,9 +406,8 @@ class VideoTrimmerApp(ctk.CTk):
 
             for st in data.get("streams", []):
                 if st.get("codec_type") == "video":
-                    if duration is None:
-                        if d := st.get("duration"):
-                            duration = float(d)
+                    if duration is None and (d := st.get("duration")):
+                        duration = float(d)
                     # PARSE r_frame_rate OR avg_frame_rate (FORMAT: "num/den")
                     for key in ("r_frame_rate", "avg_frame_rate"):
                         if (fr := st.get(key)) and "/" in fr:
@@ -429,7 +447,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         self.after(0, _done)
 
-    ########################################################## FRAME PREVIEWS ##########################################################
+    # ************************************************** FRAME PREVIEWS **************************************************
 
     def _cancel_preview_jobs(self) -> None:
         for attr in ("_preview_start_job", "_preview_end_job"):
@@ -493,17 +511,29 @@ class VideoTrimmerApp(ctk.CTk):
 
         threading.Thread(target=_worker, daemon=True).start()
 
-    def _extract_frame(self, video_path: str, sec: float) -> Optional[Image.Image]:
+    def _extract_frame(self, video_path: str, sec: float) -> Image.Image | None:
         """Extract a single video frame at `sec` seconds; returns PIL Image or None."""
         if not self.ffmpeg_path:
             return None
 
         cmd = [
-            self.ffmpeg_path, "-ss", f"{max(0.0, sec):.6f}", "-i", video_path, "-frames:v", "1", "-vf",
+            self.ffmpeg_path,
+            "-ss",
+            f"{max(0.0, sec):.6f}",
+            "-i",
+            video_path,
+            "-frames:v",
+            "1",
+            "-vf",
             (
                 f"scale={_THUMB_W}:{_THUMB_H}:force_original_aspect_ratio=decrease:flags=lanczos,"
                 f"pad={_THUMB_W}:{_THUMB_H}:({_THUMB_W}-iw)/2:({_THUMB_H}-ih)/2"
-            ), "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"
+            ),
+            "-f",
+            "image2pipe",
+            "-vcodec",
+            "mjpeg",
+            "pipe:1",
         ]
 
         try:
@@ -515,9 +545,9 @@ class VideoTrimmerApp(ctk.CTk):
 
         return None
 
-    ########################################################## SCRUB STRIP ##########################################################
+    # ************************************************** SCRUB STRIP **************************************************
 
-    def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:
+    def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:  # ruff:ignore[complex-structure]
         """Background: extract `_STRIP_COUNT` evenly-spaced low-res frames in a single ffmpeg pass."""
         if not self.ffmpeg_path or duration <= 0:
             return
@@ -529,14 +559,27 @@ class VideoTrimmerApp(ctk.CTk):
 
         with tempfile.TemporaryDirectory(prefix="vt_strip_", ignore_cleanup_errors=True) as td:
             cmd = [
-                self.ffmpeg_path, "-hide_banner", "-loglevel", "error", "-progress", "pipe:1", "-i", video_path, "-vf",
+                self.ffmpeg_path,
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-progress",
+                "pipe:1",
+                "-i",
+                video_path,
+                "-vf",
                 (
                     f"fps={rate:.6f},"
                     f"scale={_STRIP_W}:{_STRIP_H}:force_original_aspect_ratio=decrease:flags=fast_bilinear,"
                     f"pad={_STRIP_W}:{_STRIP_H}:({_STRIP_W}-iw)/2:({_STRIP_H}-ih)/2"
-                ), "-vsync", "vfr", "-q:v", "6", "-frames:v",
+                ),
+                "-vsync",
+                "vfr",
+                "-q:v",
+                "6",
+                "-frames:v",
                 str(count),
-                str(Path(td) / "f%05d.jpg")
+                str(Path(td) / "f%05d.jpg"),
             ]
 
             try:
@@ -614,7 +657,7 @@ class VideoTrimmerApp(ctk.CTk):
         else:
             self.lbl_strip_status.configure(text="", text_color=c["placeholder_foreground"])
 
-    def _strip_image_at(self, sec: float) -> Optional[Image.Image]:
+    def _strip_image_at(self, sec: float) -> Image.Image | None:
         """Return the nearest low-res strip thumbnail for `sec`, upscaled to display size."""
         if not self._thumb_strip or self.duration is None or self.duration <= 0:
             return None
@@ -627,7 +670,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         return self._thumb_strip[idx].resize((_THUMB_W, _THUMB_H), Image.Resampling.BILINEAR)
 
-    def _set_preview(self, which: str, img: Optional[Image.Image]) -> None:
+    def _set_preview(self, which: str, img: Image.Image | None) -> None:
         """Update a thumbnail widget; `which` is 'start' or 'end'."""
         lbl = self.lbl_start_thumb if which == "start" else self.lbl_end_thumb
         c = COLORS[self._current_theme]
@@ -635,10 +678,8 @@ class VideoTrimmerApp(ctk.CTk):
         if img is None:
             setattr(self, f"_{which}_preview_image", None)
             # CLEAR THE UNDERLYING tk.Label IMAGE FIRST TO PREVENT TclError FROM STALE PHOTIMAGE REFS
-            try:
+            with suppress(Exception):
                 lbl._label.configure(image="")
-            except Exception:
-                pass
             lbl.configure(
                 image=None, text="Start\nframe" if which == "start" else "End\nframe", text_color=c["placeholder_foreground"]
             )
@@ -649,7 +690,7 @@ class VideoTrimmerApp(ctk.CTk):
         lbl.configure(image=ctk_img, text="")
         lbl.place(relx=0.5, rely=0.5, anchor="center")
 
-    ########################################################## TIMELINE INTERACTIONS ##########################################################
+    # ************************************************* TIMELINE INTERACTIONS *************************************************
 
     def _on_timeline_change(self, start_frac: float, end_frac: float) -> None:
         """Called continuously while the timeline handle is being dragged."""
@@ -685,7 +726,7 @@ class VideoTrimmerApp(ctk.CTk):
         self._schedule_preview("start", self._start_sec)
         self._schedule_preview("end", self._end_sec if self._end_sec is not None else self.duration)
 
-    ########################################################## ENTRY INTERACTIONS ##########################################################
+    # ************************************************** ENTRY INTERACTIONS **************************************************
 
     def _on_entry_commit(self, which: str) -> None:
         """Parse the entry and update internal state; revert on invalid input."""
@@ -701,13 +742,11 @@ class VideoTrimmerApp(ctk.CTk):
             self._sync_timeline()
             return
 
-        sec: Optional[float] = None
+        sec: float | None = None
         if self._input_mode == "frame":
             fps = self.fps or _DEFAULT_FPS
-            try:
+            with suppress(ValueError):
                 sec = frame_to_time(int(val), fps)
-            except ValueError:
-                pass
         else:
             sec = parse_time(val)
 
@@ -732,13 +771,13 @@ class VideoTrimmerApp(ctk.CTk):
         """Increment or decrement the start or end by exactly one frame."""
         if not self.selected_file:
             return
+
         fps = self.fps or _DEFAULT_FPS
         step = 1.0 / fps
 
-        if which == "start":
-            current = self._start_sec
-        else:
-            current = self._end_sec if self._end_sec is not None else (self.duration or 0.0)
+        current = (
+            self._start_sec if which == "start" else (self._end_sec if self._end_sec is not None else (self.duration or 0.0))
+        )
 
         new_sec = max(0.0, current + direction * step)
         if self.duration is not None:
@@ -762,7 +801,7 @@ class VideoTrimmerApp(ctk.CTk):
         self._update_hint()
         self._sync_entries()
 
-    ########################################################## STATE SYNC ##########################################################
+    # ************************************************** STATE SYNC **************************************************
 
     def _sync_entries(self) -> None:
         """Repopulate the entry widgets from `_start_sec` / `_end_sec`."""
@@ -808,11 +847,11 @@ class VideoTrimmerApp(ctk.CTk):
 
         self.lbl_hint.configure(text=hint)
 
-    ########################################################## OUTPUT & RESET ##########################################################
+    # ************************************************** OUTPUT & RESET **************************************************
 
     def select_output(self) -> None:
-        initial_dir: Optional[str] = None
-        initial_file: Optional[str] = None
+        initial_dir: str | None = None
+        initial_file: str | None = None
 
         if self.selected_file:
             p = Path(self.selected_file)
@@ -852,7 +891,7 @@ class VideoTrimmerApp(ctk.CTk):
         c = COLORS[self._current_theme]
         self.lbl_file.configure(text="No file selected", text_color=c["placeholder_foreground"])
         self.btn_select_file.stop(state="normal")
-        self.lbl_out.configure(text=f"(auto: same folder, suffix \"{_TRIM_SUFFIX}\")", text_color=c["placeholder_foreground"])
+        self.lbl_out.configure(text=f'(auto: same folder, suffix "{_TRIM_SUFFIX}")', text_color=c["placeholder_foreground"])
 
         self._set_preview("start", None)
         self._set_preview("end", None)
@@ -860,7 +899,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.trim_timeline.set_range(0.0, 1.0)
         self.trim_timeline.set_enabled(False)
 
-    ########################################################## THEMING ##########################################################
+    # ************************************************** THEMING **************************************************
 
     def _apply_theme(self) -> None:
         self._current_theme = get_system_theme()
@@ -910,13 +949,13 @@ class VideoTrimmerApp(ctk.CTk):
         self.trim_timeline.apply_colors(c)
 
         # STEPPER BUTTONS
-        _chevron_left = render_svg_icon("chevron-left", 14, c["muted_foreground"])
-        _chevron_right = render_svg_icon("chevron-right", 14, c["muted_foreground"])
+        chevron_left = render_svg_icon("chevron-left", 14, c["muted_foreground"])
+        chevron_right = render_svg_icon("chevron-right", 14, c["muted_foreground"])
         for btn, icon in (
-            (self.btn_start_left, _chevron_left),
-            (self.btn_start_right, _chevron_right),
-            (self.btn_end_left, _chevron_left),
-            (self.btn_end_right, _chevron_right),
+            (self.btn_start_left, chevron_left),
+            (self.btn_start_right, chevron_right),
+            (self.btn_end_left, chevron_left),
+            (self.btn_end_right, chevron_right),
         ):
             btn.configure(
                 fg_color=c["secondary"],
@@ -989,7 +1028,7 @@ class VideoTrimmerApp(ctk.CTk):
             self._apply_theme()
         self.after(2000, self._poll_theme)
 
-    ########################################################## TRIMMING ##########################################################
+    # ************************************************** TRIMMING **************************************************
 
     def _animate_progress_to(self, target: float) -> None:
         """Ease-out animate the progress bar toward `target` at ~60 fps."""
@@ -999,24 +1038,24 @@ class VideoTrimmerApp(ctk.CTk):
             self.after_cancel(self._progress_anim_id)
             self._progress_anim_id = None
 
-        _STEP_MS: int = 16
-        _EASE: float = 0.25
-        _SNAP: float = 0.005
+        STEP_MS: int = 16
+        EASE: float = 0.25
+        SNAP: float = 0.005
 
         def _step() -> None:
-            if abs(remaining := target - self._progress_anim_current) < _SNAP:
+            if abs(remaining := target - self._progress_anim_current) < SNAP:
                 self.progress_bar.set(target)
                 self._progress_anim_current = target
                 self._progress_anim_id = None
                 return
 
-            self._progress_anim_current += remaining * _EASE
+            self._progress_anim_current += remaining * EASE
             self.progress_bar.set(self._progress_anim_current)
-            self._progress_anim_id = self.after(_STEP_MS, _step)
+            self._progress_anim_id = self.after(STEP_MS, _step)
 
         _step()
 
-    def apply_trim(self) -> None:
+    def apply_trim(self) -> None:  # ruff:ignore[complex-structure]
         if not self.ffmpeg_path:
             return
         if not self.selected_file:
@@ -1044,7 +1083,7 @@ class VideoTrimmerApp(ctk.CTk):
                     return
                 start_s = parsed
 
-        end_s: Optional[float] = None
+        end_s: float | None = None
         if end_str:
             if self._input_mode == "frame":
                 fps = self.fps or _DEFAULT_FPS
@@ -1082,15 +1121,14 @@ class VideoTrimmerApp(ctk.CTk):
             messagebox.showerror("Invalid Output", "Output path must differ from the input file.")
             return
 
-        if Path(out_path).exists():
-            if not messagebox.askokcancel(
-                    "Overwrite?",
-                    f'"{Path(out_path).name}" already exists.\n\nOverwrite this file?',
-                    icon="warning",
-            ):
-                return
+        if Path(out_path).exists() and not messagebox.askokcancel(
+            "Overwrite?",
+            f'"{Path(out_path).name}" already exists.\n\nOverwrite this file?',
+            icon="warning",
+        ):
+            return
 
-        clip_total: Optional[float] = None
+        clip_total: float | None = None
         if end_s is not None:
             clip_total = end_s - start_s
         elif self.duration is not None:
@@ -1112,7 +1150,7 @@ class VideoTrimmerApp(ctk.CTk):
         def _on_progress(frac: float) -> None:
             self.after(0, lambda f=frac: self._animate_progress_to(f))
 
-        def _on_done(ok: bool, err: Optional[str]) -> None:
+        def _on_done(ok: bool, err: str | None) -> None:
 
             def _apply() -> None:
                 self._trimming = False
@@ -1148,10 +1186,8 @@ if __name__ == "__main__":
     # ON WINDOWS, SET THE APP USER MODEL ID BEFORE CREATING THE WINDOW SO THE
     # TASKBAR GROUPS THE APP UNDER ITS OWN ICON RATHER THAN THE PYTHON INTERPRETER
     if sys.platform == "win32":
-        try:
+        with suppress(Exception):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VideoTrimmer.app")
-        except Exception:
-            pass
 
     app = VideoTrimmerApp()
 

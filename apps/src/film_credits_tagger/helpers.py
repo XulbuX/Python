@@ -10,17 +10,17 @@ def normalize_multi(val: str) -> str:
 def parse_date(val: str) -> str:
     """Parse a user-entered date (`DD/MM/YYYY`, flexible separators) into ExifTool format `YYYY:MM:DD 00:00:00`.<br>
     Raises `ValueError` with a human-readable message if the input cannot be parsed."""
-    _fmt = "Expected format: DD/MM/YYYY (e.g. 25/12/2026)"
+    fmt = "Expected format: DD/MM/YYYY (e.g. 25/12/2026)"
 
     if not (match := re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})[./\- ](\d{4})", val.strip())):
-        raise ValueError(f'Cannot parse "{val}" as a date.\n{_fmt}')
+        raise ValueError(f'Cannot parse "{val}" as a date.\n{fmt}')
 
     day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
 
     if not (1 <= month <= 12):
-        raise ValueError(f'Invalid month ({month}) in "{val}".\n{_fmt}')
+        raise ValueError(f'Invalid month ({month}) in "{val}".\n{fmt}')
     if not (1 <= day <= 31):
-        raise ValueError(f'Invalid day ({day}) in "{val}".\n{_fmt}')
+        raise ValueError(f'Invalid day ({day}) in "{val}".\n{fmt}')
 
     return f"{year}:{month:02d}:{day:02d} 00:00:00"
 

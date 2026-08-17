@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Lists all Python files, executable as commands, in the current directory.
 A short description and command arguments are displayed if available."""
@@ -18,11 +18,11 @@ from xulbux.base.types import ArgParseConfigs
 Only files, starting with a python shebang line (e.g. `#!/usr/bin/env python3`), are considered commands.
 
 [2] WHICH FILES WILL BE CHECKED FOR UPDATES?
-Only files that include the comment `#[x-cmds]: UPDATE` at the top of the file will be checked for updates from GitHub.
+Only files that include the comment `# x-cmds:file[update]` at the top of the file will be checked for updates from GitHub.
 
 [3] UNLISTED FILES
-Files that include the comment `#[x-cmds]: UNLISTED` at the top of the file will not appear in the commands list.
-Combine options to apply both: `#[x-cmds]: UNLISTED, UPDATE`
+Files that include the comment `# x-cmds:file[unlisted]` at the top of the file will not appear in the commands list.
+Combine options to apply both: `# x-cmds:file[unlisted, update]`
 This is useful for shared helper/library files that should be auto-updated but are not standalone commands.
 
 [4] COMMAND DESCRIPTION
@@ -74,7 +74,7 @@ ARGS = xx.console.get_args({"list": {"-l", "--list"}, "update_check": {"-u", "--
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
-    update_marker=r"(?i)^\s*#\s*\[x-cmds\]\s*:\s*([\w]+(?:\s*,\s*[\w]+)*)\s*$",
+    update_marker=r"(?i)^\s*#\s*x-cmds:file\[([\w]+(?:\s*,\s*[\w]+)*)\]\s*$",
     desc=r"(?is)^(?:\s*#!?[^\n]+)*\s*(\"{3}(?:(?!\"\"\").)+\"{3}|'{3}(?:(?!''').)+'{3})",
     sys_argv=r"(?m)(?:#\s*(\[.+?\])\s*)?sys\s*\.\s*argv(?:\[[-:0-9]+\])?(?:\s*#\s*(\[.+?\]))?",
     args_comment=r"(\w+)(?:\s*:\s*(?:\{([^\}]*)\}|(before|after)))?",
@@ -129,7 +129,7 @@ def get_python_files() -> set[str]:
 
 
 def get_xcmds_options(filepath: str) -> dict[str, bool]:
-    """Get options for `x-cmds` set using special `#[x-cmds]: …` comments."""
+    """Get options for `x-cmds` set using special `# x-cmds:file[…]` comments."""
 
     options: dict[str, bool] = {}
     try:
@@ -138,10 +138,10 @@ def get_xcmds_options(filepath: str) -> dict[str, bool]:
                 if PATTERNS.python_shebang.match(line):
                     continue  # SKIP SHEBANG LINE
                 elif match := PATTERNS.update_marker.match(line):
-                    for option in (opt.strip().upper() for opt in match.group(1).split(",")):
-                        if option == "UPDATE":
+                    for option in (opt.strip().lower() for opt in match.group(1).split(",")):
+                        if option == "update":
                             options["update_check"] = True
-                        elif option == "UNLISTED":
+                        elif option == "unlisted":
                             options["unlisted"] = True
                 else:
                     break  # STOP AT FIRST NON-MATCHING LINE
@@ -348,7 +348,7 @@ def get_commands_str(python_files: set[str], list_mode: bool = False) -> str:
     return cmds
 
 
-def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # noqa: C901
+def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[complex-structure]
     """Check for new files, updated files, and deleted files on GitHub compared to local command-directory."""
 
     result: GithubDiffs = {

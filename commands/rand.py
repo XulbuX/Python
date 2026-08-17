@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Generate a truly random number with a specific number of digits or within a range.
 Provide either the number of digits or a min and max range."""
@@ -11,14 +11,12 @@ from xulbux.console import ProgressBar
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args(
-    {
-        "digits_or_min_max": "before",
-        "batch_gen": {"-b", "--batch", "--batch-gen"},
-        "format": {"-f", "--format"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "digits_or_min_max": "before",
+    "batch_gen": {"-b", "--batch", "--batch-gen"},
+    "format": {"-f", "--format"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

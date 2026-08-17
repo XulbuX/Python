@@ -1,15 +1,14 @@
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-from pynput.keyboard import Key, KeyCode
-from pynput import mouse, keyboard
-from xulbux import Console, Path
-import threading
-import comtypes
-import shutil
-import pygame
-import time
-import sys
 import os
-
+import shutil
+import sys
+import threading
+import time
+import comtypes
+import pygame
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from pynput import keyboard, mouse
+from pynput.keyboard import Key, KeyCode
+from xulbux import Console, Path
 
 MIN_VOLUME = 0.50  # VOLUME IN %
 
@@ -62,15 +61,16 @@ def add_self_to_startup() -> None:
             return
         startup_dir = os.path.join(appdata_path, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
         target_script_path_in_startup = os.path.join(startup_dir, script_filename)
-        if os.path.normcase(os.path.abspath(current_script_path)
-                            ) == os.path.normcase(os.path.abspath(target_script_path_in_startup)):
+        if os.path.normcase(os.path.abspath(current_script_path)) == os.path.normcase(
+            os.path.abspath(target_script_path_in_startup)
+        ):
             Console.info("Script is running from startup directory. Won't copy itself to there.")
         else:
             Console.info(f"Copying script to startup directory: {target_script_path_in_startup}")
             try:
                 os.makedirs(startup_dir, exist_ok=True)
                 shutil.copy2(current_script_path, target_script_path_in_startup)
-                Console.done(f"Script successfully copied to startup.")
+                Console.done("Script successfully copied to startup.")
             except Exception as exc:
                 Console.fail(f"Failed to copy script to startup: {exc}", exit=False)
     except Exception as exc:
@@ -135,22 +135,22 @@ def ensure_min_system_volume() -> None:
             else:
                 Console.fail(
                     f"COM Initialization (CoInitialize) failed: HRESULT={exc.hresult}, Text='{exc.text}'.\n ⮡ Cannot manage volume.",
-                    exit=False
+                    exit=False,
                 )
                 return
         except Exception as exc_generic_init:
             Console.fail(
                 f"Unexpected error during COM Initialization (CoInitialize): {exc_generic_init}.\n ⮡ Cannot manage volume.",
-                exit=False
+                exit=False,
             )
             return
         speakers = AudioUtilities.GetSpeakers()
         if not speakers:
-            Console.warn("No speaker device found.\n"
-                         " ⮡ Cannot manage master system volume.", exit=False)
+            Console.warn("No speaker device found.\n ⮡ Cannot manage master system volume.", exit=False)
         else:
-            volume_control = speakers.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL,
-                                               None).QueryInterface(IAudioEndpointVolume)
+            volume_control = speakers.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None).QueryInterface(
+                IAudioEndpointVolume
+            )
             current_mute_state = volume_control.GetMute()
             current_vol_scalar = volume_control.GetMasterVolumeLevelScalar()
             if current_mute_state:
@@ -175,7 +175,7 @@ def ensure_min_system_volume() -> None:
     except comtypes.COMError as e_com_audio:
         Console.fail(
             f"pycaw/COM Error during audio device interaction: HRESULT={e_com_audio.hresult}, Text='{e_com_audio.text}'",
-            exit=False
+            exit=False,
         )
         if e_com_audio.hresult == 0x8001010E:  # RPC_E_WRONG_THREAD
             Console.warn(
@@ -210,10 +210,10 @@ def play_sound(sound_key) -> None:
         return
     sound_object = LOADED_SOUNDS.get(sound_key)
     if sound_object:
-        sound_thread = threading.Thread(target=_play_sound_task, args=(sound_object, ), daemon=True)
+        sound_thread = threading.Thread(target=_play_sound_task, args=(sound_object,), daemon=True)
         sound_thread.start()
     elif sound_key in SOUNDS:
-        Console.debug(f"Sound for key '{str(sound_key)}' was defined but not loaded. Skipping playback.", active=DEBUG)
+        Console.debug(f"Sound for key '{sound_key!s}' was defined but not loaded. Skipping playback.", active=DEBUG)
 
 
 def on_click(x, y, button, pressed) -> None:
@@ -225,7 +225,7 @@ def on_click(x, y, button, pressed) -> None:
 def on_press(key) -> None:
     try:
         Console.debug(f"Key pressed: {key} [dim]/(type: {type(key)})[_dim]", active=DEBUG)
-        if (Key.alt in PRESSED_KEYS or Key.alt_l in PRESSED_KEYS or Key.alt_r in PRESSED_KEYS):
+        if Key.alt in PRESSED_KEYS or Key.alt_l in PRESSED_KEYS or Key.alt_r in PRESSED_KEYS:
             if key == Key.f4:
                 play_sound("alt_f4")
                 PRESSED_KEYS.add(key)
@@ -240,9 +240,8 @@ def on_press(key) -> None:
                     play_sound(alt_char_key)
                     PRESSED_KEYS.add(key)
                     return
-        if (Key.ctrl in PRESSED_KEYS or Key.ctrl_l in PRESSED_KEYS or Key.ctrl_r in PRESSED_KEYS):
-            if isinstance(key, KeyCode) and key.char is not None:
-                pass
+        if Key.ctrl in PRESSED_KEYS or Key.ctrl_l in PRESSED_KEYS or Key.ctrl_r in PRESSED_KEYS:
+            isinstance(key, KeyCode) and key.char is not None
 
         PRESSED_KEYS.add(key)
 
@@ -291,7 +290,7 @@ def main() -> None:
     except Exception as exc_init:
         Console.fail(
             f"An unexpected error occurred during pygame initialization: {exc_init}\n ⮡ Sound playback will be disabled.",
-            exit=False
+            exit=False,
         )
         PYGAME_INITIALIZED = False
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """A really advanced directory tree generator
 with a lot of options and customization."""
@@ -23,18 +23,16 @@ from xulbux import S, StyledText, Term, Throbber
 if TYPE_CHECKING:
     from xulbux.ansi import AnyStyle
 
-ARGS = xx.console.get_args(
-    {
-        "base_dir": "before",
-        "ignore_dirs": {"-i", "--ignore"},
-        "auto_ignore_mode": {"-a", "--auto-ignore"},
-        "truncate_similar": {"-nt", "--no-truncate"},
-        "include_file_contents": {"-c", "--content"},
-        "to_file": {"-f", "--file"},
-        "interactive": {"-I", "--interactive"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = xx.console.get_args({
+    "base_dir": "before",
+    "ignore_dirs": {"-i", "--ignore"},
+    "auto_ignore_mode": {"-a", "--auto-ignore"},
+    "truncate_similar": {"-nt", "--no-truncate"},
+    "include_file_contents": {"-c", "--content"},
+    "to_file": {"-f", "--file"},
+    "interactive": {"-I", "--interactive"},
+    "help": {"-h", "--help"},
+})
 
 COLORS: TreeColorConfig = {
     "line": S.BR.BLACK,
@@ -187,21 +185,19 @@ ALL_CATEGORIES: dict[Category, frozenset[str]] = {
 }
 EXT_TO_CAT: dict[str, Category] = {ext: cat for cat, exts in ALL_CATEGORIES.items() for ext in exts}
 
-TEXT_TRANS = str.maketrans(
-    {
-        0x2000: " ",
-        0x2001: " ",
-        0x2002: " ",
-        0x2003: " ",
-        0x2004: " ",
-        0x2005: " ",
-        0x2006: " ",
-        0x2007: " ",
-        0x2008: " ",
-        0x2009: " ",
-        0x200A: " ",
-    }
-)
+TEXT_TRANS = str.maketrans({
+    0x2000: " ",
+    0x2001: " ",
+    0x2002: " ",
+    0x2003: " ",
+    0x2004: " ",
+    0x2005: " ",
+    0x2006: " ",
+    0x2007: " ",
+    0x2008: " ",
+    0x2009: " ",
+    0x200A: " ",
+})
 
 
 # fmt: off
@@ -219,24 +215,24 @@ def print_help() -> None:
         ("  ", S.BR.CYAN("base_dir"), "               Base directory to generate tree from ", S.DIM("(default: CWD)")),
         "",
         S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # noqa: E501
-        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # noqa: E501
-        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive similar-filename chunks"),  # noqa: E501
-        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # noqa: E501
-        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive similar-filename chunks"),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # ruff:ignore[line-too-long]
         ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
         "",
         S.BOLD("Controls:"),
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "              Cancel and exit"),
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--auto-ignore", S.DIM("="), "1"), "                           ", S.DIM("# ", S.ITALIC("Set auto-ignore mode to hardcoded only"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-truncate"), "                             ", S.DIM("# ", S.ITALIC("Disable truncation of repetitive chunks"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # noqa: E501
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # noqa: E501
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--auto-ignore", S.DIM("="), "1"), "                           ", S.DIM("# ", S.ITALIC("Set auto-ignore mode to hardcoded only"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-truncate"), "                             ", S.DIM("# ", S.ITALIC("Disable truncation of repetitive chunks"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # ruff:ignore[line-too-long]
         "",
         (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
         ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
@@ -356,12 +352,12 @@ class IGNORE:
         "version.date": r"(?:[0-9]\.){3}" + date,
         "delimited_date": r"(?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})[-.](?:[0-9]{2}|[0-9]{4})",
         "base64": r"[+/0-9A-Za-z]{8,}={1,2}",
-        "hex": r"(?:[a-fA-F0-9]{7,8}|[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",  # noqa: E501
-        "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",  # noqa: E501
+        "hex": r"(?:[a-fA-F0-9]{7,8}|[a-fA-F0-9]{16}[a-fA-F0-9]{20}|[a-fA-F0-9]{32}|[a-fA-F0-9]{38}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64})",  # ruff:ignore[line-too-long]
+        "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{sep}|{ext}))?",  # ruff:ignore[line-too-long]
         "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
         "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
-        "rand_short": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{4,12}}(?:{sep}|{ext})",  # noqa: E501
-        "rand_long": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{13,64}}(?:{sep}|{ext})",  # noqa: E501
+        "rand_short": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{4,12}}(?:{sep}|{ext})",  # ruff:ignore[line-too-long]
+        "rand_long": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{sep}|{ext}))(?![A-Z]+(?:{sep}|{ext}))(?![a-z]+(?:{sep}|{ext}))[a-zA-Z0-9]{{13,64}}(?:{sep}|{ext})",  # ruff:ignore[line-too-long]
     }
     standalones: ClassVar[dict[str, str]] = {
         "hex2": r"[a-fA-F0-9]{2}",
@@ -486,7 +482,7 @@ class DirectoryScanner:
         self.exact_folder_paths = tuple(exact_folder_paths_list)
         self.abs_folder_paths = tuple((pattern[1:], pattern[1:] + "/") for pattern in abs_folder_paths_list)
 
-    def should_ignore_path(self, path: str) -> bool:  # noqa: C901
+    def should_ignore_path(self, path: str) -> bool:  # ruff:ignore[complex-structure]
         """Check if a relative path matches any user-specified or default ignore pattern."""
 
         if not path:
@@ -652,7 +648,7 @@ class TreeRenderer:
         self._progress_item_count: int = 0
         self._console_width: int = xx.console.get_width()
 
-    def _pre_scan_parallel(self, root_dir: str) -> None:  # noqa: C901
+    def _pre_scan_parallel(self, root_dir: str) -> None:  # ruff:ignore[complex-structure]
         """Pre-populate the scan and ignore caches by scanning all subdirectories in
         parallel before the single-threaded rendering pass. I/O calls release the GIL,
         so a thread pool gives a large real-world speedup on any modern SSD."""
@@ -1226,7 +1222,7 @@ def get_user_inputs(config: TreeConfig) -> None:
     )
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:  # ruff:ignore[complex-structure]
     if ARGS.help.exists:
         print_help()
         return

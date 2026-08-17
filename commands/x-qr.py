@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Lets you quickly generate QR codes directly within the terminal."""
 
@@ -13,17 +13,15 @@ from xulbux import Console, FormatCodes
 from xulbux.base.consts import COLOR
 from xulbux.console import ParsedArgs, Throbber
 
-ARGS = Console.get_args(
-    {
-        "text": "before",
-        "invert": {"-i", "--invert"},
-        "scale": {"-s", "--scale"},
-        "error_correction": {"-e", "--error"},
-        "contact": {"-c", "--contact"},
-        "wifi": {"-w", "--wifi"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "text": "before",
+    "invert": {"-i", "--invert"},
+    "scale": {"-s", "--scale"},
+    "error_correction": {"-e", "--error"},
+    "contact": {"-c", "--contact"},
+    "wifi": {"-w", "--wifi"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:
@@ -382,7 +380,7 @@ class WiFi:
         return display
 
 
-def ascii_qr(text: str, args: ParsedArgs) -> str | None:  # noqa: C901
+def ascii_qr(text: str, args: ParsedArgs) -> str | None:  # ruff:ignore[complex-structure]
     """Generate and display QR code in terminal."""
 
     try:

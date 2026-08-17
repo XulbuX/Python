@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# ruff: noqa: C901,RUF001
-# [x-cmds]: UPDATE
+# ruff:file-ignore[complex-structure, ambiguous-unicode-character-string]
+# x-cmds:file[update]
 
 """Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
@@ -17,16 +17,14 @@ from xulbux.regex import LazyRegex
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args(
-    {
-        "calculation": "before",
-        "ans": {"-a", "--ans"},
-        "precision": {"-p", "--precision"},
-        "format": {"-f", "--format"},
-        "debug": {"-d", "--debug"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "calculation": "before",
+    "ans": {"-a", "--ans"},
+    "precision": {"-p", "--precision"},
+    "format": {"-f", "--format"},
+    "debug": {"-d", "--debug"},
+    "help": {"-h", "--help"},
+})
 DEBUG = ARGS.debug.exists
 REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 

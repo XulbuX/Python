@@ -1,1 +1,1 @@
-# SHARED CODE & ASSETS USED BY MULTIPLE APPS UNDER apps/src/
+# Shared code & assets used by multiple apps under `apps/src/`.

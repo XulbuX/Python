@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """List all library dependencies imported across Python files in the script directory.
 Filters out local project modules, showing only installable packages."""
@@ -11,17 +11,15 @@ from pathlib import Path
 from xulbux import Console, Data, FileSys, FormatCodes
 from xulbux.console import Throbber
 
-ARGS = Console.get_args(
-    {
-        "directory": "before",
-        "external_only": {"-e", "--external"},
-        "recursive": {"-r", "--recursive"},
-        "list": {"-l", "--list"},
-        "as_json": {"-j", "--json"},
-        "install": {"-i", "--install"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "directory": "before",
+    "external_only": {"-e", "--external"},
+    "recursive": {"-r", "--recursive"},
+    "list": {"-l", "--list"},
+    "as_json": {"-j", "--json"},
+    "install": {"-i", "--install"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:
@@ -129,7 +127,7 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
     return module_usage
 
 
-def show_and_install_modules(modules: dict[str, list[str]], external_only: bool, install: bool = False) -> None:  # noqa: C901
+def show_and_install_modules(modules: dict[str, list[str]], external_only: bool, install: bool = False) -> None:  # ruff:ignore[complex-structure]
     title_start = "INSTALLING" if install else "FOUND"
     output = (
         f"[b|bg:black]([in]( {title_start} ) {len(modules)} [in]( EXTERNAL MODULES ))\n"
@@ -167,7 +165,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     output += "\n"
     FormatCodes.print(output)
 
-    ################################################## INSTALLATION ##################################################
+    # ************************************************** INSTALLATION **************************************************
     if not install:
         return
     if not Console.confirm("Proceed with installation?"):

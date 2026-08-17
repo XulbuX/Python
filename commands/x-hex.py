@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Transform all hex color codes in a file or directory:
 uppercase, lowercase, grayscale, hue rotation, inversion, and more."""
@@ -21,19 +21,17 @@ class Operation(Enum):
     INVERT = "invert"
 
 
-ARGS = Console.get_args(
-    {
-        "path": "before",
-        "upper": {"-u", "--upper"},
-        "lower": {"-l", "--lower"},
-        "grayscale": {"-g", "--grayscale"},
-        "rotate": {"-r", "--rotate"},
-        "invert": {"-i", "--invert"},
-        "apply_gitignore": {"-G", "--gitignore"},
-        "check": {"-d", "--dry"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = Console.get_args({
+    "path": "before",
+    "upper": {"-u", "--upper"},
+    "lower": {"-l", "--lower"},
+    "grayscale": {"-g", "--grayscale"},
+    "rotate": {"-r", "--rotate"},
+    "invert": {"-i", "--invert"},
+    "apply_gitignore": {"-G", "--gitignore"},
+    "check": {"-d", "--dry"},
+    "help": {"-h", "--help"},
+})
 
 PATTERNS = LazyRegex(hex=r"(?i)(#)([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3,4})\b|(0x)([0-9A-F]{8}|[0-9A-F]{6})\b")
 
@@ -124,7 +122,7 @@ def is_gitignored(file_path: str, patterns: list[tuple[str, str]]) -> bool:
     return False
 
 
-def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: int = 0, dry_run: bool = False) -> None:  # noqa: C901
+def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: int = 0, dry_run: bool = False) -> None:  # ruff:ignore[complex-structure]
     if not is_text_file(file_path):
         return
 
@@ -210,7 +208,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
         )
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:  # ruff:ignore[complex-structure]
     if ARGS.help.exists or not ARGS.path.values:
         print_help()
         return

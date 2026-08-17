@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Lists all installed Visual Studio Code extensions with
 the option to directly format them as a JSON list."""
@@ -31,7 +31,7 @@ def print_help() -> None:
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("vscode-ext"), "           ", S.DIM("# ", S.ITALIC("List all installed extensions"))),
-        ("  ", S.BR.GREEN("vscode-ext "), S.BR.BLUE("--json"), "    ", S.DIM("# ", S.ITALIC("Output all extension as a JSON list"))),  # noqa: E501
+        ("  ", S.BR.GREEN("vscode-ext "), S.BR.BLUE("--json"), "    ", S.DIM("# ", S.ITALIC("Output all extension as a JSON list"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()
@@ -50,80 +50,63 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
         programfiles_x86 = os.environ.get("PROGRAMFILES(X86)", "")
 
         if localappdata:
-            locations.extend(
-                [
-                    ("code", str(Path(localappdata) / "Programs" / "Microsoft VS Code" / "bin" / "code.cmd")),
-                    (
-                        "code-insiders",
-                        str(Path(localappdata) / "Programs" / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
-                    ),
-                ]
-            )
-        if programfiles:
-            locations.extend(
-                [
-                    ("code", str(Path(programfiles) / "Microsoft VS Code" / "bin" / "code.cmd")),
-                    ("code-insiders", str(Path(programfiles) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),
-                ]
-            )
-        if programfiles_x86:
-            locations.extend(
-                [
-                    ("code", str(Path(programfiles_x86) / "Microsoft VS Code" / "bin" / "code.cmd")),
-                    (
-                        "code-insiders",
-                        str(Path(programfiles_x86) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
-                    ),
-                ]
-            )
-
-    elif system == "Darwin":
-        locations.extend(
-            [
-                ("code", "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"),
-                ("code-insiders", "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code-insiders"),
-                (
-                    "code",
-                    str(
-                        Path.home()
-                        / "Applications"
-                        / "Visual Studio Code.app"
-                        / "Contents"
-                        / "Resources"
-                        / "app"
-                        / "bin"
-                        / "code"
-                    ),
-                ),
+            locations.extend([
+                ("code", str(Path(localappdata) / "Programs" / "Microsoft VS Code" / "bin" / "code.cmd")),
                 (
                     "code-insiders",
-                    str(
-                        Path.home()
-                        / "Applications"
-                        / "Visual Studio Code - Insiders.app"
-                        / "Contents"
-                        / "Resources"
-                        / "app"
-                        / "bin"
-                        / "code-insiders"
-                    ),
+                    str(Path(localappdata) / "Programs" / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
                 ),
-                ("code", "/usr/local/bin/code"),
-                ("code-insiders", "/usr/local/bin/code-insiders"),
-            ]
-        )
+            ])
+        if programfiles:
+            locations.extend([
+                ("code", str(Path(programfiles) / "Microsoft VS Code" / "bin" / "code.cmd")),
+                ("code-insiders", str(Path(programfiles) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),
+            ])
+        if programfiles_x86:
+            locations.extend([
+                ("code", str(Path(programfiles_x86) / "Microsoft VS Code" / "bin" / "code.cmd")),
+                (
+                    "code-insiders",
+                    str(Path(programfiles_x86) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
+                ),
+            ])
+
+    elif system == "Darwin":
+        locations.extend([
+            ("code", "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"),
+            ("code-insiders", "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code-insiders"),
+            (
+                "code",
+                str(
+                    Path.home() / "Applications" / "Visual Studio Code.app" / "Contents" / "Resources" / "app" / "bin" / "code"
+                ),
+            ),
+            (
+                "code-insiders",
+                str(
+                    Path.home()
+                    / "Applications"
+                    / "Visual Studio Code - Insiders.app"
+                    / "Contents"
+                    / "Resources"
+                    / "app"
+                    / "bin"
+                    / "code-insiders"
+                ),
+            ),
+            ("code", "/usr/local/bin/code"),
+            ("code-insiders", "/usr/local/bin/code-insiders"),
+        ])
 
     elif system == "Linux":
-        locations.extend(
-            [
-                ("code", "/usr/bin/code"),
-                ("code-insiders", "/usr/bin/code-insiders"),
-                ("code", "/usr/local/bin/code"),
-                ("code-insiders", "/usr/local/bin/code-insiders"),
-                ("code", str(Path.home() / ".local" / "bin" / "code")),
-                ("code-insiders", str(Path.home() / ".local" / "bin" / "code-insiders")),
-            ]
-        )
+        locations.extend([
+            ("code", "/usr/bin/code"),
+            ("code-insiders", "/usr/bin/code-insiders"),
+            ("code", "/usr/local/bin/code"),
+            ("code-insiders", "/usr/local/bin/code-insiders"),
+            ("code", str(Path.home() / ".local" / "bin" / "code")),
+            ("code-insiders", str(Path.home() / ".local" / "bin" / "code-insiders")),
+        ])
 
     return locations
 

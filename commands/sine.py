@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Show a sine wave animation inside the terminal."""
 
@@ -23,16 +23,16 @@ def print_help() -> None:
         "",
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--speed"), "        Animation speed multiplier ", S.DIM("(default: 1.0)")),
-        ("  ", S.BR.BLUE("-y"), ", ", S.BR.BLUE("--y-stretch"), "    Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-y"), ", ", S.BR.BLUE("--y-stretch"), "    Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Controls:"),
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "          Stop the animation"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("sine"), "                  ", S.DIM("# ", S.ITALIC("Default wave"))),
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--speed", S.DIM("="), "2"), "        ", S.DIM("# ", S.ITALIC("Scroll twice as fast"))),  # noqa: E501
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--y-stretch", S.DIM("="), "3"), "    ", S.DIM("# ", S.ITALIC("Cycles 3× more stretched out"))),  # noqa: E501, RUF001
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("-s", S.DIM("="), "0.5"), " ", S.BR.BLUE("-y", S.DIM("="), "0.5"), "    ", S.DIM("# ", S.ITALIC("Half speed, half stretch"))),  # noqa: E501
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--speed", S.DIM("="), "2"), "        ", S.DIM("# ", S.ITALIC("Scroll twice as fast"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--y-stretch", S.DIM("="), "3"), "    ", S.DIM("# ", S.ITALIC("Cycles 3× more stretched out"))),  # ruff:ignore[line-too-long, ambiguous-unicode-character-string]
+        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("-s", S.DIM("="), "0.5"), " ", S.BR.BLUE("-y", S.DIM("="), "0.5"), "    ", S.DIM("# ", S.ITALIC("Half speed, half stretch"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()

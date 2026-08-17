@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# ruff: noqa: RUF001
-# [x-cmds]: UPDATE
+# ruff:file-ignore[ambiguous-unicode-character-string]
+# x-cmds:file[update]
 
 """Play a maze game in the console.
 Controls and options are shown on startup."""
@@ -292,7 +292,7 @@ class Maze:
 
         for y in range(height):
             for x in range(width):
-                noise_map[(y, x)] = random.uniform(min_noise, max_noise)
+                noise_map[y, x] = random.uniform(min_noise, max_noise)
 
         frame_delay = 1.0 / fps
 

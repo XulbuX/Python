@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Force delete files or directories, even if they are locked by processes."""
 
@@ -15,7 +15,7 @@ import psutil
 import xulbux as xx
 from xulbux import FormatCodes
 
-######################### CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED #########################
+# ************************* CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED *************************
 
 PROTECTED_PROCESSES_WINDOWS = {
     "csrss.exe",
@@ -363,7 +363,7 @@ def attempt_deletion(path: Path) -> bool:
     return not path.exists()
 
 
-def force_delete(path: Path) -> bool:  # noqa: C901
+def force_delete(path: Path) -> bool:  # ruff:ignore[complex-structure]
     """Force delete a file or directory, terminating processes if needed."""
 
     print()

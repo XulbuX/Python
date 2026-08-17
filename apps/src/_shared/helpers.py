@@ -60,7 +60,7 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
     pil_icon: Image.Image = Image.open(str(icon_png))
 
     if sys.platform == "win32":
-        ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)  # noqa: SIM115
+        ico_tmp = tempfile.NamedTemporaryFile(suffix=".ico", delete=False)  # ruff:ignore[open-file-with-context-handler]
         ico_tmp.close()
         pil_icon.save(ico_tmp.name, format="ICO", sizes=[(512, 512), (256, 256), (128, 128), (64, 64)])
         ico_path: Path = Path(ico_tmp.name)

@@ -1,38 +1,57 @@
 # pyright: basic
+import ctypes
+import io
+import json
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import webbrowser
+from contextlib import suppress
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TYPE_CHECKING, Optional
-from PIL import Image
+from typing import TYPE_CHECKING
 import customtkinter as ctk
-import subprocess
-import webbrowser
-import threading
-import tempfile
-import ctypes
-import shutil
-import json
-import sys
-import io
-import re
+from PIL import Image
 
-# MAKE THE _shared PACKAGE (apps/src/_shared) IMPORTABLE WHEN RUNNING THIS SCRIPT DIRECTLY
+# Make the `_shared` package (apps/src/_shared) importable when running this script directly:
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# SHARED – ABSOLUTE IMPORTS DURING RUNTIME, RELATIVE ONES DURING DEVELOPMENT SO THE TYPES ARE LINKED CORRECTLY IN THE IDE
-from _shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon  # type: ignore[missing-import]
-from _shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon  # type: ignore[missing-import]
-from _shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS  # type: ignore[missing-import]
-if TYPE_CHECKING:
-    from .._shared.helpers import resolve_mono_font, get_system_theme, setup_window_icon
-    from .._shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
-    from .._shared.consts import COLORS, POPEN_FLAGS as _POPEN_FLAGS
+# Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
+from _shared.consts import COLORS  # type: ignore[missing-import]
+from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
+from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon  # type: ignore[missing-import]
+from _shared.widgets import (  # type: ignore[missing-import]
+    MultilineEntry,
+    SingleLineEntry,
+    SpinnerButton,
+    ToolTip,
+    render_svg_icon,
+)
 
-from helpers import normalize_multi, validate_field, parse_date, exiftool_date_to_display
-from consts import COVER_ART_FILE_TYPES, VIDEO_FILE_TYPES, APP_ICON_PNG, FIELDS, FIELDS_FLAT, FieldEntry, FieldType, ValueType
+if TYPE_CHECKING:
+    from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.consts import POPEN_FLAGS as _POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.helpers import (  # ruff:ignore[runtime-import-in-type-checking-block]
+        get_system_theme,
+        resolve_mono_font,
+        setup_window_icon,
+    )
+    from .._shared.widgets import (  # ruff:ignore[runtime-import-in-type-checking-block]
+        MultilineEntry,
+        SingleLineEntry,
+        SpinnerButton,
+        ToolTip,
+        render_svg_icon,
+    )
+
+from consts import APP_ICON_PNG, COVER_ART_FILE_TYPES, FIELDS, FIELDS_FLAT, VIDEO_FILE_TYPES, FieldEntry, FieldType, ValueType
+from helpers import exiftool_date_to_display, normalize_multi, parse_date, validate_field
 
 
 class MetadataTaggerApp(ctk.CTk):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -46,24 +65,24 @@ class MetadataTaggerApp(ctk.CTk):
         self.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
 
         # SET WINDOW/TASKBAR ICON
-        self._temp_ico_path: Optional[Path] = setup_window_icon(self, APP_ICON_PNG)
+        self._temp_ico_path: Path | None = setup_window_icon(self, APP_ICON_PNG)
 
         # CHECK FOR EXIFTOOL
-        self.exiftool_path: Optional[str] = shutil.which("exiftool")
+        self.exiftool_path: str | None = shutil.which("exiftool")
 
         self.selected_files: list[str] = []
 
-        self.cover_art_path: Optional[str] = None
-        self.cover_art_embed_path: Optional[str] = None  # TEMP FILE WITH RESIZED VERSION
-        self.cover_preview_image: Optional[ctk.CTkImage] = None
-        self._cover_video_source: Optional[str] = None  # SET WHEN COVER CAME FROM A VIDEO (NOT AN IMAGE FILE)
+        self.cover_art_path: str | None = None
+        self.cover_art_embed_path: str | None = None  # TEMP FILE WITH RESIZED VERSION
+        self.cover_preview_image: ctk.CTkImage | None = None
+        self._cover_video_source: str | None = None  # SET WHEN COVER CAME FROM A VIDEO (NOT AN IMAGE FILE)
 
         self._current_theme: str = get_system_theme()
 
-        ################################################## UI LAYOUT ##################################################
+        # ************************************************** UI LAYOUT **************************************************
         PAD: int = 16
 
-        #################### TWO-COLUMN ROOT FRAME ####################
+        # ******************** TWO-COLUMN ROOT FRAME ********************
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True)
 
@@ -77,7 +96,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.right_panel = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.right_panel.pack(side="left", fill="both", expand=True)
 
-        #################### SELECT MEDIA SECTION ####################
+        # ******************** SELECT MEDIA SECTION ********************
         self.sec1 = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.sec1.pack(fill="x", padx=PAD, pady=(PAD - 6, PAD))
         self.sec1.grid_columnconfigure(1, weight=1)
@@ -125,7 +144,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.sep1 = ctk.CTkFrame(self.left_panel, height=1)
         self.sep1.pack(fill="x")
 
-        #################### LOAD/SAVE DATA SECTION ####################
+        # ******************** LOAD/SAVE DATA SECTION ********************
         self.sec2 = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.sec2.pack(fill="x", padx=PAD, pady=(PAD - 6, PAD))
 
@@ -143,11 +162,11 @@ class MetadataTaggerApp(ctk.CTk):
             text="Load from Video",
             command=self.load_from_video,
             state="disabled",  # ENABLED AFTER _verify_exiftool CONFIRMS
-            border_width=1
+            border_width=1,
         )
         self.btn_load_from_video.pack(fill="x", pady=(6, 0))
 
-        #################### APPLY BUTTON –OR– EXIFTOOL NOT FOUND BANNER ####################
+        # ******************** Apply Button -OR- ExifTool Not Found Banner ********************
         if self.exiftool_path:
             self._apply_bottom = ctk.CTkFrame(self.left_panel, fg_color="transparent")
             self._apply_bottom.pack(fill="x", side="bottom")
@@ -158,7 +177,7 @@ class MetadataTaggerApp(ctk.CTk):
             self.progress_bar.grid(row=0, column=0, padx=PAD, pady=(PAD // 2, 10), sticky="ew")
             self.progress_bar.set(0)
             self.progress_bar.grid_remove()
-            self._progress_anim_id: Optional[str] = None
+            self._progress_anim_id: str | None = None
             self._progress_anim_current: float = 0.0
         else:
             self.btn_apply = None
@@ -170,7 +189,7 @@ class MetadataTaggerApp(ctk.CTk):
                 text="ExifTool is not installed or not in PATH",
                 font=ctk.CTkFont(size=13, weight="bold"),
                 wraplength=290,
-                justify="left"
+                justify="left",
             )
             lbl_title.pack(anchor="w", padx=10, pady=(2, 0))
             self._banner_labels.append((lbl_title, "destructive_foreground"))
@@ -178,7 +197,7 @@ class MetadataTaggerApp(ctk.CTk):
                 self._banner,
                 text="ExifTool is required to write metadata to video files. Please install it and restart the app.",
                 wraplength=290,
-                justify="left"
+                justify="left",
             )
             lbl_desc.pack(anchor="w", padx=10, pady=(4, 0))
             self._banner_labels.append((lbl_desc, "destructive_muted"))
@@ -187,7 +206,7 @@ class MetadataTaggerApp(ctk.CTk):
             lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://exiftool.org"))
             self._banner_labels.append((lbl_cmd, "link"))
 
-        #################### METADATA FIELDS SECTION ####################
+        # ******************** METADATA FIELDS SECTION ********************
         self.sec3_header = ctk.CTkFrame(self.right_panel, fg_color="transparent")
         self.sec3_header.pack(fill="x", padx=PAD, pady=(PAD - 6, 0))
         self.sw_clear_empty = ctk.CTkCheckBox(
@@ -198,13 +217,13 @@ class MetadataTaggerApp(ctk.CTk):
             checkbox_width=18,
             checkbox_height=18,
             border_width=1,
-            corner_radius=5
+            corner_radius=5,
         )
         self.sw_clear_empty.pack(side="right", anchor="e", pady=(0, 6))
         ToolTip(
             self.sw_clear_empty,
-            "ON – Empty fields and no cover art will delete those tags from the file when applying.\n"
-            "OFF – Only filled-in fields are written; existing tags in the file are left untouched.",
+            "ON – Empty fields and no cover art will delete those tags from the file when applying.\n"  # ruff:ignore[ambiguous-unicode-character-string]
+            "OFF – Only filled-in fields are written; existing tags in the file are left untouched.",  # ruff:ignore[ambiguous-unicode-character-string]
         )
         self.btn_reset_all = ctk.CTkButton(
             self.sec3_header, text="", width=28, height=28, corner_radius=6, border_width=0, command=self.reset_all
@@ -220,10 +239,10 @@ class MetadataTaggerApp(ctk.CTk):
         self.sec3._scrollbar.configure(width=14)
 
         # AUTO-HIDE SCROLLBAR WHEN CONTENT FITS
-        _orig_set = self.sec3._scrollbar.set
+        orig_set = self.sec3._scrollbar.set
 
         def _on_yscroll(first: float, last: float) -> None:
-            _orig_set(first, last)
+            orig_set(first, last)
             if float(first) <= 0.0 and float(last) >= 1.0:
                 self.sec3._scrollbar.grid_remove()
                 self.sec3._parent_frame.pack(padx=PAD)
@@ -234,12 +253,12 @@ class MetadataTaggerApp(ctk.CTk):
         self.sec3._parent_canvas.configure(yscrollcommand=_on_yscroll)
 
         # SPEED UP MOUSEWHEEL SCROLLING
-        _sec3_canvas = self.sec3._parent_canvas
+        sec3_canvas = self.sec3._parent_canvas
 
         def _on_sec3_fast_scroll(event: object) -> None:
-            _sec3_canvas.yview_scroll(int(-48 * (event.delta / 120)), "units")  # type: ignore[attr-defined]
+            sec3_canvas.yview_scroll(int(-48 * (event.delta / 120)), "units")  # type: ignore[attr-defined]
 
-        _sec3_canvas.bind("<Enter>", lambda _: _sec3_canvas.bind_all("<MouseWheel>", _on_sec3_fast_scroll), add=True)
+        sec3_canvas.bind("<Enter>", lambda _: sec3_canvas.bind_all("<MouseWheel>", _on_sec3_fast_scroll), add=True)
 
         self.entries: dict[str, FieldEntry] = {}
         self._field_labels: list[ctk.CTkLabel] = []
@@ -298,8 +317,8 @@ class MetadataTaggerApp(ctk.CTk):
         if filenames := filedialog.askopenfilenames(title="Select Video File(s)", filetypes=VIDEO_FILE_TYPES):
             self.selected_files = list(filenames)
             self.lbl_files.configure(
-                text=f"{len(self.selected_files)} file{'' if len(self.selected_files) == 1 else's'} selected",
-                text_color=COLORS[self._current_theme]["foreground"]
+                text=f"{len(self.selected_files)} file{'' if len(self.selected_files) == 1 else 's'} selected",
+                text_color=COLORS[self._current_theme]["foreground"],
             )
 
     def select_cover_art(self) -> None:
@@ -336,7 +355,7 @@ class MetadataTaggerApp(ctk.CTk):
         # SAVE RESIZED VERSION TO TEMP FILE FOR EXIFTOOL
         if self.cover_art_embed_path and Path(self.cover_art_embed_path).exists():
             Path(self.cover_art_embed_path).unlink()
-        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)  # ruff:ignore[open-file-with-context-handler]
         tmp.write(buf.getvalue())
         tmp.close()
         self.cover_art_embed_path = tmp.name
@@ -352,7 +371,7 @@ class MetadataTaggerApp(ctk.CTk):
         self.lbl_cover_thumb.configure(image=self.cover_preview_image, text="")
         self.lbl_cover_info.configure(
             text=f"image/jpeg\n{embed_w}\u00d7{embed_h}\n{embed_kb} KB\nFront Cover",
-            text_color=COLORS[self._current_theme]["foreground"]
+            text_color=COLORS[self._current_theme]["foreground"],
         )
         self.btn_remove_cover.grid()  # SHOW THE REMOVE BUTTON NOW THAT A COVER IS LOADED
 
@@ -374,10 +393,8 @@ class MetadataTaggerApp(ctk.CTk):
         # NO STALE PhotoImage REFERENCE CAUSES TclError WHEN TKINTER VALIDATES OPTIONS ON REDRAW.
         self.lbl_cover_thumb._image = None
 
-        try:
+        with suppress(Exception):
             self.lbl_cover_thumb._label.configure(image="")
-        except Exception:
-            pass
 
         self.lbl_cover_thumb.configure(text="No cover\nart selected", text_color=c["placeholder_foreground"])
         self.lbl_cover_info.configure(text="", text_color=c["placeholder_foreground"])
@@ -444,7 +461,7 @@ class MetadataTaggerApp(ctk.CTk):
             fg_color=c["secondary"],
             hover_color=c["secondary_hover"],
             border_color=c["secondary_border"],
-            text_color=c["secondary_foreground"]
+            text_color=c["secondary_foreground"],
         )
         self.btn_remove_cover.configure(
             width=28,
@@ -459,7 +476,7 @@ class MetadataTaggerApp(ctk.CTk):
             fg_color=c["secondary"],
             hover_color=c["secondary_hover"],
             border_color=c["secondary_border"],
-            text_color=c["secondary_foreground"]
+            text_color=c["secondary_foreground"],
         )
         self.btn_reset_all.configure(
             width=28,
@@ -535,20 +552,20 @@ class MetadataTaggerApp(ctk.CTk):
             self.after_cancel(self._progress_anim_id)
             self._progress_anim_id = None
 
-        _STEP_MS: int = 16
-        _EASE: float = 0.25
-        _SNAP: float = 0.005
+        STEP_MS: int = 16
+        EASE: float = 0.25
+        SNAP: float = 0.005
 
         def _step() -> None:
-            if abs(remaining := target - self._progress_anim_current) < _SNAP:
+            if abs(remaining := target - self._progress_anim_current) < SNAP:
                 self.progress_bar.set(target)
                 self._progress_anim_current = target
                 self._progress_anim_id = None
                 return
 
-            self._progress_anim_current += remaining * _EASE
+            self._progress_anim_current += remaining * EASE
             self.progress_bar.set(self._progress_anim_current)
-            self._progress_anim_id = self.after(_STEP_MS, _step)
+            self._progress_anim_id = self.after(STEP_MS, _step)
 
         _step()
 
@@ -559,26 +576,26 @@ class MetadataTaggerApp(ctk.CTk):
         for label, data in self.entries.items():
             if val := data["widget"].get().strip():
                 if FIELDS_FLAT[label].get("value_type") == ValueType.Date:
-                    try:
+                    with suppress(ValueError):
+                        # If error, save as-is; `apply_metadata` will catch the error later.
                         val = exiftool_date_to_display(parse_date(val)) or val
-                    except ValueError:
-                        pass  # SAVE AS-IS; apply_metadata WILL CATCH THE ERROR LATER
 
                 template_data[label] = val
 
-        cover_src: Optional[str] = self._cover_video_source or self.cover_art_path
+        cover_src: str | None = self._cover_video_source or self.cover_art_path
 
         if not template_data and not cover_src:
             messagebox.showinfo("Empty", "No fields filled out to save.")
             return
 
-        if filepath := filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")],
-                                                    title="Save Metadata Template"):
+        if filepath := filedialog.asksaveasfilename(
+            defaultextension=".json", filetypes=[("JSON Files", "*.json")], title="Save Metadata Template"
+        ):
             if cover_src:
                 try:
                     rel = Path(cover_src).relative_to(Path(filepath).parent, walk_up=True)
                     template_data["__cover_art__"] = rel.as_posix()
-                except ValueError:  # DIFFERENT DRIVES ON WINDOWS – FALL BACK TO ABSOLUTE
+                except ValueError:  # DIFFERENT DRIVES ON WINDOWS; FALL BACK TO ABSOLUTE
                     template_data["__cover_art__"] = cover_src
             try:
                 with open(filepath, "w", encoding="utf-8") as file:
@@ -639,25 +656,30 @@ class MetadataTaggerApp(ctk.CTk):
             except subprocess.CalledProcessError as err:
                 self.after(
                     0,
-                    lambda m=f"Failed to read metadata:\n{err.stderr}":
-                    (self.btn_load_from_video.stop(state="normal"), messagebox.showerror("ExifTool Error", m))
+                    lambda m=f"Failed to read metadata:\n{err.stderr}": (
+                        self.btn_load_from_video.stop(state="normal"),
+                        messagebox.showerror("ExifTool Error", m),
+                    ),
                 )
                 return
 
             except (json.JSONDecodeError, KeyError) as err:
                 self.after(
                     0,
-                    lambda m=f"Could not parse ExifTool output:\n{err}":
-                    (self.btn_load_from_video.stop(state="normal"), messagebox.showerror("Parse Error", m))
+                    lambda m=f"Could not parse ExifTool output:\n{err}": (
+                        self.btn_load_from_video.stop(state="normal"),
+                        messagebox.showerror("Parse Error", m),
+                    ),
                 )
                 return
 
             if not records:
                 self.after(
-                    0, lambda: (
+                    0,
+                    lambda: (
                         self.btn_load_from_video.stop(state="normal"),
-                        messagebox.showinfo("No Data", "ExifTool returned no metadata for this file.")
-                    )
+                        messagebox.showinfo("No Data", "ExifTool returned no metadata for this file."),
+                    ),
                 )
                 return
 
@@ -707,7 +729,7 @@ class MetadataTaggerApp(ctk.CTk):
             return
 
         try:
-            with open(filepath, "r", encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8") as file:
                 template_data: dict[str, str] = json.load(file)
         except Exception as exc:
             messagebox.showerror("Error", f"Failed to load template:\n{exc}")
@@ -727,12 +749,13 @@ class MetadataTaggerApp(ctk.CTk):
         # (JOINING AN ABSOLUTE PATH DISCARDS THE BASE, SO BOTH FORMATS WORK TRANSPARENTLY)
         if not Path(cover_path := str((Path(filepath).parent / cover_path_raw).resolve())).is_file():
             messagebox.showwarning(
-                "Cover Art Not Found", f"The cover image saved in this template could not be found:\n{cover_path}\n\n"
-                "The rest of the template was loaded successfully."
+                "Cover Art Not Found",
+                f"The cover image saved in this template could not be found:\n{cover_path}\n\n"
+                "The rest of the template was loaded successfully.",
             )
             return
 
-        # FAST PATH: PLAIN IMAGE FILE (RUNS ON MAIN THREAD – NO SPINNER NEEDED)
+        # FAST PATH: PLAIN IMAGE FILE (RUNS ON MAIN THREAD; NO SPINNER NEEDED)
         try:
             self.cover_art_path = cover_path
             self._set_cover_from_image(Image.open(cover_path).convert("RGB"))
@@ -740,7 +763,7 @@ class MetadataTaggerApp(ctk.CTk):
         except Exception:
             self.cover_art_path = None
 
-        # SLOW PATH: EMBEDDED COVER IN A VIDEO – RUN EXIFTOOL IN A BACKGROUND THREAD
+        # SLOW PATH: EMBEDDED COVER IN A VIDEO; RUN EXIFTOOL IN A BACKGROUND THREAD
         c = COLORS[self._current_theme]
         self.btn_load_template.start(c["card_foreground"])
 
@@ -755,14 +778,14 @@ class MetadataTaggerApp(ctk.CTk):
                     messagebox.showwarning(
                         "Cover Art Failed to Load",
                         f"The cover image saved in this template could not be loaded:\n{cover_path}\n\n"
-                        "The rest of the template was loaded successfully."
+                        "The rest of the template was loaded successfully.",
                     )
 
             self.after(0, _done)
 
         threading.Thread(target=_worker, daemon=True).start()
 
-    def apply_metadata(self) -> None:
+    def apply_metadata(self) -> None:  # ruff:ignore[complex-structure]
         if not self.exiftool_path:
             return
         if not self.selected_files:
@@ -775,16 +798,15 @@ class MetadataTaggerApp(ctk.CTk):
         n_files: int = len(files)
         exiftool: str = self.exiftool_path
 
-        if clear_mode := bool(self.sw_clear_empty.get()):
-            if not messagebox.askokcancel(
-                    "Clear Empty Fields",
-                    '"Clear empty fields" is enabled.\n\n'
-                    f"Fields left blank will actively delete the corresponding tags from the file{'' if n_files == 1 else 's'}. "
-                    "This cannot be undone – consider backing up your files first.\n\n"
-                    "Continue?",
-                    icon="warning",
-            ):
-                return
+        if (clear_mode := bool(self.sw_clear_empty.get())) and not messagebox.askokcancel(
+            "Clear Empty Fields",
+            '"Clear empty fields" is enabled.\n\n'
+            f"Fields left blank will actively delete the corresponding tags from the file{'' if n_files == 1 else 's'}. "
+            "This cannot be undone – consider backing up your files first.\n\n"  # ruff:ignore[ambiguous-unicode-character-string]
+            "Continue?",
+            icon="warning",
+        ):
+            return
 
         tag_lines: list[str] = []
         val_tempfiles: list[Path] = []  # PER-VALUE TEMP FILES FOR MULTILINE CONTENT
@@ -793,7 +815,7 @@ class MetadataTaggerApp(ctk.CTk):
         def _tag_line(tag: str, val: str) -> str:
             """Return an argfile line for `tag=val`, using a temp file if val contains newlines."""
             if "\n" in val:
-                vf = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8", delete=False, newline="\n")
+                vf = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8", delete=False, newline="\n")  # ruff:ignore[open-file-with-context-handler]
                 vf.write(val)
                 vf.close()
                 val_tempfiles.append(Path(vf.name))
@@ -840,7 +862,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         # WRITE TAG ASSIGNMENTS TO A UTF-8 ARGFILE SO UNICODE VALUES ARE PASSED
         # CORRECTLY ON WINDOWS (BYPASSES SYSTEM CODEPAGE FOR COMMAND-LINE ARGS)
-        argfile = tempfile.NamedTemporaryFile(mode="w", suffix=".args", encoding="utf-8", delete=False, newline="\n")
+        argfile = tempfile.NamedTemporaryFile(mode="w", suffix=".args", encoding="utf-8", delete=False, newline="\n")  # ruff:ignore[open-file-with-context-handler]
         argfile.write("\n".join(tag_lines))
         argfile.close()
 
@@ -883,7 +905,7 @@ class MetadataTaggerApp(ctk.CTk):
                 warn_text = "\n\n".join(warnings)
                 messagebox.showwarning(
                     "Completed with Warnings",
-                    f"Updated {n_files} file{'' if n_files == 1 else 's'}, but ExifTool reported minor warnings:\n{warn_text}"
+                    f"Updated {n_files} file{'' if n_files == 1 else 's'}, but ExifTool reported minor warnings:\n{warn_text}",
                 )
             else:
                 messagebox.showinfo("Success", f"Successfully updated {n_files} file{'' if n_files == 1 else 's'}!")
@@ -922,10 +944,8 @@ if __name__ == "__main__":
     # ON WINDOWS, SET THE APP USER MODEL ID BEFORE CREATING THE WINDOW SO THE
     # TASKBAR GROUPS THE APP UNDER ITS OWN ICON RATHER THAN THE PYTHON INTERPRETER
     if sys.platform == "win32":
-        try:
+        with suppress(Exception):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FilmCreditsTagger.app")
-        except Exception:
-            pass
 
     app = MetadataTaggerApp()
 

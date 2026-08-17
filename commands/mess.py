@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Displays an animated, random text character mess.
 The mess can be made faster and displayed in color."""
@@ -34,7 +34,7 @@ def print_help() -> None:
         ("  ", S.BR.GREEN("mess"), "            ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
         ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--fast"), "     ", S.DIM("# ", S.ITALIC("Show binary mess at maximum speed"))),
         ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--color"), "    ", S.DIM("# ", S.ITALIC("Show colorful binary mess"))),
-        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # noqa: E501
+        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()

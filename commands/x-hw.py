@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Get detailed hardware information about your PC."""
 
@@ -160,7 +160,7 @@ class HardwareInfo:
 
         return info
 
-    def _get_gpu_info(self) -> dict[str, Any]:  # noqa: C901
+    def _get_gpu_info(self) -> dict[str, Any]:  # ruff:ignore[complex-structure]
         """Get GPU information."""
         info: dict[str, Any] = {"gpus": []}
 
@@ -297,7 +297,7 @@ class HardwareInfo:
             result["battery"] = self.battery
         return result
 
-    def display(self) -> None:  # noqa: C901
+    def display(self) -> None:  # ruff:ignore[complex-structure]
         """Display hardware information in formatted output."""
         print()
 

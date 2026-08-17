@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Show the foreground and background colors
 from the current terminal color scheme."""
@@ -9,18 +9,16 @@ from xulbux.console import get_args
 
 ARGS = get_args({"help": {"-h", "--help"}})
 
-# fmt: off
 SHELL_COLORS: list[list[AnyStyle]] = [
-    [S.BLACK,   S.BR.BLACK,   S.WHITE | S.BG.BLACK,   S.WHITE | S.BG.BR.BLACK  ],
-    [S.WHITE,   S.BR.WHITE,   S.BLACK | S.BG.WHITE,   S.BLACK | S.BG.BR.WHITE  ],
-    [S.RED,     S.BR.RED,     S.BLACK | S.BG.RED,     S.BLACK | S.BG.BR.RED    ],
-    [S.YELLOW,  S.BR.YELLOW,  S.BLACK | S.BG.YELLOW,  S.BLACK | S.BG.BR.YELLOW ],
-    [S.GREEN,   S.BR.GREEN,   S.BLACK | S.BG.GREEN,   S.BLACK | S.BG.BR.GREEN  ],
-    [S.CYAN,    S.BR.CYAN,    S.BLACK | S.BG.CYAN,    S.BLACK | S.BG.BR.CYAN   ],
-    [S.BLUE,    S.BR.BLUE,    S.BLACK | S.BG.BLUE,    S.BLACK | S.BG.BR.BLUE   ],
+    [S.BLACK, S.BR.BLACK, S.WHITE | S.BG.BLACK, S.WHITE | S.BG.BR.BLACK],
+    [S.WHITE, S.BR.WHITE, S.BLACK | S.BG.WHITE, S.BLACK | S.BG.BR.WHITE],
+    [S.RED, S.BR.RED, S.BLACK | S.BG.RED, S.BLACK | S.BG.BR.RED],
+    [S.YELLOW, S.BR.YELLOW, S.BLACK | S.BG.YELLOW, S.BLACK | S.BG.BR.YELLOW],
+    [S.GREEN, S.BR.GREEN, S.BLACK | S.BG.GREEN, S.BLACK | S.BG.BR.GREEN],
+    [S.CYAN, S.BR.CYAN, S.BLACK | S.BG.CYAN, S.BLACK | S.BG.BR.CYAN],
+    [S.BLUE, S.BR.BLUE, S.BLACK | S.BG.BLUE, S.BLACK | S.BG.BR.BLUE],
     [S.MAGENTA, S.BR.MAGENTA, S.BLACK | S.BG.MAGENTA, S.BLACK | S.BG.BR.MAGENTA],
 ]
-# fmt: on
 
 
 def print_help() -> None:

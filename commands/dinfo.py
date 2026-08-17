@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 """Get detailed information about files in the current directory."""
 
 import fnmatch
@@ -13,15 +13,13 @@ from pathlib import Path
 import xulbux as xx
 from xulbux import S, StyledText, Term, Throbber
 
-ARGS = xx.console.get_args(
-    {
-        "recursive": {"-r", "--recursive"},
-        "exclude_info": {"-e", "--exclude"},
-        "skip_hidden": {"-H", "--skip-hidden"},
-        "apply_gitignore": {"-G", "--gitignore"},
-        "help": {"-h", "--help"},
-    }
-)
+ARGS = xx.console.get_args({
+    "recursive": {"-r", "--recursive"},
+    "exclude_info": {"-e", "--exclude"},
+    "skip_hidden": {"-H", "--skip-hidden"},
+    "apply_gitignore": {"-G", "--gitignore"},
+    "help": {"-h", "--help"},
+})
 
 EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split()}
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
@@ -40,18 +38,18 @@ def print_help() -> None:
         "",
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-r"), ", ", S.BR.BLUE("--recursive"), "      Also scan all subdirectories recursively"),
-        ("  ", S.BR.BLUE("-e"), ", ", S.BR.BLUE("--exclude", S.DIM("="), "S"), "      Exclude parts of the info ", S.DIM("(", S.ITALIC("size"), ", ", S.ITALIC("lines"), "; count is always included)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-e"), ", ", S.BR.BLUE("--exclude", S.DIM("="), "S"), "      Exclude parts of the info ", S.DIM("(", S.ITALIC("size"), ", ", S.ITALIC("lines"), "; count is always included)")),  # ruff:ignore[line-too-long]
         ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--skip-hidden"), "    Skip hidden, system, and protected items"),
-        ("  ", S.BR.BLUE("-G"), ", ", S.BR.BLUE("--gitignore"), "      Apply ", S.WHITE(".gitignore"), " rules when scanning files"),  # noqa: E501
+        ("  ", S.BR.BLUE("-G"), ", ", S.BR.BLUE("--gitignore"), "      Apply ", S.WHITE(".gitignore"), " rules when scanning files"),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Controls:"),
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel and exit"),
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("dinfo"), "                    ", S.DIM("# ", S.ITALIC("Get all directory info, not ignoring any items"))),  # noqa: E501
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("-e", S.DIM("="), '"size lines"'), "    ", S.DIM("# ", S.ITALIC("Only show file count, excluding size and line count"))),  # noqa: E501
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--skip-hidden"), "      ", S.DIM("# ", S.ITALIC("Skip hidden and system items"))),  # noqa: E501
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--gitignore"), "        ", S.DIM("# ", S.ITALIC("Apply .gitignore rules when scanning files"))),  # noqa: E501
+        ("  ", S.BR.GREEN("dinfo"), "                    ", S.DIM("# ", S.ITALIC("Get all directory info, not ignoring any items"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("-e", S.DIM("="), '"size lines"'), "    ", S.DIM("# ", S.ITALIC("Only show file count, excluding size and line count"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--skip-hidden"), "      ", S.DIM("# ", S.ITALIC("Skip hidden and system items"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--gitignore"), "        ", S.DIM("# ", S.ITALIC("Apply .gitignore rules when scanning files"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()
@@ -183,7 +181,7 @@ def count_lines(file_path: str) -> int:
         return 0
 
 
-def scan_and_calc_scope(directory: str) -> tuple[int, int, int]:  # noqa: C901
+def scan_and_calc_scope(directory: str) -> tuple[int, int, int]:  # ruff:ignore[complex-structure]
     """Recursively scan directory and calculate total files, lines, and size in bytes in parallel."""
 
     total_files = 0
@@ -208,7 +206,7 @@ def scan_and_calc_scope(directory: str) -> tuple[int, int, int]:  # noqa: C901
             if active[0] == 0:
                 done.set()
 
-    def _scan(dir_path: str) -> None:  # noqa: C901
+    def _scan(dir_path: str) -> None:  # ruff:ignore[complex-structure]
         if canceled[0]:
             with lock:
                 active[0] -= 1

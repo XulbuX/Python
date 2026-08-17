@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Clean broken registry entries, environment variables, shortcuts and temp files."""
 
@@ -23,7 +23,7 @@ except ImportError:
     COMDispatch = None
     HAS_WIN32COM = False  # type: ignore[constant-reassignment]
 
-########################################## CONSTANTS ##########################################
+# **************************************** CONSTANTS ****************************************
 
 BACKUPS_DIR = FileSys.script_dir / "backups"
 
@@ -83,7 +83,7 @@ def _build_shortcut_dirs() -> list[tuple[str, Path]]:
 
 HIVE_NAMES = {winreg.HKEY_CURRENT_USER: "HKCU", winreg.HKEY_LOCAL_MACHINE: "HKLM"}
 
-########################################## CLI ##########################################
+# **************************************** CLI ****************************************
 
 ARGS = Console.get_args({"restore_path": "before", "restore": {"-r", "--restore"}, "help": {"-h", "--help"}})
 
@@ -109,7 +109,7 @@ def print_help() -> None:
     FormatCodes.print(help_text)
 
 
-########################################## HELPERS ##########################################
+# **************************************** HELPERS ****************************************
 
 
 def hive_name(hive: int) -> str:
@@ -209,7 +209,7 @@ def resolve_shortcut(lnk_path: Path) -> Path | None:
         return None
 
 
-########################################## SCANNING ##########################################
+# **************************************** SCANNING ****************************************
 
 
 def scan_registry_app_paths() -> list[dict[str, Any]]:
@@ -245,9 +245,12 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
                     if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
                         path = extract_path_from_value(str(val_data))
                         if path is not None and not path_exists(path):
-                            issues.append(
-                                {"hive": hive, "path": full_path, "subkey": subkey_name, "broken_path": str(val_data)}
-                            )
+                            issues.append({
+                                "hive": hive,
+                                "path": full_path,
+                                "subkey": subkey_name,
+                                "broken_path": str(val_data),
+                            })
                 except OSError:
                     pass
 
@@ -316,15 +319,13 @@ def scan_registry_unins_paths() -> list[dict[str, Any]]:
 
                 # IF WE FOUND BROKEN PATHS AND NO VALID PATHS, FLAG THE ENTIRE ENTRY
                 if broken_values and not has_any_valid:
-                    issues.append(
-                        {
-                            "hive": hive,
-                            "path": full_path,
-                            "subkey": subkey_name,
-                            "display_name": display_name,
-                            "broken_values": broken_values,
-                        }
-                    )
+                    issues.append({
+                        "hive": hive,
+                        "path": full_path,
+                        "subkey": subkey_name,
+                        "display_name": display_name,
+                        "broken_values": broken_values,
+                    })
         finally:
             winreg.CloseKey(root_key)
 
@@ -360,9 +361,13 @@ def scan_registry_startup_paths() -> list[dict[str, Any]]:
                     continue
 
                 if not path_exists(p):
-                    issues.append(
-                        {"hive": hive, "path": reg_path, "value_name": name, "value_data": str(value), "value_type": val_type}
-                    )
+                    issues.append({
+                        "hive": hive,
+                        "path": reg_path,
+                        "value_name": name,
+                        "value_data": str(value),
+                        "value_type": val_type,
+                    })
         finally:
             winreg.CloseKey(key)
 
@@ -403,28 +408,24 @@ def scan_env_vars() -> dict[str, list[dict[str, Any]]]:
                         p for p in paths if looks_like_path(p) and not path_exists(Path(expand_env_in_path(p.strip('"'))))
                     ]
                     if broken:
-                        result[scope].append(
-                            {
-                                "name": name,
-                                "value_type": val_type,
-                                "original_value": str_value,
-                                "broken_paths": broken,
-                                "scope": scope,
-                            }
-                        )
+                        result[scope].append({
+                            "name": name,
+                            "value_type": val_type,
+                            "original_value": str_value,
+                            "broken_paths": broken,
+                            "scope": scope,
+                        })
                 # CHECK IF THE SINGLE VALUE LOOKS LIKE A BROKEN PATH
                 elif looks_like_path(str_value):
                     p = Path(expand_env_in_path(str_value.strip().strip('"')))
                     if not path_exists(p):
-                        result[scope].append(
-                            {
-                                "name": name,
-                                "value_type": val_type,
-                                "original_value": str_value,
-                                "broken_paths": [str_value],
-                                "scope": scope,
-                            }
-                        )
+                        result[scope].append({
+                            "name": name,
+                            "value_type": val_type,
+                            "original_value": str_value,
+                            "broken_paths": [str_value],
+                            "scope": scope,
+                        })
 
         finally:
             winreg.CloseKey(key)
@@ -513,7 +514,7 @@ def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
     return {"dirs": result}
 
 
-########################################## BACKUPS ##########################################
+# **************************************** BACKUPS ****************************************
 
 
 def create_backup_dir() -> Path:
@@ -595,7 +596,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
         return False
 
 
-########################################## RESTORE ##########################################
+# **************************************** RESTORE ****************************************
 
 
 def restore_env_vars(backup_path: Path) -> None:
@@ -663,7 +664,7 @@ def _broadcast_env_change() -> None:
         pass
 
 
-########################################## CLEANUP EXECUTION ##########################################
+# **************************************** CLEANUP EXECUTION ****************************************
 
 
 def execute_registry_cleanup(
@@ -929,7 +930,7 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
     return failures
 
 
-########################################## DISPLAY ##########################################
+# **************************************** DISPLAY ****************************************
 
 
 def format_size(size_bytes: int, /) -> str:
@@ -942,7 +943,7 @@ def format_size(size_bytes: int, /) -> str:
     return f"{size:.1f} TB"
 
 
-def show_summary(  # noqa: C901
+def show_summary(  # ruff:ignore[complex-structure]
     reg_app_path_issues: list[dict[str, Any]],
     reg_unins_issues: list[dict[str, Any]],
     reg_startup_issues: list[dict[str, Any]],
@@ -1039,7 +1040,7 @@ def show_summary(  # noqa: C901
         print()
 
 
-########################################## MAIN ##########################################
+# **************************************** MAIN ****************************************
 
 
 def choose_options() -> dict[str, bool]:
@@ -1066,7 +1067,7 @@ def choose_options() -> dict[str, bool]:
     return selected
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:  # ruff:ignore[complex-structure]
     if ARGS.help.exists:
         print_help()
         return

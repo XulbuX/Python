@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [x-cmds]: UPDATE
+# x-cmds:file[update]
 
 """Execute a command and automatically copy the full output
 including metadata to the clipboard, after execution."""
@@ -48,18 +48,18 @@ def print_help() -> None:
         "",
         S.BOLD("Options:"),
         ("  ", S.BR.BLUE("-nc"), ", ", S.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
-        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),  # noqa: E501
-        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),  # noqa: E501
-        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),  # noqa: E501
+        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Controls:"),
         ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
         "",
         S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),  # noqa: E501
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),  # noqa: E501
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),  # noqa: E501
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),  # noqa: E501
+        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),  # ruff:ignore[line-too-long]
+        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),  # ruff:ignore[line-too-long]
         "",
         sep="\n",
     ).print()
@@ -113,8 +113,8 @@ def terminate_process(process: subprocess.Popen[str] | None) -> None:
             process.kill()
 
 
-def main() -> None:  # noqa: C901
-    ################################### PARSE ARGS & INIT ###################################
+def main() -> None:  # ruff:ignore[complex-structure]
+    # *********************************** PARSE ARGS & INIT ***********************************
     show_help, exclude_cmd, exclude_meta, keep_ansi, command_args = parse_flags_and_command(
         # [no_command: {-nc, --no-command}, no_meta: {-nm, --no-meta}, only: {-o, --only}, help: {-h, --help}, command: after]
         sys.argv[1:]
@@ -145,7 +145,7 @@ def main() -> None:  # noqa: C901
     start_time = time.time()
     exit_code = 0
 
-    #################################### RUN THE COMMAND ####################################
+    # ************************************ RUN THE COMMAND ************************************
     try:
         # `bufsize=1` and `text=True` enables line-by-line text streaming:
         general_popen_kwargs: dict[str, Any] = {
@@ -208,7 +208,7 @@ def main() -> None:  # noqa: C901
     duration = time.time() - start_time
     duration_str = f"{int(duration * 1000 + 0.5)}ms" if duration < 1 else f"{int(duration + 0.5)}s"
 
-    ################################ BUILD CLIPBOARD CONTENT ################################
+    # ******************************** BUILD CLIPBOARD CONTENT ********************************
     clipboard_parts: list[str] = []
 
     if not exclude_cmd:
@@ -229,7 +229,7 @@ def main() -> None:  # noqa: C901
 
     clipboard_content = "".join(clipboard_parts)
 
-    ############################### COPY TO CLIPBOARD & EXIT ################################
+    # ******************************* COPY TO CLIPBOARD & EXIT ********************************
     try:
         pyperclip.copy(clipboard_content)
     except Exception as exc:

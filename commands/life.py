@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# ruff: noqa: RUF001
-# [x-cmds]: UPDATE
+# ruff:file-ignore[ambiguous-unicode-character-string]
+# x-cmds:file[update]
 
 """Conway's game of life in the console."""
 

@@ -121,15 +121,13 @@ C_BR = Regex.brackets("{", "}", is_group=True)
 A_BR = Regex.brackets("<", ">", is_group=True)
 
 
-ARGS = Console.get_args(
-    {
-        "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
-        "indent": {"-i", "--indent", "-is", "--indent-spaces"},
-        "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
-        "help": {"-h", "--help"},
-        "debug": {"-d", "--debug"},
-    }
-)
+ARGS = Console.get_args({
+    "filepath": {"-f", "--file", "-p", "--path", "-fp", "--filepath", "--file-path"},
+    "indent": {"-i", "--indent", "-is", "--indent-spaces"},
+    "blade_vue": {"-bv", "--blade-vue", "--blade-to-vue"},
+    "help": {"-h", "--help"},
+    "debug": {"-d", "--debug"},
+})
 
 
 def show_help():

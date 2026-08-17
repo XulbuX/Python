@@ -15,6 +15,7 @@ The `notSUS` file does the exact same thing (shutdown PC after `{time}` minutes 
 Per default, the **`{time}` before shutdown is set to `5 minutes`**, so there's enough time to delete the `notSUS` file from the startup directory, before shutdown happens again.
 
 ### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/add_shutdown_script_to_startup_directory_and_shutdown_pc.exe)
+>
 > [!NOTE]<br>
 > This script/EXE works on all OSes.
 
@@ -25,6 +26,7 @@ This script/EXE will simply create a bunch of colored rectangles on your screen 
 There will be no way of getting rid of them, except for restarting your PC.
 
 ### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/make_lots_of_colorful_random_msg_rectangles.exe)
+>
 > [!NOTE]<br>
 > This script/EXE works on all OSes.
 
@@ -36,6 +38,7 @@ If you enter the wrong answer or the timer runs out, the window will renew the p
 Trying to close or iconify the window will not work. The only way to close a math-problem-window is by entering the correct answer in time.
 
 ### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/not_closable_timed_maths_problems_until_correct_answer.exe)
+>
 > [!NOTE]<br>
 > This script/EXE works on all OSes.
 
@@ -48,6 +51,7 @@ The volume can not be lowered lower than the set `MIN_VOLUME` (*default is 50%*)
 The only way to stop the script is by restarting the PC or by killing it in the task manager under the background processes (*the process is called the same as the script's/EXEs name*).
 
 ### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/play_annoying_sounds_on_keyboard_and_mouse.exe)
+>
 > [!NOTE]<br>
 > This script/EXE works **only on Windows**.
 
@@ -59,5 +63,6 @@ This script/EXE will shut down your PC five seconds after being run and display 
 The script/EXE are named a confusing and special looking name, to make it look like a very suspicious file.
 
 ### [Download](https://github.com/xulbux/python/raw/refs/heads/main/projects/harmless-prank-viruses/exe/shutdown_pc_with_virus_warning.exe)
+>
 > [!NOTE]<br>
 > This script/EXE works on all OSes.

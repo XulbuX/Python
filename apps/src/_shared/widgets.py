@@ -290,7 +290,7 @@ class ToolTip:
         tip_border = self._TIP_COLORS.get(mode, self._TIP_COLORS["dark"])["border"]
 
         scaling: float = getattr(self._widget, "_get_widget_scaling", lambda: 1.0)()
-        _FONT = ctk.CTkFont(size=18)
+        FONT = ctk.CTkFont(size=18)
         TIP_R = round(self._TIP_R * scaling)
         TIP_PX = round(self._TIP_PX * scaling)
         TIP_PY = round(self._TIP_PY * scaling)
@@ -298,7 +298,7 @@ class ToolTip:
         WRAP = round(280 * scaling)
 
         # MEASURE WIDTH FROM FULL TEXT, THEN EACH PARAGRAPH SEPARATELY FOR HEIGHT
-        probe = tk.Label(self._widget, text=self._text, font=_FONT, justify="left", wraplength=WRAP, padx=0, pady=0, bd=0)
+        probe = tk.Label(self._widget, text=self._text, font=FONT, justify="left", wraplength=WRAP, padx=0, pady=0, bd=0)
         probe.update_idletasks()
         tw = probe.winfo_reqwidth() + TIP_PX * 2
         probe.destroy()
@@ -308,7 +308,7 @@ class ToolTip:
         para_heights: list[int] = []
 
         for para in paragraphs:
-            pl = tk.Label(self._widget, text=para or " ", font=_FONT, justify="left", wraplength=text_w, padx=0, pady=0, bd=0)
+            pl = tk.Label(self._widget, text=para or " ", font=FONT, justify="left", wraplength=text_w, padx=0, pady=0, bd=0)
             pl.update_idletasks()
             para_heights.append(pl.winfo_reqheight())
             pl.destroy()
@@ -366,7 +366,7 @@ class ToolTip:
         ty = TIP_PY
 
         for para, ph in zip(paragraphs, para_heights, strict=False):
-            cv.create_text(TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=_FONT, width=text_w, justify="left")
+            cv.create_text(TIP_PX, ty, text=para, anchor="nw", fill=tip_fg, font=FONT, width=text_w, justify="left")
             ty += ph + PARA_GAP
 
         self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
@@ -524,13 +524,13 @@ class SegmentedButton(ctk.CTkFrame):
         self._selected: str = self._values[0] if self._values else ""
         self._buttons: dict[str, ctk.CTkButton] = {}
 
-        _c = COLORS.get(ctk.get_appearance_mode().lower(), COLORS["dark"])
-        self._selected_color: str = _c["primary"]
-        self._selected_hover: str = _c["primary_hover"]
-        self._selected_text_color: str = _c["primary_foreground"]
-        self._unselected_color: str = _c["secondary"]
-        self._unselected_hover: str = _c["secondary_hover"]
-        self._text_color: str = _c["secondary_foreground"]
+        color = COLORS.get(ctk.get_appearance_mode().lower(), COLORS["dark"])
+        self._selected_color: str = color["primary"]
+        self._selected_hover: str = color["primary_hover"]
+        self._selected_text_color: str = color["primary_foreground"]
+        self._unselected_color: str = color["secondary"]
+        self._unselected_hover: str = color["secondary_hover"]
+        self._text_color: str = color["secondary_foreground"]
 
         btn_w = (width // len(values)) if (width and values) else 0
 

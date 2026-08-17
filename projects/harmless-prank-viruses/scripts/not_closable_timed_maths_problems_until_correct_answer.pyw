@@ -1,7 +1,6 @@
-import customtkinter as ctk
 import random
 import sys
-
+import customtkinter as ctk
 
 sys.setrecursionlimit(1000000000)
 ctk.set_appearance_mode("System")
@@ -67,7 +66,8 @@ class MathsProblemWindow:
         return num1, num2, operation, question, int(eval(question))
 
     def reset(self, timer: int):
-        if self.timer_id: self.win.after_cancel(self.timer_id)
+        if self.timer_id:
+            self.win.after_cancel(self.timer_id)
         self.num1, self.num2, self.operation, self.question, self.answer = self.problem()
         self.question_label.configure(text=self.question)
         self.result_label.configure(text="")
@@ -88,7 +88,8 @@ class MathsProblemWindow:
     def check_answer(self):
         user_answer = self.entry.get()
         if user_answer.isdigit() and int(user_answer) == self.answer:
-            if self.timer_id: self.win.after_cancel(self.timer_id)
+            if self.timer_id:
+                self.win.after_cancel(self.timer_id)
             for after_id in self.win.tk.call("after", "info"):
                 self.win.after_cancel(after_id)
             OPEN_WINDOWS.remove(self.win)
