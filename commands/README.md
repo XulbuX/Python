@@ -133,15 +133,6 @@ Run any command with `-h` or `--help` to see its full usage information.<br>
 
 <br>
 
-### `_`
-
-This is a better version of the `cls` or `clear` command to clear your terminal for a few reasons:<br>
-*   The command `_` is faster to type.
-*   The command actually **clears** the terminal and doesn't just scroll the content up.
-*   The command also resets all the color and style formats.
-
-<br>
-
 ### `x-cmds`
 
 This command outputs a list of all custom Python commands in the current directory,<br>
@@ -161,8 +152,8 @@ The update system is designed to keep managed commands up-to-date while protecti
 
 *   **Update Detection:** The system checks multiple GitHub repository URLs (*configurable in the script*),<br>
     merges all available commands, and detects three types of changes:
-    -   **New commands** – available in the repository but not locally
-    -   **Updated commands** – local managed commands with content changes
-    -   **Deleted commands** – local managed commands no longer in any repository
+    -   **New commands** – Available in the repository but not locally.
+    -   **Updated commands** – Local managed commands with content changes.
+    -   **Deleted commands** – Local managed commands no longer in any repository.
 
 This approach allows you to safely add your own commands to the directory while still benefiting from automatic updates.
