@@ -10,7 +10,9 @@ import time
 from xulbux import Console, FormatCodes
 from xulbux.base.consts import CHARS
 
-ARGS = Console.get_args({"help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

@@ -85,7 +85,11 @@ HIVE_NAMES = {winreg.HKEY_CURRENT_USER: "HKCU", winreg.HKEY_LOCAL_MACHINE: "HKLM
 
 # **************************************** CLI ****************************************
 
-ARGS = Console.get_args({"restore_path": "before", "restore": {"-r", "--restore"}, "help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "restore_path": "before",
+    "restore": {"-r", "--restore"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

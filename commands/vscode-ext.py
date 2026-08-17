@@ -12,7 +12,10 @@ from typing import cast
 import xulbux as xx
 from xulbux import S, StyledText
 
-ARGS = xx.console.get_args({"as_json": {"-j", "--json"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({
+    "as_json": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 # fmt: off

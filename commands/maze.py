@@ -18,7 +18,9 @@ import keyboard
 from xulbux import Console, FileSys, FormatCodes
 from xulbux.console import Throbber
 
-ARGS = Console.get_args({"help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

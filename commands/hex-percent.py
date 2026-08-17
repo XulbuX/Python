@@ -5,7 +5,10 @@
 
 from xulbux import S, StyledText, console
 
-ARGS = console.get_args({"hex_value": "before", "help": {"-h", "--help"}})
+ARGS = console.get_args({
+    "hex_value": "before",
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

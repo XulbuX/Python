@@ -9,7 +9,10 @@ import time
 from collections.abc import Iterator
 from xulbux import FormatCodes, Throbber, console
 
-ARGS = console.get_args({"decimal_places": "before", "help": {"-h", "--help"}})
+ARGS = console.get_args({
+    "decimal_places": "before",
+    "help": {"-h", "--help"},
+})
 
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS

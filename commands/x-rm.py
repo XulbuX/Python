@@ -62,7 +62,11 @@ PROTECTED_PROCESSES_UNIX = {
     "zsh",
 }
 
-ARGS = xx.console.get_args({"rm_path": "before", "confirmed": {"-y", "--yes"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({
+    "rm_path": "before",
+    "confirmed": {"-y", "--yes"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

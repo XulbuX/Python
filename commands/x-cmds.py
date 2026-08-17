@@ -7,7 +7,7 @@ A short description and command arguments are displayed if available."""
 import hashlib
 import re
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 import requests
 import xulbux as xx
 from xulbux import FormatCodes, LazyRegex, S, StyledText, Throbber
@@ -70,7 +70,11 @@ CONFIG: ScriptConfig = {
     },
 }
 
-ARGS = xx.console.get_args({"list": {"-l", "--list"}, "update_check": {"-u", "--update"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({
+    "list": {"-l", "--list"},
+    "update_check": {"-u", "--update"},
+    "help": {"-h", "--help"},
+})
 
 PATTERNS = LazyRegex(
     python_shebang=r"(?i)^\s*#!.*python",
@@ -171,9 +175,9 @@ def arguments_desc(arg_parse_configs: ArgParseConfigs | None) -> str:
             arg_descs.append(f"non-flagged argument at position [b]({keys.index(key) + 1})")
         elif isinstance(val, str):
             if val.lower() == "before":
-                arg_descs.append("all non flagged arguments [b](before) first flag")
+                arg_descs.append("All non-flagged arguments [b](BEFORE) first flag.")
             elif val.lower() == "after":
-                arg_descs.append("all non flagged arguments [b](after) last flag's value")
+                arg_descs.append("All non-flagged arguments [b](AFTER) last flag's value.")
             else:
                 arg_descs.append(val)
         elif isinstance(val, dict) and "flags" in val:
@@ -257,9 +261,15 @@ def parse_file_args(content: str) -> ArgParseConfigs | None:
 
             else:
                 func_args = get_args_funcs[0]
-            for arg in PATTERNS.arg.finditer(func_args):
-                if (key := arg.group(2)) and (val := arg.group(3)):
-                    arg_parse_configs[key.strip()] = xx.string.to_type(val.strip().rstrip(","))
+            import ast
+
+            try:
+                if isinstance(parsed := ast.literal_eval("{" + func_args + "}"), dict):
+                    arg_parse_configs.update(cast("dict[str, Any]", parsed))
+            except Exception:
+                for arg in PATTERNS.arg.finditer(func_args):
+                    if (key := arg.group(2)) and (val := arg.group(3)):
+                        arg_parse_configs[key.strip()] = xx.string.to_type(val.strip().rstrip(","))
 
         else:
             for comment in sys_argv_comments:

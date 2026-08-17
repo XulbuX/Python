@@ -9,7 +9,11 @@ import time
 import xulbux as xx
 from xulbux.ansi import AnyStyle, S, StyledText
 
-ARGS = xx.console.get_args({"fast_mode": {"-f", "--fast"}, "color_mode": {"-c", "--color"}, "help": {"-h", "--help"}})
+ARGS = xx.console.get_args({
+    "fast_mode": {"-f", "--fast"},
+    "color_mode": {"-c", "--color"},
+    "help": {"-h", "--help"},
+})
 
 
 # fmt: off

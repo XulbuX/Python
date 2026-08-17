@@ -7,7 +7,9 @@ from the current terminal color scheme."""
 from xulbux.ansi import AnyStyle, S, StyledText
 from xulbux.console import get_args
 
-ARGS = get_args({"help": {"-h", "--help"}})
+ARGS = get_args({
+    "help": {"-h", "--help"},
+})
 
 SHELL_COLORS: list[list[AnyStyle]] = [
     [S.BLACK, S.BR.BLACK, S.WHITE | S.BG.BLACK, S.WHITE | S.BG.BR.BLACK],

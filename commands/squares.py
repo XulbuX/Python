@@ -7,7 +7,11 @@ import keyboard
 from xulbux import Console, FormatCodes
 from xulbux.base.consts import CHARS
 
-ARGS = Console.get_args({"table_cols": {"-c", "--cols"}, "help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "table_cols": {"-c", "--cols"},
+    "help": {"-h", "--help"},
+})
+
 TABLE_COLS = int(v) if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() else 4
 
 

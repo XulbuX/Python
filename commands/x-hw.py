@@ -22,7 +22,11 @@ except (ImportError, ModuleNotFoundError) as exc:
     PSUTIL_AVAILABLE: bool = False  # type: ignore[no-redef]
     PSUTIL_ERROR: str | None = str(exc)  # type: ignore[no-redef]
 
-ARGS = Console.get_args({"detailed": {"-d", "--detailed"}, "json_output": {"-j", "--json"}, "help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "detailed": {"-d", "--detailed"},
+    "json_output": {"-j", "--json"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:

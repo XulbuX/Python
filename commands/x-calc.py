@@ -25,6 +25,7 @@ ARGS = Console.get_args({
     "debug": {"-d", "--debug"},
     "help": {"-h", "--help"},
 })
+
 DEBUG = ARGS.debug.exists
 REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 

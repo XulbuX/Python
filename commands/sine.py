@@ -7,7 +7,11 @@ import math
 import time
 from xulbux import S, StyledText, console
 
-ARGS = console.get_args({"speed": {"-s", "--speed"}, "y_stretch": {"-y", "--y-stretch"}, "help": {"-h", "--help"}})
+ARGS = console.get_args({
+    "speed": {"-s", "--speed"},
+    "y_stretch": {"-y", "--y-stretch"},
+    "help": {"-h", "--help"},
+})
 
 
 # fmt: off

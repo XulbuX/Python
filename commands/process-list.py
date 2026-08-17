@@ -5,7 +5,11 @@
 
 from xulbux import Console, FormatCodes
 
-ARGS = Console.get_args({"list_items": "before", "separator": {"-s", "--sep"}, "help": {"-h", "--help"}})
+ARGS = Console.get_args({
+    "list_items": "before",
+    "separator": {"-s", "--sep"},
+    "help": {"-h", "--help"},
+})
 
 
 def print_help() -> None:
