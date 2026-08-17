@@ -47,7 +47,7 @@ Place them all in a single, permanent directory on your computer. We'll call thi
 
 <br>
 
-<span id="install-dependencies" />
+<span id="install-deps" />
 
 ### Step 2: Install Dependencies
 
@@ -127,9 +127,8 @@ Run any command with `-h` or `--help` to see its full usage information.<br>
 **⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
 
 > [!NOTE]<br>
-> If any of the scripts doesn't work (*especially after you updated them to their latest versions*),<br>
-> make sure you have updated all the required dependencies to their latest versions.<br>
-> For that download the latest <a title="Click to download" href="https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt">**`requirements.txt`**</a> file and then follow the [**Install Dependencies**](#install-dependencies) steps again.
+> If any of the scripts stop working (*especially after updating*), ensure all dependencies are up-to-date.<br>
+> Download the latest <a title="Click to download" href="https://git-link.vercel.app/api/download?url=https://github.com/xulbux/python/blob/main/commands/requirements.txt">**`requirements.txt`**</a> and follow the [**Install Dependencies**](#install-deps) steps again.
 
 <br>
 
