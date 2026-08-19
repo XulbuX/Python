@@ -1,9 +1,9 @@
 [tool.pyright]
+typeCheckingMode = "strict"
+reportDeprecated = "warning"
+reportPrivateUsage = "warning"
 include = ["apps", "commands", "projects"]
 exclude = [".github", ".venv", "**/__pycache__"]
-reportDeprecated = "warning"
-reportPrivateUsage = "none"
-typeCheckingMode = "strict"
 
 [tool.ruff]
 preview = true
