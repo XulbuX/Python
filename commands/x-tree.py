@@ -1274,53 +1274,6 @@ def main() -> None:  # ruff:ignore[complex-structure]
         result.print()
 
 
-# fmt: off
-def print_help() -> None:
-    title = ["  Tree Generator", " — Quickly generate advanced and good looking directory trees  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("x-tree "), S.BR.CYAN("<base_dir> "), S.BR.BLUE("[options]")),
-        "",
-        S.BOLD("Arguments:"),
-        ("  ", S.BR.CYAN("base_dir"), "               Base directory to generate tree from ", S.DIM("(default: CWD)")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-i"), ", ", S.BR.BLUE("--ignore", S.DIM("="), "S"), "         Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--auto-ignore", S.DIM("="), "N"), "    Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-nt"), ", ", S.BR.BLUE("--no-truncate"), "     Disable truncation of repetitive similar-filename chunks"),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--content", S.DIM("="), "N"), "        Include file contents, optionally truncated to N lines"),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--file", S.DIM("="), "PATH"), "        Output tree into file ", S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-I"), ", ", S.BR.BLUE("--interactive"), "      Prompt for interactive tree settings"),
-        "",
-        S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "              Cancel and exit"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-I"), "                                        ", S.DIM("# ", S.ITALIC("Prompt for interactive settings"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-i", S.DIM("="), '"/abs/to/dir1 | rel/to/dir2 | dir3"'), "    ", S.DIM("# ", S.ITALIC("Ignore specified directories"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--auto-ignore", S.DIM("="), "1"), "                           ", S.DIM("# ", S.ITALIC("Set auto-ignore mode to hardcoded only"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--no-truncate"), "                             ", S.DIM("# ", S.ITALIC("Disable truncation of repetitive chunks"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content"), "                                 ", S.DIM("# ", S.ITALIC("Include full file contents"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("--content", S.DIM("="), "10"), "                              ", S.DIM("# ", S.ITALIC("Include file contents, truncated to 10 lines"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("x-tree "), S.BR.BLUE("-f", S.DIM("="), '"/path/to/dir_or_file"'), "                 ", S.DIM("# ", S.ITALIC("Output to specific file or directory"))),  # ruff:ignore[line-too-long]
-        "",
-        (S.BOLD("Prompts: "), S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)")),
-        ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
-        ("  ", (S.ITALIC | S.DIM)("2"), "  Auto-ignore mode"),
-        ("  ", (S.ITALIC | S.DIM)("3"), "  Truncate repetitive chunks of similarly named files"),
-        ("  ", (S.ITALIC | S.DIM)("4"), "  Include file contents"),
-        ("  ", (S.ITALIC | S.DIM)("5"), "  Indentation size"),
-        ("  ", (S.ITALIC | S.DIM)("6"), "  Output tree to file"),
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
-
-
 if __name__ == "__main__":
     args = ArgumentParser(
         title="Tree Generator",
@@ -1352,49 +1305,48 @@ if __name__ == "__main__":
 
     args.add_arg(
         "base_dir",
-        "before",
-        description=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
+        nargs="?",
+        help=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
     )
     args.add_arg(
-        "ignore_dirs",
         {"-i", "--ignore"},
+        "ignore_dirs",
         expects_value="S",
-        description=("Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),
+        help=("Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),
     )
     args.add_arg(
-        "auto_ignore_mode",
         {"-a", "--auto-ignore"},
+        "auto_ignore_mode",
         expects_value="N",
         choices=("0", "1", "2"),
-        description=(
+        help=(
             "Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ",
             S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})"),
         ),
     )
     args.add_arg(
-        "truncate_similar",
         {"-nt", "--no-truncate"},
-        description="Disable truncation of repetitive similar-filename chunks",
+        "truncate_similar",
+        help="Disable truncation of repetitive similar-filename chunks",
     )
     args.add_arg(
-        "include_file_contents",
         {"-c", "--content"},
+        "include_file_contents",
         expects_value="N",
-        description="Include file contents, optionally truncated to N lines",
+        help="Include file contents, optionally truncated to N lines",
     )
     args.add_arg(
-        "to_file",
         {"-f", "--file"},
+        "to_file",
         expects_value="PATH",
-        description=(
+        help=(
             "Output tree into file ",
             S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)"),
         ),
     )
     args.add_arg(
-        "interactive",
         {"-I", "--interactive"},
-        description="Prompt for interactive tree settings",
+        help="Prompt for interactive tree settings",
     )
 
     global ARGS
