@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple, TypedDict, cast
-
 import xulbux as xx
 from xulbux import ArgumentParser, S, StyledText, Term, Throbber
 
@@ -1308,13 +1307,13 @@ if __name__ == "__main__":
         nargs="?",
         help=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
     )
-    args.add_arg(
+    args.add_opt(
         {"-i", "--ignore"},
         "ignore_dirs",
         expects_value="S",
         help=("Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),
     )
-    args.add_arg(
+    args.add_opt(
         {"-a", "--auto-ignore"},
         "auto_ignore_mode",
         expects_value="N",
@@ -1324,18 +1323,18 @@ if __name__ == "__main__":
             S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})"),
         ),
     )
-    args.add_arg(
+    args.add_opt(
         {"-nt", "--no-truncate"},
         "truncate_similar",
         help="Disable truncation of repetitive similar-filename chunks",
     )
-    args.add_arg(
+    args.add_opt(
         {"-c", "--content"},
         "include_file_contents",
         expects_value="N",
         help="Include file contents, optionally truncated to N lines",
     )
-    args.add_arg(
+    args.add_opt(
         {"-f", "--file"},
         "to_file",
         expects_value="PATH",
@@ -1344,7 +1343,7 @@ if __name__ == "__main__":
             S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)"),
         ),
     )
-    args.add_arg(
+    args.add_opt(
         {"-I", "--interactive"},
         help="Prompt for interactive tree settings",
     )
