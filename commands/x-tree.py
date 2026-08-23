@@ -1277,7 +1277,7 @@ if __name__ == "__main__":
     args = ArgumentParser(
         title="Tree Generator",
         subtitle="Quickly generate advanced and good looking directory trees",
-        controls=[("Ctrl(⌘)+C", "Cancel and exit")],
+        controls=[("Ctrl+C", "Cancel and exit")],
         examples=[
             ("{cmd} -I", "Prompt for interactive settings"),
             ('{cmd} -i "/abs/to/dir1 | rel/to/dir2 | dir3"', "Ignore specified directories"),
@@ -1304,7 +1304,7 @@ if __name__ == "__main__":
 
     args.add_arg(
         "base_dir",
-        nargs="?",
+        required=False,
         help=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
     )
     args.add_opt(
@@ -1337,7 +1337,7 @@ if __name__ == "__main__":
     args.add_opt(
         {"-f", "--file"},
         "to_file",
-        expects_value="PATH",
+        expects_value="PATH?",
         help=(
             "Output tree into file ",
             S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)"),
