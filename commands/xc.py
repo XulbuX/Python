@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import IO, Any, cast
 import xulbux as xx
-from xulbux import S, StyledText
+from xulbux import ArgumentParser, S, StyledText
 
 try:
     import pyperclip
@@ -26,77 +26,22 @@ except Exception as exc:
     sys.exit(1)
 
 
-# fmt: off
-def print_help() -> None:
-    title = ["  Execute & Copy", " — Run a command and copy its output to clipboard  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD | S.BR.YELLOW)(
-            "⚠ Commands that use dynamic progress bars and such\n",
-            "  may not render correctly using this tool.\n",
-            "  Interactive STDIN is currently not supported.",
-        ),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("xc "), S.BR.BLUE("[options] "), S.BR.CYAN("<command> [args...]")),
-        "",
-        S.BOLD("Arguments:"),
-        ("  ", S.BR.CYAN("command"), "              Command to execute with its arguments"),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-nc"), ", ", S.BR.BLUE("--no-command"), "    Do not include the ran command in clipboard"),
-        ("  ", S.BR.BLUE("-nm"), ", ", S.BR.BLUE("--no-meta"), "       Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-o"), ", ", S.BR.BLUE("--only"), "           Only copy the command output without command or metadata"),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-a"), ", ", S.BR.BLUE("--ansi"), "           Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")),  # ruff:ignore[line-too-long]
-        "",
-        S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel the command and copy the output captured so far"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("xc "), S.BR.CYAN("pip show xulbux"), "         ", S.DIM("# ", S.ITALIC("Run and copy Python lib xulbux info"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-meta "), S.BR.CYAN("git status"), "    ", S.DIM("# ", S.ITALIC("Run and copy git status without metadata"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--no-command "), S.BR.CYAN("tree"), "       ", S.DIM("# ", S.ITALIC("Generate an copy a tree listing without the command"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("xc "), S.BR.BLUE("--only "), S.BR.CYAN("ls -la"), "           ", S.DIM("# ", S.ITALIC("Run and copy ls -la output only"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
+def format_time(elapsed: float) -> str:
+    m, s = divmod(int(elapsed), 60)
+    h, m = divmod(m, 60)
+    ms = int((elapsed % 1) * 1000)
 
+    parts: list[str] = []
+    if h > 0:
+        parts.append(f"{h}h")
+    if m > 0:
+        parts.append(f"{m}m")
+    if s > 0:
+        parts.append(f"{s}s")
+    if ms > 0:
+        parts.append(f"{ms}ms")
 
-def parse_flags_and_command(args: list[str]) -> tuple[bool, bool, bool, bool, list[str]]:
-    """Parse `xc` flags at the start, then extract the command."""
-
-    show_help, exclude_cmd, exclude_meta, keep_ansi = False, False, False, False
-
-    i = 0
-    while i < len(args):
-        arg = args[i].lower().strip()
-
-        # Check for XC flags:
-        if arg in {"-h", "--help"}:
-            show_help = True
-            i += 1
-        elif arg in {"-nc", "--no-command"}:
-            exclude_cmd = True
-            i += 1
-        elif arg in {"-nm", "--no-meta"}:
-            exclude_meta = True
-            i += 1
-        elif arg in {"-o", "--only"}:
-            exclude_cmd = True
-            exclude_meta = True
-            i += 1
-        elif arg in {"-a", "--ansi"}:
-            keep_ansi = True
-            i += 1
-        else:
-            # Not an XC flag; this is the start of the command.
-            break
-
-    return show_help, exclude_cmd, exclude_meta, keep_ansi, args[i:]
+    return "".join(parts) if parts else "0ms"
 
 
 def terminate_process(process: subprocess.Popen[str] | None) -> None:
@@ -115,14 +60,11 @@ def terminate_process(process: subprocess.Popen[str] | None) -> None:
 
 def main() -> None:  # ruff:ignore[complex-structure]
     # *********************************** PARSE ARGS & INIT ***********************************
-    show_help, exclude_cmd, exclude_meta, keep_ansi, command_args = parse_flags_and_command(
-        # [no_command: {-nc, --no-command}, no_meta: {-nm, --no-meta}, only: {-o, --only}, help: {-h, --help}, command: after]
-        sys.argv[1:]
-    )
 
-    if show_help or not command_args:
-        print_help()
-        sys.exit(0)
+    command_args = ARGS.command.vals()
+    exclude_cmd = bool(ARGS.no_command or ARGS.only)
+    exclude_meta = bool(ARGS.no_meta or ARGS.only)
+    keep_ansi = bool(ARGS.ansi)
 
     # Properly construct command string for the shell:
     if platform.system() == "Windows":
@@ -146,6 +88,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     exit_code = 0
 
     # ************************************ RUN THE COMMAND ************************************
+
     try:
         # `bufsize=1` and `text=True` enables line-by-line text streaming:
         general_popen_kwargs: dict[str, Any] = {
@@ -205,10 +148,10 @@ def main() -> None:  # ruff:ignore[complex-structure]
     finally:
         terminate_process(process)
 
-    duration = time.time() - start_time
-    duration_str = f"{int(duration * 1000 + 0.5)}ms" if duration < 1 else f"{int(duration + 0.5)}s"
+    duration_str = format_time(time.time() - start_time)
 
     # ******************************** BUILD CLIPBOARD CONTENT ********************************
+
     clipboard_parts: list[str] = []
 
     if not exclude_cmd:
@@ -230,6 +173,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     clipboard_content = "".join(clipboard_parts)
 
     # ******************************* COPY TO CLIPBOARD & EXIT ********************************
+
     try:
         pyperclip.copy(clipboard_content)
     except Exception as exc:
@@ -238,15 +182,16 @@ def main() -> None:  # ruff:ignore[complex-structure]
         sys.exit(1)
 
     lines_count = len(captured_output)
-    status_f = S.BR.GREEN if exit_code == 0 else S.BR.RED
 
     # fmt: off
     StyledText(
         ("\n" if add_nl_before_end else ""),
-        status_f("━━━ Output copied to clipboard ━━━ "),
-        S.DIM(
-            S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''}, ",
-            S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
+        (S.BR.GREEN if exit_code == 0 else S.BR.RED)(
+            "━━━ Output copied to clipboard ━━━ ",
+            S.DIM(
+                S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''}, ",
+                S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
+            )
         ),
         "\n",
     ).print()
@@ -257,6 +202,34 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Execute & Copy",
+        subtitle="Run a command and copy its output to clipboard",
+        notice=S.BR.YELLOW(
+            "⚠ Commands that use dynamic progress bars and such\n",
+            "  may not render correctly using this tool.\n",
+            S.BOLD("  Interactive STDIN is currently not supported."),
+        ),
+        usage=(S.BOLD("Usage: "), "{cmd} {opts} {args}"),
+        controls=[("Ctrl+C", "Cancel the command and copy the output captured so far")],
+        examples=[
+            ("{cmd} pip show xulbux", "Run and copy Python lib xulbux info"),
+            ("{cmd} --no-meta git status", "Run and copy git status without metadata"),
+            ("{cmd} --no-command tree", "Generate and copy a tree listing without the command"),
+            ("{cmd} --only ls -la", ("Run and copy ", S.BR.GREEN("ls "), S.BR.BLUE("-la"), " output only")),
+        ],
+        intermixed=False,
+    )
+
+    args.add_arg("command", nargs="+", help="Command to execute with its arguments")
+    args.add_opt({"-nc", "--no-command"}, help="Do not include the ran command in clipboard")
+    args.add_opt({"-nm", "--no-meta"}, help=("Do not include metadata in clipboard ", S.DIM("(exit code, duration, date)")))
+    args.add_opt({"-o", "--only"}, help="Only copy the command output without command or metadata")
+    args.add_opt({"-a", "--ansi"}, help=("Keep the ANSI codes in the copied output ", S.DIM("(default: ANSI removed)")))
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

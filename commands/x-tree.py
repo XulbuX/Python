@@ -1302,11 +1302,7 @@ if __name__ == "__main__":
         ),
     )
 
-    args.add_arg(
-        "base_dir",
-        required=False,
-        help=("Base directory to generate tree from ", S.DIM("(default: CWD)")),
-    )
+    args.add_arg("base_dir", required=False, help=("Base directory to generate tree from ", S.DIM("(default: CWD)")))
     args.add_opt(
         {"-i", "--ignore"},
         "ignore_dirs",
@@ -1323,11 +1319,7 @@ if __name__ == "__main__":
             S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})"),
         ),
     )
-    args.add_opt(
-        {"-nt", "--no-truncate"},
-        "truncate_similar",
-        help="Disable truncation of repetitive similar-filename chunks",
-    )
+    args.add_opt({"-nt", "--no-truncate"}, "truncate_similar", help="Disable truncation of repetitive similar-filename chunks")
     args.add_opt(
         {"-c", "--content"},
         "include_file_contents",
@@ -1343,10 +1335,7 @@ if __name__ == "__main__":
             S.DIM("(default: ", S.WHITE("tree.txt"), " in ", S.WHITE("CWD"), " if ", S.BR.BLUE("PATH"), " is omitted)"),
         ),
     )
-    args.add_opt(
-        {"-I", "--interactive"},
-        help="Prompt for interactive tree settings",
-    )
+    args.add_opt({"-I", "--interactive"}, help="Prompt for interactive tree settings")
 
     global ARGS
     ARGS = args.parse()
