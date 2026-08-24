@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 import regex as rx
 import xulbux as xx
-from xulbux import FormatCodes, LazyRegex, hexa
+from xulbux import ArgumentParser, FormatCodes, LazyRegex, S, hexa
 
 
 class Operation(Enum):
@@ -19,18 +19,6 @@ class Operation(Enum):
     ROTATE = "rotate"
     INVERT = "invert"
 
-
-ARGS = xx.console.get_args({
-    "path": "before",
-    "upper": {"-u", "--upper"},
-    "lower": {"-l", "--lower"},
-    "grayscale": {"-g", "--grayscale"},
-    "rotate": {"-r", "--rotate"},
-    "invert": {"-i", "--invert"},
-    "apply_gitignore": {"-G", "--gitignore"},
-    "check": {"-d", "--dry"},
-    "help": {"-h", "--help"},
-})
 
 PATTERNS = LazyRegex(hex=r"(?i)(#)([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3,4})\b|(0x)([0-9A-F]{8}|[0-9A-F]{6})\b")
 
@@ -208,11 +196,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
 
 
 def main() -> None:  # ruff:ignore[complex-structure]
-    if ARGS.help.exists or not ARGS.path.values:
-        print_help()
-        return
-
-    paths = ARGS.path.values
+    paths = ARGS.path.vals()
 
     # DETERMINE OPERATION
     degrees = 0
@@ -223,9 +207,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     elif ARGS.grayscale.exists:
         operation = Operation.GRAYSCALE
     elif ARGS.rotate.exists:
-        try:
-            degrees = int("".join(ARGS.rotate.values).strip())
-        except (ValueError, TypeError):
+        if (degrees := ARGS.rotate.val(int, default=None)) is None:
             xx.console.fail(
                 "[br:blue](--rotate) requires a degree value (0-360), e.g. [br:blue](--rotate=180)", start="\n", end="\n\n"
             )
@@ -267,6 +249,43 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Hex Colors",
+        subtitle="Transform hex color codes in a file or directory",
+        usage=(S.BOLD("Usage: "), "{cmd} <path...> {opts}"),
+        examples=[
+            ('{cmd} "./styles.css"', "Uppercase hex colors in a single file"),
+            ('{cmd} "./src" --lower', "Lowercase hex colors in all files"),
+            ('{cmd} "./src" --grayscale', "Convert all hex colors to grayscale"),
+            ('{cmd} "./styles.css" --rotate=180', "Rotate hue by 180 degrees"),
+            ('{cmd} "./styles.css" --invert', "Invert all hex colors"),
+        ],
+    )
+
+    args.add_arg("path", nargs="+", help="One or more paths to files or directories to process")
+    args.add_opt({"-u", "--upper"}, help="Uppercase all hex colors (#9EB6FF)")
+    args.add_opt({"-l", "--lower"}, help="Lowercase all hex colors (#9eb6ff)")
+    args.add_opt({"-g", "--grayscale"}, help="Convert all hex colors to grayscale")
+    args.add_opt(
+        {"-r", "--rotate"},
+        expects_value="DEG",
+        help="Rotate the hue of all hex colors by DEG degrees (0-360)",
+    )
+    args.add_opt({"-i", "--invert"}, help="Invert all hex colors")
+    args.add_opt(
+        {"-G", "--gitignore"},
+        "apply_gitignore",
+        help="Apply .gitignore rules when scanning directories",
+    )
+    args.add_opt(
+        {"-d", "--dry"},
+        "check",
+        help="Dry-run: show what would change without modifying any files",
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

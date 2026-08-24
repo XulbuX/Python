@@ -124,7 +124,7 @@ The changes are now active, and you can run the files by typing their names (*e.
 ## Some Commands in More Detail
 
 Run any command with `-h` or `--help` to see its full usage information.<br>
-**⇾** Each process can be canceled by pressing `Ctrl(⌘) + C`.
+**⇾** Each process can be canceled by pressing `Ctrl + C`.
 
 > [!NOTE]<br>
 > If any of the scripts stop working (*especially after updating*), ensure all dependencies are up-to-date.<br>

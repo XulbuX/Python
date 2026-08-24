@@ -7,20 +7,10 @@ specified color channel with a specified number of steps."""
 import colorsys
 from typing import TYPE_CHECKING, Literal, cast
 import xulbux as xx
-from xulbux import S, StyledText, hexa, rgba
+from xulbux import ArgumentParser, S, StyledText, hexa, rgba
 
 if TYPE_CHECKING:
     from xulbux.ansi import RenderSegment
-
-ARGS = xx.console.get_args({
-    "color_points": "before",
-    "steps": {"-s", "--steps"},
-    "hsv": {"-H", "--hsv"},
-    "oklch": {"-O", "--oklch"},
-    "list": {"-l", "--list"},
-    "numerate": {"-n", "--numerate"},
-    "help": {"-h", "--help"},
-})
 
 
 # fmt: off
@@ -432,10 +422,6 @@ def parse_color_args(
 
 
 def main() -> None:
-    if ARGS.help.exists or not (ARGS.color_points.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
-        print_help()
-        return
-
     # DETERMINE INTERPOLATION MODE
     if ARGS.hsv.exists and ARGS.oklch.exists:
         raise ValueError(
@@ -449,7 +435,7 @@ def main() -> None:
         )
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
-    color_args = " ".join(ARGS.color_points.values).split()
+    color_args = " ".join(ARGS.color_points.vals()).split()
 
     if len(color_args) < 2:
         raise ValueError(
@@ -471,17 +457,17 @@ def main() -> None:
     while len(directions) < len(colors) - 1:
         directions.append("shortest")
 
-    if (sv := ARGS.steps.get(0)) and int(sv) <= 1:
+    if (sv := ARGS.steps.val(int, default=None)) and sv <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
+    total_steps = sv if sv is not None else xx.console.get_width() * 2
 
     gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],
         width=xx.console.get_width(),
-        list_colors=ARGS.list.exists or ARGS.numerate.exists,
+        list_colors=bool(ARGS.list or ARGS.numerate),
         numerate=ARGS.numerate.exists,
     )
 
@@ -489,6 +475,53 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Gradient",
+        subtitle="Generate and preview advanced color gradients",
+        examples=[
+            ("{cmd} F00 00F", "Linear RGB interpolation"),
+            ("{cmd} F00 00F 0F0", "Multicolor linear gradient"),
+            ("{cmd} F00 00F --steps=5", "5 steps total across segments"),
+            ("{cmd} F00 00F 0F0 -O", "OKLCH, shortest hue path"),
+            ('{cmd} "F00 > 00F" -H', "HSV, clockwise hue rotation"),
+            ('{cmd} "F00 > 00F < 0F0" -H', "HSV, mixed hue directions"),
+        ],
+        epilog=StyledText(
+            (
+                S.BOLD("Direction: "),
+                S.DIM("(only with ", S.BR.BLUE("--hsv"), " or ", S.BR.BLUE("--oklch"), " modes)"),
+            ),
+            ("  ", S.BR.CYAN(">"), "                 Rotate hue clockwise"),
+            ("  ", S.BR.CYAN("<"), "                 Rotate hue counterclockwise"),
+            ("  ", S.DIM("no arrow"), "          Use shortest hue path ", S.DIM("(default)")),
+            sep="\n",
+        ),
+    )
+
+    args.add_arg(
+        "color_points",
+        nargs="+",
+        help=("Hex colors to create gradient between ", S.DIM("(at least 2 required)")),
+    )
+    args.add_opt(
+        {"-s", "--steps"},
+        expects_value="N",
+        help=("Number of gradient steps ", S.DIM("(total across all color segments)")),
+    )
+    args.add_opt({"-H", "--hsv"}, help="Use HSV interpolation with hue rotation")
+    args.add_opt(
+        {"-O", "--oklch"},
+        help="Use perceptually uniform OKLCH interpolation with hue rotation",
+    )
+    args.add_opt({"-l", "--list"}, help="Show list of all gradient colors")
+    args.add_opt(
+        {"-n", "--numerate"},
+        help=("Show step numbers alongside listed colors ", S.DIM("(implies ", S.BR.BLUE("-l"), ")")),
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

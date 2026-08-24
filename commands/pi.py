@@ -7,12 +7,7 @@ import math
 import sys
 import time
 from collections.abc import Iterator
-from xulbux import FormatCodes, Throbber, console
-
-ARGS = console.get_args({
-    "decimal_places": "before",
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, FormatCodes, Throbber, console
 
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
@@ -218,12 +213,7 @@ def pi(decimals: int = 10) -> str:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
-    global CALC_DONE
-    input_k = int(v) if (v := ARGS.decimal_places.get(0)) and v.replace("_", "").isdigit() else 10
+    input_k = int(v.replace("_", "")) if (v := ARGS.decimals.val()) and v.replace("_", "").isdigit() else 10
 
     if (estimated_secs := estimate_runtime(input_k)) >= 604800:
         FormatCodes.print(
@@ -259,4 +249,23 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    args = ArgumentParser(
+        title="Pi",
+        subtitle="Calculate the value of π to a specified number of decimal places",
+        examples=[
+            ("{cmd}", "Calculate π to 10 decimal places"),
+            ("{cmd} 10_000", "Calculate π to 10,000 decimal places"),
+        ],
+    )
+
+    args.add_arg("decimals", required=False, help="Number of decimal places (default: 10)")
+
+    global ARGS
+    ARGS = args.parse()
+
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+    except Exception as exc:
+        console.fail(exc, start="\n", end="\n\n")

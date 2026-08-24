@@ -6,13 +6,7 @@
 import math
 import time
 import xulbux as xx
-from xulbux import S, StyledText
-
-ARGS = xx.console.get_args({
-    "speed": {"-s", "--speed"},
-    "y_stretch": {"-y", "--y-stretch"},
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, S, StyledText
 
 
 # fmt: off
@@ -31,7 +25,7 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-y"), ", ", S.BR.BLUE("--y-stretch"), "    Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "          Stop the animation"),
+        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "          Stop the animation"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("sine"), "                  ", S.DIM("# ", S.ITALIC("Default wave"))),
@@ -85,17 +79,39 @@ def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
-    speed = max(0.1, float(ARGS.speed.values[0])) if ARGS.speed.exists else 1.0
-    y_stretch = max(0.1, float(ARGS.y_stretch.values[0])) if ARGS.y_stretch.exists else 1.0
+    speed = max(0.1, ARGS.speed.val(float, default=1.0))
+    y_stretch = max(0.1, ARGS.y_stretch.val(float, default=1.0))
 
     show_wave(width=xx.console.get_width() - 1, speed=(2 / y_stretch, speed))
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Sine",
+        subtitle="Show a sine wave animation inside the terminal",
+        controls=[("Ctrl+C", "Stop the animation")],
+        examples=[
+            ("{cmd}", "Default wave"),
+            ("{cmd} --speed=2", "Scroll twice as fast"),
+            ("{cmd} --y-stretch=3", "Cycles 3× more stretched out"),  # ruff:ignore[ambiguous-unicode-character-string]
+            ("{cmd} -s=0.5 -y=0.5", "Half speed, half stretch"),
+        ],
+    )
+
+    args.add_opt(
+        {"-s", "--speed"},
+        expects_value="N",
+        help=("Animation speed multiplier ", S.DIM("(default: 1.0)")),
+    )
+    args.add_opt(
+        {"-y", "--y-stretch"},
+        expects_value="N",
+        help=("Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

@@ -16,11 +16,7 @@ from pathlib import Path
 from typing import cast
 import keyboard
 import xulbux as xx
-from xulbux import FormatCodes, Throbber
-
-ARGS = xx.console.get_args({
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, FormatCodes, S, Throbber
 
 
 def print_help() -> None:
@@ -31,12 +27,12 @@ def print_help() -> None:
 
 [b](Controls:)
   [br:red](Enter)            Start game in normal mode
-  [br:red](Ctrl(⌘)[dim](+)Enter)    Start game in ASCII mode
+  [br:red](Ctrl[dim](+)Enter)    Start game in ASCII mode
   [br:red](Space)            Generate maze to a file
   [br:red](WASD), [br:red](⏶⏴⏷⏵)       Move the player
   [br:red](H)                Toggle solution path
   [br:red](F)                Finish maze
-  [br:red](Ctrl(⌘)[dim](+)C)        Exit game
+  [br:red](Ctrl[dim](+)C)        Exit game
 
 [b](Examples:)
   [br:green](maze)    [dim](# [i](Start the interactive maze game))
@@ -389,10 +385,6 @@ class Maze:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     def smart_split(s: str, char: str = " ", /) -> list[str]:
         return s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split()
 
@@ -400,12 +392,12 @@ def main() -> None:
         "[br:blue]  [b](WASD ⏶⏴⏷⏵)   [blue]:[br:blue] move the player",
         "[br:blue]      [b](H)       [blue]:[br:blue] toggle solution",
         "[br:blue]      [b](F)       [blue]:[br:blue] finish maze",
-        "[br:blue]  [b](Ctrl(⌘)[dim](+)[b]C)   [blue]:[br:blue] exit game",
+        "[br:blue]  [b](Ctrl[dim](+)[b]C)   [blue]:[br:blue] exit game",
         "{hr}",
         "[br:blue]    [b](ENTER)     [blue]:[br:blue] start game normal",
-        "[br:blue][b](Ctrl(⌘)[dim](+)[b]ENTER) [blue]:[br:blue] start game ASCII",
+        "[br:blue][b](Ctrl[dim](+)[b]ENTER) [blue]:[br:blue] start game ASCII",
         "[br:blue]    [b](SPACE)     [blue]:[br:blue] generate to file",
-        border_style="dim|br:blue",
+        border_style=S.DIM | S.BR.BLUE,
         start="\n",
         end="\n\n",
     )
@@ -498,7 +490,7 @@ def main() -> None:
             xx.console.log_box_bordered(
                 f"[br:blue]Saved maze to [b|link:file:///{files[0].resolve()}]({files[0].name}) [[i]({sizes[0]})]",
                 f"[br:blue]Saved solution to [b|link:file:///{files[1].resolve()}]({files[1].name}) [[i]({sizes[1]})]",
-                border_style="dim|br:blue",
+                border_style=S.DIM | S.BR.BLUE,
                 end="\n\n",
             )
 
@@ -506,6 +498,24 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Maze",
+        subtitle="Play a maze game or generate mazes in the terminal",
+        controls=[
+            ("Enter", "Start game in normal mode"),
+            ("Ctrl+Enter", "Start game in ASCII mode"),
+            ("Space", "Generate maze to a file"),
+            (("WASD", "⏶⏴⏷⏵"), "Move the player"),
+            ("H", "Toggle solution path"),
+            ("F", "Finish maze"),
+            ("Ctrl+C", "Exit game"),
+        ],
+        examples=[("{cmd}", "Start the interactive maze game")],
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

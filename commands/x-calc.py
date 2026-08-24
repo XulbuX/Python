@@ -13,20 +13,11 @@ from typing import Any, ClassVar
 import numpy
 import sympy
 import xulbux as xx
-from xulbux import FormatCodes, LazyRegex
+from xulbux import ArgumentParser, FormatCodes, LazyRegex
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = xx.console.get_args({
-    "calculation": "before",
-    "ans": {"-a", "--ans"},
-    "precision": {"-p", "--precision"},
-    "format": {"-f", "--format"},
-    "debug": {"-d", "--debug"},
-    "help": {"-h", "--help"},
-})
-
-DEBUG = ARGS.debug.exists
+DEBUG = False
 REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
 
@@ -170,7 +161,7 @@ class CONSTANTS:
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
     IMPLEMENT: ClassVar[dict[str, object]] = {
-        ANS[0]: (ARGS.ans.values or [None])[0],
+        ANS[0]: None,
         E[0]: sympy.E,
         INF[0]: sympy.oo,
         PI[0]: sympy.pi,
@@ -834,7 +825,11 @@ class Calc:
                     print_line("CALCULATING CONSTANT")
                     FormatCodes.print(f"[dim](constant ID:) {c_id}")
 
-                constant_value = CONSTANTS.get(c_id)
+                constant_value = (
+                    sanitize(self.last_ans)
+                    if (c_id == CONSTANTS.ANS[0] and self.last_ans is not None)
+                    else CONSTANTS.get(c_id)
+                )
 
                 if c_id == CONSTANTS.ANS[0] and constant_value is None:
                     raise Exception("Answer constant was not specified")
@@ -1037,44 +1032,64 @@ class Calc:
 def main() -> None:
     print()
 
-    if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
-        precision_value = int(v) if (v := ARGS.precision.get(0)) and v.lstrip("-").isdigit() else 100
-        if precision_value <= 0 and precision_value != -1:
-            xx.console.fail(
-                "[b](ValueError:) Precision must be positive or [br:cyan](-1) "
-                f"for infinite precision, got [br:cyan]({precision_value})",
-                end="\n\n",
-            )
-            return
-
-        if precision_value == -1:
-            precision = -1
-            max_num_len = -1
-        else:
-            precision = precision_value + 10
-            max_num_len = precision_value
-
-        calculation = Calc(
-            calc_str=" ".join(str(v) for v in calc_str_parts),
-            last_ans=(ARGS.ans.values or [None])[0],
-            precision=precision,
-            max_num_len=max_num_len,
+    calc_str_parts = ARGS.calculation.vals()
+    precision_value = ARGS.precision.val(int, default=100)
+    if precision_value <= 0 and precision_value != -1:
+        xx.console.fail(
+            "[b](ValueError:) Precision must be positive or [br:cyan](-1) "
+            f"for infinite precision, got [br:cyan]({precision_value})",
+            end="\n\n",
         )
-        result = calculation.eval()
+        return
 
-        if DEBUG:
-            print_line("FINAL RESULT")
-            FormatCodes.print(f"[dim](answer:) {result}")
-            print_line()
-            print()
-        else:
-            print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
-
+    if precision_value == -1:
+        precision = -1
+        max_num_len = -1
     else:
-        print_help()
+        precision = precision_value + 10
+        max_num_len = precision_value
+
+    calculation = Calc(
+        calc_str=" ".join(str(v) for v in calc_str_parts),
+        last_ans=ARGS.ans.val(default=None),
+        precision=precision,
+        max_num_len=max_num_len,
+    )
+    result = calculation.eval()
+
+    if DEBUG:
+        print_line("FINAL RESULT")
+        FormatCodes.print(f"[dim](answer:) {result}")
+        print_line()
+        print()
+    else:
+        print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Advanced Calculator",
+        subtitle="Perform complex calculations directly from the command line",
+        examples=[
+            ('{cmd} "2 + 2 * 2"', "Simple arithmetic"),
+            ('{cmd} "ans * 2" --ans=6', "Using the 'ans' constant"),
+            ('{cmd} "sqrt(ln(10) + 1) / cos(π / 4)" -p=1000', "High precision with functions and constants"),
+        ],
+    )
+
+    args.add_arg("calculation", nargs="+", help="The calculation string to evaluate")
+    args.add_opt({"-a", "--ans"}, expects_value="VALUE", help="Value to use for 'ans' constant")
+    args.add_opt(
+        {"-p", "--precision"},
+        expects_value="N",
+        help="Number of decimal places to calculate (default: 100, -1 for infinite)",
+    )
+    args.add_opt({"-f", "--format"}, help="Format the output with thousands separators")
+    args.add_opt({"-d", "--debug"}, help="Show debug information during calculation")
+
+    ARGS = args.parse()
+    DEBUG = ARGS.debug.exists
+
     try:
         main()
     except KeyboardInterrupt:

@@ -8,7 +8,7 @@ import re
 import subprocess
 from typing import TYPE_CHECKING, Any, TypedDict
 import xulbux as xx
-from xulbux import FormatCodes
+from xulbux import ArgumentParser, FormatCodes
 
 if TYPE_CHECKING:
     import psutil
@@ -22,12 +22,6 @@ try:
 except (ImportError, ModuleNotFoundError) as exc:
     PSUTIL_AVAILABLE: bool = False  # type:ignore[no-redef]
     PSUTIL_ERROR: str | None = str(exc)  # type:ignore[no-redef]
-
-ARGS = xx.console.get_args({
-    "detailed": {"-d", "--detailed"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
 
 
 def print_help() -> None:
@@ -432,10 +426,6 @@ class HardwareInfo:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     hw_info = HardwareInfo()
 
     try:
@@ -451,6 +441,22 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Hardware Info",
+        subtitle="Get detailed hardware information about your PC",
+        examples=[
+            ("{cmd}", "Show summary hardware information"),
+            ("{cmd} --detailed", "Show detailed hardware specifications"),
+            ("{cmd} --json", "Output hardware information as JSON"),
+        ],
+    )
+
+    args.add_opt({"-d", "--detailed"}, "detailed", help="Show detailed hardware information")
+    args.add_opt({"-j", "--json"}, "json_output", help="Output hardware information as JSON")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

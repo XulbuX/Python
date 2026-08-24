@@ -128,7 +128,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        StyledText("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl(⌘)+C)"))).print()
+        StyledText("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
         add_nl_before_end = False
         exit_code = 130  # SIGINT.
 

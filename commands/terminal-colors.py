@@ -4,12 +4,8 @@
 """Show the foreground and background colors
 from the current terminal color scheme."""
 
-from xulbux.ansi import AnyStyle, S, StyledText
-from xulbux.console import get_args
-
-ARGS = get_args({
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, S, StyledText
+from xulbux.ansi import AnyStyle
 
 SHELL_COLORS: list[list[AnyStyle]] = [
     [S.BLACK, S.BR.BLACK, S.WHITE | S.BG.BLACK, S.WHITE | S.BG.BR.BLACK],
@@ -54,7 +50,12 @@ def show_shell_colors() -> None:
 
 
 if __name__ == "__main__":
-    if ARGS.help.exists:
-        print_help()
-    else:
-        show_shell_colors()
+    args = ArgumentParser(
+        title="Terminal Colors",
+        subtitle="Show all foreground and background terminal colors",
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
+    show_shell_colors()

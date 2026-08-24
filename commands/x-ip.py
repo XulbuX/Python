@@ -9,14 +9,7 @@ import socket
 import subprocess
 from typing import Any
 import xulbux as xx
-from xulbux import FormatCodes
-
-ARGS = xx.console.get_args({
-    "get_geo": {"-g", "--geo", "--location"},
-    "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
-    "json_output": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, FormatCodes
 
 
 def print_help() -> None:
@@ -345,14 +338,10 @@ class IPInfo:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     ip_info = IPInfo()
 
     try:
-        ip_info.gather_info(provider=(ARGS.provider.values or [None])[0], get_geo=ARGS.get_geo.exists)
+        ip_info.gather_info(provider=ARGS.provider.val(default="ipify"), get_geo=ARGS.get_geo.exists)
     except Exception as exc:
         xx.console.fail(f"Error gathering IP information: {exc}", end="\n\n")
         return
@@ -364,6 +353,29 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="IP Info",
+        subtitle="Get local and public IP addresses with geolocation",
+        examples=[
+            ("{cmd}", "Show basic IP information"),
+            ("{cmd} --geo", "Show IP information with geolocation"),
+            ("{cmd} --provider=ipapi", "Use ipapi.co to get public IP"),
+            ("{cmd} --json", "Output IP information as JSON"),
+        ],
+    )
+
+    args.add_opt({"-g", "--geo", "--location"}, "get_geo", help="Show geolocation info for public IP")
+    args.add_opt(
+        {"-p", "--provider"},
+        "provider",
+        expects_value="NAME",
+        help="Use specific IP provider (ipify, ipapi, icanhazip)",
+    )
+    args.add_opt({"-j", "--json"}, "json_output", help="Output IP information as JSON")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

@@ -5,15 +5,8 @@
 
 import keyboard
 import xulbux as xx
-from xulbux import FormatCodes
+from xulbux import ArgumentParser, FormatCodes
 from xulbux.base.consts import CHARS
-
-ARGS = xx.console.get_args({
-    "table_cols": {"-c", "--cols"},
-    "help": {"-h", "--help"},
-})
-
-TABLE_COLS = int(v) if (v := ARGS.table_cols.get(0)) and v.replace("_", "").isdigit() else 4
 
 
 def clear_last_lines(count: int) -> None:
@@ -45,9 +38,7 @@ def print_help() -> None:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
+    table_cols = ARGS.table_cols.val(int, default=4)
 
     FormatCodes.print(
         "═══════════════════ [b](SQUARED NUMBERS — ALL OF THEM!) ═══════════════════\n"
@@ -66,8 +57,8 @@ def main() -> None:
     row_space = len(f"│ {loops}² = {loops * loops:,} │")
 
     borders = {
-        "top": ("╭" + ((row_space * TABLE_COLS) - 2) * "─" + "╮"),
-        "bottom": ("╰" + ((row_space * TABLE_COLS) - 2) * "─" + "╯"),
+        "top": ("╭" + ((row_space * table_cols) - 2) * "─" + "╮"),
+        "bottom": ("╰" + ((row_space * table_cols) - 2) * "─" + "╯"),
     }
 
     print(borders["top"])
@@ -75,13 +66,13 @@ def main() -> None:
         row = ""
         if keyboard.is_pressed("space"):
             wait_key_pressed_and_released("space")
-        for _ in range(TABLE_COLS):
+        for _ in range(table_cols):
             if i <= loops:
                 output = f"│ {i}² = {i * i:,}"
                 row += f"{output}{(row_space - len(output) - 1) * ' '}│"
             else:
                 row += f"│{(row_space - 2) * ' '}│"
-            i += 1
+                i += 1
         print(row)
     print(borders["bottom"])
     print()
@@ -90,6 +81,25 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Squares",
+        subtitle="Calculate the squares of all numbers up to a given number",
+        examples=[
+            ("{cmd}", "Calculate squares with 4 columns"),
+            ("{cmd} --cols=6", "Calculate squares with 6 columns"),
+        ],
+    )
+
+    args.add_opt(
+        {"-c", "--cols"},
+        "table_cols",
+        expects_value="N",
+        help="Number of table columns (default: 4)",
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

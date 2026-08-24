@@ -7,13 +7,8 @@ The mess can be made faster and displayed in color."""
 import random as rnd
 import time
 import xulbux as xx
+from xulbux import ArgumentParser
 from xulbux.ansi import AnyStyle, S, StyledText
-
-ARGS = xx.console.get_args({
-    "fast_mode": {"-f", "--fast"},
-    "color_mode": {"-c", "--color"},
-    "help": {"-h", "--help"},
-})
 
 
 # fmt: off
@@ -32,7 +27,7 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--color"), "    Color the mess in random colors"),
         "",
         S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "      Stop the animation"),
+        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "      Stop the animation"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("mess"), "            ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
@@ -48,25 +43,22 @@ def print_help() -> None:
 digits: list[str] = ["0", "1"]
 styles: list[AnyStyle] = [S.DIM, S.BOLD, S.INVERSE, S.UNDERLINE, S.STRIKETHROUGH, S.DOUBLE_UNDERLINE]
 
-# fmt: off
-if ARGS.color_mode.exists:
-    styles.extend([
-        S.BLACK, S.RED, S.GREEN, S.YELLOW, S.BLUE, S.MAGENTA, S.CYAN, S.WHITE,
-        S.BR.BLACK, S.BR.RED, S.BR.GREEN, S.BR.YELLOW, S.BR.BLUE, S.BR.MAGENTA, S.BR.CYAN, S.BR.WHITE,
-        S.BG.BLACK, S.BG.RED, S.BG.GREEN, S.BG.YELLOW, S.BG.BLUE, S.BG.MAGENTA, S.BG.CYAN, S.BG.WHITE,
-        S.BG.BR.BLACK, S.BG.BR.RED, S.BG.BR.GREEN, S.BG.BR.YELLOW, S.BG.BR.BLUE, S.BG.BR.MAGENTA, S.BG.BR.CYAN, S.BG.BR.WHITE,
-    ])
-# fmt: on
-
 
 def binary_line() -> StyledText:
     return StyledText(*(rnd.choice(styles)(rnd.choice(digits)) for _ in range(xx.console.get_width())))
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
+    # fmt: off
+    if ARGS.color_mode.exists:
+        styles.extend([
+            S.BLACK, S.RED, S.GREEN, S.YELLOW, S.BLUE, S.MAGENTA, S.CYAN, S.WHITE,
+            S.BR.BLACK, S.BR.RED, S.BR.GREEN, S.BR.YELLOW, S.BR.BLUE, S.BR.MAGENTA, S.BR.CYAN, S.BR.WHITE,
+            S.BG.BLACK, S.BG.RED, S.BG.GREEN, S.BG.YELLOW, S.BG.BLUE, S.BG.MAGENTA, S.BG.CYAN, S.BG.WHITE,
+            S.BG.BR.BLACK, S.BG.BR.RED, S.BG.BR.GREEN, S.BG.BR.YELLOW, S.BG.BR.BLUE, S.BG.BR.MAGENTA, S.BG.BR.CYAN,
+            S.BG.BR.WHITE,
+        ])
+    # fmt: on
 
     if ARGS.fast_mode.exists:
         while True:
@@ -78,6 +70,24 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Mess",
+        subtitle="Display a random binary mess",
+        controls=[("Ctrl+C", "Stop the animation")],
+        examples=[
+            ("{cmd}", "Show binary mess at normal speed"),
+            ("{cmd} --fast", "Show binary mess at maximum speed"),
+            ("{cmd} --color", "Show colorful binary mess"),
+            ("{cmd} -f -c", "Show colorful binary mess at maximum speed"),
+        ],
+    )
+
+    args.add_opt({"-f", "--fast"}, "fast_mode", help="Display the mess at maximum speed")
+    args.add_opt({"-c", "--color"}, "color_mode", help="Color the mess in random colors")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

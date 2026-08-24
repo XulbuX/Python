@@ -10,12 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import cast
 import xulbux as xx
-from xulbux import S, StyledText
-
-ARGS = xx.console.get_args({
-    "as_json": {"-j", "--json"},
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, S, StyledText
 
 
 # fmt: off
@@ -146,10 +141,6 @@ def get_vscode_extensions(executable: str) -> list[str] | None:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     if (vscode_info := find_vscode_executable()) is None:
         StyledText(S.BR.RED("Visual Studio Code is not installed or could not be found."))
         raise SystemExit(1)
@@ -178,6 +169,20 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="VS Code Extensions",
+        subtitle="List all installed Visual Studio Code extensions",
+        examples=[
+            ("{cmd}", "List all installed extensions"),
+            ("{cmd} --json", "Output all extensions as a JSON list"),
+        ],
+    )
+
+    args.add_opt({"-j", "--json"}, "as_json", help="Output as a JSON list")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

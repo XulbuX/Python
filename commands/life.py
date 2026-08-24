@@ -8,29 +8,8 @@ import random
 import sys
 import time
 import xulbux as xx
-from xulbux import FormatCodes
+from xulbux import ArgumentParser, S, StyledText
 from xulbux.base.consts import CHARS
-
-ARGS = xx.console.get_args({
-    "help": {"-h", "--help"},
-})
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Game of Life — \
-[link:https://wikipedia.org/wiki/Conway's_Game_of_Life](Conway's cellular automaton) \
-in the terminal )
-
-[b](Usage:) [br:green](life)
-
-[b](Controls:)
-  [br:red](Ctrl(⌘)[dim](+)C)    Exit the simulation
-
-[b](Examples:)
-  [br:green](life)    [dim](# [i](Start Game of Life with interactive setup))
-"""
-    FormatCodes.print(help_text)
 
 
 class GameOfLife:
@@ -135,14 +114,15 @@ class GameOfLife:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     game = GameOfLife()
 
-    FormatCodes.print("[b](Choose Initialization)\n [b|i](1)  Random pattern\n [b|i](2)  Some classic patterns")
-    choice = xx.console.input("(1) [b](>) ", max_len=1, allowed_chars="12", default_val=1, output_type=int)
+    StyledText(
+        S.BOLD("Choose Initialization"),
+        ((S.BOLD | S.ITALIC)(" 1  "), "Random pattern"),
+        ((S.BOLD | S.ITALIC)(" 2  "), "Some classic patterns"),
+        sep="\n",
+    ).print()
+    choice = xx.console.input(("(1) ", S.BOLD(">"), " "), max_len=1, allowed_chars="12", default_val=1, output_type=int)
 
     match choice:
         case 2:
@@ -157,7 +137,7 @@ def main() -> None:
         case _:
             density = 0.2
             density = xx.console.input(
-                f"\n[b](Enter density) [0.0 – 1.0]({density}) [b](>) ",
+                (S.BOLD("\nEnter density"), f" [0.0 – 1.0]({density}) ", S.BOLD(">"), " "),
                 allowed_chars=CHARS.FLOAT_DIGITS,
                 default_val=density,
                 output_type=float,
@@ -166,7 +146,7 @@ def main() -> None:
 
     delay = 0.02
     delay = xx.console.input(
-        f"\n[b](Delay between generations) [secs]({delay}) [b](>) ",
+        (S.BOLD("\nDelay between generations"), f" [secs]({delay}) ", S.BOLD(">"), " "),
         allowed_chars=CHARS.FLOAT_DIGITS,
         default_val=delay,
         output_type=float,
@@ -176,6 +156,16 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Game of Life",
+        subtitle="Conway's cellular automaton in the terminal",
+        controls=[("Ctrl+C", "Exit the simulation")],
+        examples=[("{cmd}", "Start Game of Life with interactive setup")],
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

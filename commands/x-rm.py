@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 import psutil
 import xulbux as xx
-from xulbux import FormatCodes
+from xulbux import ArgumentParser, FormatCodes
 
 # ************************* CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED *************************
 
@@ -61,12 +61,6 @@ PROTECTED_PROCESSES_UNIX = {
     "watchdog",
     "zsh",
 }
-
-ARGS = xx.console.get_args({
-    "rm_path": "before",
-    "confirmed": {"-y", "--yes"},
-    "help": {"-h", "--help"},
-})
 
 
 def print_help() -> None:
@@ -449,10 +443,6 @@ def path_validator(path: str) -> str | None:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
     FormatCodes.print(f"\n[b|bg:black]( {platform.system()} [in]( FORCE DELETE UTILITY ))")
     xx.console.log_box_bordered(
         "[yellow](This will terminate processes if needed.)",
@@ -469,10 +459,11 @@ def main() -> None:
                 "  [dim|yellow](Consider running:) [b|br:white](sudo) [white](python) [br:green](x-rm) [br:cyan](<path>)"
             )
 
-    if len(target_path := "".join(ARGS.rm_path.values) or ARGS.confirmed.get(0, "")) == 0:
-        target_path = xx.console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
+    target_path_str = ARGS.path.val(default="") or ARGS.confirmed.val(default="")
+    if not target_path_str:
+        target_path_str = xx.console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
 
-    if not (target_path := Path(target_path)).exists():
+    if not (target_path := Path(target_path_str)).exists():
         xx.console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
 
     if not ARGS.confirmed.exists and not xx.console.confirm(
@@ -484,6 +475,21 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Force Remove",
+        subtitle="Delete files/directories even if they are locked",
+        examples=[
+            ('{cmd} "/path/to/directory"', "Delete a directory"),
+            ('{cmd} -y="/path/to/file.txt"', "Delete a file, skipping confirmation"),
+        ],
+    )
+
+    args.add_arg("path", required=False, help="The path to the file/directory to delete")
+    args.add_opt({"-y", "--yes"}, "confirmed", expects_value="PATH", help="Skip confirmation prompt")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

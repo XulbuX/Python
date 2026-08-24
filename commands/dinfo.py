@@ -11,17 +11,9 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import xulbux as xx
-from xulbux import S, StyledText, Term, Throbber
+from xulbux import ArgumentParser, S, StyledText, Term, Throbber
 
-ARGS = xx.console.get_args({
-    "recursive": {"-r", "--recursive"},
-    "exclude_info": {"-e", "--exclude"},
-    "skip_hidden": {"-H", "--skip-hidden"},
-    "apply_gitignore": {"-G", "--gitignore"},
-    "help": {"-h", "--help"},
-})
-
-EXCLUDE: set[str] = {item.lower() for item in ARGS.exclude_info.get(0, "").split()}
+EXCLUDE: set[str] = set()
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
 
 
@@ -43,7 +35,7 @@ def print_help() -> None:
         ("  ", S.BR.BLUE("-G"), ", ", S.BR.BLUE("--gitignore"), "      Apply ", S.WHITE(".gitignore"), " rules when scanning files"),  # ruff:ignore[line-too-long]
         "",
         S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl(⌘)", S.DIM("+"), "C"), "            Cancel and exit"),
+        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "            Cancel and exit"),
         "",
         S.BOLD("Examples:"),
         ("  ", S.BR.GREEN("dinfo"), "                    ", S.DIM("# ", S.ITALIC("Get all directory info, not ignoring any items"))),  # ruff:ignore[line-too-long]
@@ -298,9 +290,7 @@ def format_bytes_size(bytes: int) -> str:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
+    EXCLUDE = {item.lower() for item in ARGS.exclude_info.val(default="").split()}
 
     print()
 
@@ -323,6 +313,38 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Directory Info",
+        subtitle="Get details about files in the current directory",
+        controls=[("Ctrl+C", "Cancel and exit")],
+        examples=[
+            ("{cmd}", "Get all directory info, not ignoring any items"),
+            ('{cmd} -e="size lines"', "Only show file count, excluding size and line count"),
+            ("{cmd} --skip-hidden", "Skip hidden and system items"),
+            ("{cmd} --gitignore", "Apply .gitignore rules when scanning files"),
+        ],
+    )
+
+    args.add_opt({"-r", "--recursive"}, help="Also scan all subdirectories recursively")
+    args.add_opt(
+        {"-e", "--exclude"},
+        "exclude_info",
+        expects_value="S",
+        help=(
+            "Exclude parts of the info ",
+            S.DIM("(", S.ITALIC("size"), ", ", S.ITALIC("lines"), "; count is always included)"),
+        ),
+    )
+    args.add_opt({"-H", "--skip-hidden"}, help="Skip hidden, system, and protected items")
+    args.add_opt(
+        {"-G", "--gitignore"},
+        "apply_gitignore",
+        help=("Apply ", S.WHITE(".gitignore"), " rules when scanning files"),
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

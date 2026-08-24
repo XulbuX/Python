@@ -4,13 +4,7 @@
 """Process a list of items and display some statistics."""
 
 import xulbux as xx
-from xulbux import FormatCodes
-
-ARGS = xx.console.get_args({
-    "list_items": "before",
-    "separator": {"-s", "--sep"},
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, FormatCodes, S, StyledText
 
 
 def print_help() -> None:
@@ -36,17 +30,13 @@ def print_help() -> None:
 
 
 def main() -> None:
-    if ARGS.help.exists:
-        print_help()
-        return
-
-    sep = ARGS.separator.get(0, "")
+    sep = ARGS.separator.val(default="")
 
     if sep != "":
-        input_str = input(">  ") if not ARGS.list_items.exists else " ".join(ARGS.list_items.values)
+        input_str = input(">  ") if not ARGS.items.exists else " ".join(ARGS.items.vals())
         lst = [x for x in input_str.split(sep) if x.strip() not in {"", None}]
     else:
-        lst = [str(val) for val in ARGS.list_items.values]
+        lst = list(ARGS.items.vals())
 
     if len(lst) >= 1 and lst[0].strip() not in {"", None}:
         FormatCodes.print(f"\n[b|bg:black]([in]( PROCESSED ) {len(lst)} [in]( LIST ENTRIES ))\n")
@@ -76,6 +66,36 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Process List",
+        subtitle="Process a list of items and display statistics",
+        usage=(S.BOLD("Usage: "), "{cmd} <item_1> <item_2> ... {opts}"),
+        examples=[
+            ("{cmd} 1 2 3 4 5", "Process a list of numbers"),
+            ("{cmd} a b c", "Process a list of strings"),
+            ('{cmd} "1,2,3" -s=","', "Process comma-separated values"),
+        ],
+        epilog=StyledText(
+            S.BOLD("Note:  "),
+            "When all items are numbers, min, max, sum and average are also shown.",
+        ),
+    )
+
+    args.add_arg(
+        "items",
+        nargs="*",
+        help=("List items to process ", S.DIM("(space-separated or custom separator using ", S.BR.BLUE("-s"), ")")),
+    )
+    args.add_opt(
+        {"-s", "--sep"},
+        "separator",
+        expects_value="S",
+        help="Separator character to split a single input string",
+    )
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

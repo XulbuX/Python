@@ -10,18 +10,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 import qrcode
 import xulbux as xx
-from xulbux import FormatCodes, Throbber
+from xulbux import ArgumentParser, FormatCodes, S, Throbber
 from xulbux.base.consts import COLOR
-
-ARGS = xx.console.get_args({
-    "text": "before",
-    "invert": {"-i", "--invert"},
-    "scale": {"-s", "--scale"},
-    "error_correction": {"-e", "--error"},
-    "contact": {"-c", "--contact"},
-    "wifi": {"-w", "--wifi"},
-    "help": {"-h", "--help"},
-})
 
 
 def print_help() -> None:
@@ -384,7 +374,7 @@ def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
     """Generate and display QR code in terminal."""
 
     try:
-        scale = ARGS.scale.val(int, 1)
+        scale = ARGS.scale.val(int, default=1)
         invert = ARGS.invert.exists
         error_level = int(
             {
@@ -393,7 +383,7 @@ def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
                 "Q": qrcode.constants.ERROR_CORRECT_Q,  # type:ignore[name-defined]
                 "H": qrcode.constants.ERROR_CORRECT_H,  # type:ignore[name-defined]
             }.get(
-                ((ARGS.error_correction.vals() or [None])[0] or "M").upper(),
+                ARGS.error_correction.val(default="M").upper(),
                 qrcode.constants.ERROR_CORRECT_M,  # type:ignore[name-defined]
             )
         )
@@ -453,10 +443,6 @@ def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
 
 
 def main() -> None:
-    if ARGS.help.exists or not (ARGS.text.exists or ARGS.wifi.exists or ARGS.contact.exists):
-        print_help()
-        return
-
     print()
     text = " ".join(ARGS.text.vals())
 
@@ -480,6 +466,38 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="QR Code Generator",
+        subtitle="Quickly generate QR codes directly within the terminal",
+        usage=(S.BOLD("Usage: "), "{cmd} <text> {opts}"),
+        examples=[
+            ('{cmd} "https://example.com"', "Encode a URL"),
+            ('{cmd} "Secret data" -i', "Invert colors for dark backgrounds"),
+            ('{cmd} "Big data" -e H', "High error correction (30% recovery)"),
+            ('{cmd} "MyNetwork;secret123" -w', "Generate a WiFi configuration QR code"),
+            ('{cmd} "John Doe;john@example.com" -c', "Generate a vCard contact QR code"),
+        ],
+    )
+
+    args.add_arg("text", nargs="+", help="Text/data to encode in the QR code")
+    args.add_opt({"-i", "--invert"}, help="Invert the QR code colors (white on black)")
+    args.add_opt(
+        {"-s", "--scale"},
+        expects_value="N",
+        help=("Scale factor for the QR code ", S.DIM("(default: 1, max: 4)")),
+    )
+    args.add_opt(
+        {"-e", "--error"},
+        "error_correction",
+        expects_value="LEVEL",
+        help="Error correction level (L=7%, M=15%, Q=25%, H=30%)",
+    )
+    args.add_opt({"-c", "--contact"}, help="Generate a contact (vCard) QR code")
+    args.add_opt({"-w", "--wifi"}, help="Generate a WiFi configuration QR code")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

@@ -9,17 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 import xulbux as xx
-from xulbux import FormatCodes, Throbber
-
-ARGS = xx.console.get_args({
-    "directory": "before",
-    "external_only": {"-e", "--external"},
-    "recursive": {"-r", "--recursive"},
-    "list": {"-l", "--list"},
-    "as_json": {"-j", "--json"},
-    "install": {"-i", "--install"},
-    "help": {"-h", "--help"},
-})
+from xulbux import ArgumentParser, FormatCodes, Throbber
 
 
 def print_help() -> None:
@@ -229,13 +219,9 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
 def main() -> None:
     print()
 
-    if ARGS.help.exists:
-        print_help()
-        return
-
-    external_only = ARGS.external_only.exists or ARGS.install.exists
+    external_only = bool(ARGS.external or ARGS.install)
     directory = (
-        Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else xx.file_sys.get_script_dir()
+        Path(ARGS.path.val()).expanduser().resolve() if ARGS.path.exists else xx.file_sys.get_script_dir()
     )
 
     with Throbber().context():
@@ -248,7 +234,7 @@ def main() -> None:
             FormatCodes.print("[i|dim](No modules found)\n")
         return
 
-    if not ARGS.install.exists and ARGS.as_json.exists:
+    if not ARGS.install.exists and ARGS.json.exists:
         if ARGS.list.exists:
             json_data = sorted(modules.keys())
         else:
@@ -260,6 +246,28 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Deps",
+        subtitle="List all library dependencies across scripts",
+        examples=[
+            ("{cmd}", "Scan current script directory"),
+            ("{cmd} path/to/project -e", "Scan project for external dependencies only"),
+            ("{cmd} -r -l", "Recursive scan, output flat package list"),
+            ("{cmd} -i", "Scan and install missing external packages"),
+            ("{cmd} -j", "Output dependency mapping as JSON"),
+        ],
+    )
+
+    args.add_arg("path", required=False, help="Directory to scan (default: script directory)")
+    args.add_opt({"-e", "--external"}, help="Show only non-standard library dependencies")
+    args.add_opt({"-r", "--recursive"}, help="Scan subdirectories recursively")
+    args.add_opt({"-l", "--list"}, help="Show flat list of package names without file mapping")
+    args.add_opt({"-j", "--json"}, help="Output results as JSON")
+    args.add_opt({"-i", "--install"}, help="Automatically install all missing external packages")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

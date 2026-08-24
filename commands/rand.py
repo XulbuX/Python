@@ -7,16 +7,9 @@ Provide either the number of digits or a min and max range."""
 import secrets
 import sys
 import xulbux as xx
-from xulbux import FormatCodes, ProgressBar
+from xulbux import ArgumentParser, FormatCodes, ProgressBar
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
-
-ARGS = xx.console.get_args({
-    "digits_or_min_max": "before",
-    "batch_gen": {"-b", "--batch", "--batch-gen"},
-    "format": {"-f", "--format"},
-    "help": {"-h", "--help"},
-})
 
 
 def print_help() -> None:
@@ -64,76 +57,87 @@ def gen_random_int(digits: int | None = None, min_val: int | None = None, max_va
 
 
 def main() -> None:
-    if ARGS.help.exists or len(ARGS.digits_or_min_max.values) == 0:
-        print_help()
-        return
-
     print()
 
-    batch = int(v) if (v := ARGS.batch_gen.get(0)) and v.replace("_", "").isdigit() else 1
+    batch = ARGS.batch_gen.val(int, default=1)
 
-    match len(ARGS.digits_or_min_max.values):
-        case 1:
-            digits = int(ARGS.digits_or_min_max.values[0])
-            FormatCodes.print("[dim](generating...)", end="")
-            if batch > 1:
-                random_ints: list[str] = []
-                with ProgressBar().progress_context(batch, "generating...") as update_progress:
-                    update_progress(0)
-                    for i in range(batch):
-                        random_int = gen_random_int(digits=digits)
-                        random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
-                        update_progress(i + 1)
-                FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
-                FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}[_]")
-            else:
-                random_int = gen_random_int(digits=digits)
-                FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
+    if not ARGS.num_2.exists:
+        digits = ARGS.num.val(int)
+        FormatCodes.print("[dim](generating...)", end="")
+        if batch > 1:
+            random_ints: list[str] = []
+            with ProgressBar().progress_context(batch, "generating...") as update_progress:
+                update_progress(0)
+                for i in range(batch):
+                    random_int = gen_random_int(digits=digits)
+                    random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
+                    update_progress(i + 1)
+            FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
+            FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}[_]")
+        else:
+            random_int = gen_random_int(digits=digits)
+            FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
-        case 2:
-            min_val = int(ARGS.digits_or_min_max.values[0])
-            max_val = int(ARGS.digits_or_min_max.values[1])
-            if min_val >= max_val:
-                xx.console.exit(
-                    "[b](Invalid range:) The minimum value must be less than the maximum value",
-                    start="\n",
-                    end="\n\n",
-                    exit_code=1,
-                )
-            FormatCodes.print("[dim](generating...)", end="")
-            if batch > 1:
-                random_ints, lowest_int, highest_int = [], max_val + 1, min_val - 1
-                with ProgressBar().progress_context(batch, "generating...") as update_progress:
-                    for i in range(batch):
-                        random_int = gen_random_int(min_val=min_val, max_val=max_val)
-                        random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
-                        if random_int < lowest_int:
-                            lowest_int = random_int
-                        if random_int > highest_int:
-                            highest_int = random_int
-                        update_progress(i + 1)
-                FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
-                FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}")
-                FormatCodes.print(
-                    f"[b|dim](lowest:)  {'' if lowest_int < 0 else ' '}"
-                    f"[dim]({lowest_int:{',' if ARGS.format.exists else ''}})\n"
-                    f"[b|dim](highest:) {'' if highest_int < 0 else ' '}"
-                    f"[dim]{highest_int:{',' if ARGS.format.exists else ''}}[_]\n"
-                )
-            else:
-                random_int = gen_random_int(min_val=min_val, max_val=max_val)
-                FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
-
-        case _:
+    else:
+        min_val = ARGS.num.val(int)
+        max_val = ARGS.num_2.val(int)
+        if min_val >= max_val:
             xx.console.exit(
-                "[b](Too many arguments:) Provide either the number of digits or a min and max range",
+                "[b](Invalid range:) The minimum value must be less than the maximum value",
                 start="\n",
                 end="\n\n",
                 exit_code=1,
             )
+        FormatCodes.print("[dim](generating...)", end="")
+        if batch > 1:
+            random_ints, lowest_int, highest_int = [], max_val + 1, min_val - 1
+            with ProgressBar().progress_context(batch, "generating...") as update_progress:
+                for i in range(batch):
+                    random_int = gen_random_int(min_val=min_val, max_val=max_val)
+                    random_ints.append(f"{random_int:{',' if ARGS.format.exists else ''}}\n")
+                    if random_int < lowest_int:
+                        lowest_int = random_int
+                    if random_int > highest_int:
+                        highest_int = random_int
+                    update_progress(i + 1)
+            FormatCodes.print("\x1b[2K\r[dim](formatting...)", end="")
+            FormatCodes.print(f"\x1b[2K\r[br:blue]{'\n'.join(random_ints)}")
+            FormatCodes.print(
+                f"[b|dim](lowest:)  {'' if lowest_int < 0 else ' '}"
+                f"[dim]({lowest_int:{',' if ARGS.format.exists else ''}})\n"
+                f"[b|dim](highest:) {'' if highest_int < 0 else ' '}"
+                f"[dim]{highest_int:{',' if ARGS.format.exists else ''}}[_]\n"
+            )
+        else:
+            random_int = gen_random_int(min_val=min_val, max_val=max_val)
+            FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="Random",
+        subtitle="Generate truly random numbers",
+        examples=[
+            ("{cmd} 10", "Random number with 10 digits"),
+            ("{cmd} -100 100", "Random number between -100 and 100"),
+            ("{cmd} 5 --batch-gen=3", "3 random numbers with 5 digits"),
+            ("{cmd} 10 --format", "Comma-formatted random number with 10 digits"),
+        ],
+    )
+
+    args.add_arg("num", help="Number of digits or start of range")
+    args.add_arg("num_2", required=False, help="End of range (optional)")
+    args.add_opt(
+        {"-b", "--batch", "--batch-gen"},
+        "batch_gen",
+        expects_value="N",
+        help="Generate multiple random numbers",
+    )
+    args.add_opt({"-f", "--format"}, help="Format numbers with commas as thousand separators")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:

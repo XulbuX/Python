@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 import xulbux as xx
-from xulbux import FormatCodes, Throbber
+from xulbux import ArgumentParser, FormatCodes, S, StyledText, Throbber
 
 try:
     from win32com.client import Dispatch as COMDispatch
@@ -84,12 +84,6 @@ def _build_shortcut_dirs() -> list[tuple[str, Path]]:
 HIVE_NAMES = {winreg.HKEY_CURRENT_USER: "HKCU", winreg.HKEY_LOCAL_MACHINE: "HKLM"}
 
 # **************************************** CLI ****************************************
-
-ARGS = xx.console.get_args({
-    "restore_path": "before",
-    "restore": {"-r", "--restore"},
-    "help": {"-h", "--help"},
-})
 
 
 def print_help() -> None:
@@ -1072,13 +1066,9 @@ def choose_options() -> dict[str, bool]:
 
 
 def main() -> None:  # ruff:ignore[complex-structure]
-    if ARGS.help.exists:
-        print_help()
-        return
-
     # HANDLE RESTORE MODE
-    if ARGS.restore.exists:
-        restore_path_str = "".join(ARGS.restore_path.values).strip()
+    if ARGS.restore.exists or ARGS.path.exists:
+        restore_path_str = (ARGS.restore.val(default="") or ARGS.path.val(default="")).strip()
         if not restore_path_str:
             xx.console.fail(
                 "Please provide a path to the backup JSON file.\n"
@@ -1211,6 +1201,28 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
 
 if __name__ == "__main__":
+    args = ArgumentParser(
+        title="System Cleaner",
+        subtitle="Clean broken registry entries, env vars, shortcuts & more",
+        examples=[
+            ('{cmd} --restore="path/to/env_vars_backup.json"', "Restore env vars from backup"),
+        ],
+        epilog=StyledText(
+            S.BOLD("What it cleans:"),
+            ("  ", S.MAGENTA("1. "), "Registry ", S.DIM("(app paths, uninstall entries, startup entries)")),
+            ("  ", S.MAGENTA("2. "), "Environment variables containing non-existent paths"),
+            ("  ", S.MAGENTA("3. "), "Broken shortcut (.lnk) files ", S.DIM("(start menu, startup, desktop)")),
+            ("  ", S.MAGENTA("4. "), "Temporary files ", S.DIM("(user temp, system temp, crash dumps)")),
+            sep="\n",
+        ),
+    )
+
+    args.add_opt({"-r", "--restore"}, expects_value="PATH", help="Restore env vars from a backup JSON file")
+    args.add_arg("path", required=False, help="Backup file path to restore")
+
+    global ARGS
+    ARGS = args.parse()
+
     try:
         main()
     except KeyboardInterrupt:
