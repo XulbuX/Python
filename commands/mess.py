@@ -10,36 +10,6 @@ import xulbux as xx
 from xulbux import ArgumentParser
 from xulbux.ansi import AnyStyle, S, StyledText
 
-
-# fmt: off
-def print_help() -> None:
-    title = ["  Mess", " — Display a random binary mess  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("mess "), S.BR.BLUE("[options]")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-f"), ", ", S.BR.BLUE("--fast"), "     Display the mess at maximum speed"),
-        ("  ", S.BR.BLUE("-c"), ", ", S.BR.BLUE("--color"), "    Color the mess in random colors"),
-        "",
-        S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "      Stop the animation"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("mess"), "            ", S.DIM("# ", S.ITALIC("Show binary mess at normal speed"))),
-        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--fast"), "     ", S.DIM("# ", S.ITALIC("Show binary mess at maximum speed"))),
-        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("--color"), "    ", S.DIM("# ", S.ITALIC("Show colorful binary mess"))),
-        ("  ", S.BR.GREEN("mess "), S.BR.BLUE("-f -c"), "      ", S.DIM("# ", S.ITALIC("Show colorful binary mess at maximum speed"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
-
-
 digits: list[str] = ["0", "1"]
 styles: list[AnyStyle] = [S.DIM, S.BOLD, S.INVERSE, S.UNDERLINE, S.STRIKETHROUGH, S.DOUBLE_UNDERLINE]
 

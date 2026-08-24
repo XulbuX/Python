@@ -19,20 +19,6 @@ SHELL_COLORS: list[list[AnyStyle]] = [
 ]
 
 
-def print_help() -> None:
-    title = ["  Terminal Colors", " — Show all foreground and background terminal colors  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        ((S.BOLD)("Usage: "), (S.BR.GREEN)("terminal-colors")),
-        "",
-        sep="\n",
-    ).print()
-
-
 def show_shell_colors() -> None:
     norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS, strict=False)
     output = StyledText("\n")

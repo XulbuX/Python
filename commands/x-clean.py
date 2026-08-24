@@ -916,8 +916,8 @@ def execute_temp_cleanup(temp_info: dict[str, Any]) -> list[str]:
                 except (PermissionError, OSError):
                     failed += 1
 
-        except (PermissionError, OSError) as e:
-            failures.append(f"Cannot access {dir_path}: {e}")
+        except (PermissionError, OSError) as exc:
+            failures.append(f"Cannot access {dir_path}: {exc}")
 
         FormatCodes.print(f"    [green](✓) Deleted [b]({deleted}) item{'' if deleted == 1 else 's'}")
         if failed:

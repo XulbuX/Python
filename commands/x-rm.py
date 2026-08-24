@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 import psutil
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes
+from xulbux import ArgumentParser, FormatCodes, S
 
 # ************************* CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED *************************
 
@@ -61,25 +61,6 @@ PROTECTED_PROCESSES_UNIX = {
     "watchdog",
     "zsh",
 }
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Force Remove — Delete files/directories even they're if locked )
-
-[b](Usage:) [br:green](x-rm) [br:cyan](<path>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](path)              The path to the file/directory to delete
-
-[b](Options:)
-  [br:blue](-y), [br:blue](--yes[dim](=)PATH)    Skip confirmation prompt for [br:blue](PATH) deletion
-
-[b](Examples:)
-  [br:green](x-rm) [br:cyan]("/path/to/directory")      [dim](# [i](Delete a directory))
-  [br:green](x-rm) [br:blue](-y[dim](=)"/path/to/file.txt")    [dim](# [i](Delete a file, skipping confirmation))
-"""
-    FormatCodes.print(help_text)
 
 
 def get_protected_processes() -> set[str]:
@@ -485,7 +466,12 @@ if __name__ == "__main__":
     )
 
     args.add_arg("path", required=False, help="The path to the file/directory to delete")
-    args.add_opt({"-y", "--yes"}, "confirmed", expects_value="PATH", help="Skip confirmation prompt")
+    args.add_opt(
+        {"-y", "--yes"},
+        "confirmed",
+        expects_value="PATH",
+        help=("Skip confirmation prompt for ", S.BR.BLUE("PATH"), " deletion"),
+    )
 
     global ARGS
     ARGS = args.parse()

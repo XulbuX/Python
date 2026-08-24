@@ -7,7 +7,13 @@ import math
 import sys
 import time
 from collections.abc import Iterator
-from xulbux import ArgumentParser, FormatCodes, Throbber, console
+from typing import TYPE_CHECKING
+import xulbux as xx
+from xulbux import ArgumentParser, S, StyledText, Throbber
+from xulbux.console import FRAMES_WINDMILL
+
+if TYPE_CHECKING:
+    from xulbux.ansi import Renderable
 
 REFERENCE_TIMES: dict[int, float] = {
     1000: 0.01,  # 1K DIGITS
@@ -19,23 +25,6 @@ REFERENCE_TIMES: dict[int, float] = {
     500000: 3000,  # 500K DIGITS
     1000000: 75000,  # 1M DIGITS
 }
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Pi — Calculate [link:https://en.wikipedia.org/wiki/Pi](the value of π) \
-to a specified number of decimal places )
-
-[b](Usage:) [br:green](pi) [br:cyan](<decimals>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](decimals)     Number of decimal places [dim]((default: 10))
-
-[b](Examples:)
-  [br:green](pi)           [dim](# [i](Calculate π to 10 decimal places))
-  [br:green](pi) [br:cyan](10_000)    [dim](# [i](Calculate π to 10,000 decimal places))
-"""
-    FormatCodes.print(help_text)
 
 
 def get_hardware_score() -> float:
@@ -107,7 +96,7 @@ def estimate_runtime(precision: int) -> float:
     return round(estimated_time, 2)
 
 
-def format_time(seconds: float, short: bool = False, pretty_print: bool = False) -> str:
+def format_time(seconds: float, short: bool = False, pretty_print: bool = False) -> StyledText:
     units = (
         (
             ("SMBH", 1e106 * 365.25 * 24 * 60 * 60),
@@ -163,40 +152,50 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
         ),
     )
 
-    parts: list[str] = []
+    parts: list[Renderable] = []
 
-    b_val, val_name, a_name = (
-        "[b|br:cyan]" if pretty_print else "",
-        f"{'' if short else ' '}{'[_b|i|cyan]' if pretty_print else ''}",
-        "[_i|br:cyan]" if pretty_print else "",
-    )
+    b_val_st = S.BR.MAGENTA if pretty_print else ""
+    val_name_st = ("" if short else " ", S.ITALIC | S.MAGENTA if pretty_print else "")
+    a_name_st = S.BR.MAGENTA if pretty_print else ""
+    r_st = S.RESET if pretty_print else ""
 
     for name, formula in units[0 if short else 1]:
         if (val := int(seconds // formula)) > 0:
             if not short:
                 val = f"{val:,}"
-            parts.append(f"{b_val}{val}{val_name}{name if val == '1' or short else f'{name}s'}{a_name}")
+            parts.append((
+                b_val_st,
+                str(val),
+                r_st,
+                val_name_st,
+                name if val == "1" or short else f"{name}s",
+                r_st,
+                a_name_st,
+            ))
             seconds %= formula
 
     if not parts:
-        formatted_seconds = f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}"
-        parts.append(
-            f"{b_val}{formatted_seconds}{val_name}"
-            + (units[0 if short else 1][-1][0] if seconds == 1 or short else f"{units[0 if short else 1][-1][0]}s")
-            + a_name
-        )
+        parts.append((
+            b_val_st,
+            f"{f'{seconds:.3f}'.rstrip('0').rstrip('.')}",
+            r_st,
+            val_name_st,
+            (units[0 if short else 1][-1][0] if seconds == 1 or short else f"{units[0 if short else 1][-1][0]}s"),
+            r_st,
+            a_name_st,
+        ))
 
     if short:
-        return ("[dim](:)" if pretty_print else ":").join(parts)
+        return StyledText(" ").join(parts)
 
     if len(parts) > 1:
         return (
-            ("[dim] + [_dim]" if pretty_print else ", ").join(parts[:-1])
-            + ("[dim] + [_dim]" if pretty_print else " and ")
+            StyledText(S.DIM(", ") if pretty_print else ", ").join(parts[:-1])
+            + (S.DIM(" & ") if pretty_print else " & ")
             + parts[-1]
         )
 
-    return parts[0]
+    return StyledText(parts[0])
 
 
 def pi_generator() -> Iterator[int]:
@@ -216,36 +215,38 @@ def main() -> None:
     input_k = int(v.replace("_", "")) if (v := ARGS.decimals.val()) and v.replace("_", "").isdigit() else 10
 
     if (estimated_secs := estimate_runtime(input_k)) >= 604800:
-        FormatCodes.print(
-            f"\n[b|bg:black]( π [in]( CALCULATION WOULD TAKE TOO LONG ))\n"
-            f"\n{format_time(estimated_secs, pretty_print=True)}[_]\n"
-        )
+        StyledText(
+            (S.BOLD | S.BG.BLACK)("\n π ", S.INVERSE(" Calculation would take too long \n")),
+            (f"\n{format_time(estimated_secs, pretty_print=True)}\n", S.RESET),
+        ).print()
 
     else:
-        FormatCodes.print(
-            f"\n[dim](Will take about [b]{format_time(estimated_secs)}[_|dim] to calculate:)" if estimated_secs > 1 else ""
-        )
+        StyledText(
+            S.DIM("\nWill take about ", S.BOLD(format_time(estimated_secs)), S.DIM, " to calculate:")
+            if estimated_secs > 1
+            else ""
+        ).print()
+
         result = None
 
         try:
-            with Throbber().context():
+            with Throbber(frames=FRAMES_WINDMILL).context():
                 result = pi(input_k)
         except MemoryError:
-            FormatCodes.print(
-                "\r[b|br:yellow](Your computer doesn't have enough memory for this calculation!)",
-                "[b|bg:black]( π [in]( CALCULATION WOULD TAKE THIS LONG IF YOU HAD ENOUGH MEMORY ))\n",
-                f"{format_time(estimated_secs, pretty_print=True)}[_]",
-                end="\n\n",
+            StyledText(
+                (S.BOLD | S.BR.YELLOW)("\rYour computer doesn't have enough memory for this calculation!"),
+                (S.BOLD | S.BG.BLACK)("\n π ", S.INVERSE(" Calculation would take this long if you had enough memory \n")),
+                (format_time(estimated_secs, pretty_print=True), S.RESET, "\n"),
                 sep="\n",
-            )
+            ).print()
         except KeyboardInterrupt:
-            FormatCodes.print("\r[b|br:red](✗)  \n")
+            StyledText((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
             sys.exit(0)
 
         if result:
-            FormatCodes.print(f"\r[br:cyan]({result})\n")
+            StyledText((S.BOLD | S.BR.CYAN)("\r", result), "\n").print()
         else:
-            FormatCodes.print("\r[b|br:red](✗)  \n")
+            StyledText((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
 
 
 if __name__ == "__main__":
@@ -268,4 +269,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

@@ -9,27 +9,7 @@ import socket
 import subprocess
 from typing import Any
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( IP Info — Get local and public IP addresses with geolocation )
-
-[b](Usage:) [br:green](x-ip) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-g), [br:blue](--geo)              Show geolocation info for public IP
-  [br:blue](-p), [br:blue](--provider[dim](=)NAME)    Use specific IP provider [dim]((ipify, ipapi, icanhazip))
-  [br:blue](-j), [br:blue](--json)             Output in JSON format
-
-[b](Examples:)
-  [br:green](x-ip)                   [dim](# [i](Show basic IP info))
-  [br:green](x-ip) [br:blue](--geo)             [dim](# [i](Show IP with location))
-  [br:green](x-ip) [br:blue](-p[dim](=)ipapi)          [dim](# [i](Use ipapi as the IP provider))
-  [br:green](x-ip) [br:blue](--json)            [dim](# [i](Output as JSON))
-"""
-    FormatCodes.print(help_text)
+from xulbux import ArgumentParser, FormatCodes, S
 
 
 class IPInfo:
@@ -369,7 +349,7 @@ if __name__ == "__main__":
         {"-p", "--provider"},
         "provider",
         expects_value="NAME",
-        help="Use specific IP provider (ipify, ipapi, icanhazip)",
+        help=("Use specific IP provider ", S.DIM("(ipify, ipapi, icanhazip)")),
     )
     args.add_opt({"-j", "--json"}, "json_output", help="Output IP information as JSON")
 

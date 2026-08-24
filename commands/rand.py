@@ -7,32 +7,9 @@ Provide either the number of digits or a min and max range."""
 import secrets
 import sys
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes, ProgressBar
+from xulbux import ArgumentParser, FormatCodes, ProgressBar, S
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Random — Generate truly random numbers )
-
-[b](Usage:) [br:green](rand) [br:cyan](<num> <num_2>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](num)                  Number of digits or start of range
-  [br:cyan](num_2)                End of range [dim]((optional))
-
-[b](Options:)
-  [br:blue](-b), [br:blue](--batch-gen[dim](=)N)    Generate multiple random numbers
-  [br:blue](-f), [br:blue](--format)         Format numbers with commas as thousand separators
-
-[b](Examples:)
-  [br:green](rand) [br:cyan](10)                 [dim](# [i](Random number with 10 digits))
-  [br:green](rand) [br:cyan](-100 100)           [dim](# [i](Random number between -100 and 100))
-  [br:green](rand) [br:cyan](5) [br:blue](--batch-gen[dim](=)3)    [dim](# [i](3 random numbers with 5 digits))
-  [br:green](rand) [br:cyan](10) [br:blue](--format)        [dim](# [i](Comma-formatted random number with 10 digits))
-"""
-    FormatCodes.print(help_text)
 
 
 def gen_random_int(digits: int | None = None, min_val: int | None = None, max_val: int | None = None) -> int:
@@ -79,8 +56,8 @@ def main() -> None:
             FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
     else:
-        min_val = ARGS.num.val(int)
-        max_val = ARGS.num_2.val(int)
+        min_val = ARGS.num.val(int, 0)
+        max_val = ARGS.num_2.val(int, 0)
         if min_val >= max_val:
             xx.console.exit(
                 "[b](Invalid range:) The minimum value must be less than the maximum value",
@@ -126,7 +103,7 @@ if __name__ == "__main__":
     )
 
     args.add_arg("num", help="Number of digits or start of range")
-    args.add_arg("num_2", required=False, help="End of range (optional)")
+    args.add_arg("num_2", required=False, help=("End of range ", S.DIM("(optional)")))
     args.add_opt(
         {"-b", "--batch", "--batch-gen"},
         "batch_gen",

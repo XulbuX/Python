@@ -136,8 +136,8 @@ def get_vscode_extensions(executable: str) -> list[str] | None:
     try:
         result = subprocess.run([executable, "--list-extensions"], capture_output=True, text=True, shell=True)
         return result.stdout.strip().splitlines()
-    except subprocess.CalledProcessError as e:
-        xx.console.fail(f"Failed to get extensions: {e.stderr}")
+    except subprocess.CalledProcessError as exc:
+        xx.console.fail(f"Failed to get extensions: {exc.stderr}")
 
 
 def main() -> None:

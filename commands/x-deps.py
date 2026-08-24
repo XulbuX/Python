@@ -12,34 +12,6 @@ import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, Throbber
 
 
-def print_help() -> None:
-    help_text = """\
-[b|in|bg:black]( Deps — List all library dependencies across scripts )
-
-[b](Usage:) [br:green](x-deps) [br:cyan](<path>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](path)               Directory to scan [dim]((default: script directory))
-
-[b](Options:)
-  [br:blue](-e), [br:blue](--external)     Show only non-standard library dependencies
-  [br:blue](-r), [br:blue](--recursive)    Scan subdirectories recursively
-  [br:blue](-l), [br:blue](--list)         Output only dependency names without extra info
-  [br:blue](-j), [br:blue](--json)         Output as json format [dim]((ignored if [br:blue](-i) is used))
-  [br:blue](-i), [br:blue](--install)      Install all external dependencies using pip
-
-[b](Examples:)
-  [br:green](x-deps)               [dim](# [i](List all dependencies in script directory))
-  [br:green](x-deps) [br:cyan]("./src")       [dim](# [i](Scan specific directory))
-  [br:green](x-deps) [br:cyan]("./src") [br:blue](-r)    [dim](# [i](Scan directory recursively))
-  [br:green](x-deps) [br:blue](--external)    [dim](# [i](List only external/third-party dependencies))
-  [br:green](x-deps) [br:blue](--list)        [dim](# [i](Output only the list of dependency names))
-  [br:green](x-deps) [br:blue](--json)        [dim](# [i](Output as JSON format))
-  [br:green](x-deps) [br:blue](--install)     [dim](# [i](Install all external dependencies))
-"""
-    FormatCodes.print(help_text)
-
-
 def extract_imports(file_path: Path) -> set[str]:
     """Extract all imported module names from a Python file."""
     imports: set[str] = set()
@@ -220,9 +192,7 @@ def main() -> None:
     print()
 
     external_only = bool(ARGS.external or ARGS.install)
-    directory = (
-        Path(ARGS.path.val()).expanduser().resolve() if ARGS.path.exists else xx.file_sys.get_script_dir()
-    )
+    directory = ARGS.path.val(Path, xx.file_sys.get_script_dir()).expanduser().resolve()
 
     with Throbber().context():
         modules = get_all_modules(directory=directory, recursive=ARGS.recursive.exists, external_only=external_only)
@@ -253,8 +223,8 @@ if __name__ == "__main__":
             ("{cmd}", "Scan current script directory"),
             ("{cmd} path/to/project -e", "Scan project for external dependencies only"),
             ("{cmd} -r -l", "Recursive scan, output flat package list"),
-            ("{cmd} -i", "Scan and install missing external packages"),
-            ("{cmd} -j", "Output dependency mapping as JSON"),
+            ("{cmd} --install", "Scan and install missing external packages"),
+            ("{cmd} --json", "Output dependency mapping as JSON"),
         ],
     )
 

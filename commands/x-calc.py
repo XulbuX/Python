@@ -13,12 +13,11 @@ from typing import Any, ClassVar
 import numpy
 import sympy
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes, LazyRegex
+from xulbux import ArgumentParser, FormatCodes, LazyRegex, S, StyledText
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-DEBUG = False
-REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
+PATTERNS = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
 
 def sanitize(expression: Any, /) -> sympy.Expr:
@@ -27,7 +26,7 @@ def sanitize(expression: Any, /) -> sympy.Expr:
 
 def clean_num(token: str, /) -> str:
     """Remove underscores from numeric tokens for proper parsing."""
-    if (no_seps_num := REGEX.thousands_seps.sub("", token)).replace(".", "").replace("-", "").isdigit():
+    if (no_seps_num := PATTERNS.thousands_seps.sub("", token)).replace(".", "").replace("-", "").isdigit():
         return no_seps_num
     return token
 
@@ -334,7 +333,7 @@ class FUNCTIONS:
         return cls.get_id(token) is not None
 
 
-PATTERN = re.compile(
+TOKEN_RX = re.compile(
     "|".join(map(re.escape, sorted(OPERATORS.ALL_TOKENS + CONSTANTS.ALL_TOKENS + FUNCTIONS.ALL_TOKENS, key=len, reverse=True)))
     + r"|[a-z]+|"
     + "|".join(map(re.escape, OPERATORS.MINUS[1]))
@@ -345,48 +344,6 @@ PATTERN = re.compile(
     + r"\(|\)|,",
     re.IGNORECASE,
 )
-
-
-def print_help() -> None:
-    o_list = "\n".join(f"[i|dim]({o_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for o_id, symbols in OPERATORS.ALL)
-    c_list = "\n".join(
-        f"[i|dim]({c_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL)
-    )
-    f_list = "\n".join(
-        f"[i|dim]({f_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL)
-    )
-    help_text = f"""\
-[b|in|bg:black]( Advanced Calculator — Perform complex calculations directly from the command line )
-
-[b](Usage:) [br:green](x-calc) [br:cyan](<calculation>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](calculation)          The calculation string to evaluate
-
-[b](Options:)
-  [br:blue](-a), [br:blue](--ans[dim](=)VALUE)      Value to use for 'ans' constant
-  [br:blue](-p), [br:blue](--precision[dim](=)N)    \
-Number of decimal places to calculate [dim]((default: 100, -1 for infinite))
-  [br:blue](-f), [br:blue](--format)         Format the output with thousands separators
-  [br:blue](-d), [br:blue](--debug)          Show debug information during calculation
-
-[b](Examples:)
-  [br:green](x-calc) [br:cyan]("2 + 2 * 2")                                [dim](# [i](Simple arithmetic))
-  [br:green](x-calc) [br:cyan]("ans * 2") [br:blue](--ans[dim](=)6)                          \
-[dim](# [i](Using the 'ans' constant))
-  [br:green](x-calc) [br:cyan]"sqrt(ln(10) + 1) / cos(π / 4)" [br:blue](-p[dim](=)1000)    \
-[dim](# [i](High precision with functions and constants))
-
-[b](Possible operators:)
-{o_list}
-
-[b](Possible constants:)
-{c_list}
-
-[b](Possible functions:)
-{f_list}
-"""
-    FormatCodes.print(help_text)
 
 
 def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
@@ -507,7 +464,7 @@ class Calc:
                 print_line("FORMATTING WITH SEPARATORS")
                 FormatCodes.print(f"[dim](should format:) {ARGS.format.exists}")
 
-            sep = ARGS.format.get(0, ",")
+            sep = ARGS.format.val(default=",")
 
             if DEBUG:
                 FormatCodes.print(f"[dim](separator:) {sep}")
@@ -682,7 +639,7 @@ class Calc:
         return "".join(result)
 
     def _find_matches(self, text: str, /) -> list[str | object]:
-        preliminary_matches = [match for match in PATTERN.findall(text) if match]  # FILTER OUT EMPTY STRINGS
+        preliminary_matches = [match for match in TOKEN_RX.findall(text) if match]  # FILTER OUT EMPTY STRINGS
         matches: list[str | object] = []
         i = 0
 
@@ -693,7 +650,7 @@ class Calc:
             if (
                 match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
-                and REGEX.thousands_seps.sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
+                and PATTERNS.thousands_seps.sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
             ):
                 # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
                 should_be_negative = False
@@ -722,7 +679,7 @@ class Calc:
                     prev_match = preliminary_matches[i - 1]
                     # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
                     if (
-                        REGEX.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
+                        PATTERNS.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
                         or prev_match == ")"
                         or CONSTANTS.is_constant(prev_match)
                     ):
@@ -1051,7 +1008,7 @@ def main() -> None:
 
     calculation = Calc(
         calc_str=" ".join(str(v) for v in calc_str_parts),
-        last_ans=ARGS.ans.val(default=None),
+        last_ans=ARGS.ans.val(),
         precision=precision,
         max_num_len=max_num_len,
     )
@@ -1063,10 +1020,18 @@ def main() -> None:
         print_line()
         print()
     else:
-        print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]")
+        print_overwrite(f"[dim|br:green][b](=) [_dim]{result}[_]\n")
 
 
 if __name__ == "__main__":
+    o_list = "\n".join(f"[i|dim]({o_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for o_id, symbols in OPERATORS.ALL)
+    c_list = "\n".join(
+        f"[i|dim]({c_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for c_id, symbols in sorted(CONSTANTS.ALL)
+    )
+    f_list = "\n".join(
+        f"[i|dim]({f_id.split(':')[1]:<22}){'[dim](,) '.join(symbols)}" for f_id, symbols in sorted(FUNCTIONS.ALL)
+    )
+
     args = ArgumentParser(
         title="Advanced Calculator",
         subtitle="Perform complex calculations directly from the command line",
@@ -1075,6 +1040,17 @@ if __name__ == "__main__":
             ('{cmd} "ans * 2" --ans=6', "Using the 'ans' constant"),
             ('{cmd} "sqrt(ln(10) + 1) / cos(π / 4)" -p=1000', "High precision with functions and constants"),
         ],
+        epilog=StyledText(
+            S.BOLD("Possible operators:"),
+            f"{o_list}",
+            "",
+            S.BOLD("Possible constants:"),
+            f"{c_list}",
+            "",
+            S.BOLD("Possible functions:"),
+            f"{f_list}",
+            sep="\n",
+        ),
     )
 
     args.add_arg("calculation", nargs="+", help="The calculation string to evaluate")
@@ -1082,11 +1058,12 @@ if __name__ == "__main__":
     args.add_opt(
         {"-p", "--precision"},
         expects_value="N",
-        help="Number of decimal places to calculate (default: 100, -1 for infinite)",
+        help=("Number of decimal places to calculate ", S.DIM("(default: 100, -1 for infinite)")),
     )
     args.add_opt({"-f", "--format"}, help="Format the output with thousands separators")
     args.add_opt({"-d", "--debug"}, help="Show debug information during calculation")
 
+    global ARGS, DEBUG
     ARGS = args.parse()
     DEBUG = ARGS.debug.exists
 

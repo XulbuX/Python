@@ -19,27 +19,6 @@ import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S, Throbber
 
 
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Maze — Play a maze game or generate mazes in the terminal )
-
-[b](Usage:) [br:green](maze)
-
-[b](Controls:)
-  [br:red](Enter)            Start game in normal mode
-  [br:red](Ctrl[dim](+)Enter)    Start game in ASCII mode
-  [br:red](Space)            Generate maze to a file
-  [br:red](WASD), [br:red](⏶⏴⏷⏵)       Move the player
-  [br:red](H)                Toggle solution path
-  [br:red](F)                Finish maze
-  [br:red](Ctrl[dim](+)C)        Exit game
-
-[b](Examples:)
-  [br:green](maze)    [dim](# [i](Start the interactive maze game))
-"""
-    FormatCodes.print(help_text)
-
-
 class Maze:
     def __init__(
         self,

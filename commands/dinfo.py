@@ -17,37 +17,6 @@ EXCLUDE: set[str] = set()
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
 
 
-# fmt: off
-def print_help() -> None:
-    title = ["  Directory Info", " — Get details about files in the current directory  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("dinfo "), S.BR.BLUE("[options]")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-r"), ", ", S.BR.BLUE("--recursive"), "      Also scan all subdirectories recursively"),
-        ("  ", S.BR.BLUE("-e"), ", ", S.BR.BLUE("--exclude", S.DIM("="), "S"), "      Exclude parts of the info ", S.DIM("(", S.ITALIC("size"), ", ", S.ITALIC("lines"), "; count is always included)")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--skip-hidden"), "    Skip hidden, system, and protected items"),
-        ("  ", S.BR.BLUE("-G"), ", ", S.BR.BLUE("--gitignore"), "      Apply ", S.WHITE(".gitignore"), " rules when scanning files"),  # ruff:ignore[line-too-long]
-        "",
-        S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "            Cancel and exit"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("dinfo"), "                    ", S.DIM("# ", S.ITALIC("Get all directory info, not ignoring any items"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("-e", S.DIM("="), '"size lines"'), "    ", S.DIM("# ", S.ITALIC("Only show file count, excluding size and line count"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--skip-hidden"), "      ", S.DIM("# ", S.ITALIC("Skip hidden and system items"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("dinfo"), " ", S.BR.BLUE("--gitignore"), "        ", S.DIM("# ", S.ITALIC("Apply .gitignore rules when scanning files"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
-
-
 def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
     """Check if a file or directory is hidden, system, or protected."""
 

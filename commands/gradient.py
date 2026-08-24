@@ -13,45 +13,6 @@ if TYPE_CHECKING:
     from xulbux.ansi import RenderSegment
 
 
-# fmt: off
-def print_help() -> None:
-    title = ["  Gradient", " — Generate and preview advanced color gradients  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("gradient "), S.BR.CYAN("<color_1> [direction] <color_2> ... "), S.BR.BLUE("[options]")),  # ruff:ignore[line-too-long]
-        "",
-        S.BOLD("Arguments:"),
-        ("  ", S.BR.CYAN("color"), "             Hex colors to create gradient between ", S.DIM("(at least 2 required)")),
-        "",
-        (S.BOLD("Direction: "), S.DIM("(only with ", S.BR.BLUE("--hsv"), " or ", S.BR.BLUE("--oklch"), " modes)")),
-        ("  ", S.BR.CYAN(">"), "                 Rotate hue clockwise"),
-        ("  ", S.BR.CYAN("<"), "                 Rotate hue counterclockwise"),
-        ("  ", S.DIM("no arrow"), "          Use shortest hue path ", S.DIM("(default)")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--steps", S.DIM("="), "N"), "     Number of gradient steps ", S.DIM("(total across all color segments)")),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-H"), ", ", S.BR.BLUE("--hsv"), "         Use HSV interpolation with hue rotation"),
-        ("  ", S.BR.BLUE("-O"), ", ", S.BR.BLUE("--oklch"), "       Use perceptually uniform OKLCH interpolation with hue rotation"),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.BLUE("-l"), ", ", S.BR.BLUE("--list"), "        Show list of all gradient colors"),
-        ("  ", S.BR.BLUE("-n"), ", ", S.BR.BLUE("--numerate"), "    Show step numbers alongside listed colors ", S.DIM("(implies ", S.BR.BLUE("-l"), ")")),  # ruff:ignore[line-too-long]
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), "                 ", S.DIM("# ", S.ITALIC("Linear RGB interpolation"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), "             ", S.DIM("# ", S.ITALIC("Multicolor linear gradient"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F"), " ", S.BR.BLUE("--steps", S.DIM("="), "5"), "       ", S.DIM("# ", S.ITALIC("5 steps total across segments"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN("F00 00F 0F0"), " ", S.BR.BLUE("-O"), "          ", S.DIM("# ", S.ITALIC("OKLCH, shortest hue path"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F"'), " ", S.BR.BLUE("-H"), "          ", S.DIM("# ", S.ITALIC("HSV, clockwise hue rotation"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("gradient"), " ", S.BR.CYAN('"F00 > 00F < 0F0"'), " ", S.BR.BLUE("-H"), "    ", S.DIM("# ", S.ITALIC("HSV, mixed hue directions"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
-
-
 def interpolate_oklch(
     color_1: rgba,
     color_2: rgba,
@@ -65,10 +26,11 @@ def interpolate_oklch(
     - `t` – interpolation factor (0.0 to 1.0)
     - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
+
     try:
         import numpy as np
         from colorspacious import cspace_convert  # type:ignore[no-stubs]
-    except ImportError as e:
+    except ImportError as exc:
         raise ImportError(
             StyledText(
                 "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.",
@@ -79,7 +41,7 @@ def interpolate_oklch(
                 ),
                 sep="\n",
             )
-        ) from e
+        ) from exc
 
     # CONVERT RGB (0-255) TO SRGB (0-1)
     rgb_a = np.array([color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0])

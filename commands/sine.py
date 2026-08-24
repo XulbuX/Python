@@ -6,36 +6,7 @@
 import math
 import time
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText
-
-
-# fmt: off
-def print_help() -> None:
-    title = ["  Sine", " — Show a sine wave animation inside the terminal  "]
-    StyledText(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("sine "), S.BR.BLUE("[options]")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-s"), ", ", S.BR.BLUE("--speed"), "        Animation speed multiplier ", S.DIM("(default: 1.0)")),
-        ("  ", S.BR.BLUE("-y"), ", ", S.BR.BLUE("--y-stretch"), "    Vertical stretch of wave cycles ", S.DIM("(default: 1.0)")),  # ruff:ignore[line-too-long]
-        "",
-        S.BOLD("Controls:"),
-        ("  ", S.BR.RED("Ctrl", S.DIM("+"), "C"), "          Stop the animation"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("sine"), "                  ", S.DIM("# ", S.ITALIC("Default wave"))),
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--speed", S.DIM("="), "2"), "        ", S.DIM("# ", S.ITALIC("Scroll twice as fast"))),  # ruff:ignore[line-too-long]
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("--y-stretch", S.DIM("="), "3"), "    ", S.DIM("# ", S.ITALIC("Cycles 3× more stretched out"))),  # ruff:ignore[line-too-long, ambiguous-unicode-character-string]
-        ("  ", S.BR.GREEN("sine "), S.BR.BLUE("-s", S.DIM("="), "0.5"), " ", S.BR.BLUE("-y", S.DIM("="), "0.5"), "    ", S.DIM("# ", S.ITALIC("Half speed, half stretch"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
+from xulbux import ArgumentParser, S
 
 
 def show_wave(width: int, speed: tuple[float, float] = (5, 1)) -> None:

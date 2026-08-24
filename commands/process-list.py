@@ -7,28 +7,6 @@ import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S, StyledText
 
 
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Process List — Process a list of items and display statistics )
-
-[b](Usage:) [br:green](process-list) [br:cyan](<item_1> <item_2> ...) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](items)          List items to process [dim]((space-separated or custom separator using [br:blue](-s)))
-
-[b](Options:)
-  [br:blue](-s), [br:blue](--sep[dim](=)S)    Separator character to split a single input string
-
-[b](Examples:)
-  [br:green](process-list) [br:cyan](1 2 3 4 5)         [dim](# [i](Process a list of numbers))
-  [br:green](process-list) [br:cyan](a b c)             [dim](# [i](Process a list of strings))
-  [br:green](process-list) [br:cyan]("1,2,3") [br:blue](-s[dim](=)',')    [dim](# [i](Process comma-separated values))
-
-[b](Note:)  When all items are numbers, min, max, sum and average are also shown.
-"""
-    FormatCodes.print(help_text)
-
-
 def main() -> None:
     sep = ARGS.separator.val(default="")
 
@@ -69,7 +47,6 @@ if __name__ == "__main__":
     args = ArgumentParser(
         title="Process List",
         subtitle="Process a list of items and display statistics",
-        usage=(S.BOLD("Usage: "), "{cmd} <item_1> <item_2> ... {opts}"),
         examples=[
             ("{cmd} 1 2 3 4 5", "Process a list of numbers"),
             ("{cmd} a b c", "Process a list of strings"),
@@ -83,7 +60,7 @@ if __name__ == "__main__":
 
     args.add_arg(
         "items",
-        nargs="*",
+        nargs="+",
         help=("List items to process ", S.DIM("(space-separated or custom separator using ", S.BR.BLUE("-s"), ")")),
     )
     args.add_opt(

@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 import regex as rx
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes, LazyRegex, S, hexa
+from xulbux import ArgumentParser, LazyRegex, S, hexa
 
 
 class Operation(Enum):
@@ -21,35 +21,6 @@ class Operation(Enum):
 
 
 PATTERNS = LazyRegex(hex=r"(?i)(#)([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3,4})\b|(0x)([0-9A-F]{8}|[0-9A-F]{6})\b")
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Hex Colors — Transform hex color codes in a file or directory )
-
-[b](Usage:) [br:green](x-hex) [br:cyan](<path> ...) [br:blue]([operation] [options])
-
-[b](Arguments:)
-  [br:cyan](path)                One or more paths to files or directories to process
-
-[b](Operations:)
-  [br:blue](-u), [br:blue](--upper)         Uppercase all hex colors [dim]((#9EB6FF))
-  [br:blue](-l), [br:blue](--lower)         Lowercase all hex colors [dim]((#9eb6ff))
-  [br:blue](-g), [br:blue](--grayscale)     Convert all hex colors to grayscale
-  [br:blue](-r), [br:blue](--rotate[dim](=)DEG)    Rotate the hue of all hex colors by [br:blue](DEG) degrees [dim]((0-360))
-  [br:blue](-i), [br:blue](--invert)        Invert all hex colors
-[b](Options:)
-  [br:blue](-G), [br:blue](--gitignore)     Apply .gitignore rules when scanning directories
-  [br:blue](-d), [br:blue](--dry)           Dry-run: show what would change without modifying any files
-
-[b](Examples:)
-  [br:green](x-hex) [br:cyan]("./styles.css")                 [dim](# [i](Uppercase hex colors in a single file))
-  [br:green](x-hex) [br:cyan]("./src") [br:blue](--lower)                [dim](# [i](Lowercase hex colors in all files))
-  [br:green](x-hex) [br:cyan]("./src") [br:blue](--grayscale)            [dim](# [i](Convert all hex colors to grayscale))
-  [br:green](x-hex) [br:cyan]("./styles.css") [br:blue](--rotate[dim](=)180)    [dim](# [i](Rotate hue by 180 degrees))
-  [br:green](x-hex) [br:cyan]("./styles.css") [br:blue](--invert)        [dim](# [i](Invert all hex colors))
-"""
-    FormatCodes.print(help_text)
 
 
 def is_text_file(filepath: Path) -> bool:
@@ -252,7 +223,6 @@ if __name__ == "__main__":
     args = ArgumentParser(
         title="Hex Colors",
         subtitle="Transform hex color codes in a file or directory",
-        usage=(S.BOLD("Usage: "), "{cmd} <path...> {opts}"),
         examples=[
             ('{cmd} "./styles.css"', "Uppercase hex colors in a single file"),
             ('{cmd} "./src" --lower', "Lowercase hex colors in all files"),
@@ -263,19 +233,19 @@ if __name__ == "__main__":
     )
 
     args.add_arg("path", nargs="+", help="One or more paths to files or directories to process")
-    args.add_opt({"-u", "--upper"}, help="Uppercase all hex colors (#9EB6FF)")
-    args.add_opt({"-l", "--lower"}, help="Lowercase all hex colors (#9eb6ff)")
+    args.add_opt({"-u", "--upper"}, help=("Uppercase all hex colors ", S.DIM("(#9EB6FF)")))
+    args.add_opt({"-l", "--lower"}, help=("Lowercase all hex colors ", S.DIM("(#9eb6ff)")))
     args.add_opt({"-g", "--grayscale"}, help="Convert all hex colors to grayscale")
     args.add_opt(
         {"-r", "--rotate"},
         expects_value="DEG",
-        help="Rotate the hue of all hex colors by DEG degrees (0-360)",
+        help=("Rotate the hue of all hex colors by ", S.BR.BLUE("DEG"), " degrees ", S.DIM("(0-360)")),
     )
     args.add_opt({"-i", "--invert"}, help="Invert all hex colors")
     args.add_opt(
         {"-G", "--gitignore"},
         "apply_gitignore",
-        help="Apply .gitignore rules when scanning directories",
+        help=("Apply ", S.WHITE(".gitignore"), " rules when scanning directories"),
     )
     args.add_opt(
         {"-d", "--dry"},

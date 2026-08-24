@@ -14,32 +14,6 @@ from xulbux import ArgumentParser, FormatCodes, S, Throbber
 from xulbux.base.consts import COLOR
 
 
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( QR Code Generator — Quickly generate QR codes directly within the terminal )
-
-[b](Usage:) [br:green](x-qr) [br:cyan](<text>) [br:blue]([options])
-
-[b](Arguments:)
-  [br:cyan](text)                 Text to encode in QR code
-
-[b](Options:)
-  [br:blue](-i), [br:blue](--invert)         Invert colors [dim]((swap filled/empty blocks))
-  [br:blue](-s), [br:blue](--scale[dim](=)N)        Scale factor for output size [dim]((default: 1))
-  [br:blue](-e), [br:blue](--error[dim](=)LEVEL)    Error correction level [dim]((L, M, Q, H — default: M))
-  [br:blue](-c), [br:blue](--contact)        Generate contact QR code [dim]((vCard format))
-  [br:blue](-w), [br:blue](--wifi)           Generate WiFi QR code [dim]((auto-detect or manual))
-
-[b](Examples:)
-  [br:green](x-qr) [br:cyan]("Hello World")                      [dim](# [i](QR code which contains simple text))
-  [br:green](x-qr) [br:cyan]("https://example.com") [br:blue](--scale[dim](=)2)    [dim](# [i](Larger QR code))
-  [br:green](x-qr) [br:cyan]("John Doe") [br:blue](--contact)               [dim](# [i](Contact QR code))
-  [br:green](x-qr) [br:cyan]("MyNetwork") [br:blue](--wifi)                 [dim](# [i](WiFi QR code))
-  [br:green](x-qr) [br:blue](--wifi)                             [dim](# [i](WiFi QR code for detected networks))
-"""
-    FormatCodes.print(help_text)
-
-
 def phone_validator(user_input: str) -> str | None:
     """Validate phone number format."""
 
@@ -469,7 +443,6 @@ if __name__ == "__main__":
     args = ArgumentParser(
         title="QR Code Generator",
         subtitle="Quickly generate QR codes directly within the terminal",
-        usage=(S.BOLD("Usage: "), "{cmd} <text> {opts}"),
         examples=[
             ('{cmd} "https://example.com"', "Encode a URL"),
             ('{cmd} "Secret data" -i', "Invert colors for dark backgrounds"),
@@ -480,19 +453,20 @@ if __name__ == "__main__":
     )
 
     args.add_arg("text", nargs="+", help="Text/data to encode in the QR code")
-    args.add_opt({"-i", "--invert"}, help="Invert the QR code colors (white on black)")
+    args.add_opt({"-i", "--invert"}, help=("Invert colors ", S.DIM("(swap filled/empty blocks)")))
     args.add_opt(
         {"-s", "--scale"},
         expects_value="N",
+        choices=("1", "2", "3", "4"),
         help=("Scale factor for the QR code ", S.DIM("(default: 1, max: 4)")),
     )
     args.add_opt(
         {"-e", "--error"},
         "error_correction",
         expects_value="LEVEL",
-        help="Error correction level (L=7%, M=15%, Q=25%, H=30%)",
+        help=("Error correction level ", S.DIM("(L, M, Q, H — default: M)")),
     )
-    args.add_opt({"-c", "--contact"}, help="Generate a contact (vCard) QR code")
+    args.add_opt({"-c", "--contact"}, help=("Generate a contact QR code ", S.DIM("(vCard)")))
     args.add_opt({"-w", "--wifi"}, help="Generate a WiFi configuration QR code")
 
     global ARGS

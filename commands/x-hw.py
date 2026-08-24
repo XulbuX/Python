@@ -19,27 +19,10 @@ try:
 
     PSUTIL_AVAILABLE: bool = True
     PSUTIL_ERROR: str | None = None
+
 except (ImportError, ModuleNotFoundError) as exc:
     PSUTIL_AVAILABLE: bool = False  # type:ignore[no-redef]
     PSUTIL_ERROR: str | None = str(exc)  # type:ignore[no-redef]
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Hardware Info — Get detailed hardware information about your PC )
-
-[b](Usage:) [br:green](x-hw) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-d), [br:blue](--detailed)         Show detailed hardware information
-  [br:blue](-j), [br:blue](--json)             Output in JSON format
-
-[b](Examples:)
-  [br:green](x-hw)                   [dim](# [i](Show basic hardware info))
-  [br:green](x-hw) [br:blue](--detailed)        [dim](# [i](Show detailed info))
-  [br:green](x-hw) [br:blue](--json)            [dim](# [i](Output as JSON))
-"""
-    FormatCodes.print(help_text)
 
 
 class AdapterInfo(TypedDict):

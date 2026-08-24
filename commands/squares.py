@@ -5,7 +5,7 @@
 
 import keyboard
 import xulbux as xx
-from xulbux import ArgumentParser, FormatCodes
+from xulbux import ArgumentParser, FormatCodes, S
 from xulbux.base.consts import CHARS
 
 
@@ -19,22 +19,6 @@ def wait_key_pressed_and_released(key: str) -> None:
         pass
     while keyboard.is_pressed(key):
         pass
-
-
-def print_help() -> None:
-    help_text = """
-[b|in|bg:black]( Squares — Calculate the squares of all numbers up to a given number )
-
-[b](Usage:) [br:green](squares) [br:blue]([options])
-
-[b](Options:)
-  [br:blue](-c), [br:blue](--cols[dim](=)N)    Number of table columns [dim]((default: 4))
-
-[b](Examples:)
-  [br:green](squares)             [dim](# [i](Calculate squares with 4 columns))
-  [br:green](squares) [br:blue](--cols[dim](=)6)    [dim](# [i](Calculate squares with 6 columns))
-"""
-    FormatCodes.print(help_text)
 
 
 def main() -> None:
@@ -94,7 +78,7 @@ if __name__ == "__main__":
         {"-c", "--cols"},
         "table_cols",
         expects_value="N",
-        help="Number of table columns (default: 4)",
+        help=("Number of table columns ", S.DIM("(default: 4)")),
     )
 
     global ARGS
