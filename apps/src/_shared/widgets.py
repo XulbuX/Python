@@ -20,9 +20,9 @@ def bind_clean_paste(tk_widget: tk.Misc) -> None:
             return "break"
 
         with contextlib.suppress(tk.TclError):
-            tk_widget.delete("sel.first", "sel.last")  # type: ignore[attr-defined]
+            tk_widget.delete("sel.first", "sel.last")  # type:ignore[attr-defined]
 
-        tk_widget.insert(  # type: ignore[attr-defined]
+        tk_widget.insert(  # type:ignore[attr-defined]
             "insert", text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
         )
 
@@ -41,7 +41,7 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     from svglib.svglib import svg2rlg
 
     svg_src = svg_path.read_text(encoding="utf-8").replace("currentColor", color)
-    drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # type: ignore[arg-type]
+    drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # type:ignore[arg-type]
 
     if drawing is None:
         raise ValueError(f"Failed to parse SVG: {svg_path.name}")
@@ -71,7 +71,7 @@ class SingleLineEntry(ctk.CTkEntry):
     """Drop-in replacement for `ctk.CTkEntry` with reliable placeholder management."""
 
     def __init__(self, master: object, **kwargs: object) -> None:
-        super().__init__(master, **kwargs)  # type: ignore[arg-type]
+        super().__init__(master, **kwargs)  # type:ignore[arg-type]
 
         bind_clean_paste(self._entry)
 
@@ -112,9 +112,9 @@ class SingleLineEntry(ctk.CTkEntry):
             if self._entry.focus_get() is not self._entry:
                 self._activate_placeholder()
             if kwargs:
-                super().configure(**kwargs)  # type: ignore[arg-type]
+                super().configure(**kwargs)  # type:ignore[arg-type]
         else:
-            super().configure(**kwargs)  # type: ignore[arg-type]
+            super().configure(**kwargs)  # type:ignore[arg-type]
 
 
 class MultilineEntry(ctk.CTkTextbox):
@@ -127,7 +127,7 @@ class MultilineEntry(ctk.CTkTextbox):
         self._showing_placeholder: bool = False
 
         kwargs.pop("height", None)
-        super().__init__(master, **kwargs)  # type: ignore[arg-type]
+        super().__init__(master, **kwargs)  # type:ignore[arg-type]
 
         self._expanded: bool | None = None
         self._always_expanded = always_expanded
@@ -223,7 +223,7 @@ class MultilineEntry(ctk.CTkTextbox):
             self._placeholder_text_color = str(color)
             self._textbox.tag_configure("placeholder", foreground=self._placeholder_text_color)
         if kwargs:
-            super().configure(**kwargs)  # type: ignore[arg-type]
+            super().configure(**kwargs)  # type:ignore[arg-type]
 
     def get(self) -> str:
         return "" if self._showing_placeholder else super().get("1.0", "end").rstrip("\n")
@@ -444,7 +444,7 @@ class SpinnerButton(ctk.CTkButton):
     _INTERVAL_MS: int = 33
 
     def __init__(self, *args: object, **kwargs: object) -> None:
-        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+        super().__init__(*args, **kwargs)  # type:ignore[arg-type]
         self._spin_frames: list[ctk.CTkImage] = []
         self._spin_idx: int = 0
         self._spin_after_id: str | None = None
@@ -456,14 +456,14 @@ class SpinnerButton(ctk.CTkButton):
         # RENDER LOADER SVG AT 3x FOR ANTI-ALIASING, THEN GENERATE ONE ROTATED FRAME PER STEP
         HI = size * 3
         r, g, b, a = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
-        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # type: ignore[attr-defined]
+        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # type:ignore[attr-defined]
 
         step = 360.0 / self._FRAME_COUNT
         self._spin_frames = []
 
         for i in range(self._FRAME_COUNT):
-            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # type: ignore[attr-defined]
-            lo = rotated.resize((size, size), Image.LANCZOS)  # type: ignore[attr-defined]
+            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # type:ignore[attr-defined]
+            lo = rotated.resize((size, size), Image.LANCZOS)  # type:ignore[attr-defined]
             self._spin_frames.append(ctk.CTkImage(light_image=lo, dark_image=lo, size=(size, size)))
 
     def start(self, color_hex: str = "#FFFFFF") -> None:
@@ -518,7 +518,7 @@ class SegmentedButton(ctk.CTkFrame):
         tooltip: str = "",
         **kwargs: object,
     ) -> None:
-        super().__init__(master, border_width=1, corner_radius=6, **kwargs)  # type: ignore[arg-type]
+        super().__init__(master, border_width=1, corner_radius=6, **kwargs)  # type:ignore[arg-type]
         self._values = list(values)
         self._command = command
         self._selected: str = self._values[0] if self._values else ""
@@ -565,7 +565,7 @@ class SegmentedButton(ctk.CTkFrame):
         self._refresh_buttons()
 
         if self._command:
-            self._command(value)  # type: ignore[call-arg]
+            self._command(value)  # type:ignore[call-arg]
 
     def _refresh_buttons(self) -> None:
         for val, btn in self._buttons.items():
@@ -598,6 +598,6 @@ class SegmentedButton(ctk.CTkFrame):
         if (v := kwargs.pop("text_color", None)) is not None:
             self._text_color = str(v)
         if kwargs:
-            super().configure(**kwargs)  # type: ignore[arg-type]
+            super().configure(**kwargs)  # type:ignore[arg-type]
 
         self._refresh_buttons()

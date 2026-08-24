@@ -9,11 +9,11 @@ import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import qrcode
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes, Throbber
 from xulbux.base.consts import COLOR
-from xulbux.console import ParsedArgs, Throbber
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "text": "before",
     "invert": {"-i", "--invert"},
     "scale": {"-s", "--scale"},
@@ -88,13 +88,13 @@ class VCard:
             details["name"] = self.vcard_str.strip()
 
         if not details["name"]:
-            details["name"] = Console.input("Name (required): ").strip()
+            details["name"] = xx.console.input("Name (required): ").strip()
             if not details["name"]:
                 raise ValueError("Name is required for contact QR code.")
         if not details["phone"]:
-            details["phone"] = Console.input("Phone number: ", validator=phone_validator).strip()
+            details["phone"] = xx.console.input("Phone number: ", validator=phone_validator).strip()
         if not details["email"]:
-            details["email"] = Console.input("Email: ", validator=email_validator).strip()
+            details["email"] = xx.console.input("Email: ", validator=email_validator).strip()
 
         return details
 
@@ -194,12 +194,12 @@ class WiFi:
         # XML export
         password = self._export_xml_method(ssid)
         if password:
-            Console.done("Retrieved password using XML export method")
+            xx.console.done("Retrieved password using XML export method")
             return password
         # Direct netsh variations
         password = self._netsh_variations(ssid)
         if password:
-            Console.done("Retrieved password using netsh method")
+            xx.console.done("Retrieved password using netsh method")
             return password
         return None
 
@@ -299,12 +299,12 @@ class WiFi:
                 FormatCodes.print(f" [white]({i:2d}) {profile}{current_marker}")
 
         if not self.network_name:
-            if current and Console.confirm(f"\nUse current network [br:cyan]({current})?"):
+            if current and xx.console.confirm(f"\nUse current network [br:cyan]({current})?"):
                 self.network_name = current
 
             if not self.network_name:
                 if profiles:
-                    choice = Console.input(
+                    choice = xx.console.input(
                         f"Enter network number (1-{len(profiles)}) or network name: ", min_len=1, max_len=32
                     ).strip()
 
@@ -313,24 +313,24 @@ class WiFi:
                         if 0 <= idx < len(profiles):
                             self.network_name = profiles[idx]
                         else:
-                            Console.warn(f"Invalid number. Please choose between 1 and {len(profiles)}.")
-                            self.network_name = Console.input(
+                            xx.console.warn(f"Invalid number. Please choose between 1 and {len(profiles)}.")
+                            self.network_name = xx.console.input(
                                 "Enter WiFi network name (SSID): ", min_len=1, max_len=32
                             ).strip()
                     else:
                         self.network_name = choice
                 else:
-                    self.network_name = Console.input("Enter WiFi network name (SSID): ", min_len=1, max_len=32).strip()
+                    self.network_name = xx.console.input("Enter WiFi network name (SSID): ", min_len=1, max_len=32).strip()
 
         if not self.network_name:
             raise ValueError("Network name is required for WiFi QR code.")
 
-        Console.info(f"Attempting to retrieve password for '{self.network_name}'...", start="\n")
+        xx.console.info(f"Attempting to retrieve password for '{self.network_name}'...", start="\n")
         password = self._try_get_password(self.network_name)
 
         if not password:
-            Console.warn("Could not retrieve password automatically.", end="\n\n")
-            Console.log_box_bordered(
+            xx.console.warn("Could not retrieve password automatically.", end="\n\n")
+            xx.console.log_box_bordered(
                 "[b](Antivirus alert? Safe to ignore:)",
                 "It's likely because we tried to",
                 "read a saved WiFi password.",
@@ -338,7 +338,7 @@ class WiFi:
                 default_color=COLOR.ORANGE,
                 indent=2,
             )
-            password = Console.input(
+            password = xx.console.input(
                 f"Enter password for '{self.network_name}': ", start="\n", mask_char="*", min_len=8, max_len=64
             ).strip()
             if not password:
@@ -346,7 +346,7 @@ class WiFi:
 
         security = self._get_security_type(self.network_name)
 
-        hidden = Console.confirm("Is this a hidden network?", start=("\n" if password else ""), default_is_yes=False)
+        hidden = xx.console.confirm("Is this a hidden network?", start=("\n" if password else ""), default_is_yes=False)
 
         return {"ssid": self.network_name, "password": password, "security": security, "hidden": hidden}
 
@@ -380,21 +380,21 @@ class WiFi:
         return display
 
 
-def ascii_qr(text: str, args: ParsedArgs) -> str | None:  # ruff:ignore[complex-structure]
+def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
     """Generate and display QR code in terminal."""
 
     try:
-        scale = int(v) if (v := args.scale.get(0)) and v.replace("_", "").isdigit() else 1
-        invert = args.invert.exists
+        scale = ARGS.scale.val(int, 1)
+        invert = ARGS.invert.exists
         error_level = int(
             {
-                "L": qrcode.constants.ERROR_CORRECT_L,  # type: ignore[name-defined]
-                "M": qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
-                "Q": qrcode.constants.ERROR_CORRECT_Q,  # type: ignore[name-defined]
-                "H": qrcode.constants.ERROR_CORRECT_H,  # type: ignore[name-defined]
+                "L": qrcode.constants.ERROR_CORRECT_L,  # type:ignore[name-defined]
+                "M": qrcode.constants.ERROR_CORRECT_M,  # type:ignore[name-defined]
+                "Q": qrcode.constants.ERROR_CORRECT_Q,  # type:ignore[name-defined]
+                "H": qrcode.constants.ERROR_CORRECT_H,  # type:ignore[name-defined]
             }.get(
-                ((args.error_correction.values or [None])[0] or "M").upper(),
-                qrcode.constants.ERROR_CORRECT_M,  # type: ignore[name-defined]
+                ((ARGS.error_correction.vals() or [None])[0] or "M").upper(),
+                qrcode.constants.ERROR_CORRECT_M,  # type:ignore[name-defined]
             )
         )
 
@@ -449,7 +449,7 @@ def ascii_qr(text: str, args: ParsedArgs) -> str | None:  # ruff:ignore[complex-
         return "  " + "\n  ".join(lines)
 
     except ValueError as exc:
-        Console.fail(exc)
+        xx.console.fail(exc)
 
 
 def main() -> None:
@@ -458,25 +458,25 @@ def main() -> None:
         return
 
     print()
-    text = " ".join(ARGS.text.values)
+    text = " ".join(ARGS.text.vals())
 
     if ARGS.wifi.exists:
         wifi = WiFi(text)
         text = wifi.get_wifi_string()
 
-        print(f"\n\n{ascii_qr(text, ARGS)}\n")
-        Console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]", end="\n\n")
+        print(f"\n\n{ascii_qr(text)}\n")
+        xx.console.info(f"[b](WiFi Details:)\n[white]{wifi.get_display_info()}[_c]", end="\n\n")
 
     elif ARGS.contact.exists:
         vcard = VCard(text)
         text = vcard.get_vcard_str()
 
-        print(f"\n\n{ascii_qr(text, ARGS)}\n")
-        Console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
+        print(f"\n\n{ascii_qr(text)}\n")
+        xx.console.info(f"[b](Contact Details:)\n[white]{vcard.get_display_info()}[_c]", end="\n\n")
 
     else:
-        print(f"\n\n{ascii_qr(text, ARGS)}\n")
-        Console.info(f"[b](Encoded Text:)\n[white]{text}[_c]", end="\n\n")
+        print(f"\n\n{ascii_qr(text)}\n")
+        xx.console.info(f"[b](Encoded Text:)\n[white]{text}[_c]", end="\n\n")
 
 
 if __name__ == "__main__":
@@ -485,4 +485,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

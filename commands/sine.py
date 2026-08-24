@@ -5,9 +5,10 @@
 
 import math
 import time
-from xulbux import S, StyledText, console
+import xulbux as xx
+from xulbux import S, StyledText
 
-ARGS = console.get_args({
+ARGS = xx.console.get_args({
     "speed": {"-s", "--speed"},
     "y_stretch": {"-y", "--y-stretch"},
     "help": {"-h", "--help"},
@@ -91,7 +92,7 @@ def main() -> None:
     speed = max(0.1, float(ARGS.speed.values[0])) if ARGS.speed.exists else 1.0
     y_stretch = max(0.1, float(ARGS.y_stretch.values[0])) if ARGS.y_stretch.exists else 1.0
 
-    show_wave(width=console.get_width() - 1, speed=(2 / y_stretch, speed))
+    show_wave(width=xx.console.get_width() - 1, speed=(2 / y_stretch, speed))
 
 
 if __name__ == "__main__":
@@ -100,4 +101,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

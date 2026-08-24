@@ -8,9 +8,8 @@ import fnmatch
 from enum import Enum
 from pathlib import Path
 import regex as rx
-from xulbux import Console, FormatCodes
-from xulbux.color import hexa
-from xulbux.regex import LazyRegex
+import xulbux as xx
+from xulbux import FormatCodes, LazyRegex, hexa
 
 
 class Operation(Enum):
@@ -21,7 +20,7 @@ class Operation(Enum):
     INVERT = "invert"
 
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "path": "before",
     "upper": {"-u", "--upper"},
     "lower": {"-l", "--lower"},
@@ -185,11 +184,11 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
         dim: str = "[dim]" if not was_modified else ""
         title: str = "Would update" if was_modified and dry_run else ("Updated" if was_modified else "[dim|green](✓ checked)")
 
-        if len(log_path) > (max_path_len := max(10, Console.width - 50)):
+        if len(log_path) > (max_path_len := max(10, xx.console.get_width() - 50)):
             log_path = "…" + log_path[-max_path_len:]
         dots = max(0, max_path_len - len(log_path))
 
-        Console.log(
+        xx.console.log(
             title,
             f"{dim}[br:cyan|link:file:///{file_path.resolve()}]({log_path})[_] "
             f"{dim}[br:black]{dots * '.'}[_]{' ' if dots > 0 else ''}"
@@ -200,7 +199,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
         )
 
     except Exception as exc:
-        Console.fail(
+        xx.console.fail(
             f"Error processing [br:red|link:file:///{file_path.resolve()}]({log_path}):\n[red]{exc}[_]",
             start="",
             end="\n",
@@ -227,7 +226,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         try:
             degrees = int("".join(ARGS.rotate.values).strip())
         except (ValueError, TypeError):
-            Console.fail(
+            xx.console.fail(
                 "[br:blue](--rotate) requires a degree value (0-360), e.g. [br:blue](--rotate=180)", start="\n", end="\n\n"
             )
             return
@@ -235,7 +234,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     elif ARGS.invert.exists:
         operation = Operation.INVERT
     else:
-        Console.fail(
+        xx.console.fail(
             "No operation given.\n"
             "Use [br:blue](--upper), [br:blue](--lower), [br:blue](--grayscale),"
             "[br:blue](--rotate[dim](=)DEG) or [br:blue](--invert).",
@@ -262,7 +261,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
                     process_file(file_path, path, operation, degrees, dry_run)
 
         else:
-            Console.fail(f"Path not found [white]{path}[_]", exit=False)
+            xx.console.fail(f"Path not found [white]{path}[_]", exit=False)
 
     print()
 
@@ -273,4 +272,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

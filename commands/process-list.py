@@ -3,9 +3,10 @@
 
 """Process a list of items and display some statistics."""
 
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "list_items": "before",
     "separator": {"-s", "--sep"},
     "help": {"-h", "--help"},
@@ -56,7 +57,7 @@ def main() -> None:
             def average(nums: list[int | float]) -> float:
                 return sum(nums) / len(nums)
 
-            Console.log_box_bordered(
+            xx.console.log_box_bordered(
                 f"[b](Min)     : [br:cyan]({min(lst)})",
                 f"[b](Max)     : [br:cyan]({max(lst)})",
                 f"[b](Sum)     : [br:cyan]({sum(lst)})",
@@ -70,7 +71,7 @@ def main() -> None:
                 lower = sum(1 for e in lst if e.islower())
                 box_content += f"\n[b](Uppercase)      : {upper / len(lst) * 100:.1f}%"
                 box_content += f"\n[b](Lowercase)      : {lower / len(lst) * 100:.1f}%"
-            Console.log_box_bordered(box_content)
+            xx.console.log_box_bordered(box_content)
         print()
 
 
@@ -80,4 +81,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

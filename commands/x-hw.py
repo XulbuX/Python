@@ -7,7 +7,8 @@ import platform
 import re
 import subprocess
 from typing import TYPE_CHECKING, Any, TypedDict
-from xulbux import Console, Data, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes
 
 if TYPE_CHECKING:
     import psutil
@@ -19,10 +20,10 @@ try:
     PSUTIL_AVAILABLE: bool = True
     PSUTIL_ERROR: str | None = None
 except (ImportError, ModuleNotFoundError) as exc:
-    PSUTIL_AVAILABLE: bool = False  # type: ignore[no-redef]
-    PSUTIL_ERROR: str | None = str(exc)  # type: ignore[no-redef]
+    PSUTIL_AVAILABLE: bool = False  # type:ignore[no-redef]
+    PSUTIL_ERROR: str | None = str(exc)  # type:ignore[no-redef]
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "detailed": {"-d", "--detailed"},
     "json_output": {"-j", "--json"},
     "help": {"-h", "--help"},
@@ -230,7 +231,7 @@ class HardwareInfo:
 
                     # GET MAC ADDRESS
                     for addr in addrs[interface_name]:
-                        if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # type: ignore[reportUnnecessaryComparison]
+                        if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # type:ignore[reportUnnecessaryComparison]
                             adapter_info["mac"] = addr.address
                             break
 
@@ -273,7 +274,7 @@ class HardwareInfo:
                 "\n[br:yellow][b](⚠ Library psutil failed to initialize - some hardware info will be missing!)"
                 "\n  [dim](This is likely due to incompatibility with your Python version.)[_c]\n"
             )
-        Console.info("Gathering hardware information...", start="\n")
+        xx.console.info("Gathering hardware information...", start="\n")
         self.system = self._get_system_info()
         self.cpu = self._get_cpu_info(detailed)
         self.memory = self._get_memory_info(detailed)
@@ -317,7 +318,7 @@ class HardwareInfo:
                 system_text.append(f"[b](Architecture) : [br:white]({self.system['architecture']})")
             if self.system.get("hostname"):
                 system_text.append(f"    [b](Hostname) : [br:white]({self.system['hostname']})")
-            Console.log_box_bordered(*system_text, border_style="br:green")
+            xx.console.log_box_bordered(*system_text, border_style="br:green")
 
         # CPU INFO
         if self.cpu:
@@ -342,7 +343,7 @@ class HardwareInfo:
                 for i in range(0, len(cores), 10):
                     formatted_cores.append("[br:white]" + ", ".join(cores[i : i + 10]))
                 cpu_text.append("[b|br:cyan](Per-Core Usage)\n" + "\n".join(formatted_cores) + "[_c]")
-            Console.log_box_bordered(*cpu_text, border_style="br:cyan")
+            xx.console.log_box_bordered(*cpu_text, border_style="br:cyan")
 
         # GPU INFO
         if self.gpu and self.gpu.get("gpus"):
@@ -352,7 +353,7 @@ class HardwareInfo:
                 if i > 0:
                     gpu_text.append("{hr}")
                 gpu_text.append(f"[b](GPU {i + 1}) : [br:white]({gpu['name']})")
-            Console.log_box_bordered(*gpu_text, border_style="br:blue")
+            xx.console.log_box_bordered(*gpu_text, border_style="br:blue")
 
         # MEMORY INFO
         if self.memory:
@@ -372,7 +373,7 @@ class HardwareInfo:
                 mem_text.append(f" [b](Swap Used) : [br:white]({self.memory['swap_used']})")
             if self.memory.get("swap_percent"):
                 mem_text.append(f"[b](Swap Usage) : [br:white]({self.memory['swap_percent']})")
-            Console.log_box_bordered(*mem_text, border_style="magenta")
+            xx.console.log_box_bordered(*mem_text, border_style="magenta")
 
         # DISK INFO
         if self.disk:
@@ -396,7 +397,7 @@ class HardwareInfo:
                     disk_text.append(f"      [b](Free) : [br:white]({partition['free']})")
                     disk_text.append(f"     [b](Usage) : [br:white]({partition['usage_percent']})")
 
-            Console.log_box_bordered(*disk_text, border_style="br:magenta")
+            xx.console.log_box_bordered(*disk_text, border_style="br:magenta")
 
         # NETWORK INFO
         if self.network and self.network.get("adapters"):
@@ -411,7 +412,7 @@ class HardwareInfo:
                     net_text.append(f"  [b](MAC) : [br:white]({adapter['mac']})")
                 if adapter.get("speed"):
                     net_text.append(f"[b](Speed) : [br:white]({adapter['speed']})")
-            Console.log_box_bordered(*net_text, border_style="br:red")
+            xx.console.log_box_bordered(*net_text, border_style="br:red")
 
         # BATTERY INFO
         if self.battery and self.battery.get("has_battery"):
@@ -425,7 +426,7 @@ class HardwareInfo:
                 battery_text.append(f"{'        ' if time_left else ''}[b](Status) : {status}[_c]")
             if time_left:
                 battery_text.append(f"[b](Time Remaining) : [br:white]({time_left})")
-            Console.log_box_bordered(*battery_text, border_style="br:white")
+            xx.console.log_box_bordered(*battery_text, border_style="br:white")
 
         print()
 
@@ -440,11 +441,11 @@ def main() -> None:
     try:
         hw_info.gather_info(detailed=ARGS.detailed.exists)
     except Exception as exc:
-        Console.fail(f"Error gathering hardware information: {exc}", end="\n\n")
+        xx.console.fail(f"Error gathering hardware information: {exc}", end="\n\n")
         return
 
     if ARGS.json_output.exists:
-        FormatCodes.print(f"\n{Data.render(hw_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
+        FormatCodes.print(f"\n{xx.data.render(hw_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         hw_info.display()
 
@@ -455,4 +456,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

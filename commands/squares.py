@@ -4,10 +4,11 @@
 """Get the squares of all numbers up to a given number."""
 
 import keyboard
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes
 from xulbux.base.consts import CHARS
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "table_cols": {"-c", "--cols"},
     "help": {"-h", "--help"},
 })
@@ -55,7 +56,7 @@ def main() -> None:
     )
 
     loops = int(
-        Console.input(
+        xx.console.input(
             "Until which number do you want all squares to be calculated: ", allowed_chars=CHARS.DIGITS, min_len=1, max_len=7
         )
         or ""
@@ -85,7 +86,7 @@ def main() -> None:
     print(borders["bottom"])
     print()
 
-    Console.cls()
+    xx.console.cls()
 
 
 if __name__ == "__main__":

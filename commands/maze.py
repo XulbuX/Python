@@ -15,10 +15,10 @@ from heapq import heappop, heappush
 from pathlib import Path
 from typing import cast
 import keyboard
-from xulbux import Console, FileSys, FormatCodes
-from xulbux.console import Throbber
+import xulbux as xx
+from xulbux import FormatCodes, Throbber
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "help": {"-h", "--help"},
 })
 
@@ -396,7 +396,7 @@ def main() -> None:
     def smart_split(s: str, char: str = " ", /) -> list[str]:
         return s.lower().strip().split(char) if char in s.lower().strip() else s.lower().strip().split()
 
-    Console.log_box_bordered(
+    xx.console.log_box_bordered(
         "[br:blue]  [b](WASD ⏶⏴⏷⏵)   [blue]:[br:blue] move the player",
         "[br:blue]      [b](H)       [blue]:[br:blue] toggle solution",
         "[br:blue]      [b](F)       [blue]:[br:blue] finish maze",
@@ -418,7 +418,7 @@ def main() -> None:
 
             try:
                 while True:
-                    Maze(Console.width // 2, Console.height, render_ascii=ascii_mode).play()
+                    Maze(xx.console.get_width() // 2, xx.console.get_height(), render_ascii=ascii_mode).play()
             except KeyboardInterrupt as exc:
                 print("\x1bc\x1b[0m", end="", flush=True)
                 raise SystemExit(0) from exc
@@ -447,7 +447,7 @@ def main() -> None:
                     ).strip()
                 )
                 > 0
-                else FileSys.script_dir
+                else xx.file_sys.get_script_dir()
             )
 
             files = (dir_path / f"maze_{w}x{h}.txt", dir_path / f"maze_{w}x{h}_solution.txt")
@@ -455,7 +455,9 @@ def main() -> None:
             print()
 
             with Throbber(
-                throbber_format=["[dim|br:blue]({a})", "[br:blue]({l})"], frames=("⠴", "⠦", "⠖", "⠲"), interval=0.1
+                format=["[dim|br:blue]({a})", "[br:blue]({l})"],
+                frames=("⠴", "⠦", "⠖", "⠲"),
+                interval=0.1,
             ).context() as update_label:
                 update_label("Generating maze")
                 maze = Maze(w, h, render_ascii=True)
@@ -493,7 +495,7 @@ def main() -> None:
                     for f in files
                 ]
 
-            Console.log_box_bordered(
+            xx.console.log_box_bordered(
                 f"[br:blue]Saved maze to [b|link:file:///{files[0].resolve()}]({files[0].name}) [[i]({sizes[0]})]",
                 f"[br:blue]Saved solution to [b|link:file:///{files[1].resolve()}]({files[1].name}) [[i]({sizes[1]})]",
                 border_style="dim|br:blue",

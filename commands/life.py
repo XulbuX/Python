@@ -7,10 +7,11 @@
 import random
 import sys
 import time
-from xulbux import Console, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes
 from xulbux.base.consts import CHARS
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "help": {"-h", "--help"},
 })
 
@@ -34,15 +35,16 @@ in the terminal )
 
 class GameOfLife:
     def __init__(self) -> None:
-        self.width = Console.width
-        self.height = Console.height * 2
+        self.width: int = xx.console.get_width()
+        self.height: int = xx.console.get_height() * 2
         self.grid = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.next_grid = [[False for _ in range(self.width)] for _ in range(self.height)]
-        # PRE-COMPUTE UTF-8 BYTE SEQUENCES FOR MAXIMUM EFFICIENCY
-        self.c_full = "█".encode()
-        self.c_upper = "▀".encode()
-        self.c_lower = "▄".encode()
-        self.c_empty = b" "
+
+        # Pre-compute UTF-8 byte sequences for maximum efficiency:
+        self.c_full: bytes = "█".encode()
+        self.c_upper: bytes = "▀".encode()
+        self.c_lower: bytes = "▄".encode()
+        self.c_empty: bytes = b" "
 
     def initialize_random(self, density: float = 0.3) -> None:
         for y in range(self.height):
@@ -110,8 +112,8 @@ class GameOfLife:
         try:
             gen = 0
             while gens is None or gen < gens:
-                new_width = Console.width
-                new_height = Console.height * 2
+                new_width: int = xx.console.get_width()
+                new_height: int = xx.console.get_height() * 2
 
                 if new_width != self.width or new_height != self.height:
                     old_grid = self.grid
@@ -140,7 +142,7 @@ def main() -> None:
     game = GameOfLife()
 
     FormatCodes.print("[b](Choose Initialization)\n [b|i](1)  Random pattern\n [b|i](2)  Some classic patterns")
-    choice = Console.input("(1) [b](>) ", max_len=1, allowed_chars="12", default_val=1, output_type=int)
+    choice = xx.console.input("(1) [b](>) ", max_len=1, allowed_chars="12", default_val=1, output_type=int)
 
     match choice:
         case 2:
@@ -154,7 +156,7 @@ def main() -> None:
                 game.grid[y][x] = True
         case _:
             density = 0.2
-            density = Console.input(
+            density = xx.console.input(
                 f"\n[b](Enter density) [0.0 – 1.0]({density}) [b](>) ",
                 allowed_chars=CHARS.FLOAT_DIGITS,
                 default_val=density,
@@ -163,7 +165,7 @@ def main() -> None:
             game.initialize_random(max(0.0, min(1.0, density)))
 
     delay = 0.02
-    delay = Console.input(
+    delay = xx.console.input(
         f"\n[b](Delay between generations) [secs]({delay}) [b](>) ",
         allowed_chars=CHARS.FLOAT_DIGITS,
         default_val=delay,
@@ -179,4 +181,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

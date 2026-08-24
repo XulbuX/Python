@@ -1,5 +1,5 @@
 # ruff: noqa
-# type: ignore
+# type:ignore
 import re
 from pathlib import Path
 from typing import cast
@@ -245,7 +245,7 @@ class blade_to_vue:
             slots[name] = content
 
         slots = {}
-        code = rx.sub(pattern_one_line, replace_slot, code, flags=re.DOTALL)  # type: ignore[overloads]
+        code = rx.sub(pattern_one_line, replace_slot, code, flags=re.DOTALL)  # type:ignore[overloads]
 
         def add_slot_attributes(match: re.Match) -> str:
             tag = match.group(1)
@@ -326,7 +326,7 @@ class blade_to_vue:
                 return f"{function_replacements[func_parts[0]]}({func_parts[1]})"
             return match.group(0)
 
-        code = rx.sub(r"(?i)" + Regex.func_call(), replace_func_name, code)  # type: ignore[overloads]
+        code = rx.sub(r"(?i)" + Regex.func_call(), replace_func_name, code)  # type:ignore[overloads]
         return code
 
     @staticmethod
@@ -369,7 +369,7 @@ class blade_to_vue:
                     return f'<div v-for="{item.strip()} in {items}" :key="{item.strip()}">'
             return match.group(0)
 
-        code = rx.sub(r"(?i)@for(?:each)?\s*" + R_BR, replace_loop, code)  # type: ignore[overloads]
+        code = rx.sub(r"(?i)@for(?:each)?\s*" + R_BR, replace_loop, code)  # type:ignore[overloads]
         return code
 
     @staticmethod

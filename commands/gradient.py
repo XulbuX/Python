@@ -5,23 +5,22 @@
 specified color channel with a specified number of steps."""
 
 import colorsys
-from typing import Literal, cast
-
+from typing import TYPE_CHECKING, Literal, cast
 import xulbux as xx
-from xulbux import hexa, rgba
-from xulbux.ansi import RenderSegment, S, StyledText
+from xulbux import S, StyledText, hexa, rgba
 
-ARGS = xx.console.get_args(
-    {
-        "color_points": "before",
-        "steps": {"-s", "--steps"},
-        "hsv": {"-H", "--hsv"},
-        "oklch": {"-O", "--oklch"},
-        "list": {"-l", "--list"},
-        "numerate": {"-n", "--numerate"},
-        "help": {"-h", "--help"},
-    }
-)
+if TYPE_CHECKING:
+    from xulbux.ansi import RenderSegment
+
+ARGS = xx.console.get_args({
+    "color_points": "before",
+    "steps": {"-s", "--steps"},
+    "hsv": {"-H", "--hsv"},
+    "oklch": {"-O", "--oklch"},
+    "list": {"-l", "--list"},
+    "numerate": {"-n", "--numerate"},
+    "help": {"-h", "--help"},
+})
 
 
 # fmt: off
@@ -78,7 +77,7 @@ def interpolate_oklch(
     """
     try:
         import numpy as np
-        from colorspacious import cspace_convert  # type: ignore[no-stubs]
+        from colorspacious import cspace_convert  # type:ignore[no-stubs]
     except ImportError as e:
         raise ImportError(
             StyledText(
@@ -131,9 +130,7 @@ def interpolate_oklch(
 
     # CONVERT BACK TO SRGB
     oklch_interpolated = np.array([L, C, h])
-    rgb_interpolated = cast(
-        "np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1")
-    )
+    rgb_interpolated = cast("np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
 
     # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
     rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
@@ -158,12 +155,8 @@ def interpolate_hsv(
     - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
     """
     # CONVERT RGB TO HSV (HUE 0-1, SATURATION 0-1, VALUE 0-1)
-    h1, s1, v1 = colorsys.rgb_to_hsv(
-        color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0
-    )
-    h2, s2, v2 = colorsys.rgb_to_hsv(
-        color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0
-    )
+    h1, s1, v1 = colorsys.rgb_to_hsv(color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0)
+    h2, s2, v2 = colorsys.rgb_to_hsv(color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0)
 
     # CONVERT HUE TO DEGREES (0-360)
     h1_deg = h1 * 360
@@ -334,19 +327,14 @@ def display_gradient(
     gradient_str = StyledText(*gradient_parts, "\n").ansi * 4
 
     color_segments = [
-        (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(
-            f" {color} "
-        )
-        for color in source_colors
+        (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} ") for color in source_colors
     ]
     summary = StyledText(
         S.BG.BLACK(" "),
-        StyledText((S.DIM | S.WHITE | S.BG.BLACK)("›")).ansi.join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
+        (S.DIM | S.WHITE | S.BG.BLACK)("›").join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
         (S.WHITE | S.BG.BLACK)(" in ", S.BOLD(str(total_colors)), " steps "),
     )
-    summary = StyledText(
-        S.BLACK("▄" * len(summary)), summary, S.BLACK("▀" * len(summary)), sep="\n"
-    )
+    summary = StyledText(S.BLACK("▄" * len(summary)), summary, S.BLACK("▀" * len(summary)), sep="\n")
 
     if not list_colors:
         print(f"\n{gradient_str}\n{summary}")
@@ -359,24 +347,13 @@ def display_gradient(
                 " ",
                 S.ITALIC,
                 (S.DIM | S.WHITE)(f"{i:>{num_width}}  "),
-                (
-                    S.BOLD
-                    | S.hex(xx.color.text_color_for_on_bg(color))
-                    | S.BG.hex(color)
-                )(f" {color} "),
+                (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} "),
             ).ansi
             for i, color in enumerate(gradient, 1)
         )
     else:
         color_list = "\n".join(
-            StyledText(
-                (
-                    S.BOLD
-                    | S.ITALIC
-                    | S.hex(xx.color.text_color_for_on_bg(color))
-                    | S.BG.hex(color)
-                )(f" {color} ")
-            ).ansi
+            StyledText((S.BOLD | S.ITALIC | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} ")).ansi
             for color in gradient
         )
 
@@ -408,9 +385,7 @@ def parse_color_args(
                     )
                 )
             if len(colors) == 0:
-                raise ValueError(
-                    f"Direction arrow '{arg}' cannot appear before the first color"
-                )
+                raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
             # ADD DIRECTION FOR PREVIOUS SEGMENT
             if arg == ">":
@@ -457,12 +432,7 @@ def parse_color_args(
 
 
 def main() -> None:
-    if ARGS.help.exists or not (
-        ARGS.color_points.exists
-        or ARGS.steps.exists
-        or ARGS.hsv.exists
-        or ARGS.oklch.exists
-    ):
+    if ARGS.help.exists or not (ARGS.color_points.exists or ARGS.steps.exists or ARGS.hsv.exists or ARGS.oklch.exists):
         print_help()
         return
 
@@ -504,13 +474,9 @@ def main() -> None:
     if (sv := ARGS.steps.get(0)) and int(sv) <= 1:
         raise ValueError("Steps must be a positive integer, bigger than 1")
 
-    total_steps = (
-        int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
-    )
+    total_steps = int(sv) if sv and sv.replace("_", "").isdigit() else xx.console.get_width() * 2
 
-    gradient = generate_multi_gradient(
-        colors=colors, directions=directions, steps=total_steps, mode=mode
-    )
+    gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
     display_gradient(
         gradient=gradient,
         source_colors=[c.to_hexa() for c in colors],

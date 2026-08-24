@@ -112,7 +112,7 @@ def take_ownership_windows(path: Path) -> bool:
             text=True,
             timeout=60,
             creationflags=(
-                subprocess.CREATE_NO_WINDOW  # type: ignore[type-unknown]
+                subprocess.CREATE_NO_WINDOW  # type:ignore[type-unknown]
                 if platform.system() == "Windows"
                 else 0
             ),
@@ -128,7 +128,7 @@ def take_ownership_windows(path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=60,
-            creationflags=subprocess.CREATE_NO_WINDOW,  # type: ignore[type-unknown]
+            creationflags=subprocess.CREATE_NO_WINDOW,  # type:ignore[type-unknown]
         )
 
         if result.returncode != 0:
@@ -157,7 +157,7 @@ def remove_attributes_windows(path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=60,
-            creationflags=subprocess.CREATE_NO_WINDOW,  # type: ignore[type-unknown]
+            creationflags=subprocess.CREATE_NO_WINDOW,  # type:ignore[type-unknown]
         )
 
         if result.returncode != 0:

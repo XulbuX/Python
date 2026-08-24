@@ -12,12 +12,12 @@ from collections.abc import Callable, Generator
 from typing import Any, ClassVar
 import numpy
 import sympy
-from xulbux import Console, FormatCodes
-from xulbux.regex import LazyRegex
+import xulbux as xx
+from xulbux import FormatCodes, LazyRegex
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "calculation": "before",
     "ans": {"-a", "--ans"},
     "precision": {"-p", "--precision"},
@@ -31,7 +31,7 @@ REGEX = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
 
 def sanitize(expression: Any, /) -> sympy.Expr:
-    return sympy.sympify(expression)  # type: ignore[return-type]
+    return sympy.sympify(expression)  # type:ignore[return-type]
 
 
 def clean_num(token: str, /) -> str:
@@ -284,7 +284,7 @@ class FUNCTIONS:
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
         CEIL[0]: lambda a: sympy.ceiling(sanitize(a)),
-        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # type: ignore[operator-unsupported]
+        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # type:ignore[operator-unsupported]
         SIGN[0]: lambda a: sympy.sign(sanitize(a)),
         # LOGARITHMIC FUNCTIONS
         LN[0]: lambda a: sympy.log(sanitize(a)),
@@ -294,8 +294,8 @@ class FUNCTIONS:
         LOG10[0]: lambda a: sympy.log(sanitize(a), 10),
         EXP[0]: lambda a: sympy.exp(sanitize(a)),
         # TRIGONOMETRIC FUNCTIONS
-        RAD[0]: lambda a: sympy.rad(sanitize(a)),  # type: ignore[partially-unknown]
-        DEG[0]: lambda a: sympy.deg(sanitize(a)),  # type: ignore[partially-unknown]
+        RAD[0]: lambda a: sympy.rad(sanitize(a)),  # type:ignore[partially-unknown]
+        DEG[0]: lambda a: sympy.deg(sanitize(a)),  # type:ignore[partially-unknown]
         SIN[0]: lambda a: sympy.sin(sanitize(a)),
         ASIN[0]: lambda a: sympy.asin(sanitize(a)),
         COS[0]: lambda a: sympy.cos(sanitize(a)),
@@ -315,7 +315,7 @@ class FUNCTIONS:
         CSC[0]: lambda a: sympy.csc(sanitize(a)),
         # ADDITIONAL FUNCTIONS
         FAC[0]: lambda a: sympy.factorial(sanitize(a)),
-        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # type: ignore[partially-unknown]
+        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # type:ignore[partially-unknown]
         CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
         POW[0]: lambda a, b=None: sympy.Pow(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
         # STATISTICAL FUNCTIONS
@@ -402,7 +402,7 @@ def print_overwrite(*values: object, sep: str = " ", end: str = "\n") -> None:
     FormatCodes.print(f"\033[2K\r{sep.join(str(val) for val in values)}", end=end)
 
 
-def print_line(title: str | None = None, /, *, char: str = "═", width: int = Console.width, end: str = "\n") -> None:
+def print_line(title: str | None = None, /, *, char: str = "═", width: int = xx.console.get_width(), end: str = "\n") -> None:
     if not title:
         FormatCodes.print(f"[dim]{char * width}[_dim]", end=end)
         return
@@ -542,9 +542,9 @@ class Calc:
 
             else:
                 if num_str.lstrip("-").isdigit() and len(num_str.lstrip("-")) > 3:
-                    formatted_num = ""
-                    sign = "-" if num_str.startswith("-") else ""
-                    digits = num_str.lstrip("-")
+                    formatted_num: str = ""
+                    sign: str = "-" if num_str.startswith("-") else ""
+                    digits: str = num_str.lstrip("-")
 
                     for i, digit in enumerate(reversed(digits)):
                         if i > 0 and i % 3 == 0:
@@ -910,7 +910,7 @@ class Calc:
                                 FormatCodes.print(f"[dim](arg1:) {arg1_value}")
                                 FormatCodes.print(f"[dim](arg2:) {arg2_value}")
 
-                            result = function_impl(arg1_value, arg2_value)  # type: ignore[assignment]
+                            result = function_impl(arg1_value, arg2_value)  # type:ignore[assignment]
 
                         # SINGLE COMPLEX ARGUMENT
                         else:
@@ -925,7 +925,7 @@ class Calc:
 
                     if DEBUG:
                         FormatCodes.print(f"[dim](result:) {result}")
-                    formatted_result = self.format_result(result)  # type: ignore[arg-type]
+                    formatted_result = self.format_result(result)  # type:ignore[arg-type]
                     new_split = [*split[:idx], formatted_result, *split[end_paren_idx + 1 :]]
                     split = new_split
                     split_sympy = sympify(split)
@@ -1040,7 +1040,7 @@ def main() -> None:
     if not ARGS.help.exists and len(calc_str_parts := list(ARGS.calculation.values)) > 0:
         precision_value = int(v) if (v := ARGS.precision.get(0)) and v.lstrip("-").isdigit() else 100
         if precision_value <= 0 and precision_value != -1:
-            Console.fail(
+            xx.console.fail(
                 "[b](ValueError:) Precision must be positive or [br:cyan](-1) "
                 f"for infinite precision, got [br:cyan]({precision_value})",
                 end="\n\n",
@@ -1080,14 +1080,14 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print_overwrite("[b|br:red](✗)\n")
     except RecursionError:
-        Console.fail(
+        xx.console.fail(
             "[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))",
             start="\n\n",
             end="\n\n",
         )
     except MemoryError:
-        Console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
+        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
     except OverflowError as exc:
-        Console.fail(f"[b](OverflowError:) {exc}", start="\n\n", end="\n\n")
+        xx.console.fail(f"[b](OverflowError:) {exc}", start="\n\n", end="\n\n")
     except Exception as exc:
-        Console.fail(exc, start="\n\n", end="\n\n")
+        xx.console.fail(exc, start="\n\n", end="\n\n")

@@ -11,8 +11,8 @@ import winreg
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from xulbux import Console, FileSys, FormatCodes, System
-from xulbux.console import Throbber
+import xulbux as xx
+from xulbux import FormatCodes, Throbber
 
 try:
     from win32com.client import Dispatch as COMDispatch
@@ -21,11 +21,11 @@ try:
 
 except ImportError:
     COMDispatch = None
-    HAS_WIN32COM = False  # type: ignore[constant-reassignment]
+    HAS_WIN32COM = False  # type:ignore[constant-reassignment]
 
 # **************************************** CONSTANTS ****************************************
 
-BACKUPS_DIR = FileSys.script_dir / "backups"
+BACKUPS_DIR = xx.file_sys.get_script_dir() / "backups"
 
 # REGISTRY PATHS TO SCAN FOR BROKEN ENTRIES
 REGISTRY_APP_PATHS: list[tuple[int, str]] = [
@@ -85,7 +85,7 @@ HIVE_NAMES = {winreg.HKEY_CURRENT_USER: "HKCU", winreg.HKEY_LOCAL_MACHINE: "HKLM
 
 # **************************************** CLI ****************************************
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "restore_path": "before",
     "restore": {"-r", "--restore"},
     "help": {"-h", "--help"},
@@ -606,7 +606,7 @@ def backup_env_vars(backup_dir: Path) -> bool:
 def restore_env_vars(backup_path: Path) -> None:
     """Restore environment variables from a JSON backup file."""
     if not backup_path.exists():
-        Console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n")
+        xx.console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n")
         return
 
     FormatCodes.print(f"\n[b](Loading backup from [br:cyan|link:file:///{backup_path.resolve()}]({backup_path.name})[b]…)")
@@ -614,7 +614,7 @@ def restore_env_vars(backup_path: Path) -> None:
     try:
         data = json.loads(backup_path.read_text(encoding="utf-8"))
     except Exception as exc:
-        Console.fail(f"Failed to read backup file: {exc}", start="\n", end="\n\n")
+        xx.console.fail(f"Failed to read backup file: {exc}", start="\n", end="\n\n")
         return
 
     # SHOW WHAT WILL BE RESTORED
@@ -622,8 +622,8 @@ def restore_env_vars(backup_path: Path) -> None:
         if data.get(scope):
             FormatCodes.print(f"\n  [b]({scope.upper()} variables:) [dim]({len(data[scope])} entries)")
 
-    if not Console.confirm("\n[b](Restore these environment variables?)", default_is_yes=False):
-        Console.exit("Restore canceled.", start="\n", end="\n\n", exit_code=0)
+    if not xx.console.confirm("\n[b](Restore these environment variables?)", default_is_yes=False):
+        xx.console.exit("Restore canceled.", start="\n", end="\n\n", exit_code=0)
         return
 
     failures: list[str] = []
@@ -1065,7 +1065,7 @@ def choose_options() -> dict[str, bool]:
         if key == "shortcuts" and not HAS_WIN32COM:
             selected[key] = False
             continue
-        answer = Console.confirm(f"  {label} ", default_is_yes=True)
+        answer = xx.console.confirm(f"  {label} ", default_is_yes=True)
         selected[key] = answer
 
     return selected
@@ -1080,7 +1080,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     if ARGS.restore.exists:
         restore_path_str = "".join(ARGS.restore_path.values).strip()
         if not restore_path_str:
-            Console.fail(
+            xx.console.fail(
                 "Please provide a path to the backup JSON file.\n"
                 "  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)",
                 start="\n",
@@ -1091,14 +1091,14 @@ def main() -> None:  # ruff:ignore[complex-structure]
         return
 
     FormatCodes.print("\n[b|bg:black]( Windows [in]( SYSTEM PATHS CLEANER ))")
-    Console.log_box_bordered(
+    xx.console.log_box_bordered(
         "[yellow](This tool scans for and removes broken system paths.)",
         "[yellow]([dim](→) Backups are created before any modifications.)",
         "[yellow]([dim](→) No actions are taken without confirmation.)",
         border_style="dim|yellow",
     )
 
-    if not System.is_elevated:
+    if not xx.system.is_elevated:
         FormatCodes.print("\n[yellow](⚠ Not running as Administrator. Some operations may fail.)")
         FormatCodes.print("[dim|yellow](  System-level registry and env var changes require elevation.)")
 
@@ -1106,7 +1106,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     selected = choose_options()
 
     if not any(selected.values()):
-        Console.exit("Nothing selected.", start="\n", end="\n\n", exit_code=0)
+        xx.console.exit("Nothing selected.", start="\n", end="\n\n", exit_code=0)
         return
 
     # [2] ────────── CREATE BACKUPS ──────────
@@ -1126,7 +1126,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
             backup_ok = False
 
     if not backup_ok:
-        Console.fail(
+        xx.console.fail(
             f"[red](Some backups failed! Aborting for safety.)"
             f"\n  [dim|br:red](Backup directory: [link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name}))",
             start="\n",
@@ -1170,7 +1170,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     # [4] ────────── SHOW SUMMARY & CONFIRM ──────────
     show_summary(reg_app_path_issues, reg_unins_issues, reg_startup_issues, env_issues, shortcut_issues, temp_info, selected)
 
-    if not Console.confirm("\nProceed with cleanup?", default_is_yes=False):
+    if not xx.console.confirm("\nProceed with cleanup?", default_is_yes=False):
         FormatCodes.print("\n[dim|br:magenta](✗ [i](Cleanup canceled.))\n")
         raise SystemExit(0)
 
@@ -1216,4 +1216,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\n[dim|br:magenta](✗ [i](Canceled by user.))\n")
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

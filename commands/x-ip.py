@@ -8,9 +8,10 @@ import re
 import socket
 import subprocess
 from typing import Any
-from xulbux import Console, Data, FormatCodes
+import xulbux as xx
+from xulbux import FormatCodes
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "get_geo": {"-g", "--geo", "--location"},
     "provider": {"flags": {"-p", "--provider"}, "default": "ipify"},
     "json_output": {"-j", "--json"},
@@ -75,7 +76,7 @@ class IPInfo:
         """Get all network interfaces and their IPs."""
         interfaces: dict[str, dict[str, str]] = {}
         try:
-            import netifaces  # type: ignore[import]
+            import netifaces  # type:ignore[import]
 
             for interface in netifaces.interfaces():
                 addrs = netifaces.ifaddresses(interface)
@@ -235,7 +236,7 @@ class IPInfo:
 
     def gather_info(self, provider: str | None, get_geo: bool = False) -> None:
         """Gather all IP information."""
-        Console.info("Gathering IP information...", start="\n")
+        xx.console.info("Gathering IP information...", start="\n")
         provider = provider or "ipify"
         self.local_ipv4 = self._get_local_ip()
         self.local_ipv6 = self._get_local_ipv6()
@@ -243,7 +244,7 @@ class IPInfo:
         self.public_ipv6 = self._get_public_ip(provider, ipv6=True)
         self.all_interfaces = self._get_all_interfaces()
         if get_geo and self.public_ipv4:
-            Console.info("Fetching geolocation data...")
+            xx.console.info("Fetching geolocation data...")
             self.geo_info = self._get_geolocation(self.public_ipv4)
 
     def to_dict(self) -> dict[str, dict[str, Any]]:
@@ -277,7 +278,7 @@ class IPInfo:
             local_ips_text.append(f"[b](IPv6) : [white]({self.local_ipv6})")
         else:
             local_ips_text.append("[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*local_ips_text, border_style="green")
+        xx.console.log_box_bordered(*local_ips_text, border_style="green")
 
         FormatCodes.print("\n[b|cyan](Public IP Addresses)")
         public_ips_text: list[str] = []
@@ -289,7 +290,7 @@ class IPInfo:
             public_ips_text.append(f"[b](IPv6) : [white]({self.public_ipv6})")
         else:
             public_ips_text.append("[b](IPv6) : [i|dim|white](Not Found)")
-        Console.log_box_bordered(*public_ips_text, border_style="cyan")
+        xx.console.log_box_bordered(*public_ips_text, border_style="cyan")
 
         if self.all_interfaces:
             FormatCodes.print("\n[b|blue](All Network Interfaces)")
@@ -315,7 +316,7 @@ class IPInfo:
                 # DNS SUFFIX
                 if "dns_suffix" in addrs:
                     interfaces_text.append(f"[b](DNS Suffix) : [white]({addrs['dns_suffix']})")
-            Console.log_box_bordered(*interfaces_text, border_style="blue")
+            xx.console.log_box_bordered(*interfaces_text, border_style="blue")
 
         if self.geo_info:
             FormatCodes.print("\n[b|magenta](Geolocation Information)")
@@ -338,7 +339,7 @@ class IPInfo:
                 geo_text.append(f"{p}     [b](ISP) : [white]{geo['org']}[_c]")
             if geo.get("asn"):
                 geo_text.append(f"{p}     [b](ASN) : [white]{geo['asn']}[_c]")
-            Console.log_box_bordered(*geo_text, border_style="magenta")
+            xx.console.log_box_bordered(*geo_text, border_style="magenta")
 
         print()
 
@@ -353,11 +354,11 @@ def main() -> None:
     try:
         ip_info.gather_info(provider=(ARGS.provider.values or [None])[0], get_geo=ARGS.get_geo.exists)
     except Exception as exc:
-        Console.fail(f"Error gathering IP information: {exc}", end="\n\n")
+        xx.console.fail(f"Error gathering IP information: {exc}", end="\n\n")
         return
 
     if ARGS.json_output.exists:
-        FormatCodes.print(f"\n{Data.render(ip_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
+        FormatCodes.print(f"\n{xx.data.render(ip_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         ip_info.display()
 
@@ -368,4 +369,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

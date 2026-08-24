@@ -6,12 +6,12 @@ Provide either the number of digits or a min and max range."""
 
 import secrets
 import sys
-from xulbux import Console, FormatCodes
-from xulbux.console import ProgressBar
+import xulbux as xx
+from xulbux import FormatCodes, ProgressBar
 
 sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "digits_or_min_max": "before",
     "batch_gen": {"-b", "--batch", "--batch-gen"},
     "format": {"-f", "--format"},
@@ -43,19 +43,21 @@ def print_help() -> None:
 
 
 def gen_random_int(digits: int | None = None, min_val: int | None = None, max_val: int | None = None) -> int:
-    # RANDOM NUMBER WITH SPECIFIC AMOUNT OF DIGITS
+    """Generate a truly random integer with a specific number of digits or within a range."""
+
+    # Random number with specific amount of digits:
     if digits is not None:
         if digits <= 0:
             raise ValueError("The number of decimal places must be a positive integer.")
         random_int = secrets.randbelow((10**digits - 1) - (min_value := 10 ** (digits - 1)) + 1) + min_value
 
-    # RANDOM NUMBER WITHIN A SPECIFIED RANGE
+    # Random number within a specified range:
     elif min_val is not None and max_val is not None:
         if min_val >= max_val:
             raise ValueError("The minimum value must be less than the maximum value.")
         random_int = secrets.randbelow(max_val - min_val + 1) + min_val
 
-    # INVALID USAGE
+    # Invalid usage:
     else:
         raise ValueError("Either 'digits' or both 'min_val' and 'max_val' must be provided.")
     return random_int
@@ -92,7 +94,7 @@ def main() -> None:
             min_val = int(ARGS.digits_or_min_max.values[0])
             max_val = int(ARGS.digits_or_min_max.values[1])
             if min_val >= max_val:
-                Console.exit(
+                xx.console.exit(
                     "[b](Invalid range:) The minimum value must be less than the maximum value",
                     start="\n",
                     end="\n\n",
@@ -123,7 +125,7 @@ def main() -> None:
                 FormatCodes.print(f"\x1b[2K\r[br:blue]({random_int:{',' if ARGS.format.exists else ''}})\n")
 
         case _:
-            Console.exit(
+            xx.console.exit(
                 "[b](Too many arguments:) Provide either the number of digits or a min and max range",
                 start="\n",
                 end="\n\n",
@@ -137,8 +139,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\x1b[2K\r[b|br:red](✗)\n")
     except MemoryError:
-        Console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
+        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
     except OverflowError as exc:
-        Console.fail(f"[b](OverflowError:) {exc}", start="\x1b[2K\r", end="\n\n")
+        xx.console.fail(f"[b](OverflowError:) {exc}", start="\x1b[2K\r", end="\n\n")
     except Exception as exc:
-        Console.fail(exc, start="\x1b[2K\r", end="\n\n")
+        xx.console.fail(exc, start="\x1b[2K\r", end="\n\n")

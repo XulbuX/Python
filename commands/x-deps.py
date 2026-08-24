@@ -8,10 +8,10 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from xulbux import Console, Data, FileSys, FormatCodes
-from xulbux.console import Throbber
+import xulbux as xx
+from xulbux import FormatCodes, Throbber
 
-ARGS = Console.get_args({
+ARGS = xx.console.get_args({
     "directory": "before",
     "external_only": {"-e", "--external"},
     "recursive": {"-r", "--recursive"},
@@ -138,7 +138,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     if ARGS.list.exists:
         output += f"\n[b|br:cyan]{'\n'.join(sorted(modules.keys()))}[_]"
     else:
-        console_w = Console.width
+        console_w = xx.console.get_width()
         num_width = len(str(len(modules)))
         for i, (module, files) in enumerate(sorted(modules.items()), 1):
             usage_count = len(files)
@@ -168,7 +168,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     # ************************************************** INSTALLATION **************************************************
     if not install:
         return
-    if not Console.confirm("Proceed with installation?"):
+    if not xx.console.confirm("Proceed with installation?"):
         FormatCodes.print("\n[i|dim](Installation cancelled.)\n")
         return
 
@@ -178,7 +178,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     for module in sorted(modules):
         with Throbber(
             label=f"Installing [b]({module})",
-            throbber_format=["[dim|br:cyan]({a})", "[br:cyan]({l})"],
+            format=["[dim|br:cyan]({a})", "[br:cyan]({l})"],
             frames=("⠴", "⠦", "⠖", "⠲"),
             interval=0.1,
         ).context():
@@ -234,7 +234,9 @@ def main() -> None:
         return
 
     external_only = ARGS.external_only.exists or ARGS.install.exists
-    directory = Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else FileSys.script_dir
+    directory = (
+        Path(ARGS.directory.values[0]).expanduser().resolve() if ARGS.directory.values else xx.file_sys.get_script_dir()
+    )
 
     with Throbber().context():
         modules = get_all_modules(directory=directory, recursive=ARGS.recursive.exists, external_only=external_only)
@@ -251,7 +253,7 @@ def main() -> None:
             json_data = sorted(modules.keys())
         else:
             json_data = {module: sorted(files) for module, files in sorted(modules.items())}
-        FormatCodes.print(f"\n{Data.render(json_data, indent=2, as_json=True, syntax_highlighting=True)}\n")
+        FormatCodes.print(f"\n{xx.data.render(json_data, indent=2, as_json=True, syntax_highlighting=True)}\n")
 
     else:
         show_and_install_modules(modules, external_only, ARGS.install.exists)
@@ -263,4 +265,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\n[i|dim](Cancelled by user.)\n")
     except Exception as exc:
-        Console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")
