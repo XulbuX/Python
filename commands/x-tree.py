@@ -1324,7 +1324,7 @@ if __name__ == "__main__":
         {"-c", "--content"},
         "include_file_contents",
         expects_value="N",
-        help="Include file contents, optionally truncated to N lines",
+        help=("Include file contents, optionally truncated to ", S.BR.BLUE("N"), " lines"),
     )
     args.add_opt(
         {"-f", "--file"},
