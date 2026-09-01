@@ -156,7 +156,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
     if not exclude_cmd:
         clipboard_parts.append(
-            ("Administrator" if xx.system.is_elevated() else xx.console.get_user())
+            ("Administrator" if xx.system.is_elevated() else xx.system.get_username())
             + f" on {platform.node()} ({platform.system()})"
             f" at {'~' if (cwd := Path.cwd()).expanduser() == Path.home() else cwd}\n"
             f"$ {command_str_display}\n\n"

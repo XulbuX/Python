@@ -20,16 +20,16 @@ def interpolate_oklch(
     hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
 ) -> rgba:
     """Interpolate between two colors using OKLCH color space for perceptual uniformity.\n
-    ---------------------------------------------------------------------------------------
-    - `color_1` – starting rgba color
-    - `color_2` – ending rgba color
-    - `t` – interpolation factor (0.0 to 1.0)
-    - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
-    """
+    ----------------------------------------------------------------------------------------------------
+    - `color_1` – Starting RGBA color.
+    - `color_2` – Ending RGBA color.
+    - `t` – Interpolation factor (0.0 to 1.0).
+    - `hue_direction` – Direction for hue interpolation (shortest, clockwise, counterclockwise)."""
 
     try:
         import numpy as np
         from colorspacious import cspace_convert  # type:ignore[no-stubs]
+
     except ImportError as exc:
         raise ImportError(
             S(
@@ -43,48 +43,48 @@ def interpolate_oklch(
             )
         ) from exc
 
-    # CONVERT RGB (0-255) TO SRGB (0-1)
+    # Convert RGB (0-255) to SRGB (0-1):
     rgb_a = np.array([color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0])
     rgb_b = np.array([color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0])
 
-    # CONVERT SRGB TO OKLCH (using CAM02-UCS / JCh which is similar to OKLCH)
+    # Convert SRGB to OKLCH (using CAM02-UCS / JCh which is similar to OKLCH):
     oklch_a = cast("np.ndarray", cspace_convert(rgb_a, "sRGB1", "JCh"))
     oklch_b = cast("np.ndarray", cspace_convert(rgb_b, "sRGB1", "JCh"))
 
-    # INTERPOLATE IN OKLCH SPACE
+    # Interpolate in OKLCH space:
     L = oklch_a[0] + (oklch_b[0] - oklch_a[0]) * t
     C = oklch_a[1] + (oklch_b[1] - oklch_a[1]) * t
 
-    # INTERPOLATE HUE BASED ON DIRECTION
+    # Interpolate hue based on direction:
     h1, h2 = oklch_a[2], oklch_b[2]
 
     if hue_direction == "shortest":
-        # USE SHORTEST PATH
-        diff = h2 - h1
-        if diff > 180:
+        # Use shortest path:
+        if (diff := h2 - h1) > 180:
             diff -= 360
         elif diff < -180:
             diff += 360
+
     elif hue_direction == "clockwise":
-        # FORCE CLOCKWISE (LONGER PATH IF h2 < h1)
-        diff = h2 - h1
-        if diff < 0:
+        # Force clockwise (longer path if h2 < h1):
+        if (diff := h2 - h1) < 0:
             diff += 360
+
     elif hue_direction == "counterclockwise":
-        # FORCE COUNTERCLOCKWISE (LONGER PATH IF h2 > h1)
-        diff = h2 - h1
-        if diff > 0:
+        # Force counterclockwise (longer path if h2 > h1):
+        if (diff := h2 - h1) > 0:
             diff -= 360
+
     else:
         diff = h2 - h1
 
     h = (h1 + diff * t) % 360
 
-    # CONVERT BACK TO SRGB
+    # Convert back to SRGB:
     oklch_interpolated = np.array([L, C, h])
     rgb_interpolated = cast("np.ndarray", cspace_convert(oklch_interpolated, "JCh", "sRGB1"))
 
-    # CLAMP TO VALID RGB RANGE AND CONVERT TO 0-255
+    # Clamp to valid RGB range and convert to 0-255:
     rgb_interpolated = np.clip(rgb_interpolated, 0, 1)
     r = round(rgb_interpolated[0] * 255)
     g = round(rgb_interpolated[1] * 255)
@@ -100,51 +100,51 @@ def interpolate_hsv(
     hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
 ) -> rgba:
     """Interpolate between two colors using HSV color space with directional hue rotation.\n
-    ---------------------------------------------------------------------------------------
-    - `color_1` – starting rgba color
-    - `color_2` – ending rgba color
-    - `t` – interpolation factor (0.0 to 1.0)
-    - `hue_direction` – "shortest", "clockwise", or "counterclockwise"
-    """
-    # CONVERT RGB TO HSV (HUE 0-1, SATURATION 0-1, VALUE 0-1)
+    ----------------------------------------------------------------------------------------------------
+    - `color_1` – Starting RGBA color.
+    - `color_2` – Ending RGBA color.
+    - `t` – Interpolation factor (0.0 to 1.0).
+    - `hue_direction` – Direction for hue interpolation (shortest, clockwise, counterclockwise)."""
+
+    # Convert RGB to HSV (hue 0-1, saturation 0-1, value 0-1):
     h1, s1, v1 = colorsys.rgb_to_hsv(color_1[0] / 255.0, color_1[1] / 255.0, color_1[2] / 255.0)
     h2, s2, v2 = colorsys.rgb_to_hsv(color_2[0] / 255.0, color_2[1] / 255.0, color_2[2] / 255.0)
 
-    # CONVERT HUE TO DEGREES (0-360)
+    # Convert hue to degrees (0-360):
     h1_deg = h1 * 360
     h2_deg = h2 * 360
 
-    # INTERPOLATE HUE BASED ON DIRECTION
+    # Interpolate hue based on direction:
     if hue_direction == "shortest":
-        # USE SHORTEST PATH
-        diff = h2_deg - h1_deg
-        if diff > 180:
+        # Use shortest path:
+        if (diff := h2_deg - h1_deg) > 180:
             diff -= 360
         elif diff < -180:
             diff += 360
+
     elif hue_direction == "clockwise":
-        # FORCE CLOCKWISE
-        diff = h2_deg - h1_deg
-        if diff < 0:
+        # Force clockwise:
+        if (diff := h2_deg - h1_deg) < 0:
             diff += 360
+
     elif hue_direction == "counterclockwise":
-        # FORCE COUNTERCLOCKWISE
-        diff = h2_deg - h1_deg
-        if diff > 0:
+        # Force counterclockwise:
+        if (diff := h2_deg - h1_deg) > 0:
             diff -= 360
+
     else:
         diff = h2_deg - h1_deg
 
     h_deg = (h1_deg + diff * t) % 360
 
-    # INTERPOLATE SATURATION AND VALUE
+    # Interpolate saturation and value:
     s = s1 + (s2 - s1) * t
     v = v1 + (v2 - v1) * t
 
-    # CONVERT BACK TO RGB
+    # Convert back to RGB:
     r, g, b = colorsys.hsv_to_rgb(h_deg / 360.0, s, v)
 
-    # CONVERT TO 0-255 RANGE
+    # Convert to 0-255 range:
     return rgba(round(r * 255), round(g * 255), round(b * 255))
 
 
@@ -155,12 +155,12 @@ def generate_multi_gradient(
     mode: Literal["linear", "hsv", "oklch"] = "linear",
 ) -> tuple[hexa, ...]:
     """Generate a multi-color gradient with optional directional hue rotation.\n
-    ------------------------------------------------------------------------------------------------
-    - `colors` – list of rgba colors to interpolate between
-    - `directions` – list of hue directions for each segment (length = len(colors) - 1)
-    - `steps` – total number of gradient steps across all segments
-    - `mode` – "linear" (RGB), "oklch", or "hsv" interpolation
-    """
+    ----------------------------------------------------------------------------------------------------
+    - `colors` – List of colors to interpolate between.
+    - `directions` – List of hue directions for each segment (length = `len(colors) - 1`).
+    - `steps` – Total number of gradient steps across all segments.
+    - `mode` – Linear (RGB), HSV, or OKLCH interpolation mode."""
+
     if len(colors) < 2:
         raise ValueError("Need at least 2 colors for a gradient")
     if len(directions) != len(colors) - 1:
@@ -168,11 +168,11 @@ def generate_multi_gradient(
 
     num_segments = len(colors) - 1
 
-    # WE WANT `steps` TOTAL COLORS IN THE FINAL GRADIENT
-    # WHEN JOINING SEGMENTS, WE SKIP FIRST COLOR OF EACH NON-FIRST SEGMENT
-    # SO: total_colors = seg1_colors + seg2_colors - 1 + seg3_colors - 1 + ...
-    # WHICH MEANS: steps = sum(segment_steps) - (num_segments - 1)
-    # THEREFORE: sum(segment_steps) = steps + (num_segments - 1)
+    # We want `steps` total colors in the final gradient.
+    # When joining segments, we skip first color of each non-first segment.
+    # So: `total_colors = seg1_colors + seg2_colors - 1 + seg3_colors - 1 + ...`
+    # Which means: `steps = sum(segment_steps) - (num_segments - 1)`
+    # Therefore: `sum(segment_steps) = steps + (num_segments - 1)`
 
     total_segment_steps = steps + (num_segments - 1)
     steps_per_segment = total_segment_steps // num_segments
@@ -181,13 +181,10 @@ def generate_multi_gradient(
     gradient: list[hexa] = []
 
     for seg_idx in range(num_segments):
-        # DISTRIBUTE REMAINDER STEPS ACROSS FIRST SEGMENTS
-        seg_steps = steps_per_segment + (1 if seg_idx < remainder else 0)
-
         segment = generate_gradient(
             color_1=colors[seg_idx],
             color_2=colors[seg_idx + 1],
-            steps=seg_steps,
+            steps=steps_per_segment + (1 if seg_idx < remainder else 0),  # Distribute remainder steps across first segments.
             mode=mode,
             hue_direction=directions[seg_idx],
         )
@@ -195,8 +192,7 @@ def generate_multi_gradient(
         if seg_idx == 0:
             gradient.extend(segment)
         else:
-            # SKIP FIRST COLOR TO AVOID DUPLICATION
-            gradient.extend(segment[1:])
+            gradient.extend(segment[1:])  # Skip first color to avoid duplication.
 
     return tuple(gradient)
 
@@ -209,35 +205,37 @@ def generate_gradient(
     hue_direction: Literal["shortest", "clockwise", "counterclockwise"] = "shortest",
 ) -> tuple[hexa, ...]:
     """Generate and display a color gradient.\n
-    ------------------------------------------------------------------------------------------------
-    - `color_1` – starting hex color
-    - `color_2` – ending hex color
-    - `steps` – number of gradient steps
-    - `mode` – "linear" (RGB), "oklch", or "hsv" interpolation
-    - `hue_direction` – "shortest", "clockwise", or "counterclockwise" (only for oklch/hsv)
-    """
+    ----------------------------------------------------------------------------------------------------
+    - `color_1` – Starting hex color.
+    - `color_2` – Ending hex color.
+    - `steps` – Number of gradient steps (total across all segments).
+    - `mode` – Linear (RGB), HSV, or OKLCH interpolation mode.
+    - `hue_direction` – Direction for hue interpolation (only relevant for OKLCH and HSV modes)."""
+
     gradient: list[hexa] = []
 
     if mode == "oklch":
-        # OKLCH INTERPOLATION FOR PERCEPTUAL UNIFORMITY
+        # OKLCH interpolation for perceptual uniformity:
         for i in range(steps):
             t = i / (steps - 1) if steps > 1 else 0
             rgb = interpolate_oklch(color_1, color_2, t, hue_direction)
-            gradient.append(rgb.to_hexa())
+            gradient.append(rgb.as_hexa())
+
     elif mode == "hsv":
-        # HSV INTERPOLATION (ALLOWS HUE ROTATION)
+        # HSV interpolation (allows hue rotation):
         for i in range(steps):
             t = i / (steps - 1) if steps > 1 else 0
             rgb = interpolate_hsv(color_1, color_2, t, hue_direction)
-            gradient.append(rgb.to_hexa())
+            gradient.append(rgb.as_hexa())
+
     else:
-        # LINEAR RGB INTERPOLATION
+        # Linear RGB interpolation:
         for i in range(steps):
             t = i / (steps - 1) if steps > 1 else 0
             r = round(color_1[0] + (color_2[0] - color_1[0]) * t)
             g = round(color_1[1] + (color_2[1] - color_1[1]) * t)
             b = round(color_1[2] + (color_2[2] - color_1[2]) * t)
-            gradient.append(rgba(r, g, b).to_hexa())
+            gradient.append(rgba(r, g, b).as_hexa())
 
     return tuple(gradient)
 
@@ -250,21 +248,21 @@ def display_gradient(
     numerate: bool = False,
 ) -> None:
     """Display gradient using half-block char to fit 2 colors per character position.\n
-    ---------------------------------------------------------------------------------------
-    - `gradient` – tuple of gradient colors to display
-    - `width` – terminal width for display
-    - `list_colors` – whether to show the color list
-    - `numerate` – whether to show step numbers
-    - `source_colors` – original input colors (for multi-color gradient summary)
-    """
-    # EACH ▌ SHOWS 2 COLORS (FG + BG), SO WE FILL total_width POSITIONS
-    # WE NEED TO MAP total_colors ACROSS total_width * 2 HALF-POSITIONS
+    ----------------------------------------------------------------------------------------------------
+    - `gradient` – Tuple of gradient colors to display.
+    - `width` – Terminal width for display.
+    - `list_colors` – Whether to show the color list.
+    - `numerate` – Whether to show step numbers.
+    - `source_colors` – Original input colors (for multi-color gradient summary)."""
+
+    # Each `▌` shows 2 colors (FG + BG), so we fill `total_width` positions.
+    # We need to map `total_colors` across `total_width * 2` half-positions:
     gradient_parts: list[RenderSegment] = []
     total_colors = len(gradient)
 
     for i in range(width):
-        # MAP CHARACTER POSITION TO GRADIENT COLOR INDICES
-        # LEFT HALF (FG) AND RIGHT HALF (BG) OF THIS CHARACTER
+        # Map character position to gradient color indices.
+        # Left half (FG) and right half (BG) of this character:
         left_pos = (i * 2) * total_colors / (width * 2)
         right_pos = (i * 2 + 1) * total_colors / (width * 2)
 
@@ -278,7 +276,7 @@ def display_gradient(
 
     gradient_str = S(*gradient_parts, "\n").ansi * 4
 
-    color_segments = [(S.BOLD | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} ") for color in source_colors]
+    color_segments = [(S.BOLD | S.BG.hex(color).as_text_fg() | S.BG.hex(color))(f" {color} ") for color in source_colors]
     summary = S(
         S.BG.BLACK(" "),
         (S.DIM | S.WHITE | S.BG.BLACK)("›").join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
@@ -297,21 +295,30 @@ def display_gradient(
                 " ",
                 S.ITALIC,
                 (S.DIM | S.WHITE)(f"{i:>{num_width}}  "),
-                (S.BOLD | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} "),
+                (S.BOLD | S.BG.hex(color).as_text_fg() | S.BG.hex(color))(f" {color} "),
             ).ansi
             for i, color in enumerate(gradient, 1)
         )
     else:
         color_list = "\n".join(
-            (S.BOLD | S.ITALIC | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} ").ansi for color in gradient
+            (S.BOLD | S.ITALIC | S.BG.hex(color).as_text_fg() | S.BG.hex(color))(f" {color} ").ansi for color in gradient
         )
 
     print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
 
 
 def parse_color_args(
-    color_args: list[str], mode: Literal["linear", "hsv", "oklch"] = "linear"
-) -> tuple[list[rgba], list[Literal["shortest", "clockwise", "counterclockwise"]]]:
+    color_args: list[str],
+    mode: Literal["linear", "hsv", "oklch"] = "linear",
+) -> tuple[
+    list[rgba],
+    list[Literal["shortest", "clockwise", "counterclockwise"]],
+]:
+    """Parse color arguments and extract colors and directions.\n
+    ----------------------------------------------------------------------------------------------------
+    - `color_args` – List of color arguments (hex colors and optional direction arrows).
+    - `mode` – Interpolation mode (linear, hsv, oklch)."""
+
     directions: list[Literal["shortest", "clockwise", "counterclockwise"]] = []
     colors: list[rgba] = []
 
@@ -319,7 +326,7 @@ def parse_color_args(
     while i < len(color_args):
         arg = str(color_args[i])
 
-        # CHECK IF IT'S A DIRECTION ARROW
+        # Check if it's a direction arrow:
         if arg in (">", "<"):
             if mode == "linear":
                 raise ValueError(
@@ -337,7 +344,7 @@ def parse_color_args(
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
-            # ADD DIRECTION FOR PREVIOUS SEGMENT
+            # Add direction for previous segment:
             if arg == ">":
                 directions.append("clockwise")
             elif arg == "<":
@@ -347,11 +354,11 @@ def parse_color_args(
             i += 1
 
         else:
-            # IT'S A COLOR
+            # It's a color:
             try:
                 if (hex_color := hexa(arg)).has_alpha():
                     raise ValueError(S("Color ", S.BR.CYAN(arg), " includes alpha channel, which is not supported"))
-                colors.append(hex_color.to_rgba())
+                colors.append(hex_color.as_rgba())
 
             except Exception as exc:
                 raise ValueError(
@@ -362,7 +369,7 @@ def parse_color_args(
                     )
                 ) from exc
 
-            # IF THIS ISN'T THE FIRST COLOR AND WE DON'T HAVE A DIRECTION YET FOR THIS SEGMENT
+            # If this isn't the first color and we don't have a direction yet for this segment:
             if len(colors) > 1 and len(directions) < len(colors) - 1:
                 directions.append("shortest")
 
@@ -372,7 +379,7 @@ def parse_color_args(
 
 
 def main() -> None:
-    # DETERMINE INTERPOLATION MODE
+    # Determine interpolation mode:
     if ARGS.hsv.exists and ARGS.oklch.exists:
         raise ValueError(S("Cannot use both ", S.BR.BLUE("--hsv"), " and ", S.BR.BLUE("--oklch"), " options together"))
 
@@ -382,14 +389,14 @@ def main() -> None:
     if len(color_args) < 2:
         raise ValueError(S("Please provide at least 2 colors in hex format (e.g., ", S.BR.CYAN("F00 00F"), ")"))
 
-    # PARSE COLORS AND DIRECTIONS
+    # Parse colors and directions:
     colors, directions = parse_color_args(color_args, mode)
 
-    # VALIDATE WE HAVE AT LEAST 2 COLORS
+    # Validate we have at least 2 colors:
     if len(colors) < 2:
         raise ValueError("Please provide at least 2 colors")
 
-    # ENSURE WE HAVE DIRECTIONS FOR ALL SEGMENTS
+    # Ensure we have directions for all segments:
     while len(directions) < len(colors) - 1:
         directions.append("shortest")
 
@@ -401,7 +408,7 @@ def main() -> None:
     gradient = generate_multi_gradient(colors=colors, directions=directions, steps=total_steps, mode=mode)
     display_gradient(
         gradient=gradient,
-        source_colors=[c.to_hexa() for c in colors],
+        source_colors=[color.as_hexa() for color in colors],
         width=xx.console.get_width(),
         list_colors=bool(ARGS.list or ARGS.numerate),
         numerate=ARGS.numerate.exists,
