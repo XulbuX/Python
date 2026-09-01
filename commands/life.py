@@ -8,7 +8,7 @@ import random
 import sys
 import time
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText
+from xulbux import ArgumentParser, S
 from xulbux.base.consts import CHARS
 
 
@@ -116,12 +116,13 @@ class GameOfLife:
 def main() -> None:
     game = GameOfLife()
 
-    StyledText(
+    S(
         S.BOLD("Choose Initialization"),
         ((S.BOLD | S.ITALIC)(" 1  "), "Random pattern"),
         ((S.BOLD | S.ITALIC)(" 2  "), "Some classic patterns"),
         sep="\n",
     ).print()
+
     choice = xx.console.input(("(1) ", S.BOLD(">"), " "), max_len=1, allowed_chars="12", default_val=1, output_type=int)
 
     match choice:

@@ -4,7 +4,7 @@
 """Show the foreground and background colors
 from the current terminal color scheme."""
 
-from xulbux import ArgumentParser, S, StyledText
+from xulbux import ArgumentParser, S
 from xulbux.ansi import AnyStyle
 
 SHELL_COLORS: list[list[AnyStyle]] = [
@@ -21,7 +21,7 @@ SHELL_COLORS: list[list[AnyStyle]] = [
 
 def show_shell_colors() -> None:
     norm_fg, bright_fg, norm_bg, bright_bg = zip(*SHELL_COLORS, strict=False)
-    output = StyledText("\n")
+    output = S("\n")
 
     for fgs, bgs in [(norm_fg, norm_bg), (bright_fg, bright_bg)]:
         output += "  "

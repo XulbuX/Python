@@ -14,13 +14,13 @@ import time
 from pathlib import Path
 from typing import IO, Any, cast
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText
+from xulbux import ArgumentParser, S
 
 try:
     import pyperclip
 except Exception as exc:
     fmt_error = "\n  ".join(str(exc).splitlines())
-    StyledText(
+    S(
         "", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), "", sep="\n"
     ).print()
     sys.exit(1)
@@ -79,7 +79,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         command_for_shell = shlex.join(command_args)
         command_str_display = command_for_shell
 
-    StyledText("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "", sep="\n").print()
+    S("", S.MAGENTA("━━━ Capturing: ", S.BOLD(command_str_display), " ━━━"), "", sep="\n").print()
 
     process: subprocess.Popen[str] | None = None
     captured_output: list[str] = []
@@ -128,19 +128,19 @@ def main() -> None:  # ruff:ignore[complex-structure]
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        StyledText("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
+        S("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
         add_nl_before_end = False
         exit_code = 130  # SIGINT.
 
     except FileNotFoundError:
-        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "\n")
+        error_msg = S(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "\n")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 127  # Command not found.
 
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        error_msg = StyledText(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "\n")
+        error_msg = S(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "\n")
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 1  # General error.
@@ -163,7 +163,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         )
 
     str_output = "".join(captured_output)
-    clipboard_parts.append(str_output if keep_ansi else StyledText.remove_ansi(str_output))
+    clipboard_parts.append(str_output if keep_ansi else S(str_output).raw)
 
     if not exclude_meta:
         clipboard_parts.append(
@@ -178,13 +178,13 @@ def main() -> None:  # ruff:ignore[complex-structure]
         pyperclip.copy(clipboard_content)
     except Exception as exc:
         fmt_error = "\n  ".join(str(exc).splitlines())
-        StyledText("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "", sep="\n").print()
+        S("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "", sep="\n").print()
         sys.exit(1)
 
     lines_count = len(captured_output)
 
     # fmt: off
-    StyledText(
+    S(
         ("\n" if add_nl_before_end else ""),
         (S.BR.GREEN if exit_code == 0 else S.BR.RED)(
             "━━━ Output copied to clipboard ━━━ ",

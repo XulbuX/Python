@@ -13,12 +13,13 @@ import textwrap
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple, TypedDict, cast
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText, Term, Throbber
+from xulbux import ArgumentParser, S, Term, Throbber
 
 if TYPE_CHECKING:
     from xulbux.ansi import AnyStyle
@@ -56,7 +57,7 @@ CHARS: TreeCharConfig = {
 }
 
 DEFAULT: ScriptDefaults = {
-    "ignore_dirs": [],
+    "exclude_dirs": [],
     "auto_ignore_mode": 2,
     "truncate_similar": True,
     "include_file_contents": False,
@@ -222,7 +223,7 @@ class TreeCharConfig(TypedDict):
 
 
 class ScriptDefaults(TypedDict):
-    ignore_dirs: list[str]
+    exclude_dirs: list[str]
     auto_ignore_mode: Literal[0, 1, 2]
     truncate_similar: bool
     include_file_contents: bool
@@ -332,40 +333,40 @@ class TreeChars:
         self.dirname_end = CHARS["dirname_end"]
 
         self.indent_size = indent_size
-        self.indent = " " * indent_size
-        self.line_hor_str = f"{self.line_hor} "
+        self.indent = " " * (indent_size + 1)
+        self.line_hor_str = f"{self.line_hor * max(0, indent_size - 1)} "
         # Pre-computed indent strings used in the hot render path:
-        self.indent_cont = f"{self.line_ver}{' ' * (indent_size - 1)}"
+        self.indent_cont = f"{self.line_ver}{' ' * indent_size}"
         self.wrap_indent_last = " " * (len(self.corners[0]) + len(self.line_hor_str))
         self.wrap_indent_cont = f"{self.line_ver}{' ' * (len(self.branch_new) + len(self.line_hor_str) - len(self.line_ver))}"
 
         # Colors as ANSI strings:
-        self.c_dim = StyledText(S.DIM).ansi
-        self.c_bold = StyledText(S.BOLD).ansi
-        self.c_bold_in = StyledText(S.BOLD | S.INVERSE).ansi
-        self.c_italic = StyledText(S.ITALIC).ansi
-        self.c_reset = StyledText(S.RESET).ansi
+        self.c_dim = S.DIM.ansi
+        self.c_bold = S.BOLD.ansi
+        self.c_bold_in = (S.BOLD | S.INVERSE).ansi
+        self.c_italic = S.ITALIC.ansi
+        self.c_reset = S.RESET.ansi
 
-        self.c_line = StyledText(self.c_reset, COLORS["line"]).ansi
-        self.c_line_dull = StyledText(self.c_reset, COLORS["line_dull"]).ansi
-        self.c_error = StyledText(self.c_reset, COLORS["error"]).ansi
-        self.c_dir = StyledText(self.c_reset, COLORS["dir"]).ansi
-        self.c_dir_dull = StyledText(self.c_reset, COLORS["dir_dull"]).ansi
-        self.c_dir_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"]).ansi
-        self.c_dir_symlink = StyledText(self.c_reset, COLORS["dir"], S.UNDERLINE).ansi
-        self.c_dir_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["dir"], S.UNDERLINE).ansi
-        self.c_file = StyledText(self.c_reset, COLORS["file"]).ansi
-        self.c_file_dim = StyledText(self.c_reset, S.DIM, COLORS["file"]).ansi
-        self.c_file_symlink = StyledText(self.c_reset, COLORS["file"], S.UNDERLINE).ansi
-        self.c_file_symlink_dim = StyledText(self.c_reset, S.DIM, COLORS["file"], S.UNDERLINE).ansi
-        self.c_content = StyledText(self.c_reset, COLORS["content"]).ansi
+        self.c_line = S(self.c_reset, COLORS["line"]).ansi
+        self.c_line_dull = S(self.c_reset, COLORS["line_dull"]).ansi
+        self.c_error = S(self.c_reset, COLORS["error"]).ansi
+        self.c_dir = S(self.c_reset, COLORS["dir"]).ansi
+        self.c_dir_dull = S(self.c_reset, COLORS["dir_dull"]).ansi
+        self.c_dir_dim = S(self.c_reset, S.DIM, COLORS["dir"]).ansi
+        self.c_dir_symlink = S(self.c_reset, COLORS["dir"], S.UNDERLINE).ansi
+        self.c_dir_symlink_dim = S(self.c_reset, S.DIM, COLORS["dir"], S.UNDERLINE).ansi
+        self.c_file = S(self.c_reset, COLORS["file"]).ansi
+        self.c_file_dim = S(self.c_reset, S.DIM, COLORS["file"]).ansi
+        self.c_file_symlink = S(self.c_reset, COLORS["file"], S.UNDERLINE).ansi
+        self.c_file_symlink_dim = S(self.c_reset, S.DIM, COLORS["file"], S.UNDERLINE).ansi
+        self.c_content = S(self.c_reset, COLORS["content"]).ansi
 
         self.category_colors: dict[Category, tuple[str, str, str, str]] = {
             cat: (
-                StyledText(self.c_reset, COLORS[cat]).ansi,
-                StyledText(self.c_reset, S.DIM, COLORS[cat]).ansi,
-                StyledText(self.c_reset, COLORS[cat], S.UNDERLINE).ansi,
-                StyledText(self.c_reset, S.DIM, COLORS[cat], S.UNDERLINE).ansi,
+                S(self.c_reset, COLORS[cat]).ansi,
+                S(self.c_reset, S.DIM, COLORS[cat]).ansi,
+                S(self.c_reset, COLORS[cat], S.UNDERLINE).ansi,
+                S(self.c_reset, S.DIM, COLORS[cat], S.UNDERLINE).ansi,
             )
             for cat in ALL_CATEGORIES
         }
@@ -378,12 +379,12 @@ class DirectoryScanner:
     _UUID_ANYWHERE = re.compile(r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}")
     _SEP_SPLITTER = re.compile(r"[-_~@\s]+")
 
-    def __init__(self, ignore_dirs: list[str], auto_ignore_mode: Literal[0, 1, 2]):
-        """Initialize the directory scanner with ignore sets and rules."""
+    def __init__(self, exclude_dirs: list[str], auto_ignore_mode: Literal[0, 1, 2]):
+        """Initialize the directory scanner with exclude sets and auto-ignore rules."""
 
         self.auto_ignore_mode = auto_ignore_mode
 
-        all_folder_ignores = ignore_dirs.copy()
+        all_folder_ignores = exclude_dirs.copy()
         if auto_ignore_mode > 0:
             all_folder_ignores.extend(path.lower() for path in IGNORE.folder_paths)
 
@@ -559,7 +560,7 @@ class DirectoryScanner:
 class TreeConfig:
     base_dir: Path
     max_width: int
-    ignore_dirs: list[str] = field(default_factory=lambda: [])
+    exclude_dirs: list[str] = field(default_factory=lambda: [])
     auto_ignore_mode: Literal[0, 1, 2] = 2
     truncate_similar: bool = True
     include_file_contents: bool = False
@@ -570,7 +571,6 @@ class TreeConfig:
         """Resolve base directory and set derived properties."""
 
         self.base_dir = self.base_dir.resolve()
-        self.indent_size = self.indent_size + 1
 
 
 class TreeRenderer:
@@ -584,7 +584,7 @@ class TreeRenderer:
 
         self.config = config
         self.chrs = TreeChars(config.indent_size)
-        self.scanner = DirectoryScanner(config.ignore_dirs, config.auto_ignore_mode)
+        self.scanner = DirectoryScanner(config.exclude_dirs, config.auto_ignore_mode)
         self.stats = GenerationStats()
         self._progress_update_interval = 0.05
         self._last_progress_update: float = 0.0
@@ -645,14 +645,14 @@ class TreeRenderer:
         finally:
             executor.shutdown(wait=False)
 
-    def generate(self) -> StyledText:
+    def generate(self) -> S:
         """Generate the entire directory tree."""
 
         if not self.config.base_dir.is_dir():
             raise ValueError(f"Invalid base directory: {self.config.base_dir}")
 
         with Throbber(
-            label=StyledText(S.WHITE("Rooting tree from "), S.MAGENTA(str(self.config.base_dir))),
+            label=S(S.WHITE("Rooting tree from "), S.MAGENTA(str(self.config.base_dir))),
             format=[("  ", S.BR.MAGENTA("{a}")), "{l}"],
         ).context():
             self._pre_scan_parallel(str(self.config.base_dir))
@@ -665,8 +665,8 @@ class TreeRenderer:
 
         print(Term.prev_line() + Term.CLEAR_LINE, end="")  # Clear the last progress output.
 
-        time_taken = StyledText("took ", S.BR.MAGENTA(self._format_time(time.time() - self.stats.start_time)))
-        tree_stats = StyledText(
+        time_taken = S("took ", S.BR.MAGENTA(self._format_time(time.time() - self.stats.start_time)))
+        tree_stats = S(
             ("max depth ", S.BR.MAGENTA(str(self.stats.max_depth))),
             (S.DIM(" | "), S.BR.MAGENTA(f"{self.stats.processed_dirs:,}"), " dirs"),
             (S.DIM(" | "), S.BR.MAGENTA(f"{self.stats.processed_files:,}"), " files"),
@@ -677,7 +677,7 @@ class TreeRenderer:
         else:
             footer = (" ", time_taken.ansi, "\n", " " * max(1, self.config.max_width - len(tree_stats.raw)), tree_stats.ansi)
 
-        return StyledText(
+        return S(
             (COLORS["line"], result_str),
             "\n",
             (S.RESET, S.DIM("─" * self.config.max_width), "\n"),
@@ -964,7 +964,7 @@ class TreeRenderer:
     def _render_file_contents(self, filepath: str, prefix: str, is_last: bool, border_color: str, lines: list[str]) -> None:
         """Read and render the contents of a text file into the tree view."""
 
-        indent_str = " " * self.chrs.indent_size if is_last else f"{self.chrs.line_ver}{' ' * (self.chrs.indent_size - 1)}"
+        indent_str = self.chrs.indent if is_last else self.chrs.indent_cont
         content_prefix = f"{prefix}{indent_str}"
 
         try:
@@ -1035,7 +1035,7 @@ class TreeRenderer:
         """Render an error message node when a path cannot be accessed."""
 
         lines.append(
-            f"{prefix}{self.chrs.corners[0]}{self.chrs.line_hor * (self.chrs.indent_size - 1)}{self.chrs.c_bold_in}"
+            f"{prefix}{self.chrs.corners[0]}{self.chrs.line_hor_str}{self.chrs.c_bold_in}"
             f"{self.chrs.c_error} {self.chrs.error} {exc!s} {self.chrs.c_reset}\n{self.chrs.c_line}"
         )
 
@@ -1096,21 +1096,21 @@ class TreeRenderer:
 def get_user_inputs(config: TreeConfig) -> None:
     """Prompt the user for terminal inputs to construct the TreeConfig interactively."""
 
-    if not ARGS.ignore_dirs.exists:
-        ignore_input = xx.console.input(
-            StyledText(
-                S.BOLD("Which directory names/paths should be ignored? "),
+    if not ARGS.exclude_dirs.exists:
+        exclude_input = xx.console.input(
+            (
+                S.BOLD("Which directory names/paths should be excluded? "),
                 S.DIM("(", S.CYAN("|"), " separated)\n"),
                 " > ",
             ),
         )
-        config.ignore_dirs = [i_dir.strip() for i_dir in ignore_input.split("|")]
+        config.exclude_dirs = [e_dir.strip() for e_dir in exclude_input.split("|")]
 
     if not ARGS.auto_ignore_mode.exists:
         config.auto_ignore_mode = cast(
             "Literal[0, 1, 2]",
             xx.console.input(
-                StyledText(
+                (
                     S.BOLD("Auto-ignore unimportant directories?\n"),
                     "0 = None, 1 = Hardcoded only, 2 = Smart\n",
                     (S.DIM(f"({config.auto_ignore_mode})"), " > "),
@@ -1125,7 +1125,7 @@ def get_user_inputs(config: TreeConfig) -> None:
     if not ARGS.truncate_similar.exists:
         config.truncate_similar = (
             xx.console.input(
-                StyledText(
+                (
                     S.BOLD("Truncate repetitive chunks of similarly named files?\n"),
                     (S.DIM("(Y)" if config.truncate_similar else "(N)"), " > "),
                 ),
@@ -1138,7 +1138,7 @@ def get_user_inputs(config: TreeConfig) -> None:
 
     if not ARGS.include_file_contents.exists:
         content_input = xx.console.input(
-            StyledText(
+            (
                 S.BOLD("How much file contents should be included?\n"),
                 "0 = full file contents, N = first N lines\n",
                 (S.DIM("(none)"), " > "),
@@ -1153,68 +1153,67 @@ def get_user_inputs(config: TreeConfig) -> None:
             except ValueError:
                 config.include_file_contents = False
 
-    config.indent_size = xx.console.input(
-        StyledText(
-            S.BOLD("What should the indentation size be?\n"),
-            (S.DIM(f"({config.indent_size})"), " > "),
-        ),
-        max_len=2,
-        allowed_chars="0123456789",
-        default_val=config.indent_size,
-        output_type=int,
-    )
+    if not ARGS.indent_size.exists:
+        config.indent_size = xx.console.input(
+            (
+                S.BOLD("What should the indentation size be?\n"),
+                (S.DIM(f"({config.indent_size})"), " > "),
+            ),
+            max_len=2,
+            allowed_chars="0123456789",
+            default_val=config.indent_size,
+            output_type=int,
+        )
 
 
 def main() -> None:  # ruff:ignore[complex-structure]
     print()
 
-    base_dir = Path(val) if (val := ARGS.base_dir.val()) else Path.cwd()
+    base_dir = Path(opt_val) if (opt_val := ARGS.base_dir.val()) else Path.cwd()
 
-    if ARGS.ignore_dirs.exists:
-        ignore_dirs = (
-            [i_dir.strip() for i_dir in ARGS.ignore_dirs.val(default="").split("|")] if ARGS.ignore_dirs.values else []
+    if ARGS.exclude_dirs.exists:
+        exclude_dirs = (
+            [e_dir.strip() for e_dir in ARGS.exclude_dirs.val(default="").split("|")] if ARGS.exclude_dirs.values else []
         )
     else:
-        ignore_dirs = DEFAULT["ignore_dirs"].copy()
+        exclude_dirs = DEFAULT["exclude_dirs"].copy()
+
+    auto_ignore_mode = DEFAULT["auto_ignore_mode"]
+
+    if ARGS.auto_ignore_mode.exists and (opt_val := ARGS.auto_ignore_mode.val(int)) is not None:
+        auto_ignore_mode = cast("Literal[0, 1, 2]", opt_val)
 
     inc_contents = DEFAULT["include_file_contents"]
     max_lines = DEFAULT["max_content_lines"]
 
-    if (inc_contents := ARGS.include_file_contents.exists) and (flag_val := ARGS.include_file_contents.val(int)) is not None:
-        try:
-            max_lines = max(0, flag_val)
-        except ValueError:
-            max_lines = 0
+    if (inc_contents := ARGS.include_file_contents.exists) and (opt_val := ARGS.include_file_contents.val(int)) is not None:
+        with suppress(ValueError):
+            max_lines = max(0, opt_val)
 
-    auto_ignore_mode = DEFAULT["auto_ignore_mode"]
-    if ARGS.auto_ignore_mode.exists and (flag_val := ARGS.auto_ignore_mode.val(int)) is not None:
-        try:
-            val = flag_val
-            if val not in (0, 1, 2):
-                raise ValueError
-            auto_ignore_mode = val
-        except ValueError:
-            xx.console.fail(f"Invalid auto-ignore mode: {flag_val}. Must be 0, 1, or 2.", start="\n", end="\n\n")
+    indent_size = DEFAULT["indent_size"]
+
+    if ARGS.indent_size.exists and (opt_val := ARGS.indent_size.val(int)) is not None:
+        with suppress(ValueError):
+            indent_size = max(0, opt_val)
 
     config = TreeConfig(
         base_dir=base_dir,
         max_width=0,  # Set to actual max-width on re-initialization after user input.
-        ignore_dirs=ignore_dirs,
+        exclude_dirs=exclude_dirs,
         auto_ignore_mode=auto_ignore_mode,
         truncate_similar=not ARGS.truncate_similar.exists,
         include_file_contents=inc_contents,
         max_content_lines=max_lines,
-        indent_size=DEFAULT["indent_size"],
+        indent_size=indent_size,
     )
 
     into_file = DEFAULT["into_file"]
     target_path = Path.cwd() / "tree.txt"
 
-    if (into_file := ARGS.to_file.exists) and (val := ARGS.to_file.val()) is not None:
-        target_path = Path(val).resolve()
-        if not (target_path.is_dir() or target_path.parent.exists()):
-            xx.console.fail(StyledText("Directory ", S.BR.CYAN(str(target_path.parent)), " does not exist."), end="\n\n")
-        elif target_path.is_dir() or val.endswith("/") or val.endswith("\\"):
+    if (into_file := ARGS.to_file.exists) and (opt_val := ARGS.to_file.val()) is not None:
+        if not ((target_path := Path(opt_val).resolve()).is_dir() or target_path.parent.exists()):
+            xx.console.fail(("Directory ", S.BR.CYAN(str(target_path.parent)), " does not exist."), end="\n\n")
+        elif target_path.is_dir() or opt_val.endswith("/") or opt_val.endswith("\\"):
             target_path = target_path / "tree.txt"
 
     if ARGS.interactive.exists:
@@ -1223,10 +1222,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         if not ARGS.to_file.exists:
             into_file = (
                 xx.console.input(
-                    StyledText(
-                        S.BOLD("Output tree to a file?\n"),
-                        (S.DIM("(Y)" if into_file else "(N)"), " > "),
-                    ),
+                    (S.BOLD("Output tree to a file?\n"), (S.DIM("(Y)" if into_file else "(N)"), " > ")),
                     max_len=1,
                     allowed_chars="yYnN",
                     default_val="Y" if into_file else "N",
@@ -1240,7 +1236,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     config = TreeConfig(
         base_dir=config.base_dir,
         max_width=200 if into_file else xx.console.get_width(),
-        ignore_dirs=config.ignore_dirs,
+        exclude_dirs=config.exclude_dirs,
         auto_ignore_mode=config.auto_ignore_mode,
         truncate_similar=config.truncate_similar,
         include_file_contents=config.include_file_contents,
@@ -1257,17 +1253,15 @@ def main() -> None:  # ruff:ignore[complex-structure]
             file = xx.file.create(str(target_path), result.raw)
         except FileExistsError:
             cls_line = Term.prev_line() + Term.CLEAR_LINE
-            if xx.console.confirm(
-                StyledText("  ", S.WHITE(target_path.name), " already exists. Overwrite? "), start=cls_line, end=""
-            ):
+            if xx.console.confirm(("  ", S.WHITE(target_path.name), " already exists. Overwrite? "), start=cls_line, end=""):
                 file = xx.file.create(str(target_path), result.raw, force=True)
             else:
                 xx.console.exit(start=cls_line, end="\n\n")
 
         if file:
-            xx.console.done(StyledText("Generated tree to ", (S.WHITE | S.link(file))(file.name)), start=cls_line, end="\n\n")
+            xx.console.done(("Generated tree to ", (S.WHITE | S.link(file))(file.name)), start=cls_line, end="\n\n")
         else:
-            xx.console.fail(StyledText((S.BR.RED)("File is empty or failed to create file.")), start=cls_line, end="\n\n")
+            xx.console.fail((S.BR.RED)("File is empty or failed to create file."), start=cls_line, end="\n\n")
 
     else:
         result.print()
@@ -1280,19 +1274,20 @@ if __name__ == "__main__":
         controls=[("Ctrl+C", "Cancel and exit")],
         examples=[
             ("{cmd} -I", "Prompt for interactive settings"),
-            ('{cmd} -i "/abs/to/dir1 | rel/to/dir2 | dir3"', "Ignore specified directories"),
+            ('{cmd} -e "/abs/to/dir1 | rel/to/dir2 | dir3"', "Exclude specified directories"),
+            ("{cmd} -i 4", "Set indentation size in spaces"),
             ("{cmd} --auto-ignore=1", "Set auto-ignore mode to hardcoded only"),
             ("{cmd} --no-truncate", "Disable truncation of repetitive chunks"),
             ("{cmd} --content", "Include full file contents"),
             ("{cmd} --content=10", "Include file contents, truncated to 10 lines"),
             ('{cmd} -f "/path/to/dir_or_file"', "Output to specific file or directory"),
         ],
-        epilog=StyledText(
+        epilog=S(
             (
                 S.BOLD("Prompts: "),
-                S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " flag)"),
+                S.DIM("(only when using the ", S.BR.BLUE("-I"), " or ", S.BR.BLUE("--interactive"), " option)"),
             ),
-            ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to ignore"),
+            ("  ", (S.ITALIC | S.DIM)("1"), "  Directories to exclude"),
             ("  ", (S.ITALIC | S.DIM)("2"), "  Auto-ignore mode"),
             ("  ", (S.ITALIC | S.DIM)("3"), "  Truncate repetitive chunks of similarly named files"),
             ("  ", (S.ITALIC | S.DIM)("4"), "  Include file contents"),
@@ -1304,20 +1299,17 @@ if __name__ == "__main__":
 
     args.add_arg("base_dir", required=False, help=("Base directory to generate tree from ", S.DIM("(default: CWD)")))
     args.add_opt(
-        {"-i", "--ignore"},
-        "ignore_dirs",
+        {"-e", "--exclude"},
+        "exclude_dirs",
         expects_value="S",
-        help=("Directories to ignore ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),
+        help=("Directories to exclude ", S.DIM("(directory paths/names, separated by ", S.BR.CYAN("|"), ")")),
     )
     args.add_opt(
         {"-a", "--auto-ignore"},
         "auto_ignore_mode",
         expects_value="N",
         choices=("0", "1", "2"),
-        help=(
-            "Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ",
-            S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})"),
-        ),
+        help=("Auto-ignore mode (0: OFF, 1: Hardcoded only, 2: Smart) ", S.DIM(f"(default: {DEFAULT['auto_ignore_mode']})")),
     )
     args.add_opt({"-nt", "--no-truncate"}, "truncate_similar", help="Disable truncation of repetitive similar-filename chunks")
     args.add_opt(
@@ -1325,6 +1317,12 @@ if __name__ == "__main__":
         "include_file_contents",
         expects_value="N",
         help=("Include file contents, optionally truncated to ", S.BR.BLUE("N"), " lines"),
+    )
+    args.add_opt(
+        {"-i", "--indent"},
+        "indent_size",
+        expects_value="N",
+        help=("Used indentation size for tree display ", S.DIM(f"(default: {DEFAULT['indent_size']})")),
     )
     args.add_opt(
         {"-f", "--file"},
@@ -1343,7 +1341,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        StyledText(S.RESET, Term.prev_line(), Term.CLEAR_LINE, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
+        S(S.RESET, Term.prev_line(), Term.CLEAR_LINE, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except PermissionError:
         xx.console.fail("Permission to create file was denied.", start="\n", end="\n\n")
     except Exception as exc:

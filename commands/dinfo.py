@@ -11,7 +11,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText, Term, Throbber
+from xulbux import ArgumentParser, S, Term, Throbber
 
 EXCLUDE: set[str] = set()
 TEXT_BYTES: bytes = bytes(range(32, 127)) + bytes([9, 10, 13])
@@ -266,14 +266,14 @@ def main() -> None:
     with Throbber(label="Scanning directory tree...").context():
         files_count, files_line_count, files_size = scan_and_calc_scope(str(Path.cwd()))
 
-    info_parts = StyledText((S.INVERSE | S.BG.BLACK)("  ", S.BOLD(f"{files_count:,}"), " total files"))
+    info_parts = S((S.INVERSE | S.BG.BLACK)("  ", S.BOLD(f"{files_count:,}"), " total files"))
 
     if "size" not in EXCLUDE:
         info_parts += (S.INVERSE | S.BG.BLACK)("  ", S.BOLD(format_bytes_size(files_size)), " total size")
     if "lines" not in EXCLUDE:
         info_parts += (S.INVERSE | S.BG.BLACK)("  ", S.BOLD(f"{files_line_count:,}"), " total lines")
 
-    StyledText(
+    S(
         (Term.CLEAR_LINE, "▄" * (len(info_parts) + 2)),
         (info_parts, S.INVERSE("  ")),
         ("▀" * (len(info_parts) + 2)),
@@ -317,6 +317,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        StyledText(Term.CLEAR_LINE, S.RESET, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
+        S(Term.CLEAR_LINE, S.RESET, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except Exception as exc:
         xx.console.fail(exc, start="\n", end="\n\n")

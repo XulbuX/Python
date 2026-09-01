@@ -3,7 +3,8 @@
 
 """Quickly convert a HEX value to a percentage."""
 
-from xulbux import ArgumentParser, S, StyledText, console
+import xulbux as xx
+from xulbux import ArgumentParser, S
 
 
 def hex_to_percent(hex_val: str | None) -> float:
@@ -21,7 +22,7 @@ def hex_to_percent(hex_val: str | None) -> float:
 
 def main() -> None:
     pct = hex_to_percent(ARGS.hex.val())
-    StyledText("", ((S.DIM | S.BR.WHITE)("  =  "), (S.WHITE | S.BOLD)(f"{pct}%")), "", sep="\n").print()
+    S("", ((S.DIM | S.BR.WHITE)("  =  "), (S.WHITE | S.BOLD)(f"{pct}%")), "", sep="\n").print()
 
 
 if __name__ == "__main__":
@@ -45,4 +46,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n")

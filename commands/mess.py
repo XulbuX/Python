@@ -8,14 +8,14 @@ import random as rnd
 import time
 import xulbux as xx
 from xulbux import ArgumentParser
-from xulbux.ansi import AnyStyle, S, StyledText
+from xulbux.ansi import AnyStyle, S
 
 digits: list[str] = ["0", "1"]
 styles: list[AnyStyle] = [S.DIM, S.BOLD, S.INVERSE, S.UNDERLINE, S.STRIKETHROUGH, S.DOUBLE_UNDERLINE]
 
 
-def binary_line() -> StyledText:
-    return StyledText(*(rnd.choice(styles)(rnd.choice(digits)) for _ in range(xx.console.get_width())))
+def binary_line() -> S:
+    return S(*(rnd.choice(styles)(rnd.choice(digits)) for _ in range(xx.console.get_width())))
 
 
 def main() -> None:

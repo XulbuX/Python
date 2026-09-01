@@ -10,13 +10,13 @@ import subprocess
 from pathlib import Path
 from typing import cast
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText
+from xulbux import ArgumentParser, S
 
 
 # fmt: off
 def print_help() -> None:
     title = ["  VS Code Extensions", " — List all installed Visual Studio Code extensions  "]
-    StyledText(
+    S(
         "",
         ("▄" * len("".join(title))),
         (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
@@ -142,7 +142,7 @@ def get_vscode_extensions(executable: str) -> list[str] | None:
 
 def main() -> None:
     if (vscode_info := find_vscode_executable()) is None:
-        StyledText(S.BR.RED("Visual Studio Code is not installed or could not be found."))
+        S.BR.RED("VS Code is not installed or could not be found.").print()
         raise SystemExit(1)
 
     variant, executable = vscode_info
@@ -150,11 +150,9 @@ def main() -> None:
 
     extensions = cast("list[str]", get_vscode_extensions(executable))
 
-    title = StyledText(
-        (S.INVERSE | S.BG.BLACK)("  Found ", S.BOLD(str(len(extensions))), f" installed {variant_display} extensions  ")
-    )
+    title = S((S.INVERSE | S.BG.BLACK)("  Found ", S.BOLD(str(len(extensions))), f" installed {variant_display} extensions  "))
 
-    StyledText(
+    S(
         "",
         "▄" * len(title.raw),
         title.ansi,

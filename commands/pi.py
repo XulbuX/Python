@@ -9,7 +9,7 @@ import time
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText, Throbber
+from xulbux import ArgumentParser, S, Throbber
 from xulbux.console import FRAMES_WINDMILL
 
 if TYPE_CHECKING:
@@ -96,7 +96,7 @@ def estimate_runtime(precision: int) -> float:
     return round(estimated_time, 2)
 
 
-def format_time(seconds: float, short: bool = False, pretty_print: bool = False) -> StyledText:
+def format_time(seconds: float, short: bool = False, pretty_print: bool = False) -> S:
     units = (
         (
             ("SMBH", 1e106 * 365.25 * 24 * 60 * 60),
@@ -186,16 +186,14 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
         ))
 
     if short:
-        return StyledText(" ").join(parts)
+        return S(" ").join(parts)
 
     if len(parts) > 1:
         return (
-            StyledText(S.DIM(", ") if pretty_print else ", ").join(parts[:-1])
-            + (S.DIM(" & ") if pretty_print else " & ")
-            + parts[-1]
+            (S.DIM(", ") if pretty_print else S(", ")).join(parts[:-1]) + (S.DIM(" & ") if pretty_print else " & ") + parts[-1]
         )
 
-    return StyledText(parts[0])
+    return S(parts[0])
 
 
 def pi_generator() -> Iterator[int]:
@@ -215,13 +213,13 @@ def main() -> None:
     input_k = int(v.replace("_", "")) if (v := ARGS.decimals.val()) and v.replace("_", "").isdigit() else 10
 
     if (estimated_secs := estimate_runtime(input_k)) >= 604800:
-        StyledText(
+        S(
             (S.BOLD | S.BG.BLACK)("\n π ", S.INVERSE(" Calculation would take too long \n")),
             (f"\n{format_time(estimated_secs, pretty_print=True)}\n", S.RESET),
         ).print()
 
     else:
-        StyledText(
+        S(
             S.DIM("\nWill take about ", S.BOLD(format_time(estimated_secs)), S.DIM, " to calculate:")
             if estimated_secs > 1
             else ""
@@ -233,20 +231,20 @@ def main() -> None:
             with Throbber(frames=FRAMES_WINDMILL).context():
                 result = pi(input_k)
         except MemoryError:
-            StyledText(
+            S(
                 (S.BOLD | S.BR.YELLOW)("\rYour computer doesn't have enough memory for this calculation!"),
                 (S.BOLD | S.BG.BLACK)("\n π ", S.INVERSE(" Calculation would take this long if you had enough memory \n")),
                 (format_time(estimated_secs, pretty_print=True), S.RESET, "\n"),
                 sep="\n",
             ).print()
         except KeyboardInterrupt:
-            StyledText((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
+            S((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
             sys.exit(0)
 
         if result:
-            StyledText((S.BOLD | S.BR.CYAN)("\r", result), "\n").print()
+            S((S.BOLD | S.BR.CYAN)("\r", result), "\n").print()
         else:
-            StyledText((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
+            S((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
 
 
 if __name__ == "__main__":

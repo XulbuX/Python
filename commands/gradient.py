@@ -7,7 +7,7 @@ specified color channel with a specified number of steps."""
 import colorsys
 from typing import TYPE_CHECKING, Literal, cast
 import xulbux as xx
-from xulbux import ArgumentParser, S, StyledText, hexa, rgba
+from xulbux import ArgumentParser, S, hexa, rgba
 
 if TYPE_CHECKING:
     from xulbux.ansi import RenderSegment
@@ -32,7 +32,7 @@ def interpolate_oklch(
         from colorspacious import cspace_convert  # type:ignore[no-stubs]
     except ImportError as exc:
         raise ImportError(
-            StyledText(
+            S(
                 "OKLCH mode requires NumPy and colorspacious, but they are not compatible with your Python version.",
                 (
                     "Please use ",
@@ -276,17 +276,15 @@ def display_gradient(
 
         gradient_parts.append((S.hex(fg_color) | S.BG.hex(bg_color))("▌"))
 
-    gradient_str = StyledText(*gradient_parts, "\n").ansi * 4
+    gradient_str = S(*gradient_parts, "\n").ansi * 4
 
-    color_segments = [
-        (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} ") for color in source_colors
-    ]
-    summary = StyledText(
+    color_segments = [(S.BOLD | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} ") for color in source_colors]
+    summary = S(
         S.BG.BLACK(" "),
         (S.DIM | S.WHITE | S.BG.BLACK)("›").join(color_segments),  # ruff:ignore[ambiguous-unicode-character-string]
         (S.WHITE | S.BG.BLACK)(" in ", S.BOLD(str(total_colors)), " steps "),
     )
-    summary = StyledText(S.BLACK("▄" * len(summary)), summary, S.BLACK("▀" * len(summary)), sep="\n")
+    summary = S(S.BLACK("▄" * len(summary)), summary, S.BLACK("▀" * len(summary)), sep="\n")
 
     if not list_colors:
         print(f"\n{gradient_str}\n{summary}")
@@ -295,18 +293,17 @@ def display_gradient(
     if numerate:
         num_width = len(str(len(gradient)))
         color_list = "\n".join(
-            StyledText(
+            S(
                 " ",
                 S.ITALIC,
                 (S.DIM | S.WHITE)(f"{i:>{num_width}}  "),
-                (S.BOLD | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} "),
+                (S.BOLD | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} "),
             ).ansi
             for i, color in enumerate(gradient, 1)
         )
     else:
         color_list = "\n".join(
-            StyledText((S.BOLD | S.ITALIC | S.hex(xx.color.text_color_for_on_bg(color)) | S.BG.hex(color))(f" {color} ")).ansi
-            for color in gradient
+            (S.BOLD | S.ITALIC | S.BG.hex(color).contrast_fg() | S.BG.hex(color))(f" {color} ").ansi for color in gradient
         )
 
     print(f"\n{gradient_str}\n{summary}\n\n{color_list}")
@@ -326,7 +323,7 @@ def parse_color_args(
         if arg in (">", "<"):
             if mode == "linear":
                 raise ValueError(
-                    StyledText(
+                    S(
                         "Direction arrows (",
                         S.BR.CYAN("< >"),
                         ") are only supported with ",
@@ -336,6 +333,7 @@ def parse_color_args(
                         " modes",
                     )
                 )
+
             if len(colors) == 0:
                 raise ValueError(f"Direction arrow '{arg}' cannot appear before the first color")
 
@@ -347,29 +345,19 @@ def parse_color_args(
             else:
                 directions.append("shortest")
             i += 1
+
         else:
             # IT'S A COLOR
             try:
                 if (hex_color := hexa(arg)).has_alpha():
-                    raise ValueError(
-                        StyledText(
-                            "Color ",
-                            S.BR.CYAN(arg),
-                            " includes alpha channel, which is not supported",
-                        )
-                    )
+                    raise ValueError(S("Color ", S.BR.CYAN(arg), " includes alpha channel, which is not supported"))
                 colors.append(hex_color.to_rgba())
+
             except Exception as exc:
                 raise ValueError(
-                    StyledText(
+                    S(
                         ("Invalid color format ", S.BR.CYAN(arg), ":"),
-                        (
-                            "Expected opaque hex color (e.g., ",
-                            S.BR.CYAN("F00"),
-                            " or ",
-                            S.BR.CYAN("FF0000"),
-                            ")",
-                        ),
+                        ("Expected opaque hex color (e.g., ", S.BR.CYAN("F00"), " or ", S.BR.CYAN("FF0000"), ")"),
                         sep="\n",
                     )
                 ) from exc
@@ -386,27 +374,13 @@ def parse_color_args(
 def main() -> None:
     # DETERMINE INTERPOLATION MODE
     if ARGS.hsv.exists and ARGS.oklch.exists:
-        raise ValueError(
-            StyledText(
-                "Cannot use both ",
-                S.BR.BLUE("--hsv"),
-                " and ",
-                S.BR.BLUE("--oklch"),
-                " options together",
-            )
-        )
+        raise ValueError(S("Cannot use both ", S.BR.BLUE("--hsv"), " and ", S.BR.BLUE("--oklch"), " options together"))
 
     mode = "hsv" if ARGS.hsv.exists else "oklch" if ARGS.oklch.exists else "linear"
     color_args = " ".join(ARGS.color_points.vals()).split()
 
     if len(color_args) < 2:
-        raise ValueError(
-            StyledText(
-                "Please provide at least 2 colors in hex format (e.g., ",
-                S.BR.CYAN("F00 00F"),
-                ")",
-            )
-        )
+        raise ValueError(S("Please provide at least 2 colors in hex format (e.g., ", S.BR.CYAN("F00 00F"), ")"))
 
     # PARSE COLORS AND DIRECTIONS
     colors, directions = parse_color_args(color_args, mode)
@@ -448,7 +422,7 @@ if __name__ == "__main__":
             ('{cmd} "F00 > 00F" -H', "HSV, clockwise hue rotation"),
             ('{cmd} "F00 > 00F < 0F0" -H', "HSV, mixed hue directions"),
         ],
-        epilog=StyledText(
+        epilog=S(
             (
                 S.BOLD("Direction: "),
                 S.DIM("(only with ", S.BR.BLUE("--hsv"), " or ", S.BR.BLUE("--oklch"), " modes)"),
