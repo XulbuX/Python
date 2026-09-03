@@ -63,5 +63,5 @@ All code must be reliable across platforms without platform-dependent crashes:
 
 -   **Strict Typing:** All functions, methods, and helpers must be fully and strictly type-hinted.
 -   **No Generator Expressions in Iteration Builtins:** Avoid passing generator expressions to `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`. Use list comprehensions `[…]` or unrolled loops.
--   **Descriptive Variable Names:** No single-letter variable names (except `i`, `j` for loop indices and `n` for counts/math).
+-   **Descriptive Variable Names:** No single-letter variable names (except `i`, `j` for loop indices, `n` for counts/math, and `x`, `y`, `z` for spatial/cartesian coordinates).
 -   **Walrus Operator & Single-Use Variables:** Follow the repository guidelines for walrus operators and single-use variable inlining.

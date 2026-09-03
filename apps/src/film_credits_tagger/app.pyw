@@ -371,6 +371,7 @@ class MetadataTaggerApp(ctk.CTk):
 
     def _remove_cover(self) -> None:
         """Clear the selected cover art and reset the cover preview."""
+
         if self.cover_art_path is None and self.cover_preview_image is None and self._cover_video_source is None:
             self.btn_remove_cover.grid_remove()
             return  # Nothing to clear; also prevents stale `PhotoImage` `TclError` on repeat calls.
@@ -381,7 +382,7 @@ class MetadataTaggerApp(ctk.CTk):
             Path(self.cover_art_embed_path).unlink()
 
         self.cover_art_embed_path = None
-        c = COLORS[self._current_theme]
+        theme_colors = COLORS[self._current_theme]
 
         # Null out both `CTkLabel`'s `_image` and the underlying `tk.Label`'s `image` option so that
         # no stale `PhotoImage` reference causes `TclError` when tkinter validates options on redraw:
@@ -390,13 +391,14 @@ class MetadataTaggerApp(ctk.CTk):
         with suppress(Exception):
             self.lbl_cover_thumb._label.configure(image="")
 
-        self.lbl_cover_thumb.configure(text="No cover\nart selected", text_color=c["placeholder_foreground"])
-        self.lbl_cover_info.configure(text="", text_color=c["placeholder_foreground"])
+        self.lbl_cover_thumb.configure(text="No cover\nart selected", text_color=theme_colors["placeholder_foreground"])
+        self.lbl_cover_info.configure(text="", text_color=theme_colors["placeholder_foreground"])
         self.cover_preview_image = None
         self.btn_remove_cover.grid_remove()
 
     def reset_all(self) -> None:
         """Clear all metadata fields and remove the cover art."""
+
         for data in self.entries.values():
             data["widget"].delete(0, "end")
 
@@ -404,117 +406,134 @@ class MetadataTaggerApp(ctk.CTk):
 
     def _apply_theme(self) -> None:
         self._current_theme = get_system_theme()
-        c: dict[str, str] = dict(COLORS[self._current_theme])
+        theme_colors: dict[str, str] = dict(COLORS[self._current_theme])
 
         ctk.set_appearance_mode(self._current_theme)
-        self.configure(fg_color=c["background"])
+        self.configure(fg_color=theme_colors["background"])
 
-        self.main_frame.configure(fg_color=c["background"])
-        self.left_panel.configure(fg_color=c["background"])
-        self.right_panel.configure(fg_color=c["background"])
+        self.main_frame.configure(fg_color=theme_colors["background"])
+        self.left_panel.configure(fg_color=theme_colors["background"])
+        self.right_panel.configure(fg_color=theme_colors["background"])
 
-        self.sec1.configure(fg_color=c["background"])
-        self.sec2.configure(fg_color=c["background"])
-        self.sec3_header.configure(fg_color=c["background"])
+        self.sec1.configure(fg_color=theme_colors["background"])
+        self.sec2.configure(fg_color=theme_colors["background"])
+        self.sec3_header.configure(fg_color=theme_colors["background"])
         self.sec3.configure(
-            fg_color=c["background"],
-            scrollbar_button_color=c["secondary_border"],
-            scrollbar_button_hover_color=c["secondary_hover"],
+            fg_color=theme_colors["background"],
+            scrollbar_button_color=theme_colors["secondary_border"],
+            scrollbar_button_hover_color=theme_colors["secondary_hover"],
         )
 
-        self.sep1.configure(fg_color=c["border"])
-        self.sep_v.configure(fg_color=c["border"])
+        self.sep1.configure(fg_color=theme_colors["border"])
+        self.sep_v.configure(fg_color=theme_colors["border"])
 
-        self.lbl_section1.configure(text_color=c["foreground"])
-        self.lbl_section2.configure(text_color=c["foreground"])
-        self.lbl_section3.configure(text_color=c["foreground"])
+        self.lbl_section1.configure(text_color=theme_colors["foreground"])
+        self.lbl_section2.configure(text_color=theme_colors["foreground"])
+        self.lbl_section3.configure(text_color=theme_colors["foreground"])
 
         if self.cover_art_path:
-            self.lbl_cover_info.configure(text_color=c["foreground"])
-        self.lbl_cover_thumb.configure(text_color=c["placeholder_foreground"], fg_color=c["background"])
-        self.lbl_files.configure(text_color=c["foreground"] if self.selected_files else c["placeholder_foreground"])
-        self.frame_thumb_container.configure(fg_color=c["background"], border_color=c["border"])
+            self.lbl_cover_info.configure(text_color=theme_colors["foreground"])
+        self.lbl_cover_thumb.configure(text_color=theme_colors["placeholder_foreground"], fg_color=theme_colors["background"])
+        self.lbl_files.configure(
+            text_color=theme_colors["foreground"] if self.selected_files else theme_colors["placeholder_foreground"]
+        )
+        self.frame_thumb_container.configure(fg_color=theme_colors["background"], border_color=theme_colors["border"])
 
         for lbl in self._section_labels:
-            lbl.configure(text_color=c["foreground"])
+            lbl.configure(text_color=theme_colors["foreground"])
         for sep in self._section_seps:
-            sep.configure(fg_color=c["border"])
+            sep.configure(fg_color=theme_colors["border"])
         for lbl in self._field_labels:
-            lbl.configure(text_color=c["muted_foreground"])
+            lbl.configure(text_color=theme_colors["muted_foreground"])
 
         self._on_clear_toggle()
         self.sw_clear_empty.configure(
-            fg_color=c["background"],
-            hover_color=c["secondary_hover"],
-            border_color=c["secondary_border"],
-            checkmark_color=c["destructive_label"],
+            fg_color=theme_colors["background"],
+            hover_color=theme_colors["secondary_hover"],
+            border_color=theme_colors["secondary_border"],
+            checkmark_color=theme_colors["destructive_label"],
         )
 
-        self.btn_select_files.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
+        self.btn_select_files.configure(
+            fg_color=theme_colors["card"], hover_color=theme_colors["card_hover"], text_color=theme_colors["card_foreground"]
+        )
         self.btn_select_cover.configure(
-            fg_color=c["secondary"],
-            hover_color=c["secondary_hover"],
-            border_color=c["secondary_border"],
-            text_color=c["secondary_foreground"],
+            fg_color=theme_colors["secondary"],
+            hover_color=theme_colors["secondary_hover"],
+            border_color=theme_colors["secondary_border"],
+            text_color=theme_colors["secondary_foreground"],
         )
         self.btn_remove_cover.configure(
             width=28,
             height=28,
-            image=render_svg_icon("x", 16, c["muted_foreground"]),
+            image=render_svg_icon("x", 16, theme_colors["muted_foreground"]),
             fg_color="transparent",
-            hover_color=c["secondary_hover"],
+            hover_color=theme_colors["secondary_hover"],
         )
-        self.btn_load_template.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
-        self.btn_save_template.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
+        self.btn_load_template.configure(
+            fg_color=theme_colors["card"], hover_color=theme_colors["card_hover"], text_color=theme_colors["card_foreground"]
+        )
+        self.btn_save_template.configure(
+            fg_color=theme_colors["card"], hover_color=theme_colors["card_hover"], text_color=theme_colors["card_foreground"]
+        )
         self.btn_load_from_video.configure(
-            fg_color=c["secondary"],
-            hover_color=c["secondary_hover"],
-            border_color=c["secondary_border"],
-            text_color=c["secondary_foreground"],
+            fg_color=theme_colors["secondary"],
+            hover_color=theme_colors["secondary_hover"],
+            border_color=theme_colors["secondary_border"],
+            text_color=theme_colors["secondary_foreground"],
         )
         self.btn_reset_all.configure(
             width=28,
             height=28,
-            image=render_svg_icon("refresh-ccw", 16, c["muted_foreground"]),
+            image=render_svg_icon("refresh-ccw", 16, theme_colors["muted_foreground"]),
             fg_color="transparent",
-            hover_color=c["secondary_hover"],
+            hover_color=theme_colors["secondary_hover"],
         )
 
         if self.btn_apply:
-            self.btn_apply.configure(fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["primary_foreground"])
+            self.btn_apply.configure(
+                fg_color=theme_colors["primary"],
+                hover_color=theme_colors["primary_hover"],
+                text_color=theme_colors["primary_foreground"],
+            )
         if hasattr(self, "progress_bar"):
-            self.progress_bar.configure(fg_color=c["secondary_hover"], progress_color=c["placeholder_foreground"])
+            self.progress_bar.configure(
+                fg_color=theme_colors["secondary_hover"], progress_color=theme_colors["placeholder_foreground"]
+            )
 
         if hasattr(self, "_banner"):
-            self._banner.configure(fg_color=c["destructive"], border_color=c["destructive_border"])
+            self._banner.configure(fg_color=theme_colors["destructive"], border_color=theme_colors["destructive_border"])
             for lbl, key in self._banner_labels:
-                lbl.configure(text_color=c[key])
+                lbl.configure(text_color=theme_colors[key])
 
         for data in self.entries.values():
             widget = data["widget"]
             if isinstance(widget, MultilineEntry):
                 widget.configure(
-                    fg_color=c["background"],
-                    border_color=c["secondary_border"],
-                    text_color=c["foreground"],
-                    placeholder_text_color=c["placeholder_foreground"],
+                    fg_color=theme_colors["background"],
+                    border_color=theme_colors["secondary_border"],
+                    text_color=theme_colors["foreground"],
+                    placeholder_text_color=theme_colors["placeholder_foreground"],
                 )
             else:
                 widget.configure(
-                    fg_color=c["background"],
-                    border_color=c["secondary_border"],
-                    text_color=c["foreground"],
-                    placeholder_text_color=c["placeholder_foreground"],
+                    fg_color=theme_colors["background"],
+                    border_color=theme_colors["secondary_border"],
+                    text_color=theme_colors["foreground"],
+                    placeholder_text_color=theme_colors["placeholder_foreground"],
                 )
 
     def _on_clear_toggle(self) -> None:
-        c = COLORS[self._current_theme]
+        theme_colors = COLORS[self._current_theme]
         self.sw_clear_empty.configure(
-            text_color=c["destructive_label"] if bool(self.sw_clear_empty.get()) else c["muted_foreground"],
+            text_color=theme_colors["destructive_label"]
+            if bool(self.sw_clear_empty.get())
+            else theme_colors["muted_foreground"],
         )
 
     def _verify_exiftool(self) -> None:
         """Verify ExifTool runs; called in a background thread."""
+
         ok = False
         if self.exiftool_path:
             try:
@@ -540,6 +559,7 @@ class MetadataTaggerApp(ctk.CTk):
     def _animate_progress_to(self, target: float) -> None:
         """Ease-out animate the progress bar toward `target` at ~60 fps.<br>
         Each frame closes 25% of the remaining distance, giving natural deceleration."""
+
         if not hasattr(self, "progress_bar"):
             return
         if self._progress_anim_id:
@@ -607,7 +627,7 @@ class MetadataTaggerApp(ctk.CTk):
         if not self.exiftool_path:
             return b""
 
-        for cover_tag in ("-ItemList:CoverArt", "-QuickTime:CoverArt"):
+        for cover_tag in {"-ItemList:CoverArt", "-QuickTime:CoverArt"}:
             res = subprocess.run([self.exiftool_path, "-b", cover_tag, video_path], capture_output=True, **_POPEN_FLAGS)
             if res.stdout:
                 return res.stdout
@@ -627,8 +647,8 @@ class MetadataTaggerApp(ctk.CTk):
 
         assert self.exiftool_path is not None
 
-        c = COLORS[self._current_theme]
-        self.btn_load_from_video.start(c["secondary_foreground"])
+        theme_colors = COLORS[self._current_theme]
+        self.btn_load_from_video.start(theme_colors["secondary_foreground"])
 
         exiftool = self.exiftool_path
 
@@ -642,7 +662,7 @@ class MetadataTaggerApp(ctk.CTk):
                     seen.add(key)
                     tag_args.append(key)
 
-        command: list[str] = [exiftool, "-json", "-charset", "utf8"] + [f"-{t}" for t in tag_args] + [filepath]
+        command: list[str] = [exiftool, "-json", "-charset", "utf8"] + [f"-{tag_arg}" for tag_arg in tag_args] + [filepath]
 
         def _worker() -> None:
             try:
@@ -652,9 +672,9 @@ class MetadataTaggerApp(ctk.CTk):
             except subprocess.CalledProcessError as err:
                 self.after(
                     0,
-                    lambda m=f"Failed to read metadata:\n{err.stderr}": (
+                    lambda msg=f"Failed to read metadata:\n{err.stderr}": (
                         self.btn_load_from_video.stop(state="normal"),
-                        messagebox.showerror("ExifTool Error", m),
+                        messagebox.showerror("ExifTool Error", msg),
                     ),
                 )
                 return
@@ -662,9 +682,9 @@ class MetadataTaggerApp(ctk.CTk):
             except (json.JSONDecodeError, KeyError) as err:
                 self.after(
                     0,
-                    lambda m=f"Could not parse ExifTool output:\n{err}": (
+                    lambda msg=f"Could not parse ExifTool output:\n{err}": (
                         self.btn_load_from_video.stop(state="normal"),
-                        messagebox.showerror("Parse Error", m),
+                        messagebox.showerror("Parse Error", msg),
                     ),
                 )
                 return
@@ -760,8 +780,8 @@ class MetadataTaggerApp(ctk.CTk):
             self.cover_art_path = None
 
         # Slow path: embedded cover in a video; run ExifTool in a background thread:
-        c = COLORS[self._current_theme]
-        self.btn_load_template.start(c["card_foreground"])
+        theme_colors = COLORS[self._current_theme]
+        self.btn_load_template.start(theme_colors["card_foreground"])
 
         def _worker() -> None:
             video_cover = self._extract_cover_bytes_from_video(cover_path)
@@ -810,6 +830,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _tag_line(tag: str, val: str) -> str:
             """Return an argfile line for `tag=val`, using a temp file if val contains newlines."""
+
             if "\n" in val:
                 vf = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8", delete=False, newline="\n")  # ruff:ignore[open-file-with-context-handler]
                 vf.write(val)
@@ -908,7 +929,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _worker() -> None:
             for i, filepath in enumerate(files):
-                self.after(0, lambda p=(i + 0.3) / n_files: self._animate_progress_to(p))
+                self.after(0, lambda progress=(i + 0.3) / n_files: self._animate_progress_to(progress))
                 cmd: list[str] = [exiftool, "-overwrite_original", "-@", argfile.name, filepath]
 
                 try:
@@ -926,7 +947,7 @@ class MetadataTaggerApp(ctk.CTk):
                 except Exception as exc:
                     errors.append(str(exc))
 
-                self.after(0, lambda p=(i + 1) / n_files: self._animate_progress_to(p))
+                self.after(0, lambda progress=(i + 1) / n_files: self._animate_progress_to(progress))
 
             self.after(0, _on_done)
 

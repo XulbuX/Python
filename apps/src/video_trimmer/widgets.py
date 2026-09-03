@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class TrimTimeline(tk.Canvas):
     """Draggable timeline range selector for video trimming.\n
-    ------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     `on_change(start_frac, end_frac)` is fired continuously while dragging.<br>
     `on_commit(start_frac, end_frac)` is fired once on mouse-button release.<br>
     Both fractions are in [0.0, 1.0].  Apply colors via `apply_colors(colors_dict)`."""
@@ -48,13 +48,13 @@ class TrimTimeline(tk.Canvas):
 
     # **************************************** PUBLIC API ****************************************
 
-    def apply_colors(self, c: dict[str, str]) -> None:
-        self._c_bg = c["background"]
-        self._c_track = c["secondary_hover"]
-        self._c_range = c["primary"]
-        self._c_range_dim = c["border"]
-        self._c_handle = c["primary"]
-        self.configure(bg=c["background"])
+    def apply_colors(self, colors: dict[str, str]) -> None:
+        self._c_bg = colors["background"]
+        self._c_track = colors["secondary_hover"]
+        self._c_range = colors["primary"]
+        self._c_range_dim = colors["border"]
+        self._c_handle = colors["primary"]
+        self.configure(bg=colors["background"])
         self._draw()
 
     def set_range(self, start_frac: float, end_frac: float) -> None:
@@ -73,14 +73,14 @@ class TrimTimeline(tk.Canvas):
         return self._HANDLE_W // 2 + 4
 
     def _frac_to_x(self, frac: float) -> float:
-        w = max(2, self.winfo_width())
-        p = self._pad()
-        return p + frac * (w - 2 * p)
+        width = max(2, self.winfo_width())
+        pad = self._pad()
+        return pad + frac * (width - 2 * pad)
 
     def _x_to_frac(self, x: float) -> float:
-        w = max(2, self.winfo_width())
-        p = self._pad()
-        return (x - p) / max(1, w - 2 * p)
+        width = max(2, self.winfo_width())
+        pad = self._pad()
+        return (x - pad) / max(1, width - 2 * pad)
 
     def _hit(self, x: float) -> str | None:
         sx = self._frac_to_x(self._start_frac)
@@ -99,7 +99,7 @@ class TrimTimeline(tk.Canvas):
         if not self._enabled:
             return
         zone = self._hit(event.x)
-        if zone in ("start", "end"):
+        if zone in {"start", "end"}:
             self.configure(cursor="sb_h_double_arrow")
         elif zone == "range":
             self.configure(cursor="hand2")
@@ -143,42 +143,43 @@ class TrimTimeline(tk.Canvas):
     def _draw(self) -> None:
         self.delete("all")
 
-        if (w := self.winfo_width()) < 4 or (h := self.winfo_height()) < 4:
+        if (width := self.winfo_width()) < 4 or (height := self.winfo_height()) < 4:
             return
 
-        cy = h // 2
+        cy = height // 2
         ty1 = cy - self._TRACK_H // 2
         ty2 = cy + self._TRACK_H // 2
-        tr = self._TRACK_H // 2
+        track_radius = self._TRACK_H // 2
         pad = self._pad()
 
-        tc = self._c_track if self._enabled else self._c_range_dim
-        rc = self._c_range if self._enabled else self._c_range_dim
-        hc = self._c_handle if self._enabled else self._c_range_dim
+        track_color = self._c_track if self._enabled else self._c_range_dim
+        range_color = self._c_range if self._enabled else self._c_range_dim
+        handle_color = self._c_handle if self._enabled else self._c_range_dim
 
         # Background track:
-        self._rrect(pad, ty1, w - pad, ty2, tr, tc)
+        self._rrect(pad, ty1, width - pad, ty2, track_radius, track_color)
 
         sx = self._frac_to_x(self._start_frac)
         ex = self._frac_to_x(self._end_frac)
 
         # Selected range fill:
-        self._rrect(sx, ty1, ex, ty2, tr, rc)
+        self._rrect(sx, ty1, ex, ty2, track_radius, range_color)
 
         # Handle pills (taller than track):
-        hw = self._HANDLE_W // 2
+        handle_w = self._HANDLE_W // 2
         hy1 = cy - self._HANDLE_H // 2
         hy2 = cy + self._HANDLE_H // 2
-        hr = min(hw, 4)
+        handle_r = min(handle_w, 4)
 
-        self._rrect(sx - hw, hy1, sx + hw, hy2, hr, hc)
-        self._rrect(ex - hw, hy1, ex + hw, hy2, hr, hc)
+        self._rrect(sx - handle_w, hy1, sx + handle_w, hy2, handle_r, handle_color)
+        self._rrect(ex - handle_w, hy1, ex + handle_w, hy2, handle_r, handle_color)
 
-    def _rrect(self, x1: float, y1: float, x2: float, y2: float, r: int, fill: str) -> None:
+    def _rrect(self, x1: float, y1: float, x2: float, y2: float, radius: int, fill: str) -> None:
         """Draw a filled rounded rectangle onto this canvas."""
+
         x1, y1, x2, y2 = float(x1), float(y1), float(x2), float(y2)
 
-        if (rr := max(0, min(r, int((x2 - x1) / 2), int((y2 - y1) / 2)))) < 1:
+        if (rr := max(0, min(radius, int((x2 - x1) / 2), int((y2 - y1) / 2)))) < 1:
             self.create_rectangle(x1, y1, x2, y2, fill=fill, outline="")
             return
 

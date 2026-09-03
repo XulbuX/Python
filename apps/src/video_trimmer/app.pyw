@@ -326,9 +326,9 @@ class VideoTrimmerApp(ctk.CTk):
 
         # Bind entry commit events:
         for entry, which in ((self.entry_start, "start"), (self.entry_end, "end")):
-            entry.bind("<FocusOut>", lambda e, w=which: self._on_entry_commit(w))
-            entry.bind("<Return>", lambda e, w=which: self._on_entry_commit(w))
-            entry.bind("<KP_Enter>", lambda e, w=which: self._on_entry_commit(w))
+            entry.bind("<FocusOut>", lambda event, w=which: self._on_entry_commit(w))
+            entry.bind("<Return>", lambda event, w=which: self._on_entry_commit(w))
+            entry.bind("<KP_Enter>", lambda event, w=which: self._on_entry_commit(w))
 
         self._apply_theme()
         self.after(2000, self._poll_theme)
@@ -366,8 +366,8 @@ class VideoTrimmerApp(ctk.CTk):
         self._preview_generation += 1
         self._thumb_strip = []
 
-        c = COLORS[self._current_theme]
-        self.lbl_file.configure(text=Path(filename).name, text_color=c["foreground"])
+        theme_colors = COLORS[self._current_theme]
+        self.lbl_file.configure(text=Path(filename).name, text_color=theme_colors["foreground"])
         self.btn_select_file.start(COLORS[self._current_theme]["card_foreground"])
 
         # Reset previews and timeline:
@@ -382,6 +382,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _probe_duration(self, filename: str) -> None:
         """Probe the file's duration and FPS via FFprobe; called in a background thread."""
+
         if not self.ffprobe_path:
             return
 
@@ -393,16 +394,16 @@ class VideoTrimmerApp(ctk.CTk):
             res = subprocess.run(cmd, capture_output=True, text=True, **_POPEN_FLAGS)
             data = json.loads(res.stdout or "{}")
 
-            if d := data.get("format", {}).get("duration"):
-                duration = float(d)
+            if dur_str := data.get("format", {}).get("duration"):
+                duration = float(dur_str)
 
             for st in data.get("streams", []):
                 if st.get("codec_type") == "video":
-                    if duration is None and (d := st.get("duration")):
-                        duration = float(d)
+                    if duration is None and (dur_str := st.get("duration")):
+                        duration = float(dur_str)
 
                     # parse `r_frame_rate` or `avg_frame_rate` (format: num/den):
-                    for key in ("r_frame_rate", "avg_frame_rate"):
+                    for key in {"r_frame_rate", "avg_frame_rate"}:
                         if (fr := st.get(key)) and "/" in fr:
                             with suppress(ValueError, ZeroDivisionError):
                                 num, den = fr.split("/", 1)
@@ -420,7 +421,7 @@ class VideoTrimmerApp(ctk.CTk):
         def _done() -> None:
             self.duration = duration
             self.fps = fps
-            c = COLORS[self._current_theme]
+            theme_colors = COLORS[self._current_theme]
 
             if duration is not None:
                 self._start_sec = 0.0
@@ -435,7 +436,7 @@ class VideoTrimmerApp(ctk.CTk):
                 gen = self._preview_generation
                 threading.Thread(target=self._build_thumb_strip, args=(filename, duration, gen), daemon=True).start()
             else:
-                self.lbl_file.configure(text_color=c["destructive_label"])
+                self.lbl_file.configure(text_color=theme_colors["destructive_label"])
             self.btn_select_file.stop(state="normal")
 
         self.after(0, _done)
@@ -443,7 +444,7 @@ class VideoTrimmerApp(ctk.CTk):
     # ************************************************** FRAME PREVIEWS **************************************************
 
     def _cancel_preview_jobs(self) -> None:
-        for attr in ("_preview_start_job", "_preview_end_job"):
+        for attr in {"_preview_start_job", "_preview_end_job"}:
             if job := getattr(self, attr):
                 self.after_cancel(job)
                 setattr(self, attr, None)
@@ -452,6 +453,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _schedule_preview(self, which: str, sec: float) -> None:
         """Show instant low-res strip preview, then throttle high-quality extraction."""
+
         if not self.selected_file or not self.ffmpeg_path:
             return
 
@@ -506,6 +508,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _extract_frame(self, video_path: str, sec: float) -> Image.Image | None:
         """Extract a single video frame at `sec` seconds; returns PIL Image or None."""
+
         if not self.ffmpeg_path:
             return None
 
@@ -540,6 +543,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:
         """Background: extract `_STRIP_COUNT` evenly-spaced low-res frames in a single ffmpeg pass."""
+
         if not self.ffmpeg_path or duration <= 0:
             return
 
@@ -600,7 +604,7 @@ class VideoTrimmerApp(ctk.CTk):
                 if key == "out_time_us" and val.lstrip("-").isdigit():
                     elapsed = max(0, int(val)) / 1_000_000.0
                     frac = max(0.0, min(0.99, elapsed / duration))
-                    self.after(0, lambda f=frac: self._set_strip_status("indexing", f, generation))
+                    self.after(0, lambda progress_frac=frac: self._set_strip_status("indexing", progress_frac, generation))
 
             proc.wait()
             self._strip_proc = None
@@ -610,8 +614,8 @@ class VideoTrimmerApp(ctk.CTk):
                 return
 
             strip: list[Image.Image] = []
-            for f in sorted(Path(td).glob("f*.jpg")):
-                with suppress(Exception), Image.open(f) as im:
+            for frame_file in sorted(Path(td).glob("f*.jpg")):
+                with suppress(Exception), Image.open(frame_file) as im:
                     strip.append(im.copy())
 
         if not strip:
@@ -629,24 +633,26 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _set_strip_status(self, state: str, frac: float, generation: int) -> None:
         """Update the small indexing indicator. `state` is 'idle' | 'indexing' | 'ready' | 'error'."""
+
         if generation != self._preview_generation:
             return
 
-        c = COLORS[self._current_theme]
+        theme_colors = COLORS[self._current_theme]
         if state == "indexing":
             self.lbl_strip_status.configure(
                 text=f"Indexing\u2026 {int(frac * 100)}%",
-                text_color=c["placeholder_foreground"],
+                text_color=theme_colors["placeholder_foreground"],
             )
         elif state == "ready":
-            self.lbl_strip_status.configure(text="Ready", text_color=c["placeholder_foreground"])
+            self.lbl_strip_status.configure(text="Ready", text_color=theme_colors["placeholder_foreground"])
         elif state == "error":
-            self.lbl_strip_status.configure(text="Index failed", text_color=c["destructive_label"])
+            self.lbl_strip_status.configure(text="Index failed", text_color=theme_colors["destructive_label"])
         else:
-            self.lbl_strip_status.configure(text="", text_color=c["placeholder_foreground"])
+            self.lbl_strip_status.configure(text="", text_color=theme_colors["placeholder_foreground"])
 
     def _strip_image_at(self, sec: float) -> Image.Image | None:
         """Return the nearest low-res strip thumbnail for `sec`, upscaled to display size."""
+
         if not self._thumb_strip or self.duration is None or self.duration <= 0:
             return None
         if self._thumb_strip_generation != self._preview_generation:
@@ -660,8 +666,9 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _set_preview(self, which: str, img: Image.Image | None) -> None:
         """Update a thumbnail widget; `which` is 'start' or 'end'."""
+
         lbl = self.lbl_start_thumb if which == "start" else self.lbl_end_thumb
-        c = COLORS[self._current_theme]
+        theme_colors = COLORS[self._current_theme]
 
         if img is None:
             setattr(self, f"_{which}_preview_image", None)
@@ -669,7 +676,9 @@ class VideoTrimmerApp(ctk.CTk):
             with suppress(Exception):
                 lbl._label.configure(image="")
             lbl.configure(
-                image=None, text="Start\nframe" if which == "start" else "End\nframe", text_color=c["placeholder_foreground"]
+                image=None,
+                text="Start\nframe" if which == "start" else "End\nframe",
+                text_color=theme_colors["placeholder_foreground"],
             )
             return
 
@@ -682,6 +691,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _on_timeline_change(self, start_frac: float, end_frac: float) -> None:
         """Called continuously while the timeline handle is being dragged."""
+
         if self.duration is None:
             return
 
@@ -703,6 +713,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _on_timeline_commit(self, start_frac: float, end_frac: float) -> None:
         """Called once when the timeline handle is released."""
+
         if self.duration is None:
             return
 
@@ -718,6 +729,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _on_entry_commit(self, which: str) -> None:
         """Parse the entry and update internal state; revert on invalid input."""
+
         entry = self.entry_start if which == "start" else self.entry_end
         val = entry.get().strip()
 
@@ -757,6 +769,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _step_time(self, which: str, direction: int) -> None:
         """Increment or decrement the start or end by exactly one frame."""
+
         if not self.selected_file:
             return
 
@@ -793,6 +806,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _sync_entries(self) -> None:
         """Repopulate the entry widgets from `_start_sec` / `_end_sec`."""
+
         if not self.selected_file:
             return
 
@@ -813,6 +827,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _sync_timeline(self) -> None:
         """Update the timeline widget from `_start_sec` / `_end_sec`."""
+
         if self.duration:
             start_frac = self._start_sec / self.duration
             end_frac = (self._end_sec / self.duration) if self._end_sec is not None else 1.0
@@ -842,9 +857,9 @@ class VideoTrimmerApp(ctk.CTk):
         initial_file: str | None = None
 
         if self.selected_file:
-            p = Path(self.selected_file)
-            initial_dir = str(p.parent)
-            initial_file = f"{p.stem}{_TRIM_SUFFIX}{p.suffix}"
+            file_path = Path(self.selected_file)
+            initial_dir = str(file_path.parent)
+            initial_file = f"{file_path.stem}{_TRIM_SUFFIX}{file_path.suffix}"
 
         path = filedialog.asksaveasfilename(
             title="Save Trimmed Video As",
@@ -857,11 +872,12 @@ class VideoTrimmerApp(ctk.CTk):
             return
 
         self.output_path = path
-        c = COLORS[self._current_theme]
-        self.lbl_out.configure(text=Path(path).name, text_color=c["foreground"])
+        theme_colors = COLORS[self._current_theme]
+        self.lbl_out.configure(text=Path(path).name, text_color=theme_colors["foreground"])
 
     def reset_all(self) -> None:
         """Clear all fields and return the UI to its initial state."""
+
         self._start_sec = 0.0
         self._end_sec = None
         self.selected_file = None
@@ -876,10 +892,12 @@ class VideoTrimmerApp(ctk.CTk):
         self.entry_start.delete(0, "end")
         self.entry_end.delete(0, "end")
 
-        c = COLORS[self._current_theme]
-        self.lbl_file.configure(text="No file selected", text_color=c["placeholder_foreground"])
+        theme_colors = COLORS[self._current_theme]
+        self.lbl_file.configure(text="No file selected", text_color=theme_colors["placeholder_foreground"])
         self.btn_select_file.stop(state="normal")
-        self.lbl_out.configure(text=f'(auto: same folder, suffix "{_TRIM_SUFFIX}")', text_color=c["placeholder_foreground"])
+        self.lbl_out.configure(
+            text=f'(auto: same folder, suffix "{_TRIM_SUFFIX}")', text_color=theme_colors["placeholder_foreground"]
+        )
 
         self._set_preview("start", None)
         self._set_preview("end", None)
@@ -891,54 +909,58 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _apply_theme(self) -> None:
         self._current_theme = get_system_theme()
-        c: dict[str, str] = dict(COLORS[self._current_theme])
+        theme_colors: dict[str, str] = dict(COLORS[self._current_theme])
 
         ctk.set_appearance_mode(self._current_theme)
-        self.configure(fg_color=c["background"])
+        self.configure(fg_color=theme_colors["background"])
 
-        self.main_frame.configure(fg_color=c["background"])
-        self.sec_file.configure(fg_color=c["background"])
-        self.sec_trim.configure(fg_color=c["background"])
-        self.trim_header.configure(fg_color=c["background"])
-        self.sec_preview.configure(fg_color=c["background"])
-        self.sec_inputs.configure(fg_color=c["background"])
-        self.sec_out.configure(fg_color=c["background"])
+        self.main_frame.configure(fg_color=theme_colors["background"])
+        self.sec_file.configure(fg_color=theme_colors["background"])
+        self.sec_trim.configure(fg_color=theme_colors["background"])
+        self.trim_header.configure(fg_color=theme_colors["background"])
+        self.sec_preview.configure(fg_color=theme_colors["background"])
+        self.sec_inputs.configure(fg_color=theme_colors["background"])
+        self.sec_out.configure(fg_color=theme_colors["background"])
 
-        self.lbl_section_file.configure(text_color=c["foreground"])
-        self.lbl_section_trim.configure(text_color=c["foreground"])
-        self.lbl_section_out.configure(text_color=c["foreground"])
+        self.lbl_section_file.configure(text_color=theme_colors["foreground"])
+        self.lbl_section_trim.configure(text_color=theme_colors["foreground"])
+        self.lbl_section_out.configure(text_color=theme_colors["foreground"])
 
-        self.lbl_start.configure(text_color=c["muted_foreground"])
-        self.lbl_end.configure(text_color=c["muted_foreground"])
-        self.lbl_hint.configure(text_color=c["muted_foreground"])
+        self.lbl_start.configure(text_color=theme_colors["muted_foreground"])
+        self.lbl_end.configure(text_color=theme_colors["muted_foreground"])
+        self.lbl_hint.configure(text_color=theme_colors["muted_foreground"])
 
-        self.lbl_file.configure(text_color=c["foreground"] if self.selected_file else c["placeholder_foreground"])
-        self.lbl_out.configure(text_color=c["foreground"] if self.output_path else c["placeholder_foreground"])
+        self.lbl_file.configure(
+            text_color=theme_colors["foreground"] if self.selected_file else theme_colors["placeholder_foreground"]
+        )
+        self.lbl_out.configure(
+            text_color=theme_colors["foreground"] if self.output_path else theme_colors["placeholder_foreground"]
+        )
 
         # Preview thumbnails:
         for frame in (self.frame_start_thumb, self.frame_end_thumb):
-            frame.configure(fg_color=c["background"], border_color=c["border"])
+            frame.configure(fg_color=theme_colors["background"], border_color=theme_colors["border"])
         for lbl in (self.lbl_start_thumb, self.lbl_end_thumb):
-            lbl.configure(text_color=c["placeholder_foreground"], fg_color="transparent")
+            lbl.configure(text_color=theme_colors["placeholder_foreground"], fg_color="transparent")
 
         # Mode toggle:
         self.mode_toggle.configure(
-            fg_color=c["background"],
-            border_color=c["secondary_border"],
-            selected_color=c["primary"],
-            selected_hover_color=c["primary_hover"],
-            selected_text_color=c["primary_foreground"],
-            unselected_color=c["background"],
-            unselected_hover_color=c["secondary_hover"],
-            text_color=c["foreground"],
+            fg_color=theme_colors["background"],
+            border_color=theme_colors["secondary_border"],
+            selected_color=theme_colors["primary"],
+            selected_hover_color=theme_colors["primary_hover"],
+            selected_text_color=theme_colors["primary_foreground"],
+            unselected_color=theme_colors["background"],
+            unselected_hover_color=theme_colors["secondary_hover"],
+            text_color=theme_colors["foreground"],
         )
 
         # Timeline:
-        self.trim_timeline.apply_colors(c)
+        self.trim_timeline.apply_colors(theme_colors)
 
         # Stepper buttons:
-        chevron_left = render_svg_icon("chevron-left", 14, c["muted_foreground"])
-        chevron_right = render_svg_icon("chevron-right", 14, c["muted_foreground"])
+        chevron_left = render_svg_icon("chevron-left", 14, theme_colors["muted_foreground"])
+        chevron_right = render_svg_icon("chevron-right", 14, theme_colors["muted_foreground"])
         for btn, icon in (
             (self.btn_start_left, chevron_left),
             (self.btn_start_right, chevron_right),
@@ -946,48 +968,57 @@ class VideoTrimmerApp(ctk.CTk):
             (self.btn_end_right, chevron_right),
         ):
             btn.configure(
-                fg_color=c["secondary"],
-                hover_color=c["secondary_hover"],
-                border_color=c["secondary_border"],
-                text_color=c["muted_foreground"],
+                fg_color=theme_colors["secondary"],
+                hover_color=theme_colors["secondary_hover"],
+                border_color=theme_colors["secondary_border"],
+                text_color=theme_colors["muted_foreground"],
                 image=icon,
             )
 
-        self.btn_select_file.configure(fg_color=c["card"], hover_color=c["card_hover"], text_color=c["card_foreground"])
+        self.btn_select_file.configure(
+            fg_color=theme_colors["card"], hover_color=theme_colors["card_hover"], text_color=theme_colors["card_foreground"]
+        )
         self.btn_select_out.configure(
-            fg_color=c["secondary"],
-            hover_color=c["secondary_hover"],
-            border_color=c["secondary_border"],
-            text_color=c["secondary_foreground"],
+            fg_color=theme_colors["secondary"],
+            hover_color=theme_colors["secondary_hover"],
+            border_color=theme_colors["secondary_border"],
+            text_color=theme_colors["secondary_foreground"],
         )
         self.btn_reset_all.configure(
             width=28,
             height=28,
-            image=render_svg_icon("refresh-ccw", 16, c["muted_foreground"]),
+            image=render_svg_icon("refresh-ccw", 16, theme_colors["muted_foreground"]),
             fg_color="transparent",
-            hover_color=c["secondary_hover"],
+            hover_color=theme_colors["secondary_hover"],
         )
 
         for entry in (self.entry_start, self.entry_end):
             entry.configure(
-                fg_color=c["background"],
-                border_color=c["secondary_border"],
-                text_color=c["foreground"],
-                placeholder_text_color=c["placeholder_foreground"],
+                fg_color=theme_colors["background"],
+                border_color=theme_colors["secondary_border"],
+                text_color=theme_colors["foreground"],
+                placeholder_text_color=theme_colors["placeholder_foreground"],
             )
 
         if self.btn_apply:
-            self.btn_apply.configure(fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["primary_foreground"])
+            self.btn_apply.configure(
+                fg_color=theme_colors["primary"],
+                hover_color=theme_colors["primary_hover"],
+                text_color=theme_colors["primary_foreground"],
+            )
         if hasattr(self, "progress_bar"):
-            self.progress_bar.configure(fg_color=c["secondary_hover"], progress_color=c["placeholder_foreground"])
+            self.progress_bar.configure(
+                fg_color=theme_colors["secondary_hover"], progress_color=theme_colors["placeholder_foreground"]
+            )
 
         if hasattr(self, "_banner"):
-            self._banner.configure(fg_color=c["destructive"], border_color=c["destructive_border"])
+            self._banner.configure(fg_color=theme_colors["destructive"], border_color=theme_colors["destructive_border"])
             for lbl, key in self._banner_labels:
-                lbl.configure(text_color=c[key])
+                lbl.configure(text_color=theme_colors[key])
 
     def _verify_ffmpeg(self) -> None:
         """Verify FFmpeg and FFprobe run; called in a background thread."""
+
         ok = False
         if self.ffmpeg_path and self.ffprobe_path:
             try:
@@ -1020,6 +1051,7 @@ class VideoTrimmerApp(ctk.CTk):
 
     def _animate_progress_to(self, target: float) -> None:
         """Ease-out animate the progress bar toward `target` at ~60 fps."""
+
         if not hasattr(self, "progress_bar"):
             return
         if self._progress_anim_id:
@@ -1102,8 +1134,8 @@ class VideoTrimmerApp(ctk.CTk):
         if self.output_path:
             out_path = self.output_path
         else:
-            p = Path(self.selected_file)
-            out_path = str(p.with_name(f"{p.stem}{_TRIM_SUFFIX}{p.suffix}"))
+            file_path = Path(self.selected_file)
+            out_path = str(file_path.with_name(f"{file_path.stem}{_TRIM_SUFFIX}{file_path.suffix}"))
 
         if Path(out_path).resolve() == Path(self.selected_file).resolve():
             messagebox.showerror("Invalid Output", "Output path must differ from the input file.")
@@ -1136,7 +1168,7 @@ class VideoTrimmerApp(ctk.CTk):
             self.progress_bar.grid()
 
         def _on_progress(frac: float) -> None:
-            self.after(0, lambda f=frac: self._animate_progress_to(f))
+            self.after(0, lambda progress_frac=frac: self._animate_progress_to(progress_frac))
 
         def _on_done(ok: bool, err: str | None) -> None:
 

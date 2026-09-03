@@ -6,6 +6,7 @@ _TIME_RE = re.compile(r"^\s*(?:(\d+):)?(?:(\d{1,2}):)?(\d+(?:\.\d+)?)\s*$")
 def parse_time(val: str) -> float | None:
     """Parse `HH:MM:SS(.ms)`, `MM:SS(.ms)`, or `SS(.ms)` into seconds.<br>
     Returns `None` if the input cannot be parsed."""
+
     if not val.strip():
         return None
     if not (match := _TIME_RE.match(val)):
@@ -26,24 +27,27 @@ def parse_time(val: str) -> float | None:
 
 def format_time(seconds: float) -> str:
     """Format `seconds` as `HH:MM:SS.mmm` (or `MM:SS.mmm` when under one hour)."""
+
     if seconds < 0:
         seconds = 0.0
 
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = seconds - h * 3600 - m * 60
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds - hours * 3600 - minutes * 60
 
-    if h > 0:
-        return f"{h:02d}:{m:02d}:{s:06.3f}"
+    if hours > 0:
+        return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
     else:
-        return f"{m:02d}:{s:06.3f}"
+        return f"{minutes:02d}:{secs:06.3f}"
 
 
 def frame_to_time(frame: int, fps: float) -> float:
     """Convert a frame number to seconds."""
+
     return frame / fps
 
 
 def time_to_frame(seconds: float, fps: float) -> int:
     """Convert seconds to the nearest frame number."""
+
     return round(seconds * fps)

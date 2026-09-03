@@ -32,7 +32,7 @@ def bind_clean_paste(tk_widget: tk.Misc) -> None:
 
 def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     """Render a single SVG file to a `PIL` RGBA image at `render_px × render_px`.\n
-    -------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Replaces `currentColor` with `color` (CSS hex string) before rasterizing.<br>
     Pipeline: `svglib` → `ReportLab PDF` (no native Cairo needed) → `PyMuPDF` → `PIL`"""
 
@@ -60,7 +60,7 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
 
 def render_svg_icon(name: str, size: int, color: str) -> ctk.CTkImage:
     """Rasterize a named icon from `ICONS` to a `ctk.CTkImage`.\n
-    ---------------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     `color` is a CSS hex string, e.g., `"#A1A1AA"`; it replaces `currentColor`.<br>
     Renders at 4× logical size so `CTkImage` can downsample cleanly on any HiDPI scale."""
 
@@ -455,8 +455,8 @@ class SpinnerButton(ctk.CTkButton):
     def _build_frames(self, color_hex: str, size: int = 18) -> None:
         # Render loader SVG at 3x for anti-aliasing, then generate one rotated frame per step:
         HI = size * 3
-        r, g, b, a = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
-        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # pyright:ignore[reportArgumentType]
+        red, green, blue, alpha = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
+        base = Image.merge("RGBA", (red, green, blue, alpha.point(lambda alpha_val: round(alpha_val * 0.5))))  # pyright:ignore[reportArgumentType]
 
         step = 360.0 / self._FRAME_COUNT
         self._spin_frames = []
@@ -544,7 +544,7 @@ class SegmentedButton(ctk.CTkFrame):
                 corner_radius=4,
                 border_width=0,
                 font=font,
-                command=lambda v=val: self._select(v),
+                command=lambda selected_val=val: self._select(selected_val),
             )
 
             pad_l = 2 if i == 0 else 0
@@ -586,18 +586,18 @@ class SegmentedButton(ctk.CTkFrame):
         return self._selected
 
     def configure(self, **kwargs: object) -> None:
-        if (v := kwargs.pop("selected_color", None)) is not None:
-            self._selected_color = str(v)
-        if (v := kwargs.pop("selected_hover_color", None)) is not None:
-            self._selected_hover = str(v)
-        if (v := kwargs.pop("selected_text_color", None)) is not None:
-            self._selected_text_color = str(v)
-        if (v := kwargs.pop("unselected_color", None)) is not None:
-            self._unselected_color = str(v)
-        if (v := kwargs.pop("unselected_hover_color", None)) is not None:
-            self._unselected_hover = str(v)
-        if (v := kwargs.pop("text_color", None)) is not None:
-            self._text_color = str(v)
+        if (val := kwargs.pop("selected_color", None)) is not None:
+            self._selected_color = str(val)
+        if (val := kwargs.pop("selected_hover_color", None)) is not None:
+            self._selected_hover = str(val)
+        if (val := kwargs.pop("selected_text_color", None)) is not None:
+            self._selected_text_color = str(val)
+        if (val := kwargs.pop("unselected_color", None)) is not None:
+            self._unselected_color = str(val)
+        if (val := kwargs.pop("unselected_hover_color", None)) is not None:
+            self._unselected_hover = str(val)
+        if (val := kwargs.pop("text_color", None)) is not None:
+            self._text_color = str(val)
 
         if kwargs:
             super().configure(**kwargs)  # pyright:ignore[reportArgumentType]

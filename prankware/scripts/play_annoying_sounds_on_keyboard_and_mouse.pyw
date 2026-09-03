@@ -13,17 +13,17 @@ from xulbux import Console, Path
 MIN_VOLUME = 0.50  # Volume in percent.
 
 SOUNDS = {
+    "mouse": "assets/sound/mouse.wav",
     "\x03": "assets/sound/ctrl_c.wav",
     "\x13": "assets/sound/ctrl_s.wav",
     "\x16": "assets/sound/ctrl_v.wav",
-    "0": "assets/sound/zero.wav",
-    "a": "assets/sound/a.wav",
     "alt_f4": "assets/sound/alt_f4.wav",
     "alt_s": "assets/sound/alt_s.wav",
     "alt_tab": "assets/sound/alt_tab.wav",
+    "0": "assets/sound/zero.wav",
+    "a": "assets/sound/a.wav",
     "j": "assets/sound/j.wav",
     "m": "assets/sound/m.wav",
-    "mouse": "assets/sound/mouse.wav",
     "w": "assets/sound/w.wav",
     "x": "assets/sound/x.wav",
     Key.backspace: "assets/sound/backspace.wav",
@@ -191,6 +191,7 @@ def ensure_min_system_volume() -> None:
 
 def _play_sound_task(sound_object: pygame.mixer.Sound) -> None:
     """Internal function to be run in a separate thread for sound playback using pygame."""
+
     ensure_min_system_volume()
     if sound_object:
         try:
@@ -205,6 +206,7 @@ def _play_sound_task(sound_object: pygame.mixer.Sound) -> None:
 
 def play_sound(sound_key) -> None:
     """Plays a sound associated with sound_key in a separate thread using pygame."""
+
     if not PYGAME_INITIALIZED:
         Console.debug("Pygame not initialized, skipping sound playback.", active=DEBUG)
         return
@@ -265,6 +267,7 @@ def on_press(key) -> None:
 
 def on_release(key) -> None:
     """Handles key release events, primarily to manage key combinations."""
+
     try:
         if key in PRESSED_KEYS:
             PRESSED_KEYS.remove(key)

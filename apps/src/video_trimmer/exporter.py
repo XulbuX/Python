@@ -1,5 +1,7 @@
-"""Frame-accurate, lossless video trimming via FFmpeg.\n
-----------------------------------------------------------------------
+"""Frame-accurate, lossless video trimming via FFmpeg.
+
+---
+
 The exporter runs ffmpeg in a background thread and reports<br>
 progress via callbacks. The caller is responsible for marshalling<br>
 those callbacks back onto its UI thread (e.g., with `tk.after`).
@@ -18,7 +20,7 @@ DoneCallback = Callable[[bool, str | None], None]
 
 class TrimExporter:
     """Frame-accurate video trim via FFmpeg.\n
-    ----------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------------------------
     Input seek (`-ss before -i`) jumps cheaply to ~2 s before the target.<br>
     Output seek (`-ss after -i`) then decodes to the exact requested frame.<br>
     Re-encoding is required for frame accuracy; the source video bitrate<br>
@@ -40,6 +42,7 @@ class TrimExporter:
         on_done: DoneCallback,
     ) -> threading.Thread:
         """Start a background trim. Returns the worker thread."""
+
         thread = threading.Thread(
             target=self._worker, args=(src, dst, start_s, end_s, clip_total, on_progress, on_done), daemon=True
         )
@@ -49,6 +52,7 @@ class TrimExporter:
 
     def cancel(self) -> None:
         """Kill the in-flight ffmpeg process if any."""
+
         if (proc := self._proc) is not None and proc.poll() is None:
             with suppress(Exception):
                 proc.kill()
@@ -83,6 +87,7 @@ class TrimExporter:
 
     def _probe_video_bitrate(self, src: str) -> int | None:
         """Return the video stream bitrate in bits/s, or None if unavailable."""
+
         if not self.ffprobe_path:
             return None
 

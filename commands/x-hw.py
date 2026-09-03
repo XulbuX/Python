@@ -253,8 +253,9 @@ class HardwareInfo:
         self.network = self._get_network_info()
         self.battery = self._get_battery_info()
 
-    def to_dict(self) -> dict[str, dict[str, Any]]:
+    def as_dict(self) -> dict[str, dict[str, Any]]:
         """Convert hardware info to dictionary."""
+
         result: dict[str, dict[str, Any]] = {}
         if self.system:
             result["system"] = self.system
@@ -411,7 +412,7 @@ def main() -> None:
         return
 
     if ARGS.json_output.exists:
-        FormatCodes.print(f"\n{xx.data.render(hw_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
+        FormatCodes.print(f"\n{xx.data.render(hw_info.as_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         hw_info.display()
 

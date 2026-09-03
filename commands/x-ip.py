@@ -216,8 +216,9 @@ class IPInfo:
             xx.console.info("Fetching geolocation data...")
             self.geo_info = self._get_geolocation(self.public_ipv4)
 
-    def to_dict(self) -> dict[str, dict[str, Any]]:
+    def as_dict(self) -> dict[str, dict[str, Any]]:
         """Convert IP info to dictionary."""
+
         result: dict[str, dict[str, Any]] = {"local": {}, "public": {}}
         if self.local_ipv4:
             result["local"]["ipv4"] = self.local_ipv4
@@ -323,7 +324,7 @@ def main() -> None:
         return
 
     if ARGS.json_output.exists:
-        FormatCodes.print(f"\n{xx.data.render(ip_info.to_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
+        FormatCodes.print(f"\n{xx.data.render(ip_info.as_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
     else:
         ip_info.display()
 

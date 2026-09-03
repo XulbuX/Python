@@ -28,8 +28,8 @@ def main() -> None:
 
     # Create file in startup directory, with shutdown command inside:
     autostart.mkdir(parents=True, exist_ok=True)
-    with open(script_path, "w") as f:
-        f.write(script_content)
+    with open(script_path, "w") as file:
+        file.write(script_content)
 
     # Set file permissions and run shutdown command:
     if sys.platform != "win32":

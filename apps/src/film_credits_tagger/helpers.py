@@ -4,12 +4,14 @@ from consts import ValueType
 
 def normalize_multi(val: str) -> str:
     """Normalize user-entered separators to `; ` for multi-value tags."""
-    return "; ".join(part for part in (raw_part.strip() for raw_part in re.split(r"\s*[/;,]\s*", val)) if part)
+
+    return "; ".join([part for part in [raw_part.strip() for raw_part in re.split(r"\s*[/;,]\s*", val)] if part])
 
 
 def parse_date(val: str) -> str:
     """Parse a user-entered date (`DD/MM/YYYY`, flexible separators) into ExifTool format `YYYY:MM:DD 00:00:00`.<br>
     Raises `ValueError` with a human-readable message if the input cannot be parsed."""
+
     fmt = "Expected format: DD/MM/YYYY (e.g., 25/12/2026)"
 
     if not (match := re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})[./\- ](\d{4})", val.strip())):
@@ -28,6 +30,7 @@ def parse_date(val: str) -> str:
 def exiftool_date_to_display(exiftool_date: str) -> str | None:
     """Convert an ExifTool date string (`YYYY:MM:DD …`) to display format `DD/MM/YYYY`.<br>
     Returns `None` if `exiftool_date` does not start with a recognizable `YYYY:MM:DD` pattern."""
+
     if match := re.match(r"(\d{4}):(\d{2}):(\d{2})", exiftool_date):
         return f"{match.group(3)}/{match.group(2)}/{match.group(1)}"
     return None
@@ -35,6 +38,7 @@ def exiftool_date_to_display(exiftool_date: str) -> str | None:
 
 def validate_field(val: str, value_type: ValueType) -> str | None:
     """Return a human-readable error string if `val` fails validation for `value_type`, else `None`."""
+
     match value_type:
         case ValueType.Date:
             try:
