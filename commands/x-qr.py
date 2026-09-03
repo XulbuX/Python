@@ -156,12 +156,13 @@ class WiFi:
     def _try_get_password(self, ssid: str) -> str | None:
         """Try multiple methods to get WiFi password."""
 
-        # XML export
+        # XML export:
         password = self._export_xml_method(ssid)
         if password:
             xx.console.done("Retrieved password using XML export method")
             return password
-        # Direct netsh variations
+
+        # Direct netsh variations:
         password = self._netsh_variations(ssid)
         if password:
             xx.console.done("Retrieved password using netsh method")

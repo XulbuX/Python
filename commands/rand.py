@@ -9,7 +9,7 @@ import sys
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, ProgressBar, S
 
-sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
+sys.set_int_max_str_digits(0)  # 0 = no limit.
 
 
 def gen_random_int(digits: int | None = None, min_val: int | None = None, max_val: int | None = None) -> int:

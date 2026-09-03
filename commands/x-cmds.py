@@ -141,7 +141,7 @@ def get_xcmds_options(filepath: str) -> dict[str, bool]:
     with suppress(Exception), open(filepath, encoding="utf-8") as file:
         for line in file:
             if PATTERNS.python_shebang.match(line):
-                continue  # SKIP SHEBANG LINE
+                continue  # Skip shebang line.
             elif match := PATTERNS.update_marker.match(line):
                 for option in (opt.strip().lower() for opt in match.group(1).split(",")):
                     if option == "update":
@@ -149,7 +149,7 @@ def get_xcmds_options(filepath: str) -> dict[str, bool]:
                     elif option == "unlisted":
                         options["unlisted"] = True
             else:
-                break  # STOP AT FIRST NON-MATCHING LINE
+                break  # Stop at first non-matching line.
 
     return options
 
@@ -367,13 +367,13 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
     }
 
     with suppress(Exception):
-        # MERGE FILES FROM ALL GITHUB REPO URLS
+        # Merge files from all GitHub repo URLs:
         github_files: dict[str, dict[str, str]] = {}
         successful_fetches = 0
 
         for repo_url in CONFIG["github_updates"]["github_repo_urls"]:
             with suppress(Exception):
-                # PARSE THE URL TO EXTRACT REPO INFO
+                # Parse the URL to extract repo info:
                 url_pattern = re.match(r"https?://github\.com/([^/]+)/([^/]+)(?:/(?:tree|blob)/([^/]+)(/.*)?)?", repo_url)
                 if not url_pattern:
                     continue
@@ -381,7 +381,7 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
                 user, repo, branch, path = url_pattern.groups()
                 branch, path = branch or "main", (path or "").strip("/")
 
-                # USE GITHUB API TO GET DIRECTORY CONTENTS
+                # Use GitHub API to get directory contents:
                 api_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
                 if branch:
                     api_url += f"?ref={branch}"
@@ -389,7 +389,7 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
                 response = requests.get(api_url, timeout=10)
                 response.raise_for_status()
 
-                # MERGE FILES FROM THIS REPO (LATER URLS OVERRIDE EARLIER ONES IF SAME NAME)
+                # Merge files from this repo (later URLs override earlier ones if same name):
                 for item in response.json():
                     if item["type"] == "file" and item["name"].endswith((".py", ".pyw")):
                         cmd_name = Path(item["name"]).stem
@@ -403,13 +403,13 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
 
         if successful_fetches == 0 and len(CONFIG["github_updates"]["github_repo_urls"]) > 0:
             result["fetch_failed"] = True
-            return result  # BAIL OUT TO PREVENT FALSE DELETIONS WHEN GITHUB API REQUESTS FAIL
+            return result  # Bail out to prevent false deletions when GitHub API requests fail.
 
-        # CREATE MAPPING FROM CMD NAME TO ACTUAL FILENAME FOR LOCAL FILES
+        # Create mapping from cmd name to actual filename for local files:
         local_file_map = {Path(f).stem: f for f in local_files}
         local_cmd_names = set(local_file_map.keys())
 
-        # GET LOCAL FILES THAT HAVE UPDATE MARKER
+        # Get local files that have update marker:
         local_updateable_files: set[str] = set()
         for filename in local_files:
             filepath = CONFIG["command_dir"] / filename
@@ -417,14 +417,14 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
             if options.get("update_check"):
                 local_updateable_files.add(Path(filename).stem)
 
-        # CHECK FOR NEW FILES
+        # Check for new files:
         if CONFIG["github_updates"]["check_for_new_commands"]:
             for cmd_name in github_files:
                 if cmd_name not in local_cmd_names:
                     result["new_commands"].append(cmd_name)
                     result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name]["download_url"]
 
-        # CHECK FOR UPDATED FILES (ONLY THOSE WITH UPDATE MARKER)
+        # Check for updated files (only those with update marker):
         if CONFIG["github_updates"]["check_for_command_updates"]:
             for cmd_name in local_updateable_files:
                 if cmd_name in github_files:
@@ -432,21 +432,21 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
                         local_filename = local_file_map[cmd_name]
                         local_path = CONFIG["command_dir"] / local_filename
 
-                        # READ AS TEXT AND NORMALIZE TO LF (UNIX) LINE ENDINGS LIKE GITHUB
+                        # Read as text and normalize to LF (Unix) line endings like GitHub:
                         with open(local_path, encoding="utf-8", newline="") as f:
                             local_content = f.read().replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
 
-                        # GITHUB USES: "blob " + FILESIZE + "\0" + CONTENT THEN SHA1 HASH
+                        # GitHub uses: "blob " + file size + "\0" + content then SHA1 hash:
                         local_sha = hashlib.sha1(f"blob {len(local_content)}\0".encode() + local_content).hexdigest()
 
-                        # COMPARE WITH GITHUB'S SHA
+                        # Compare with GitHub's SHA:
                         if local_sha != github_files[cmd_name]["sha"]:
                             result["updated_commands"].append(cmd_name)
                             result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name][
                                 "download_url"
                             ]
 
-        # CHECK FOR DELETED FILES (LOCAL FILES WITH UPDATE MARKER NOT IN GITHUB)
+        # Check for deleted files (local files with update marker not in GitHub):
         if CONFIG["github_updates"]["check_for_new_commands"]:
             for cmd_name in local_updateable_files:
                 if cmd_name not in github_files and cmd_name not in result["updated_commands"]:
@@ -479,7 +479,7 @@ def github_diffs_str(github_diffs: GithubDiffs) -> str:
             else "[magenta](ⓘ [i](All your command-files are up-to-date.))\n\n"
         )
 
-    # BUILD TITLE
+    # Build title:
     title_parts: list[str] = []
     if num_new_cmds:
         title_parts.append(f"{num_new_cmds} new command{'' if num_new_cmds == 1 else 's'}")
@@ -533,20 +533,20 @@ def download_files(github_diffs: GithubDiffs) -> None:
 
     success_count = 0
 
-    # DOWNLOAD NEW AND UPDATED FILES
+    # Download new and updated files:
     for filename, url in downloads:
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
 
-            # SAVE WITH OR WITHOUT EXTENSION BASED ON PLATFORM
+            # Save with or without extension based on platform:
             cmd_name = Path(filename).stem
             file_path = CONFIG["command_dir"] / (filename if xx.system.is_win() else cmd_name)
 
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
 
-            # MAKE EXECUTABLE ON UNIX-LIKE SYSTEMS
+            # Make executable on Unix-like systems:
             if not xx.system.is_win():
                 Path(file_path).chmod(0o755)
 
@@ -556,10 +556,10 @@ def download_files(github_diffs: GithubDiffs) -> None:
         except Exception as exc:
             FormatCodes.print(f"[br:red](✗ Failed to download [b]({filename}) [dim]/({exc})[_])")
 
-    # DELETE REMOVED FILES
+    # Delete removed files:
     for cmd_name in deletions:
         try:
-            # TRY BOTH WITH AND WITHOUT EXTENSION
+            # Try both with and without extension:
             deleted = False
             for ext in [".py", ".pyw", ""]:
                 file_path = CONFIG["command_dir"] / f"{cmd_name}{ext}"

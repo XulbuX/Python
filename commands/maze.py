@@ -35,14 +35,15 @@ class Maze:
         render_opts: dict[str, str | int | tuple[str, str]] | None = None,
         render_ascii: bool = False,
     ) -> None:
-        # PRE-COMPUTE TILES
+        # Pre-compute tiles:
         self.bg_byte: int = ord(bg)
         self.wall_byte: int = ord(wall)
         self.start_byte: int = ord(start)
         self.goal_byte: int = ord(goal)
         self.player_byte: int = ord(player)
         self.solution_byte: int = ord(solution)
-        # RENDER
+
+        # Render:
         self.render_opts: dict[str, str | int | tuple[str, str]] = (
             {"bg": " ", "wall": "░", "start": " ", "goal": "▞", "player": "█", "solution": "▒", "stretch_w": 2}
             if render_ascii
@@ -69,15 +70,18 @@ class Maze:
             self.player_byte: self._render_char(cast("str | tuple[str, str]", self.render_opts["player"])),
             self.solution_byte: self._render_char(cast("str | tuple[str, str]", self.render_opts["solution"])),
         }
-        # GENERATE MAZE
+
+        # Generate maze:
         self.width: int = width - 2
         self.height: int = height - 2
         self.maze = self._generate()
-        # POSITIONS
+
+        # Positions:
         self.start_pos: list[int] = self._get_pos(self.start_byte)
         self.goal_pos: list[int] = self._get_pos(self.goal_byte)
         self.player_pos: list[int] = list(self.start_pos)
-        # PLAYER
+
+        # Player:
         self.under_player: int = self.maze[self.player_pos[0]][self.player_pos[1]]
         self._move_player(0, 0)
 
@@ -324,10 +328,10 @@ class Maze:
 
     def _game_main_loop(self) -> None:
         directions: dict[int | str, tuple[int, int]] = {
-            72: (-1, 0),  # UP
-            80: (1, 0),  # DOWN
-            75: (0, -1),  # LEFT
-            77: (0, 1),  # RIGHT
+            72: (-1, 0),  # Up
+            80: (1, 0),  # Down
+            75: (0, -1),  # Left
+            77: (0, 1),  # Right
             "w": (-1, 0),
             "s": (1, 0),
             "a": (0, -1),

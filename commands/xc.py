@@ -130,7 +130,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     except KeyboardInterrupt:
         S("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
         add_nl_before_end = False
-        exit_code = 130  # SIGINT.
+        exit_code = 130  # `SIGINT`
 
     except FileNotFoundError:
         error_msg = S(S.RED(S.BOLD("[ERROR] "), "Command not found:"), S.BR.RED(f"  {command_args[0]}"), "\n")

@@ -5,18 +5,18 @@ import customtkinter as ctk  # type:ignore[no-stubs]
 
 
 class ValueType(IntEnum):
-    Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (EXIFTOOL FORMAT)
-    Lang = 2  # ISO 639-2 CODE: eng, fra, deu…
+    Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (ExifTool format).
+    Lang = 2  # ISO 639-2 code: eng, fra, deu…
 
 
 class FieldType(IntEnum):
-    SINGLE = 1  # SINGLE-LINE CTkEntry
-    EXPANDING = 2  # SINGLE-LINE THAT EXPANDS TO MULTI-LINE (NO HARD NEWLINES)
-    MULTILINE = 3  # FREE MULTI-LINE WITH NEWLINES ALLOWED
+    SINGLE = 1  # Single-line `CTkEntry`.
+    EXPANDING = 2  # Single-line that expands to multi-line (no hard newlines).
+    MULTILINE = 3  # Free multi-line with newlines allowed.
 
 
 class _FieldDefRequired(TypedDict):
-    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
+    tags: tuple[str, ...]  # Primary (cross-platform) tag first; all are written, primary used for reading back.
     field_type: FieldType
 
 
@@ -26,8 +26,8 @@ class FieldDef(_FieldDefRequired, total=False):
 
 
 class FieldEntry(TypedDict):
-    tags: tuple[str, ...]  # PRIMARY (CROSS-PLATFORM) TAG FIRST; ALL ARE WRITTEN, PRIMARY USED FOR READING BACK
-    widget: ctk.CTkEntry  # ctk.CTkEntry OR MultilineEntry
+    tags: tuple[str, ...]  # Primary (cross-platform) tag first; all are written, primary used for reading back.
+    widget: ctk.CTkEntry  # `ctk.CTkEntry` or `MultilineEntry`.
 
 
 _ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
@@ -38,9 +38,8 @@ VIDEO_FILE_TYPES: list[tuple[str, str]] = [("Video Files", "*.mp4 *.mov *.m4v *.
 
 COVER_ART_FILE_TYPES: list[tuple[str, str]] = [("Images", "*.jpg *.jpeg *.png *.webp *.tiff *.tif")]
 
-# EACH FIELD LISTS ITS TAGS IN PRIORITY ORDER: CROSS-PLATFORM FIRST, OS-SPECIFIC APPENDED.
-# ItemList TAGS WRITE STANDARD iTunes/QuickTime ATOMS (©dir, ©wrt, ©prd, …) RECOGNIZED BY
-# macOS, VLC, MPV AND LINUX MEDIA PLAYERS. MICROSOFT TAGS COVER WINDOWS EXPLORER / WMP.
+# Each field lists tags in priority order: cross-platform first, OS-specific appended.
+# `ItemList` tags write standard iTunes/QuickTime atoms; Microsoft tags cover Windows Explorer/WMP:
 FIELDS: dict[str, dict[str, FieldDef]] = {
     "General": {
         "Title": {"tags": ("-ItemList:Title",), "field_type": FieldType.SINGLE},

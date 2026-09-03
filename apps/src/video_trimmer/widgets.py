@@ -156,16 +156,16 @@ class TrimTimeline(tk.Canvas):
         rc = self._c_range if self._enabled else self._c_range_dim
         hc = self._c_handle if self._enabled else self._c_range_dim
 
-        # BACKGROUND TRACK
+        # Background track:
         self._rrect(pad, ty1, w - pad, ty2, tr, tc)
 
         sx = self._frac_to_x(self._start_frac)
         ex = self._frac_to_x(self._end_frac)
 
-        # SELECTED RANGE FILL
+        # Selected range fill:
         self._rrect(sx, ty1, ex, ty2, tr, rc)
 
-        # HANDLE PILLS (TALLER THAN TRACK)
+        # Handle pills (taller than track):
         hw = self._HANDLE_W // 2
         hy1 = cy - self._HANDLE_H // 2
         hy2 = cy + self._HANDLE_H // 2

@@ -16,7 +16,7 @@ import sympy
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, LazyRegex, S, StyledText
 
-sys.set_int_max_str_digits(0)  # 0 = NO LIMIT
+sys.set_int_max_str_digits(0)  # 0 = no limit.
 
 PATTERNS = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
@@ -33,7 +33,7 @@ def clean_num(token: str, /) -> str:
 
 
 class OPERATORS:
-    # ARITHMETIC OPERATORS
+    # Arithmetic operators:
     MINUS = ("o:minus", ["-", "−"])
     PLUS = ("o:plus", ["+", "＋"])
     MULTIPLY = ("o:multiply", ["*", "×", "∗", "·"])
@@ -41,14 +41,14 @@ class OPERATORS:
     FLOOR_DIVIDE = ("o:floor_divide", ["//", "⌊/⌋"])
     MODULO = ("o:modulo", ["%", "mod"])
     POWER = ("o:power", ["**", "^"])
-    # LOGIC OPERATORS
+    # Logic operators:
     AND = ("o:and", ["and", "&&", "∧"])
     OR = ("o:or", ["or", "||", "∨"])
     NOT = ("o:not", ["not", "!", "¬"])
     XOR = ("o:xor", ["xor", "⊻"])
-    # POSTFIX OPERATORS
+    # Postfix operators:
     FACTORIAL = ("o:factorial", ["!"])
-    # COMPARISON OPERATORS
+    # Comparison operators:
     EQUALS = ("o:equals", ["eq", "=", "==", "≡"])
     NOT_EQUALS = ("o:not_equals", ["ne", "!=", "≠", "<>"])
     LESS_THAN = ("o:less_than", ["lt", "<", "＜"])
@@ -79,7 +79,7 @@ class OPERATORS:
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
     PRECEDENCE: ClassVar[dict[str | tuple[str, ...], int]] = {
-        # HIGHER VALUES REPRESENT HIGHER PRECEDENCE
+        # Higher values represent higher precedence:
         FACTORIAL[0]: 5,
         POWER[0]: 4,
         (MULTIPLY[0], DIVIDE[0], FLOOR_DIVIDE[0], MODULO[0]): 3,
@@ -92,7 +92,7 @@ class OPERATORS:
     }
 
     IMPLEMENT: ClassVar[dict[str, Callable[[Any, Any], Any]]] = {
-        # ARITHMETIC OPERATORS
+        # Arithmetic operators:
         MINUS[0]: lambda a, b: sympy.Add(sanitize(a), sympy.Mul(sanitize(b), sympy.Integer(-1))),
         PLUS[0]: lambda a, b: sympy.Add(sanitize(a), sanitize(b)),
         MULTIPLY[0]: lambda a, b: sympy.Mul(sanitize(a), sanitize(b)),
@@ -100,14 +100,14 @@ class OPERATORS:
         FLOOR_DIVIDE[0]: lambda a, b: sympy.floor(sympy.Mul(sanitize(a), sympy.Pow(sanitize(b), -1))),
         MODULO[0]: lambda a, b: sympy.Mod(sanitize(a), sanitize(b)),
         POWER[0]: lambda a, b: sympy.Pow(sanitize(a), sanitize(b)),
-        # LOGIC OPERATORS
+        # Logic operators:
         AND[0]: lambda a, b: 1 if (bool(a) and bool(b)) else 0,
         OR[0]: lambda a, b: 1 if (bool(a) or bool(b)) else 0,
         NOT[0]: lambda a, _: 1 if not bool(a) else 0,
         XOR[0]: lambda a, b: 1 if ((bool(a) and not bool(b)) or (not bool(a) and bool(b))) else 0,
-        # POSTFIX OPERATORS
+        # Postfix operators:
         FACTORIAL[0]: lambda a, _: sympy.factorial(sanitize(a)),
-        # COMPARISON OPERATORS
+        # Comparison operators:
         EQUALS[0]: lambda a, b: 1 if a == b else 0,
         NOT_EQUALS[0]: lambda a, b: 1 if a != b else 0,
         LESS_THAN[0]: lambda a, b: 1 if a < b else 0,
@@ -145,11 +145,11 @@ class OPERATORS:
             else:
                 if operator_id == keys:
                     return val
-        return 5  # DEFAULT
+        return 5  # Default
 
 
 class CONSTANTS:
-    # MATHEMATICAL CONSTANTS
+    # Mathematical constants:
     ANS = ("c:ans", ["ans", "answer"])
     E = ("c:e", ["e", "euler"])
     INF = ("c:inf", ["inf", "infinity", "∞"])
@@ -190,20 +190,20 @@ class CONSTANTS:
 
 
 class FUNCTIONS:
-    # PROGRAMMING FUNCTIONS
+    # Programming functions:
     ABS = ("f:abs", ["abs", "absolute", "magnitude"])
     FLOOR = ("f:floor", ["floor"])
     CEIL = ("f:ceil", ["ceil", "ceiling"])
     ROUND = ("f:round", ["round"])
     SIGN = ("f:sign", ["sign", "sgn"])
-    # LOGARITHMIC FUNCTIONS
+    # Logarithmic functions:
     LN = ("f:ln", ["ln", "log_e", "natural_log", "loge"])
     LOG = ("f:log", ["log", "logarithm"])
     LOGB = ("f:logb", ["logb", "log_base"])
     LOG2 = ("f:log2", ["log2", "log_2"])
     LOG10 = ("f:log10", ["log10"])
     EXP = ("f:exp", ["exp", "exponential"])
-    # TRIGONOMETRIC FUNCTIONS
+    # Trigonometric functions:
     RAD = ("f:rad", ["rad", "radians", "to_radians"])
     DEG = ("f:deg", ["deg", "degrees", "to_degrees"])
     SIN = ("f:sin", ["sin", "sine"])
@@ -212,23 +212,23 @@ class FUNCTIONS:
     ACOS = ("f:acos", ["acos", "arccos", "arccosine", "cos_inv"])
     TAN = ("f:tan", ["tan", "tangent"])
     ATAN = ("f:atan", ["atan", "arctan", "arctangent", "tan_inv"])
-    # HYPERBOLIC FUNCTIONS
+    # Hyperbolic functions:
     SINH = ("f:sinh", ["sinh", "hyperbolic_sine"])
     COSH = ("f:cosh", ["cosh", "hyperbolic_cosine"])
     TANH = ("f:tanh", ["tanh", "hyperbolic_tangent"])
     ASINH = ("f:asinh", ["asinh", "arcsinh", "inverse_sinh"])
     ACOSH = ("f:acosh", ["acosh", "arccosh", "inverse_cosh"])
     ATANH = ("f:atanh", ["atanh", "arctanh", "inverse_tanh"])
-    # ADDITIONAL TRIGONOMETRIC FUNCTIONS
+    # Additional trigonometric functions:
     COT = ("f:cot", ["cot", "cotangent"])
     SEC = ("f:sec", ["sec", "secant"])
     CSC = ("f:csc", ["csc", "cosecant"])
-    # ADDITIONAL FUNCTIONS
+    # Additional functions:
     FAC = ("f:fac", ["fac", "factorial", "fact"])
     SQRT = ("f:sqrt", ["sqrt", "square_root", "√"])
     CBRT = ("f:cbrt", ["cbrt", "cube_root", "∛"])
     POW = ("f:pow", ["pow", "power"])
-    # STATISTICAL FUNCTIONS
+    # Statistical functions:
     MIN = ("f:min", ["min", "minimum"])
     MAX = ("f:max", ["max", "maximum"])
 
@@ -271,20 +271,20 @@ class FUNCTIONS:
     ALL_TOKENS: tuple[str, ...] = tuple(token for _, tokens in ALL for token in tokens)
 
     IMPLEMENT: ClassVar[dict[str, Callable[[Any], Any]]] = {
-        # PROGRAMMING FUNCTIONS
+        # Programming functions:
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
         CEIL[0]: lambda a: sympy.ceiling(sanitize(a)),
         ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # type:ignore[operator-unsupported]
         SIGN[0]: lambda a: sympy.sign(sanitize(a)),
-        # LOGARITHMIC FUNCTIONS
+        # Logarithmic functions:
         LN[0]: lambda a: sympy.log(sanitize(a)),
         LOG[0]: lambda a, b=None: sympy.log(sanitize(a), sanitize(b)) if b is not None else sympy.log(sanitize(a), 10),
         LOGB[0]: lambda a, b=None: sympy.log(sanitize(a), sanitize(b)) if b is not None else sympy.log(sanitize(a)),
         LOG2[0]: lambda a: sympy.log(sanitize(a), 2),
         LOG10[0]: lambda a: sympy.log(sanitize(a), 10),
         EXP[0]: lambda a: sympy.exp(sanitize(a)),
-        # TRIGONOMETRIC FUNCTIONS
+        # Trigonometric functions:
         RAD[0]: lambda a: sympy.rad(sanitize(a)),  # type:ignore[partially-unknown]
         DEG[0]: lambda a: sympy.deg(sanitize(a)),  # type:ignore[partially-unknown]
         SIN[0]: lambda a: sympy.sin(sanitize(a)),
@@ -293,23 +293,23 @@ class FUNCTIONS:
         ACOS[0]: lambda a: sympy.acos(sanitize(a)),
         TAN[0]: lambda a: sympy.tan(sanitize(a)),
         ATAN[0]: lambda a: sympy.atan(sanitize(a)),
-        # HYPERBOLIC FUNCTIONS
+        # Hyperbolic functions:
         SINH[0]: lambda a: sympy.sinh(sanitize(a)),
         COSH[0]: lambda a: sympy.cosh(sanitize(a)),
         TANH[0]: lambda a: sympy.tanh(sanitize(a)),
         ASINH[0]: lambda a: sympy.asinh(sanitize(a)),
         ACOSH[0]: lambda a: sympy.acosh(sanitize(a)),
         ATANH[0]: lambda a: sympy.atanh(sanitize(a)),
-        # ADDITIONAL TRIGONOMETRIC FUNCTIONS
+        # Additional trigonometric functions:
         COT[0]: lambda a: sympy.cot(sanitize(a)),
         SEC[0]: lambda a: sympy.sec(sanitize(a)),
         CSC[0]: lambda a: sympy.csc(sanitize(a)),
-        # ADDITIONAL FUNCTIONS
+        # Additional functions:
         FAC[0]: lambda a: sympy.factorial(sanitize(a)),
         SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # type:ignore[partially-unknown]
         CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
         POW[0]: lambda a, b=None: sympy.Pow(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
-        # STATISTICAL FUNCTIONS
+        # Statistical functions:
         MIN[0]: lambda a, b=None: sympy.Min(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
         MAX[0]: lambda a, b=None: sympy.Max(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
     }
@@ -400,7 +400,7 @@ class Calc:
         else:
             print_overwrite("[dim|white](calculating...)", end="")
 
-        # SKIP PRECISION ADJUSTMENTS FOR INFINITE PRECISION (-1)
+        # Skip precision adjustments for infinite precision (-1):
         if not self.inf_precision and self.precision <= self.max_num_len:
             self.max_num_len = self.precision
             self.precision += 10
@@ -420,14 +420,14 @@ class Calc:
             FormatCodes.print(f"[dim](result:) {result}")
             FormatCodes.print(f"[dim](precision:) {self.precision} [dim]/(infinite:[_dim] {self.inf_precision}[dim])[_dim]")
 
-        # FOR INFINITE PRECISION, JUST CONVERT TO STRING WITHOUT FORMATTING
+        # For infinite precision, just convert to string without formatting:
         if self.inf_precision:
             result_str = str(result)
             if DEBUG:
                 FormatCodes.print(f"[dim](infinite precision result:) {result_str}")
             return result_str
 
-        # CHECK IF RESULT IS AN EXACT INTEGER TO AVOID FLOAT PRECISION ERRORS
+        # Check if result is an exact integer to avoid float precision errors:
         is_exact_integer = False
         with suppress(Exception):
             if (
@@ -457,7 +457,7 @@ class Calc:
         if not DEBUG:
             print_overwrite("[dim|white](formatting...)", end="")
 
-        # FORMAT WITH THOUSANDS SEPARATORS IF REQUESTED
+        # Format with thousands separators if requested:
         if ARGS.format.exists:
             if DEBUG:
                 print_line("FORMATTING WITH SEPARATORS")
@@ -503,7 +503,7 @@ class Calc:
                     if DEBUG:
                         FormatCodes.print(f"[dim](formatted whole number:) {num_str}")
 
-        # TRUNCATE REPEATING DECIMAL (skip for infinite precision)
+        # Truncate repeating decimal (skip for infinite precision):
         if not self.inf_precision and len(num_str) > self.max_num_len and "." in num_str:
             num_str = num_str[:-10]
             int_part, decimal_part = num_str.split(".")
@@ -521,7 +521,7 @@ class Calc:
             if DEBUG:
                 FormatCodes.print(f"[dim](formatted string:) {num_str}")
 
-        # FORMAT LONG NUMBERS TO EXPONENTS (skip for infinite precision)
+        # Format long numbers to exponents (skip for infinite precision):
         elif not self.inf_precision and len(num_str) > self.max_num_len:
             if DEBUG:
                 print_line("FORMATTING LONG NUMBERS TO EXPONENTS")
@@ -638,45 +638,45 @@ class Calc:
         return "".join(result)
 
     def _find_matches(self, text: str, /) -> list[str | object]:
-        preliminary_matches = [match for match in TOKEN_RX.findall(text) if match]  # FILTER OUT EMPTY STRINGS
+        preliminary_matches = [match for match in TOKEN_RX.findall(text) if match]  # Filter out empty strings.
         matches: list[str | object] = []
         i = 0
 
         while i < len(preliminary_matches):
             match = preliminary_matches[i]
 
-            # CHECK IF THIS IS A MINUS SIGN THAT SHOULD BE COMBINED WITH THE NEXT NUMBER
+            # Check if this is a minus sign that should be combined with the next number:
             if (
                 match in OPERATORS.MINUS[1]
                 and i + 1 < len(preliminary_matches)
                 and PATTERNS.thousands_seps.sub("", preliminary_matches[i + 1]).replace(".", "").isdigit()
             ):
-                # CHECK IF THIS SHOULD BE TREATED AS A NEGATIVE NUMBER (NOT SUBTRACTION)
+                # Check if this should be treated as a negative number (not subtraction):
                 should_be_negative = False
-                if i == 0:  # AT THE BEGINNING
+                if i == 0:  # At the beginning.
                     should_be_negative = True
                 else:
                     prev_match = preliminary_matches[i - 1]
-                    # IF PREVIOUS TOKEN IS AN OPERATOR OR OPEN PARENTHESIS, TREAT AS NEGATIVE NUMBER
+                    # If previous token is an operator or open parenthesis, treat as negative number:
                     if OPERATORS.is_operator(prev_match) or prev_match == "(" or FUNCTIONS.is_function(prev_match):
                         should_be_negative = True
 
                 if should_be_negative:
-                    # COMBINE MINUS WITH NEXT NUMBER AND CLEAN UNDERSCORES
+                    # Combine minus with next number and clean underscores:
                     matches.append(clean_num(match + preliminary_matches[i + 1]))
-                    i += 2  # SKIP THE NEXT TOKEN SINCE WE CONSUMED IT
+                    i += 2  # Skip the next token since we consumed it.
                 else:
-                    # KEEP AS SEPARATE SUBTRACTION OPERATOR
+                    # Keep as separate subtraction operator:
                     matches.append(match)
                     i += 1
 
-            # DISTINGUISH BETWEEN 'FACTORIAL' AND 'NOT'
+            # Distinguish between 'factorial' and 'not':
             elif match == "!":
                 should_be_factorial = False
 
                 if i > 0:
                     prev_match = preliminary_matches[i - 1]
-                    # IF PREVIOUS TOKEN IS A NUMBER, CLOSING PARENTHESIS, OR CONSTANT, TREAT AS FACTORIAL
+                    # If previous token is a number, closing parenthesis, or constant, treat as factorial:
                     if (
                         PATTERNS.thousands_seps.sub("", prev_match).replace(".", "").replace("-", "").isdigit()
                         or prev_match == ")"
@@ -692,7 +692,7 @@ class Calc:
                 i += 1
 
             else:
-                # CONVERT TOKENS TO IDS FOR OPERATORS, CONSTANTS AND FUNCTIONS
+                # Convert tokens to IDs for operators, constants, and functions:
                 if OPERATORS.is_operator(match):
                     matches.append(OPERATORS.get_id(match))
                 elif CONSTANTS.is_constant(match):
@@ -700,7 +700,7 @@ class Calc:
                 elif FUNCTIONS.is_function(match):
                     matches.append(FUNCTIONS.get_id(match))
                 else:
-                    # CLEAN UNDERSCORES FROM NUMERIC TOKENS
+                    # Clean underscores from numeric tokens:
                     matches.append(clean_num(match))
 
                 i += 1
@@ -717,13 +717,13 @@ class Calc:
         """Internal recursive calculation function that doesn't do preprocessing."""
         SAVE_CALC_STR = calc_str
 
-        # HANDLE MATHEMATICAL GROUPING PARENTHESES (NOT FUNCTION CALLS)
+        # Handle mathematical grouping parentheses (not function calls):
         while "(" in calc_str and ")" in calc_str:
             paren_stack: list[int] = []
             start_idx = -1
             end_idx = -1
 
-            # FIND THE INNERMOST PARENTHESES
+            # Find the innermost parentheses:
             for i, char in enumerate(calc_str):
                 if char == "(":
                     paren_stack.append(i)
@@ -732,14 +732,14 @@ class Calc:
                     start_idx = paren_stack.pop()
                     end_idx = i
 
-                    # CHECK IF THIS IS A FUNCTION CALL BY LOOKING AT WHAT'S BEFORE THE OPENING PARENTHESIS
+                    # Check if this is a function call by looking at what's before the opening parenthesis:
                     if start_idx > 0:
                         token_start = start_idx - 1
                         while token_start > 0 and calc_str[token_start - 1].isalnum():
                             token_start -= 1
                         token_before = calc_str[token_start:start_idx]
 
-                        # IF IT'S A FUNCTION, DON'T PROCESS THESE PARENTHESES
+                        # If it's a function, don't process these parentheses:
                         if FUNCTIONS.is_function(token_before):
                             continue
 
@@ -752,10 +752,10 @@ class Calc:
             else:
                 break
 
-        numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # HANDLE SCIENTIFIC NOTATION
+        numpy.set_printoptions(floatmode="fixed", formatter={"float_kind": "{:f}".format})  # Handle scientific notation.
         split = self._find_matches(calc_str)
 
-        # CONVERT ALL OPERANDS TO 'SymPy' EXPRESSIONS
+        # Convert all operands to SymPy expressions:
         def sympify(split_matches: list[str | object], /) -> list[str | object]:
             split_sympy: list[str | object] = []
 
@@ -772,7 +772,7 @@ class Calc:
 
         split_sympy = sympify(split)
 
-        # ITERATE OVER CONSTANTS FIRST
+        # Iterate over constants first:
         for c_id, _ in CONSTANTS.ALL:
             while c_id in split:
                 idx = split.index(c_id)
@@ -797,7 +797,7 @@ class Calc:
                 split: list[str | object] = new_split
                 split_sympy: list[str | object] = sympify(split)
 
-        # ITERATE OVER FUNCTIONS AVAILABLE
+        # Iterate over functions available:
         for f_id, _ in FUNCTIONS.ALL:
             while f_id in split:
                 idx = split.index(f_id)
@@ -824,7 +824,7 @@ class Calc:
                         FormatCodes.print(f"[dim](function ID:) {f_id}")
                         FormatCodes.print(f"[dim](arg_tokens:) {arg_tokens}")
 
-                    # HANDLE MULTI-ARGUMENT FUNCTIONS
+                    # Handle multi-argument functions:
                     if len(arg_tokens) == 1:
                         arg_value = split_sympy[idx + 2]
                         function_impl = FUNCTIONS.get(f_id)
@@ -863,7 +863,7 @@ class Calc:
 
                             result = function_impl(arg1_value, arg2_value)  # type:ignore[assignment]
 
-                        # SINGLE COMPLEX ARGUMENT
+                        # Single complex argument:
                         else:
                             arg_str = self._convert_ids_to_symbols(arg_tokens)
                             if DEBUG:
@@ -881,21 +881,21 @@ class Calc:
                     split = new_split
                     split_sympy = sympify(split)
 
-                # NO PARENTHESES FOUND - NOT A FUNCTION CALL
+                # No parentheses found - not a function call:
                 else:
                     break
 
-        # ITERATE OVER OPERATORS BASED ON PRECEDENCE
+        # Iterate over operators based on precedence:
         while len(split) > 1:
             operator_positions: list[tuple[int, str, int]] = []
             for i, token in enumerate(split):
                 if isinstance(token, str) and token.startswith("o:"):
                     precedence = OPERATORS.get_precedence(token)
-                    # GIVE PREFIX 'NOT' HIGHER PRECEDENCE THAN BINARY OPERATORS
+                    # Give prefix 'not' higher precedence than binary operators:
                     if token == OPERATORS.NOT[0] and (
                         i == 0 or (isinstance(s := split[i - 1], str) and s.startswith("o:")) or s in ["("]
                     ):
-                        precedence = 3  # HIGHER THAN BINARY ARITHMETIC OPERATORS
+                        precedence = 3  # Higher than binary arithmetic operators.
                     operator_positions.append((i, token, precedence))
 
             if not operator_positions:
@@ -913,7 +913,7 @@ class Calc:
             if operator_func is None:
                 break
 
-            # POSTFIX FACTORIAL OPERATOR
+            # Postfix factorial operator:
             if operator_id == OPERATORS.FACTORIAL[0]:
                 if idx == 0:
                     break
@@ -924,7 +924,7 @@ class Calc:
                     FormatCodes.print(f"[dim](result:) {result}")
                 new_split = [*split[: idx - 1], self.format_result(result), *split[idx + 1 :]]
 
-            # UNARY MINUS
+            # Unary minus:
             elif operator_id == OPERATORS.MINUS[0] and (
                 idx == 0 or (isinstance(s := split[idx - 1], str) and s.startswith("o:"))
             ):
@@ -938,7 +938,7 @@ class Calc:
                     FormatCodes.print(f"[dim](result:) {result}")
                 new_split = [*split[:idx], self.format_result(result), *split[idx + 2 :]]
 
-            # PREFIX NOT OPERATOR
+            # Prefix not operator:
             elif operator_id == OPERATORS.NOT[0] and (
                 idx == 0 or (isinstance(s := split[idx - 1], str) and s.startswith("o:")) or s in ["("]
             ):
@@ -951,7 +951,7 @@ class Calc:
                     FormatCodes.print(f"[dim](result:) {result}")
                 new_split = [*split[:idx], self.format_result(result), *split[idx + 2 :]]
 
-            # BINARY OPERATOR
+            # Binary operator:
             else:
                 if idx == 0 or idx + 1 >= len(split):
                     break

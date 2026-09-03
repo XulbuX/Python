@@ -88,7 +88,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
 
     try:
         changed = 0
-        # IN DRY-RUN MODE, SKIP COLLECTING OUTPUT LINES ENTIRELY
+        # In dry-run mode, skip collecting output lines entirely:
         out_lines: list[str] | None = None if dry_run else []
 
         def replace_match(match: rx.Match[str]) -> str:
@@ -114,7 +114,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
                     else:
                         return match.group(0)
 
-                    # STRIP # AND RESTORE ORIGINAL PREFIX
+                    # Strip `#` and restore original prefix:
                     result = str(transformed).lstrip("#")
 
                 except Exception:
@@ -125,7 +125,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
 
             return new_value
 
-        # STREAM LINE-BY-LINE: NEVER LOADS FULL FILE INTO MEMORY
+        # Stream line-by-line: never loads full file into memory:
         with file_path.open("r", encoding="utf-8") as file:
             for line in file:
                 if "#" not in line and "0x" not in line:
@@ -169,7 +169,7 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
 def main() -> None:  # ruff:ignore[complex-structure]
     paths = ARGS.path.vals()
 
-    # DETERMINE OPERATION
+    # Determine operation:
     degrees = 0
     if ARGS.upper.exists:
         operation = Operation.UPPER

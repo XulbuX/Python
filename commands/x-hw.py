@@ -14,7 +14,7 @@ from xulbux import ArgumentParser, FormatCodes
 if TYPE_CHECKING:
     import psutil
 
-# CHECK IF PSUTIL IS AVAILABLE (MAY FAIL ON PYTHON 3.14)
+# Check if psutil is available (may fail on Python 3.14):
 try:
     import psutil
 
@@ -138,7 +138,7 @@ class HardwareInfo:
             info["total_free"] = self._format_bytes(total_free)
 
             if not detailed:
-                # IN NON-DETAILED MODE, ONLY SHOW SUMMARY
+                # In non-detailed mode, only show summary:
                 info["partitions"] = []
 
         return info
@@ -163,7 +163,7 @@ class HardwareInfo:
 
         elif system == "Linux":
             with suppress(Exception):
-                # TRY 'lspci' FOR GPU INFO
+                # Try `lspci` for GPU info:
                 result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     for line in result.stdout.split("\n"):
@@ -201,7 +201,7 @@ class HardwareInfo:
                         "mac": None,
                     }
 
-                    # GET MAC ADDRESS
+                    # Get MAC address:
                     for addr in addrs[interface_name]:
                         if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # type:ignore[reportUnnecessaryComparison]
                             adapter_info["mac"] = addr.address
@@ -276,7 +276,7 @@ class HardwareInfo:
         """Display hardware information in formatted output."""
         print()
 
-        # SYSTEM INFO
+        # System info:
         if self.system:
             FormatCodes.print("\n[b|br:green](System Information)")
             system_text: list[str] = []
@@ -290,7 +290,7 @@ class HardwareInfo:
                 system_text.append(f"    [b](Hostname) : [br:white]({self.system['hostname']})")
             xx.console.log_box_bordered(*system_text, border_style="br:green")
 
-        # CPU INFO
+        # CPU info:
         if self.cpu:
             FormatCodes.print("\n[b|br:cyan](CPU Information)")
             cpu_text: list[str] = []
@@ -315,7 +315,7 @@ class HardwareInfo:
                 cpu_text.append("[b|br:cyan](Per-Core Usage)\n" + "\n".join(formatted_cores) + "[_c]")
             xx.console.log_box_bordered(*cpu_text, border_style="br:cyan")
 
-        # GPU INFO
+        # GPU info:
         if self.gpu and self.gpu.get("gpus"):
             FormatCodes.print("\n[b|br:blue](GPU Information)")
             gpu_text: list[str] = []
@@ -325,7 +325,7 @@ class HardwareInfo:
                 gpu_text.append(f"[b](GPU {i + 1}) : [br:white]({gpu['name']})")
             xx.console.log_box_bordered(*gpu_text, border_style="br:blue")
 
-        # MEMORY INFO
+        # Memory info:
         if self.memory:
             FormatCodes.print("\n[b|magenta](Memory Information)")
             mem_text: list[str] = []
@@ -345,7 +345,7 @@ class HardwareInfo:
                 mem_text.append(f"[b](Swap Usage) : [br:white]({self.memory['swap_percent']})")
             xx.console.log_box_bordered(*mem_text, border_style="magenta")
 
-        # DISK INFO
+        # Disk info:
         if self.disk:
             FormatCodes.print("\n[b|br:magenta](Disk Information)")
             disk_text: list[str] = []
@@ -369,7 +369,7 @@ class HardwareInfo:
 
             xx.console.log_box_bordered(*disk_text, border_style="br:magenta")
 
-        # NETWORK INFO
+        # Network info:
         if self.network and self.network.get("adapters"):
             FormatCodes.print("\n[b|br:red](Network Adapters)")
             net_text: list[str] = []
@@ -384,7 +384,7 @@ class HardwareInfo:
                     net_text.append(f"[b](Speed) : [br:white]({adapter['speed']})")
             xx.console.log_box_bordered(*net_text, border_style="br:red")
 
-        # BATTERY INFO
+        # Battery info:
         if self.battery and self.battery.get("has_battery"):
             FormatCodes.print("\n[b|br:white](Battery Information)")
             battery_text: list[str] = []

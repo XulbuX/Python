@@ -22,20 +22,24 @@ def extract_imports(file_path: Path) -> set[str]:
     with suppress(Exception), open(file_path, encoding="utf-8") as f:
         content = f.read()
 
-        # REMOVE DOCSTRINGS AND COMMENTS BEFORE PROCESSING
-        # TRIPLE-QUOTED STRINGS (DOCSTRINGS)
+        # Remove docstrings and comments before processing.
+        # Triple-quoted strings (docstrings):
         content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', "", content)
-        # SINGLE/DOUBLE QUOTED STRINGS
+
+        # Single/double quoted strings:
         content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', "", content)
-        # COMMENTS (LINES STARTING WITH #)
+
+        # Comments (lines starting with `#`):
         content = re.sub(r"#.*$", "", content, flags=re.MULTILINE)
 
         for match in import_pattern.finditer(content):
             module = match.group(1) or match.group(2)
-            # SKIP RELATIVE IMPORTS (starting with .)
+
+            # Skip relative imports (starting with `.`):
             if module.startswith("."):
                 continue
-            # ADD TOP-LEVEL MODULE NAME
+
+            # Add top-level module name:
             imports.add(module.split(".")[0])
 
     return imports

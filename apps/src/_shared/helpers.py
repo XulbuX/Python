@@ -87,10 +87,10 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
                 user32 = ctypes.windll.user32
                 inner_hwnd = window.winfo_id()
                 hwnd = user32.GetAncestor(inner_hwnd, GA_ROOT) or inner_hwnd
-                sm_cx_icon = user32.GetSystemMetrics(11)  # SM_CXICON
-                sm_cy_icon = user32.GetSystemMetrics(12)  # SM_CYICON
-                sm_cx_small = user32.GetSystemMetrics(49)  # SM_CXSMICON
-                sm_cy_small = user32.GetSystemMetrics(50)  # SM_CYSMICON
+                sm_cx_icon = user32.GetSystemMetrics(11)  # `SM_CXICON`
+                sm_cy_icon = user32.GetSystemMetrics(12)  # `SM_CYICON`
+                sm_cx_small = user32.GetSystemMetrics(49)  # `SM_CXSMICON`
+                sm_cy_small = user32.GetSystemMetrics(50)  # `SM_CYSMICON`
                 hicon_big = user32.LoadImageW(None, str(ico_path), IMAGE_ICON, sm_cx_icon, sm_cy_icon, LR_LOADFROMFILE)
                 hicon_small = user32.LoadImageW(None, str(ico_path), IMAGE_ICON, sm_cx_small, sm_cy_small, LR_LOADFROMFILE)
 
@@ -105,7 +105,7 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
 
     else:
         icon_photo: ImageTk.PhotoImage = ImageTk.PhotoImage(pil_icon)
-        window._icon_photo = icon_photo  # PREVENT GARBAGE COLLECTION
+        window._icon_photo = icon_photo  # Prevent garbage collection.
         window.after(201, lambda: window.wm_iconphoto(True, icon_photo))
 
     return None

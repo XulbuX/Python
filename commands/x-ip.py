@@ -39,7 +39,7 @@ class IPInfo:
         try:
             s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             s.settimeout(0.1)
-            s.connect(("2001:4860:4860::8888", 80))  # GOOGLE DNS IPv6
+            s.connect(("2001:4860:4860::8888", 80))  # Google DNS IPv6.
             local_ip = s.getsockname()[0]
             s.close()
             return local_ip
@@ -55,20 +55,20 @@ class IPInfo:
             for interface in netifaces.interfaces():
                 addrs = netifaces.ifaddresses(interface)
                 interface_info = {}
-                # IPv4
+                # IPv4:
                 if netifaces.AF_INET in addrs:
                     ipv4_info = addrs[netifaces.AF_INET][0]
                     interface_info["ipv4"] = ipv4_info.get("addr", "N/A")
                     if "netmask" in ipv4_info:
                         interface_info["subnet_mask"] = ipv4_info["netmask"]
-                # IPv6
+                # IPv6:
                 if netifaces.AF_INET6 in addrs:
                     ipv6_info = addrs[netifaces.AF_INET6][0]
                     ipv6_addr = ipv6_info.get("addr", "N/A")
                     ipv6_addr = ipv6_addr.split("%")[0]
                     interface_info["ipv6"] = ipv6_addr
 
-                # GET GATEWAY INFORMATION
+                # Get gateway information:
                 with suppress(Exception):
                     gateways = netifaces.gateways()
                     if "default" in gateways and netifaces.AF_INET in gateways["default"]:
@@ -94,7 +94,7 @@ class IPInfo:
                 for line in result.stdout.split("\n"):
                     line = line.strip()
 
-                    # CHECK IF THIS LINE DEFINES A NEW INTERFACE
+                    # Check if this line defines a new interface:
                     if ("adapter" in line or "configuration" in line) and line.endswith(":"):
                         interface_name = line.rstrip(":")
                         interface_name = re.sub(
@@ -104,25 +104,25 @@ class IPInfo:
                             current_interface = interface_name
                             interfaces[current_interface] = {}
 
-                    # EXTRACT IPv4 ADDRESS
+                    # Extract IPv4 address:
                     elif "IPv4 Address" in line and current_interface:
                         match = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
                         if match:
                             interfaces[current_interface]["ipv4"] = match.group(1)
 
-                    # EXTRACT SUBNET MASK
+                    # Extract subnet mask:
                     elif "Subnet Mask" in line and current_interface:
                         match = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
                         if match:
                             interfaces[current_interface]["subnet_mask"] = match.group(1)
 
-                    # EXTRACT DEFAULT GATEWAY
+                    # Extract default gateway:
                     elif "Default Gateway" in line and current_interface:
                         match = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
                         if match:
                             interfaces[current_interface]["gateway"] = match.group(1)
 
-                    # EXTRACT DNS SUFFIX
+                    # Extract DNS suffix:
                     elif "Connection-specific DNS Suffix" in line and current_interface:
                         match = re.search(r":\s+(.+)", line)
                         if match:
@@ -130,7 +130,7 @@ class IPInfo:
                             if dns_suffix:
                                 interfaces[current_interface]["dns_suffix"] = dns_suffix
 
-                    # EXTRACT IPv6 ADDRESS
+                    # Extract IPv6 address:
                     elif ("IPv6 Address" in line or "Link-local IPv6 Address" in line) and current_interface:
                         match = re.search(r":\s+([0-9a-fA-F:]+)", line)
                         if match:
@@ -138,17 +138,17 @@ class IPInfo:
                             if ":" in ipv6_addr and len(ipv6_addr) > 5:
                                 interfaces[current_interface]["ipv6"] = ipv6_addr
 
-                    # EXTRACT MEDIA STATE (FOR DISCONNECTED INTERFACES)
+                    # Extract media state (for disconnected interfaces):
                     elif "Media State" in line and current_interface:
                         if "disconnected" in line.lower():
                             interfaces[current_interface]["status"] = "Disconnected"
 
-                # SET STATUS TO CONNECTED FOR INTERFACES WITH IP ADDRESSES
+                # Set status to connected for interfaces with IP addresses:
                 for _, interface_data in interfaces.items():
                     if "status" not in interface_data and any(key in interface_data for key in ["ipv4", "ipv6"]):
                         interface_data["status"] = "Connected"
 
-                # REMOVE INTERFACES WITH NO IP ADDRESSES (BUT KEEP DISCONNECTED ONES FOR STATUS INFO)
+                # Remove interfaces with no IP addresses (but keep disconnected ones for status info):
                 interfaces = {
                     name: addrs
                     for name, addrs in interfaces.items()
@@ -272,17 +272,17 @@ class IPInfo:
                 )
                 interfaces_text.append(f"{'{hr}' if i > 0 else ''}[b|blue]({interface}){status}")
                 p = "   " if "dns_suffix" in addrs else ""
-                # IPv4 INFO
+                # IPv4 info:
                 if "ipv4" in addrs:
                     interfaces_text.append(f"{p}   [b](IPv4) : [white]({addrs['ipv4']})")
                     if "subnet_mask" in addrs:
                         interfaces_text.append(f"{p} [b](Subnet) : [white]({addrs['subnet_mask']})")
                     if "gateway" in addrs:
                         interfaces_text.append(f"{p}[b](Gateway) : [white]({addrs['gateway']})")
-                # IPv6 INFO
+                # IPv6 info:
                 if "ipv6" in addrs:
                     interfaces_text.append(f"{p}   [b](IPv6) : [white]({addrs['ipv6']})")
-                # DNS SUFFIX
+                # DNS suffix:
                 if "dns_suffix" in addrs:
                     interfaces_text.append(f"[b](DNS Suffix) : [white]({addrs['dns_suffix']})")
             xx.console.log_box_bordered(*interfaces_text, border_style="blue")

@@ -52,18 +52,18 @@ from exporter import TrimExporter
 from helpers import format_time, frame_to_time, parse_time, time_to_frame
 from widgets import TrimTimeline
 
-# CONFIG FOR THE PREVIEW THUMBNAILS SHOWN ABOVE THE TIMELINE
+# Config for the preview thumbnails shown above the timeline:
 _THUMB_W: int = 266
-_THUMB_H: int = 150  # 16:9 ASPECT RATIO
+_THUMB_H: int = 150  # 16:9 aspect ratio.
 _PREVIEW_DEBOUNCE_MS: int = 350
 _DEFAULT_FPS: float = 25.0
 
-# THUMBNAIL STRIP (LOW-RES IN-MEMORY CACHE FOR INSTANT SCRUB FEEDBACK)
+# Thumbnail strip (low-res in-memory cache for instant scrub feedback):
 _STRIP_COUNT: int = 2048
 _STRIP_W: int = 320
-_STRIP_H: int = 180  # 16:9 ASPECT RATIO
+_STRIP_H: int = 180  # 16:9 aspect ratio.
 
-# SUFFIX FOR AUTO-GENERATED FILENAMES WHEN THE USER DOESN'T SPECIFY AN OUTPUT PATH
+# Suffix for auto-generated filenames when the user doesn't specify an output path:
 _TRIM_SUFFIX: str = "_trim"
 
 
@@ -74,28 +74,28 @@ class VideoTrimmerApp(ctk.CTk):
         self.title("Video Trimmer")
         self.resizable(False, False)
 
-        # CENTERED FIXED-SIZE WINDOW
+        # Centered fixed-size window:
         ww, wh = 580, 635
         self.update_idletasks()
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
         self.geometry(f"{ww}x{wh}+{(sw - ww) // 2}+{(sh - wh) // 2}")
 
-        # SET WINDOW/TASKBAR ICON
+        # Set window/taskbar icon:
         self._temp_ico_path: Path | None = setup_window_icon(self, APP_ICON_PNG)
 
-        # CHECK FOR FFMPEG / FFPROBE
+        # Check for FFmpeg / FFprobe:
         self.ffmpeg_path: str | None = shutil.which("ffmpeg")
         self.ffprobe_path: str | None = shutil.which("ffprobe")
 
         self.selected_file: str | None = None
-        self.duration: float | None = None  # IN SECONDS
+        self.duration: float | None = None  # In seconds.
         self.fps: float | None = None
         self.output_path: str | None = None
 
-        self._start_sec: float = 0.0  # INTERNAL START POINT (ALWAYS IN SECONDS)
-        self._end_sec: float | None = None  # INTERNAL END POINT; None = END OF FILE
+        self._start_sec: float = 0.0  # Internal start point (always in seconds).
+        self._end_sec: float | None = None  # Internal end point; None = end of file.
 
-        self._input_mode: str = "time"  # "time" OR "frame"
+        self._input_mode: str = "time"  # "time" or "frame".
         self._current_theme: str = get_system_theme()
         self._trimming: bool = False
 
@@ -108,10 +108,10 @@ class VideoTrimmerApp(ctk.CTk):
         self._end_preview_image: ctk.CTkImage | None = None
         self._preview_generation: int = 0
 
-        # LOW-RES THUMBNAIL STRIP FOR SCRUB FEEDBACK
+        # Low-res thumbnail strip for scrub feedback:
         self._thumb_strip: list[Image.Image] = []
         self._thumb_strip_generation: int = -1
-        self._strip_proc: subprocess.Popen | None = None  # IN-FLIGHT FFMPEG INDEX PROCESS
+        self._strip_proc: subprocess.Popen | None = None  # In-flight FFmpeg index process.
 
         # ************************************************** UI LAYOUT **************************************************
         PAD: int = 16
@@ -137,7 +137,7 @@ class VideoTrimmerApp(ctk.CTk):
             self.sec_file,
             text="Select Video File",
             command=self.select_file,
-            state="disabled",  # ENABLED AFTER _verify_ffmpeg CONFIRMS
+            state="disabled",  # Enabled after `_verify_ffmpeg` confirms.
         )
         self.btn_select_file.grid(row=1, column=0, sticky="w")
 
@@ -148,7 +148,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.sec_trim = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.sec_trim.pack(fill="x", pady=(PAD, 0))
 
-        # -- SECTION HEADER: TITLE + TIME / FRAME MODE TOGGLE --
+        # Section header: title + time / frame mode toggle:
         self.trim_header = ctk.CTkFrame(self.sec_trim, fg_color="transparent")
         self.trim_header.pack(fill="x", pady=(0, 8))
 
@@ -167,11 +167,11 @@ class VideoTrimmerApp(ctk.CTk):
         self.mode_toggle.set("Time")
         self.mode_toggle.pack(side="right")
 
-        # SCRUB-STRIP INDEXING STATUS (LEFT OF THE MODE TOGGLE)
+        # Scrub-strip indexing status (left of the mode toggle):
         self.lbl_strip_status = ctk.CTkLabel(self.trim_header, text="", font=ctk.CTkFont(size=11), justify="right")
         self.lbl_strip_status.pack(side="right", padx=(0, 12))
 
-        # -- PREVIEW THUMBNAILS: START ON LEFT, END ON RIGHT --
+        # Preview thumbnails: start on left, end on right:
         self.sec_preview = ctk.CTkFrame(self.sec_trim, fg_color="transparent")
         self.sec_preview.pack(fill="x", pady=(0, 6))
 
@@ -191,20 +191,20 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_end_thumb = ctk.CTkLabel(self.frame_end_thumb, text="End\nframe", font=ctk.CTkFont(size=11))
         self.lbl_end_thumb.place(relx=0.5, rely=0.5, anchor="center")
 
-        # -- TIMELINE BAR --
+        # Timeline bar:
         self.trim_timeline = TrimTimeline(self.sec_trim, height=36)
         self.trim_timeline.pack(fill="x", pady=(16, 32))
         self.trim_timeline.on_change = self._on_timeline_change
         self.trim_timeline.on_commit = self._on_timeline_commit
-        self.trim_timeline.set_enabled(False)  # DISABLED UNTIL A FILE IS LOADED
+        self.trim_timeline.set_enabled(False)  # Disabled until a file is loaded.
 
-        # -- INPUT ROW: START / END ENTRIES WITH STEPPERS --
+        # Input row: start / end entries with steppers:
         self.sec_inputs = ctk.CTkFrame(self.sec_trim, fg_color="transparent")
         self.sec_inputs.pack(fill="x")
         self.sec_inputs.grid_columnconfigure(2, weight=1)
         self.sec_inputs.grid_columnconfigure(6, weight=1)
 
-        # START
+        # Start:
         self.lbl_start = ctk.CTkLabel(self.sec_inputs, text="Start")
         self.lbl_start.grid(row=0, column=0, sticky="w", padx=(0, 6))
 
@@ -233,7 +233,7 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_start_right.grid(row=0, column=3, padx=(2, 0))
 
-        # END
+        # End:
         self.lbl_end = ctk.CTkLabel(self.sec_inputs, text="End")
         self.lbl_end.grid(row=0, column=4, sticky="w", padx=(PAD, 6))
 
@@ -262,7 +262,7 @@ class VideoTrimmerApp(ctk.CTk):
         )
         self.btn_end_right.grid(row=0, column=7, padx=(2, 0))
 
-        # -- HINT TEXT --
+        # Hint text:
         self.lbl_hint = ctk.CTkLabel(
             self.sec_trim,
             text="Format: SS, MM:SS or HH:MM:SS  (decimals allowed, e.g., 1:23.5)",
@@ -283,7 +283,7 @@ class VideoTrimmerApp(ctk.CTk):
             text="Choose Output\u2026",
             command=self.select_output,
             border_width=1,
-            state="disabled",  # ENABLED AFTER _verify_ffmpeg CONFIRMS
+            state="disabled",  # Enabled after `_verify_ffmpeg` confirms.
         )
         self.btn_select_out.grid(row=1, column=0, sticky="w")
 
@@ -330,7 +330,7 @@ class VideoTrimmerApp(ctk.CTk):
             lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://ffmpeg.org"))
             self._banner_labels.append((lbl_cmd, "link"))
 
-        # BIND ENTRY COMMIT EVENTS
+        # Bind entry commit events:
         for entry, which in ((self.entry_start, "start"), (self.entry_end, "end")):
             entry.bind("<FocusOut>", lambda e, w=which: self._on_entry_commit(w))
             entry.bind("<Return>", lambda e, w=which: self._on_entry_commit(w))
@@ -339,16 +339,16 @@ class VideoTrimmerApp(ctk.CTk):
         self._apply_theme()
         self.after(2000, self._poll_theme)
 
-        # VERIFY FFMPEG IN THE BACKGROUND SO THE UI IS FULLY RENDERED FIRST
+        # Verify FFmpeg in the background so the UI is fully rendered first:
         if self.ffmpeg_path and self.ffprobe_path and self.btn_apply:
             self.btn_apply.start(COLORS[self._current_theme]["primary_foreground"])
             threading.Thread(target=self._verify_ffmpeg, daemon=True).start()
 
-        # KILL ANY IN-FLIGHT INDEX PROCESS BEFORE TEARDOWN SO TEMP DIRS CAN CLEAN UP
+        # Kill any in-flight index process before teardown so temp dirs can clean up:
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _on_close(self) -> None:
-        # BUMP GENERATION SO THE STRIP THREAD'S LOOP NOTICES AND BAILS
+        # Bump generation so the strip thread's loop notices and bails:
         self._preview_generation += 1
 
         if (proc := self._strip_proc) is not None and proc.poll() is None:
@@ -376,7 +376,7 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_file.configure(text=Path(filename).name, text_color=c["foreground"])
         self.btn_select_file.start(COLORS[self._current_theme]["card_foreground"])
 
-        # RESET PREVIEWS AND TIMELINE
+        # Reset previews and timeline:
         self._cancel_preview_jobs()
         self._set_preview("start", None)
         self._set_preview("end", None)
@@ -437,7 +437,7 @@ class VideoTrimmerApp(ctk.CTk):
                 self._update_hint()
                 self._schedule_preview("start", 0.0)
                 self._schedule_preview("end", duration)
-                # KICK OFF LOW-RES SCRUB STRIP IN BACKGROUND
+                # Kick off low-res scrub strip in background:
                 gen = self._preview_generation
                 threading.Thread(target=self._build_thumb_strip, args=(filename, duration, gen), daemon=True).start()
             else:
@@ -461,19 +461,19 @@ class VideoTrimmerApp(ctk.CTk):
         if not self.selected_file or not self.ffmpeg_path:
             return
 
-        # CAP TO JUST BEFORE EOF; FFmpeg RETURNS NOTHING IF SEEK POSITION >= DURATION
+        # Cap to just before EOF; FFmpeg returns nothing if seek position >= duration:
         if self.duration is not None:
             sec = min(sec, max(0.0, self.duration - 1.0 / (self.fps or _DEFAULT_FPS)))
 
-        # 1) INSTANT FEEDBACK FROM IN-MEMORY STRIP (IF AVAILABLE)
+        # [1] Instant feedback from in-memory strip (if available):
         if (strip_img := self._strip_image_at(sec)) is not None:
             self._set_preview(which, strip_img)
 
-        # 2) ALWAYS RECORD THE LATEST TARGET SO STALE HD RESULTS CAN BE DISCARDED
+        # [2] Always record the latest target so stale HD results can be discarded:
         self._preview_pending_sec[which] = sec
         self._preview_latest_sec[which] = sec
 
-        # IF A JOB IS ALREADY SCHEDULED, IT WILL PICK UP THE UPDATED `sec` ON FIRE
+        # If a job is already scheduled, it will pick up the updated `sec` on fire:
         if getattr(self, f"_preview_{which}_job") is not None:
             return
 
@@ -498,7 +498,7 @@ class VideoTrimmerApp(ctk.CTk):
             img = self._extract_frame(video_path, sec)
 
             def _apply() -> None:
-                # DISCARD IF FILE CHANGED OR USER HAS SCRUBBED TO A NEW POSITION SINCE
+                # Discard if file changed or user has scrubbed to a new position since:
                 if self._preview_generation != generation:
                     return
                 if self._preview_latest_sec.get(which) != sec:
@@ -550,7 +550,7 @@ class VideoTrimmerApp(ctk.CTk):
             return
 
         count = max(2, _STRIP_COUNT)
-        rate = count / duration  # FRAMES PER SECOND TO SAMPLE
+        rate = count / duration  # Frames per second to sample.
 
         self.after(0, lambda: self._set_strip_status("indexing", 0.0, generation))
 
@@ -611,7 +611,7 @@ class VideoTrimmerApp(ctk.CTk):
             proc.wait()
             self._strip_proc = None
 
-            # ABORT IF USER ALREADY SWITCHED FILES
+            # Abort if user already switched files:
             if self._preview_generation != generation:
                 return
 
@@ -671,7 +671,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         if img is None:
             setattr(self, f"_{which}_preview_image", None)
-            # CLEAR THE UNDERLYING tk.Label IMAGE FIRST TO PREVENT TclError FROM STALE PHOTIMAGE REFS
+            # Clear the underlying `tk.Label` image first to prevent `TclError` from stale `PhotoImage` refs:
             with suppress(Exception):
                 lbl._label.configure(image="")
             lbl.configure(
@@ -700,7 +700,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         self._sync_entries()
 
-        # LIVE-UPDATE PREVIEWS WHILE DRAGGING (DEBOUNCED IN `_schedule_preview`)
+        # Live-update previews while dragging (debounced in `_schedule_preview`):
         cur_end = self._end_sec if self._end_sec is not None else self.duration
         if self._start_sec != prev_start:
             self._schedule_preview("start", self._start_sec)
@@ -745,7 +745,7 @@ class VideoTrimmerApp(ctk.CTk):
             sec = parse_time(val)
 
         if sec is None:
-            self._sync_entries()  # REVERT TO LAST VALID VALUE
+            self._sync_entries()  # Revert to last valid value.
             return
 
         sec = max(0.0, sec)
@@ -921,13 +921,13 @@ class VideoTrimmerApp(ctk.CTk):
         self.lbl_file.configure(text_color=c["foreground"] if self.selected_file else c["placeholder_foreground"])
         self.lbl_out.configure(text_color=c["foreground"] if self.output_path else c["placeholder_foreground"])
 
-        # PREVIEW THUMBNAILS
+        # Preview thumbnails:
         for frame in (self.frame_start_thumb, self.frame_end_thumb):
             frame.configure(fg_color=c["background"], border_color=c["border"])
         for lbl in (self.lbl_start_thumb, self.lbl_end_thumb):
             lbl.configure(text_color=c["placeholder_foreground"], fg_color="transparent")
 
-        # MODE TOGGLE
+        # Mode toggle:
         self.mode_toggle.configure(
             fg_color=c["background"],
             border_color=c["secondary_border"],
@@ -939,10 +939,10 @@ class VideoTrimmerApp(ctk.CTk):
             text_color=c["foreground"],
         )
 
-        # TIMELINE
+        # Timeline:
         self.trim_timeline.apply_colors(c)
 
-        # STEPPER BUTTONS
+        # Stepper buttons:
         chevron_left = render_svg_icon("chevron-left", 14, c["muted_foreground"])
         chevron_right = render_svg_icon("chevron-right", 14, c["muted_foreground"])
         for btn, icon in (
@@ -1058,7 +1058,7 @@ class VideoTrimmerApp(ctk.CTk):
         if self._trimming:
             return
 
-        # PARSE CURRENT ENTRY VALUES (HANDLES UNCOMMITTED CHANGES)
+        # Parse current entry values (handles uncommitted changes):
         start_str = self.entry_start.get().strip()
         end_str = self.entry_end.get().strip()
 
@@ -1104,7 +1104,7 @@ class VideoTrimmerApp(ctk.CTk):
                 messagebox.showerror("Invalid Range", "End time is past the end of the file.")
                 return
 
-        # RESOLVE OUTPUT PATH
+        # Resolve output path:
         if self.output_path:
             out_path = self.output_path
         else:
@@ -1177,8 +1177,8 @@ if __name__ == "__main__":
     ctk.set_appearance_mode(get_system_theme())
     ctk.set_default_color_theme("blue")
 
-    # ON WINDOWS, SET THE APP USER MODEL ID BEFORE CREATING THE WINDOW SO THE
-    # TASKBAR GROUPS THE APP UNDER ITS OWN ICON RATHER THAN THE PYTHON INTERPRETER
+    # On Windows, set the app user model ID before creating the window so the
+    # taskbar groups the app under its own icon rather than the Python interpreter:
     if sys.platform == "win32":
         with suppress(Exception):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VideoTrimmer.app")
@@ -1190,6 +1190,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         app.destroy()
 
-    # CLEAN UP TEMP FILES
+    # Clean up temp files:
     if app._temp_ico_path and app._temp_ico_path.exists():
         app._temp_ico_path.unlink()

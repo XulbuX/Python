@@ -56,8 +56,8 @@ class TrimExporter:
     # **************************************** INTERNAL ****************************************
 
     def _build_cmd(self, src: str, dst: str, start_s: float, end_s: float | None) -> list[str]:
-        # INPUT SEEK TO ~2s BEFORE THE TARGET REDUCES DECODING COST FOR LONG INPUTS.
-        # OUTPUT SEEK (-ss AFTER -i) IS FRAME-ACCURATE BECAUSE RE-ENCODING IS USED.
+        # Input seek to ~2s before the target reduces decoding cost for long inputs.
+        # Output seek (`-ss` after `-i`) is frame-accurate because re-encoding is used:
         prelude = max(0.0, start_s - 2.0)
         rel_start = start_s - prelude
 
@@ -71,8 +71,8 @@ class TrimExporter:
         if end_s is not None:
             cmd += ["-to", format_time(end_s - prelude)]
 
-        # MATCH SOURCE BITRATE SO OUTPUT SIZE SCALES PROPORTIONALLY WITH CLIP LENGTH.
-        # FALL BACK TO CRF 23 (LIBX264 DEFAULT) IF PROBING FAILS.
+        # Match source bitrate so output size scales proportionally with clip length.
+        # Fall back to CRF 23 (`libx264` default) if probing fails:
         video_bitrate = self._probe_video_bitrate(src)
         video_flags = ["libx264", "-b:v", str(video_bitrate)] if video_bitrate else ["libx264", "-crf", "23"]
         video_flags += ["-preset", "medium"]
@@ -86,7 +86,7 @@ class TrimExporter:
         if not self.ffprobe_path:
             return None
 
-        # TRY STREAM-LEVEL BITRATE FIRST
+        # Try stream-level bitrate first:
         with suppress(Exception):
             res = subprocess.run(
                 [
@@ -110,7 +110,7 @@ class TrimExporter:
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
                 return int(val)
 
-        # FALL BACK TO FORMAT (CONTAINER) BITRATE MINUS A TYPICAL AUDIO ESTIMATE
+        # Fall back to format (container) bitrate minus a typical audio estimate:
         with suppress(Exception):
             res = subprocess.run(
                 [
@@ -130,7 +130,7 @@ class TrimExporter:
             )
 
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
-                return max(1, int(val) - 192_000)  # SUBTRACT TYPICAL AUDIO BITRATE
+                return max(1, int(val) - 192_000)  # Subtract typical audio bitrate.
 
         return None
 

@@ -10,7 +10,7 @@ from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
 from xulbux import Console, Path
 
-MIN_VOLUME = 0.50  # VOLUME IN %
+MIN_VOLUME = 0.50  # Volume in percent.
 
 SOUNDS = {
     "\x03": "assets/sound/ctrl_c.wav",
@@ -126,7 +126,7 @@ def ensure_min_system_volume() -> None:
             comtypes.CoInitialize()
             needs_uninitialize = True
         except comtypes.COMError as exc:
-            if exc.hresult == 0x80010106:  # RPC_E_CHANGED_MODE
+            if exc.hresult == 0x80010106:  # `RPC_E_CHANGED_MODE`
                 Console.info(
                     "COM already initialized on this thread, possibly with a different mode (RPC_E_CHANGED_MODE).\n"
                     " ⮡ Proceeding with existing COM state for pycaw."
@@ -177,7 +177,7 @@ def ensure_min_system_volume() -> None:
             f"pycaw/COM Error during audio device interaction: HRESULT={e_com_audio.hresult}, Text='{e_com_audio.text}'",
             exit=False,
         )
-        if e_com_audio.hresult == 0x8001010E:  # RPC_E_WRONG_THREAD
+        if e_com_audio.hresult == 0x8001010E:  # `RPC_E_WRONG_THREAD`
             Console.warn(
                 "RPC_E_WRONG_THREAD: pycaw COM object accessed from wrong apartment.\n"
                 "This is common if pynput threads are MTA and CoInitialize failed to set STA."

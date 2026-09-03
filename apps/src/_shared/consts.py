@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# PREVENT A CONSOLE WINDOW FROM FLASHING WHEN CALLING EXTERNAL PROCESSES
+# Prevent a console window from flashing when calling external processes:
 POPEN_FLAGS: dict[str, Any] = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
 _ICON_DIR: Path = Path(__file__).resolve().parent / "assets" / "icons"

@@ -284,7 +284,7 @@ def is_protected_process(proc: psutil.Process) -> bool:
 
         return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):
-        return True  # ERR ON THE SIDE OF CAUTION
+        return True  # Err on the side of caution.
 
 
 def terminate_process(proc: psutil.Process) -> bool:
