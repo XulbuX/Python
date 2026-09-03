@@ -347,13 +347,13 @@ def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
         invert = ARGS.invert.exists
         error_level = int(
             {
-                "L": qrcode.constants.ERROR_CORRECT_L,  # type:ignore[name-defined]
-                "M": qrcode.constants.ERROR_CORRECT_M,  # type:ignore[name-defined]
-                "Q": qrcode.constants.ERROR_CORRECT_Q,  # type:ignore[name-defined]
-                "H": qrcode.constants.ERROR_CORRECT_H,  # type:ignore[name-defined]
+                "L": qrcode.constants.ERROR_CORRECT_L,  # pyright:ignore[reportAttributeAccessIssue,reportUnknownArgumentType,reportUnknownMemberType]
+                "M": qrcode.constants.ERROR_CORRECT_M,  # pyright:ignore[reportAttributeAccessIssue,reportUnknownArgumentType,reportUnknownMemberType]
+                "Q": qrcode.constants.ERROR_CORRECT_Q,  # pyright:ignore[reportAttributeAccessIssue,reportUnknownArgumentType,reportUnknownMemberType]
+                "H": qrcode.constants.ERROR_CORRECT_H,  # pyright:ignore[reportAttributeAccessIssue,reportUnknownArgumentType,reportUnknownMemberType]
             }.get(
                 ARGS.error_correction.val(default="M").upper(),
-                qrcode.constants.ERROR_CORRECT_M,  # type:ignore[name-defined]
+                qrcode.constants.ERROR_CORRECT_M,  # pyright:ignore[reportAttributeAccessIssue,reportUnknownArgumentType,reportUnknownMemberType]
             )
         )
 

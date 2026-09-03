@@ -76,8 +76,8 @@ This makes your commands available from any location in your terminal. ⚙️
 
 *   **Add the *commands-directory* to your system's `Path` environment variable:**
     1.  Open the Start Menu, search for "Environment Variables", and select `Edit the system environment variables`.
-    2.  In the `System Properties` window, click `Environment Variables...`.
-    3.  Under the `System variables` section, find and select the `Path` variable, then click `Edit...`.
+    2.  In the `System Properties` window, click `Environment Variables…`.
+    3.  Under the `System variables` section, find and select the `Path` variable, then click `Edit…`.
     4.  Click `New` and paste in the absolute path to your *commands-directory*.
     5.  Click `OK` to close all dialogs.
 *   **Assure correct file associations for `.py` and `.pyw` files:**

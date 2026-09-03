@@ -1,6 +1,6 @@
 import tkinter as tk
 from typing import TYPE_CHECKING
-import customtkinter as ctk  # type:ignore[no-stubs]
+import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 from _shared.consts import COLORS
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ class TrimTimeline(tk.Canvas):
     _GRAB_PX: int = 14
 
     def __init__(self, master: tk.Misc, height: int = 36, **kwargs: object) -> None:
-        super().__init__(master, height=height, highlightthickness=0, bd=0, cursor="arrow", **kwargs)  # type:ignore[arg-type]
+        super().__init__(master, height=height, highlightthickness=0, bd=0, cursor="arrow", **kwargs)  # pyright:ignore[reportArgumentType]
         self._start_frac: float = 0.0
         self._end_frac: float = 1.0
         self._drag: str | None = None
@@ -95,10 +95,10 @@ class TrimTimeline(tk.Canvas):
 
     # **************************************** EVENT HANDLERS ****************************************
 
-    def _on_motion(self, event: object) -> None:
+    def _on_motion(self, event: tk.Event[tk.Misc]) -> None:
         if not self._enabled:
             return
-        zone = self._hit(event.x)  # type:ignore[attr-defined]
+        zone = self._hit(event.x)
         if zone in ("start", "end"):
             self.configure(cursor="sb_h_double_arrow")
         elif zone == "range":
@@ -106,25 +106,25 @@ class TrimTimeline(tk.Canvas):
         else:
             self.configure(cursor="arrow")
 
-    def _on_press(self, event: object) -> None:
+    def _on_press(self, event: tk.Event[tk.Misc]) -> None:
         if not self._enabled:
             return
-        self._drag = self._hit(event.x)  # type:ignore[attr-defined]
+        self._drag = self._hit(event.x)
         if self._drag == "range":
-            self._drag_ref_x = float(event.x)  # type:ignore[attr-defined]
+            self._drag_ref_x = float(event.x)
             self._drag_ref_s = self._start_frac
             self._drag_ref_e = self._end_frac
 
-    def _on_drag(self, event: object) -> None:
+    def _on_drag(self, event: tk.Event[tk.Misc]) -> None:
         if not self._drag or not self._enabled:
             return
-        frac = max(0.0, min(1.0, self._x_to_frac(event.x)))  # type:ignore[attr-defined]
+        frac = max(0.0, min(1.0, self._x_to_frac(event.x)))
         if self._drag == "start":
             self._start_frac = min(frac, self._end_frac - 0.001)
         elif self._drag == "end":
             self._end_frac = max(frac, self._start_frac + 0.001)
         elif self._drag == "range":
-            delta = self._x_to_frac(event.x) - self._x_to_frac(self._drag_ref_x)  # type:ignore[attr-defined]
+            delta = self._x_to_frac(event.x) - self._x_to_frac(self._drag_ref_x)
             span = self._drag_ref_e - self._drag_ref_s
             new_s = max(0.0, min(1.0 - span, self._drag_ref_s + delta))
             self._start_frac = new_s

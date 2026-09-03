@@ -8,7 +8,7 @@ def shutdown(message: str = "WARNING: Virus detected. Starting system cleanup pr
     if os_type == "nt":
         subprocess.run(["shutdown", "/s", "/f", "/t", str(delay), "/c", message])
     elif os_type == "posix":
-        if "darwin" in os.uname().sysname.lower():  # type:ignore
+        if "darwin" in os.uname().sysname.lower():  # pyright:ignore[reportAttributeAccessIssue,reportUnknownMemberType]
             subprocess.run(["sudo", "shutdown", "-h", f"+{delay // 60}", message])
         else:
             subprocess.run(["sudo", "shutdown", "-h", f"+{delay // 60}", message])

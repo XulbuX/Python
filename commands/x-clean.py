@@ -22,7 +22,7 @@ try:
 
 except ImportError:
     COMDispatch = None
-    HAS_WIN32COM = False  # type:ignore[constant-reassignment]
+    HAS_WIN32COM = False  # pyright:ignore[reportConstantRedefinition]
 
 # **************************************** CONSTANTS ****************************************
 

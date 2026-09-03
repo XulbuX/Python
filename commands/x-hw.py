@@ -22,8 +22,8 @@ try:
     PSUTIL_ERROR: str | None = None
 
 except (ImportError, ModuleNotFoundError) as exc:
-    PSUTIL_AVAILABLE: bool = False  # type:ignore[no-redef]
-    PSUTIL_ERROR: str | None = str(exc)  # type:ignore[no-redef]
+    PSUTIL_AVAILABLE: bool = False  # pyright:ignore[reportConstantRedefinition]
+    PSUTIL_ERROR: str | None = str(exc)  # pyright:ignore[reportConstantRedefinition]
 
 
 class AdapterInfo(TypedDict):
@@ -203,7 +203,7 @@ class HardwareInfo:
 
                     # Get MAC address:
                     for addr in addrs[interface_name]:
-                        if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # type:ignore[reportUnnecessaryComparison]
+                        if addr.family.name == "AF_LINK" or addr.family.name == "AF_PACKET":  # pyright:ignore[reportUnnecessaryComparison]
                             adapter_info["mac"] = addr.address
                             break
 

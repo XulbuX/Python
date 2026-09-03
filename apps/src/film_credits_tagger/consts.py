@@ -1,7 +1,7 @@
 from enum import IntEnum
 from pathlib import Path
 from typing import TypedDict
-import customtkinter as ctk  # type:ignore[no-stubs]
+import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 
 
 class ValueType(IntEnum):

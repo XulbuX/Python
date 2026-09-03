@@ -20,16 +20,10 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
-from _shared.consts import COLORS  # type:ignore[missing-import]
+from _shared.consts import COLORS
 from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
-from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon  # type:ignore[missing-import]
-from _shared.widgets import (  # type:ignore[missing-import]
-    SegmentedButton,
-    SingleLineEntry,
-    SpinnerButton,
-    ToolTip,
-    render_svg_icon,
-)
+from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon
+from _shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
 
 if TYPE_CHECKING:
     from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]

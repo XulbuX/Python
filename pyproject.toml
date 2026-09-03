@@ -2,7 +2,7 @@
 typeCheckingMode = "strict"
 reportDeprecated = "warning"
 reportPrivateUsage = "warning"
-include = ["apps", "commands", "projects"]
+include = ["apps", "commands", "prankware"]
 exclude = [".github", ".venv", "**/__pycache__"]
 
 [tool.ruff]

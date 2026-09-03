@@ -22,7 +22,7 @@ PATTERNS = LazyRegex(thousands_seps=r"(?<=\d)[_'](?=\d)")
 
 
 def sanitize(expression: Any, /) -> sympy.Expr:
-    return sympy.sympify(expression)  # type:ignore[return-type]
+    return sympy.sympify(expression)  # pyright:ignore[reportUnknownMemberType,reportUnknownVariableType]
 
 
 def clean_num(token: str, /) -> str:
@@ -275,7 +275,7 @@ class FUNCTIONS:
         ABS[0]: lambda a: abs(sanitize(a)),
         FLOOR[0]: lambda a: sympy.floor(sanitize(a)),
         CEIL[0]: lambda a: sympy.ceiling(sanitize(a)),
-        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # type:ignore[operator-unsupported]
+        ROUND[0]: lambda a: sympy.floor(sanitize(a) + sympy.Rational(1, 2)),  # pyright:ignore[reportOperatorIssue]
         SIGN[0]: lambda a: sympy.sign(sanitize(a)),
         # Logarithmic functions:
         LN[0]: lambda a: sympy.log(sanitize(a)),
@@ -285,8 +285,8 @@ class FUNCTIONS:
         LOG10[0]: lambda a: sympy.log(sanitize(a), 10),
         EXP[0]: lambda a: sympy.exp(sanitize(a)),
         # Trigonometric functions:
-        RAD[0]: lambda a: sympy.rad(sanitize(a)),  # type:ignore[partially-unknown]
-        DEG[0]: lambda a: sympy.deg(sanitize(a)),  # type:ignore[partially-unknown]
+        RAD[0]: lambda a: sympy.rad(sanitize(a)),  # pyright:ignore[reportUnknownLambdaType,reportUnknownMemberType]
+        DEG[0]: lambda a: sympy.deg(sanitize(a)),  # pyright:ignore[reportUnknownLambdaType,reportUnknownMemberType]
         SIN[0]: lambda a: sympy.sin(sanitize(a)),
         ASIN[0]: lambda a: sympy.asin(sanitize(a)),
         COS[0]: lambda a: sympy.cos(sanitize(a)),
@@ -306,7 +306,7 @@ class FUNCTIONS:
         CSC[0]: lambda a: sympy.csc(sanitize(a)),
         # Additional functions:
         FAC[0]: lambda a: sympy.factorial(sanitize(a)),
-        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # type:ignore[partially-unknown]
+        SQRT[0]: lambda a: sympy.sqrt(sanitize(a)),  # pyright:ignore[reportUnknownMemberType]
         CBRT[0]: lambda a: sympy.Pow(sanitize(a), sympy.Rational(1, 3)),
         POW[0]: lambda a, b=None: sympy.Pow(sanitize(a), sanitize(b)) if b is not None else sanitize(a),
         # Statistical functions:
@@ -861,7 +861,7 @@ class Calc:
                                 FormatCodes.print(f"[dim](arg1:) {arg1_value}")
                                 FormatCodes.print(f"[dim](arg2:) {arg2_value}")
 
-                            result = function_impl(arg1_value, arg2_value)  # type:ignore[assignment]
+                            result = function_impl(arg1_value, arg2_value)
 
                         # Single complex argument:
                         else:
@@ -876,7 +876,7 @@ class Calc:
 
                     if DEBUG:
                         FormatCodes.print(f"[dim](result:) {result}")
-                    formatted_result = self.format_result(result)  # type:ignore[arg-type]
+                    formatted_result = self.format_result(result)
                     new_split = [*split[:idx], formatted_result, *split[end_paren_idx + 1 :]]
                     split = new_split
                     split_sympy = sympify(split)

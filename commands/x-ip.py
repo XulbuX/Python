@@ -50,7 +50,7 @@ class IPInfo:
         """Get all network interfaces and their IPs."""
         interfaces: dict[str, dict[str, str]] = {}
         try:
-            import netifaces  # type:ignore[import]
+            import netifaces
 
             for interface in netifaces.interfaces():
                 addrs = netifaces.ifaddresses(interface)

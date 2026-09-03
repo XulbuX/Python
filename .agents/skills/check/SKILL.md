@@ -39,7 +39,8 @@ ruff format . ; if ($?) { ruff check . --fix } ; if ($?) { pyright }
 
 -   **Zero Issues Policy:** Every edit session must end with 0 errors, 0 warnings, and 0 lint issues.
 -   **Fix Real Bugs in Code:** If a check fails due to an issue or typing mismatch, **fix the code**. Do not suppress or work around real bugs.
--   **Type Ignore Formatting:** When using `# pyright:ignore[…]` or `# type:ignore[…]` (only when fundamentally unavoidable), **NEVER** put spaces after commas between rule names (e.g., `# pyright:ignore[reportUnknownMemberType,reportAttributeAccessIssue]`).
+-   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden. Only MyPy requires `# type:ignore`, but this repository does not use MyPy. When suppression is fundamentally unavoidable, only use specific `# pyright:ignore[…]` comments for Pyright or `# ruff:ignore[…]` comments for Ruff.
+-   **Ignore Comment Formatting:** When using `# pyright:ignore[…]` or `# ruff:ignore[…]` (only when fundamentally unavoidable), **NEVER** put spaces after commas between rule names (e.g., `# pyright:ignore[reportUnknownMemberType,reportAttributeAccessIssue]`). Always specify explicit rule IDs.
 
 ---
 

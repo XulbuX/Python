@@ -5,6 +5,7 @@ When working on this repository, any AI agent or automated assistant must adhere
 ## 1. Strict Typing
 
 All Python code across this repository must be meticulously and strictly type-hinted to pass Pyright strict type checking. Do not ever use `Any` unless it is fundamentally impossible to type-hint otherwise. All changes must be fully statically analyzable.
+*   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden across the repository. Only MyPy requires `# type:ignore`, but since this repository does not use MyPy, they must never be used. When suppression is fundamentally unavoidable, only specific `# pyright:ignore[…]` comments for Pyright or `# ruff:ignore[…]` comments for Ruff are allowed.
 
 ## 2. Validation & Testing
 

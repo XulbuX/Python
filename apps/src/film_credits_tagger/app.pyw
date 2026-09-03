@@ -20,16 +20,10 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
-from _shared.consts import COLORS  # type:ignore[missing-import]
+from _shared.consts import COLORS
 from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
-from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon  # type:ignore[missing-import]
-from _shared.widgets import (  # type:ignore[missing-import]
-    MultilineEntry,
-    SingleLineEntry,
-    SpinnerButton,
-    ToolTip,
-    render_svg_icon,
-)
+from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon
+from _shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
 
 if TYPE_CHECKING:
     from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]
@@ -256,7 +250,7 @@ class MetadataTaggerApp(ctk.CTk):
         sec3_canvas = self.sec3._parent_canvas
 
         def _on_sec3_fast_scroll(event: object) -> None:
-            sec3_canvas.yview_scroll(int(-48 * (event.delta / 120)), "units")  # type:ignore[attr-defined]
+            sec3_canvas.yview_scroll(int(-48 * (event.delta / 120)), "units")  # pyright:ignore[reportAttributeAccessIssue]
 
         sec3_canvas.bind("<Enter>", lambda _: sec3_canvas.bind_all("<MouseWheel>", _on_sec3_fast_scroll), add=True)
 
@@ -284,11 +278,11 @@ class MetadataTaggerApp(ctk.CTk):
                 self._field_labels.append(lbl)
 
                 if field_def["field_type"] == FieldType.EXPANDING:
-                    entry_widget: ctk.CTkEntry = MultilineEntry(  # type:ignore[assignment]
+                    entry_widget: ctk.CTkEntry = MultilineEntry(  # pyright:ignore[reportAssignmentType]
                         self.sec3, border_width=1, wrap="word", placeholder_text=field_def.get("placeholder", "")
                     )
                 elif field_def["field_type"] == FieldType.MULTILINE:
-                    entry_widget = MultilineEntry(  # type:ignore[assignment]
+                    entry_widget = MultilineEntry(  # pyright:ignore[reportAssignmentType]
                         self.sec3, allow_newlines=True, always_expanded=True, border_width=1, wrap="word"
                     )
                 else:
@@ -345,7 +339,7 @@ class MetadataTaggerApp(ctk.CTk):
             embed_h: int = max(1, int(orig_h * embed_ratio))
         else:
             embed_w, embed_h = orig_w, orig_h
-        embed_img: Image.Image = img.resize((embed_w, embed_h), Image.LANCZOS)  # type:ignore[attr-defined]
+        embed_img: Image.Image = img.resize((embed_w, embed_h), Image.LANCZOS)  # pyright:ignore[reportAttributeAccessIssue]
 
         # Measure JPEG size after compression:
         buf: io.BytesIO = io.BytesIO()
@@ -365,7 +359,7 @@ class MetadataTaggerApp(ctk.CTk):
         fit_scale: float = min(THUMB / embed_w, THUMB / embed_h)
         fit_w: int = max(1, int(embed_w * fit_scale))
         fit_h: int = max(1, int(embed_h * fit_scale))
-        thumb_img: Image.Image = embed_img.resize((fit_w, fit_h), Image.LANCZOS)  # type:ignore[attr-defined]
+        thumb_img: Image.Image = embed_img.resize((fit_w, fit_h), Image.LANCZOS)  # pyright:ignore[reportAttributeAccessIssue]
 
         self.cover_preview_image = ctk.CTkImage(light_image=thumb_img, dark_image=thumb_img, size=(fit_w, fit_h))
         self.lbl_cover_thumb.configure(image=self.cover_preview_image, text="")
