@@ -3,40 +3,54 @@ from pathlib import Path
 from typing import TypedDict
 import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 
+ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
+"""Absolute path to the assets directory."""
+
 
 class ValueType(IntEnum):
+    """Validation format types for metadata fields."""
+
     Date = 1  # DD/MM/YYYY → YYYY:MM:DD 00:00:00 (ExifTool format).
     Lang = 2  # ISO 639-2 code: eng, fra, deu…
 
 
 class FieldType(IntEnum):
+    """UI input widget behavior type for metadata fields."""
+
     SINGLE = 1  # Single-line `CTkEntry`.
     EXPANDING = 2  # Single-line that expands to multi-line (no hard newlines).
     MULTILINE = 3  # Free multi-line with newlines allowed.
 
 
 class _FieldDefRequired(TypedDict):
+    """Required attributes for a field definition."""
+
     tags: tuple[str, ...]  # Primary (cross-platform) tag first; all are written, primary used for reading back.
     field_type: FieldType
 
 
 class FieldDef(_FieldDefRequired, total=False):
+    """Complete definition specifying metadata field properties."""
+
     placeholder: str
     value_type: ValueType
 
 
 class FieldEntry(TypedDict):
+    """Runtime field entry mapping tags to UI entry widgets."""
+
     tags: tuple[str, ...]  # Primary (cross-platform) tag first; all are written, primary used for reading back.
     widget: ctk.CTkEntry  # `ctk.CTkEntry` or `MultilineEntry`.
 
 
-_ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
-
-APP_ICON_PNG: Path = _ASSET_DIR / "img" / "FilmCreditsTagger.png"
+APP_ICON_PNG: Path = ASSET_DIR / "img" / "FilmCreditsTagger.png"
+"""Absolute path to the app icon image file."""
 
 VIDEO_FILE_TYPES: list[tuple[str, str]] = [("Video Files", "*.mp4 *.mov *.m4v *.m4a *.3gp *.3g2"), ("All Files", "*.*")]
+"""File type filters for video file selection dialogs."""
 
 COVER_ART_FILE_TYPES: list[tuple[str, str]] = [("Images", "*.jpg *.jpeg *.png *.webp *.tiff *.tif")]
+"""File type filters for cover art file selection dialogs."""
 
 # Each field lists tags in priority order: cross-platform first, OS-specific appended.
 # `ItemList` tags write standard iTunes/QuickTime atoms; Microsoft tags cover Windows Explorer/WMP:
@@ -103,3 +117,4 @@ FIELDS: dict[str, dict[str, FieldDef]] = {
 }
 
 FIELDS_FLAT: dict[str, FieldDef] = {label: fd for section in FIELDS.values() for label, fd in section.items()}
+"""Flat mapping of field labels to definitions for easy lookup."""

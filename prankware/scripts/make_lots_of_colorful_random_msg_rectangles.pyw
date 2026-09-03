@@ -1,8 +1,10 @@
 import tkinter as tk
 from random import choice, randint
 
-WINS = 1000
-MSGS = [
+WINS: int = 1000
+"""Number of windows to generate."""
+
+MSGS: list[str] = [
     "Am I a rectangle?",
     "Am I alone?",
     "Am I annoying?",
@@ -42,9 +44,12 @@ MSGS = [
     "You will never be rid of me.",
     "You will never get rid of me.",
 ]
+"""Random existential messages displayed in spawned rectangles."""
 
 
 def make_window() -> None:
+    """Spawn a borderless rectangle window with random coordinates, color, and message."""
+
     win = tk.Toplevel()
     win.overrideredirect(True)
     x = randint(0, root.winfo_screenwidth() - 200)

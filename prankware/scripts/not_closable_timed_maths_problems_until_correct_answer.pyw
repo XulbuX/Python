@@ -1,11 +1,13 @@
 import random
 import sys
-import customtkinter as ctk
+import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 
 sys.setrecursionlimit(1000000000)
 ctk.set_appearance_mode("System")
 
-OPEN_WINDOWS = []
+OPEN_WINDOWS: list[ctk.CTk] = []
+"""List tracking currently active problem windows."""
+
 SETTINGS = {
     "color_themes": ["blue", "green", "dark-blue"],
     "max_number": {
@@ -20,9 +22,13 @@ SETTINGS = {
 
 
 class MathsProblemWindow:
+    """CustomTkinter window presenting a timed maths problem that cannot be easily closed."""
+
     window_count = 0
 
-    def __init__(self, focus_win: bool = False):
+    def __init__(self, focus_win: bool = False) -> None:
+        """Initialize and display a new maths problem window."""
+
         MathsProblemWindow.window_count += 1
         ctk.set_default_color_theme(SETTINGS["color_themes"][random.randint(0, len(SETTINGS["color_themes"]) - 1)])
         self.win = ctk.CTk()
@@ -35,11 +41,12 @@ class MathsProblemWindow:
         self.win.title(f"Maths Problem {MathsProblemWindow.window_count}")
         self.win.bind("<Unmap>", self.on_iconify)
         self.win.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.timer_id = None
+        self.timer_id: str | None = None
         self.setup_ui()
         self.start()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        """Construct the window layout and widgets."""
         self.timer = SETTINGS["problem_timer"]
         self.question_label = ctk.CTkLabel(self.win, font=ctk.CTkFont(size=40, weight="bold"))
         self.question_label.pack(pady=10)
@@ -56,7 +63,9 @@ class MathsProblemWindow:
         self.result_label.pack(pady=5)
         OPEN_WINDOWS.append(self.win)
 
-    def problem(self) -> tuple:
+    def problem(self) -> tuple[int, int, str, str, int]:
+        """Generate a random math problem and compute the integer answer."""
+
         operation = random.choice(["+", "-", "*", "/"])
         num1 = random.randint(1, SETTINGS["max_number"][operation][0])
         num2 = random.randint(1, SETTINGS["max_number"][operation][1])
@@ -65,7 +74,9 @@ class MathsProblemWindow:
         question = f"{num1} {operation} {num2}"
         return num1, num2, operation, question, int(eval(question))
 
-    def reset(self, timer: int):
+    def reset(self, timer: int) -> None:
+        """Reset the problem, question labels, and countdown timer."""
+
         if self.timer_id:
             self.win.after_cancel(self.timer_id)
         self.num1, self.num2, self.operation, self.question, self.answer = self.problem()
@@ -75,7 +86,9 @@ class MathsProblemWindow:
         self.timer = timer
         self.update_timer()
 
-    def update_timer(self):
+    def update_timer(self) -> None:
+        """Tick the countdown timer by one second and spawn a new window if expired."""
+
         if self.timer > 0:
             self.timer_label.configure(text=f"Time left: {self.timer}s")
             self.timer -= 1
@@ -85,7 +98,9 @@ class MathsProblemWindow:
             self.reset(SETTINGS["problem_timer"])
             MathsProblemWindow()
 
-    def check_answer(self):
+    def check_answer(self) -> None:
+        """Validate user input against answer and close the window if correct."""
+
         user_answer = self.entry.get()
         if user_answer.isdigit() and int(user_answer) == self.answer:
             if self.timer_id:
@@ -99,14 +114,20 @@ class MathsProblemWindow:
             self.reset(SETTINGS["problem_timer"])
             MathsProblemWindow()
 
-    def on_close(self):
+    def on_close(self) -> None:
+        """Handle window close event preventing direct window dismissal."""
+
         self.result_label.configure(text="Close the window by solving the problem.", text_color="#40DFBD")
 
-    def on_iconify(self, _):
+    def on_iconify(self, event: object) -> None:
+        """Prevent minimizing by immediately deiconifying."""
+
         self.win.deiconify()
         self.result_label.configure(text="Minimizing the window is illegal!", text_color="#EE8050")
 
-    def start(self):
+    def start(self) -> None:
+        """Start the problem window lifecycle."""
+
         self.reset(SETTINGS["problem_timer"] + 1)
         self.win.mainloop()
 

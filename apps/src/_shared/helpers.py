@@ -5,7 +5,8 @@ import tempfile
 import tkinter.font as tkfont
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
+import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 from PIL import Image, ImageTk
 
 
@@ -54,7 +55,7 @@ def resolve_mono_font(size: int) -> tuple[str, int]:
     return ("Courier New", size)
 
 
-def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
+def setup_window_icon(window: ctk.CTk, icon_png: Path) -> Path | None:
     """Set the window and taskbar icon from a PNG file."""
 
     if not icon_png.is_file():
@@ -69,7 +70,7 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
         ico_path: Path = Path(ico_tmp.name)
 
         with suppress(Exception):
-            window.iconbitmap(str(ico_path))
+            window.iconbitmap(str(ico_path))  # pyright:ignore[reportUnknownMemberType]
 
         # Also push via Win32 API after rendering, covering any taskbar refresh edge cases:
         def _apply_win32() -> None:

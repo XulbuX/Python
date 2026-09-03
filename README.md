@@ -9,7 +9,7 @@ This repository contains a ton of useful CLI scripts and other Python related pr
 
 ## Apps
 
-This directory contains lots of small, useful desktop apps built with [**Python**](https://www.python.org) and [**CustomTkinter**](https://customtkinter.tomschimansky.com).<br>
+This directory contains some small, useful desktop apps built with [**Python**](https://www.python.org) and [**CustomTkinter**](https://customtkinter.tomschimansky.com).<br>
 To see what apps are in this collection and what they do, see the directory's [**`README.md`**](./apps/README.md).
 
 

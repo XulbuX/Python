@@ -47,8 +47,8 @@ LOADED_SOUNDS = {}
 PRESSED_KEYS = set()
 
 if not DEBUG:
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")
-    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # ruff:ignore[open-file-with-context-handler]
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")  # ruff:ignore[open-file-with-context-handler]
 
 
 def add_self_to_startup() -> None:
@@ -119,7 +119,9 @@ def init_sounds() -> None:
         Console.fail(f"Error while initializing the sound files with pygame: {exc}", exit=False)
 
 
-def ensure_min_system_volume() -> None:
+def ensure_min_system_volume() -> None:  # ruff:ignore[complex-structure]
+    """Ensure that the system volume is unmuted and set to at least the minimum threshold."""
+
     needs_uninitialize = False
     try:
         try:
@@ -134,7 +136,8 @@ def ensure_min_system_volume() -> None:
                 needs_uninitialize = False
             else:
                 Console.fail(
-                    f"COM Initialization (CoInitialize) failed: HRESULT={exc.hresult}, Text='{exc.text}'.\n ⮡ Cannot manage volume.",
+                    "COM Initialization (CoInitialize) failed: "
+                    f"HRESULT={exc.hresult}, Text='{exc.text}'.\n ⮡ Cannot manage volume.",
                     exit=False,
                 )
                 return
@@ -159,7 +162,8 @@ def ensure_min_system_volume() -> None:
 
                 if target_vol_scalar != current_vol_scalar or current_vol_scalar < MIN_VOLUME:
                     Console.info(
-                        f"Setting volume to {target_vol_scalar:.2f} (was {current_vol_scalar:.2f}, min required: {MIN_VOLUME:.2f}). This action is expected to unmute."
+                        f"Setting volume to {target_vol_scalar:.2f} (was {current_vol_scalar:.2f}, "
+                        f"min required: {MIN_VOLUME:.2f}). This action is expected to unmute."
                     )
                 else:
                     Console.info(
@@ -218,16 +222,20 @@ def play_sound(sound_key) -> None:
         Console.debug(f"Sound for key '{sound_key!s}' was defined but not loaded. Skipping playback.", active=DEBUG)
 
 
-def on_click(x, y, button, pressed) -> None:
+def on_click(x: int, y: int, button: object, pressed: bool) -> None:
+    """Handle mouse click events to play click sound."""
+
     if pressed:
         Console.debug(f"Mouse clicked: {button} [dim]/(x: {x}, y: {y})[_dim]", active=DEBUG)
         play_sound("mouse")
 
 
-def on_press(key) -> None:
+def on_press(key) -> None:  # ruff:ignore[complex-structure]
+    """Handle key press events to play annoying sounds."""
+
     try:
         Console.debug(f"Key pressed: {key} [dim]/(type: {type(key)})[_dim]", active=DEBUG)
-        if Key.alt in PRESSED_KEYS or Key.alt_l in PRESSED_KEYS or Key.alt_r in PRESSED_KEYS:
+        if PRESSED_KEYS & {Key.alt, Key.alt_l, Key.alt_r}:
             if key == Key.f4:
                 play_sound("alt_f4")
                 PRESSED_KEYS.add(key)
@@ -237,23 +245,23 @@ def on_press(key) -> None:
                 PRESSED_KEYS.add(key)
                 return
             elif isinstance(key, KeyCode) and key.char is not None:
-                alt_char_key = f"alt_{(alt_char := key.char.lower())}"
+                alt_char_key = f"alt_{key.char.lower()}"
                 if alt_char_key in SOUNDS:
                     play_sound(alt_char_key)
                     PRESSED_KEYS.add(key)
                     return
-        if Key.ctrl in PRESSED_KEYS or Key.ctrl_l in PRESSED_KEYS or Key.ctrl_r in PRESSED_KEYS:
-            isinstance(key, KeyCode) and key.char is not None
+        if PRESSED_KEYS & {Key.ctrl, Key.ctrl_l, Key.ctrl_r}:
+            _ = isinstance(key, KeyCode) and key.char is not None
 
         PRESSED_KEYS.add(key)
 
         if key in SOUNDS:
             play_sound(key)
-        elif key in (Key.shift_l, Key.shift_r):
+        elif key in {Key.shift_l, Key.shift_r}:
             play_sound(Key.shift)
-        elif key in (Key.ctrl_l, Key.ctrl_r):
+        elif key in {Key.ctrl_l, Key.ctrl_r}:
             play_sound(Key.ctrl)
-        elif key in (Key.cmd_l, Key.cmd_r):
+        elif key in {Key.cmd_l, Key.cmd_r}:
             play_sound(Key.cmd)
         elif isinstance(key, KeyCode) and key.char is not None:
             char_lower = key.char.lower()
