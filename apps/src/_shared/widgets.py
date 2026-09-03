@@ -2,6 +2,7 @@
 import contextlib
 import io
 import tkinter as tk
+from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar
 from _shared.consts import COLORS, ICONS
@@ -20,11 +21,9 @@ def bind_clean_paste(tk_widget: tk.Misc) -> None:
             return "break"
 
         with contextlib.suppress(tk.TclError):
-            tk_widget.delete("sel.first", "sel.last")  # type:ignore[attr-defined]
+            tk_widget.delete("sel.first", "sel.last")  # pyright:ignore[reportAttributeAccessIssue]
 
-        tk_widget.insert(  # type:ignore[attr-defined]
-            "insert", text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
-        )
+        tk_widget.insert("insert", text.replace("\r\n", " ").replace("\r", " ").replace("\n", " "))  # pyright:ignore[reportAttributeAccessIssue]
 
         return "break"
 
@@ -36,12 +35,13 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     -------------------------------------------------------------------------------------
     Replaces `currentColor` with `color` (CSS hex string) before rasterizing.<br>
     Pipeline: `svglib` → `ReportLab PDF` (no native Cairo needed) → `PyMuPDF` → `PIL`"""
+
     import fitz  # PyMuPDF
     from reportlab.graphics.renderPDF import drawToString
     from svglib.svglib import svg2rlg
 
     svg_src = svg_path.read_text(encoding="utf-8").replace("currentColor", color)
-    drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # type:ignore[arg-type]
+    drawing = svg2rlg(io.BytesIO(svg_src.encode()))  # pyright:ignore[reportArgumentType]
 
     if drawing is None:
         raise ValueError(f"Failed to parse SVG: {svg_path.name}")
@@ -61,8 +61,9 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
 def render_svg_icon(name: str, size: int, color: str) -> ctk.CTkImage:
     """Rasterize a named icon from `ICONS` to a `ctk.CTkImage`.\n
     ---------------------------------------------------------------------------------------
-    `color` is a CSS hex string, e.g. `"#A1A1AA"`; it replaces `currentColor`.<br>
+    `color` is a CSS hex string, e.g., `"#A1A1AA"`; it replaces `currentColor`.<br>
     Renders at 4× logical size so `CTkImage` can downsample cleanly on any HiDPI scale."""
+
     pil_img = _svg_to_pil(ICONS[name], size * 4, color)
     return ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(size, size))
 
@@ -71,19 +72,20 @@ class SingleLineEntry(ctk.CTkEntry):
     """Drop-in replacement for `ctk.CTkEntry` with reliable placeholder management."""
 
     def __init__(self, master: object, **kwargs: object) -> None:
-        super().__init__(master, **kwargs)  # type:ignore[arg-type]
+        super().__init__(master, **kwargs)  # pyright:ignore[reportArgumentType]
 
         bind_clean_paste(self._entry)
 
-        # add=True PREVENTS APP CODE'S _entry.bind() CALLS FROM CLOBBERING THESE HANDLERS
+        # `add=True` prevents app code's `_entry.bind()` calls from clobbering these handlers:
         self._entry.bind("<FocusIn>", self._sle_focus_in, add=True)
         self._entry.bind("<FocusOut>", self._sle_focus_out, add=True)
 
     def _sle_focus_in(self, _event: object = None) -> None:
         if self._placeholder_text_active:
             self._deactivate_placeholder()
-        # UNCONDITIONAL; CTkEntry'S OWN FocusIn CLEARS _placeholder_text_active FIRST,
-        # SO A GUARDED RESET WOULD NEVER RUN; _deactivate_placeholder() NEVER RESETS IT
+
+        # Unconditional: `CTkEntry`'s own `FocusIn` clears `_placeholder_text_active` first,
+        # so a guarded reset would never run; `_deactivate_placeholder()` never resets it:
         self._entry.configure(insertbackground=self._apply_appearance_mode(self._text_color))
 
     def _sle_focus_out(self, _event: object = None) -> None:
@@ -91,13 +93,13 @@ class SingleLineEntry(ctk.CTkEntry):
             self._activate_placeholder()
 
     def delete(self, first_index: object, last_index: object = None) -> None:
-        # DEACTIVATE FIRST; super().delete() CLEARS THE TEXT BUT LEAVES _placeholder_text_active = True
+        # Deactivate first; `super().delete()` clears the text but leaves `_placeholder_text_active = True`:
         if self._placeholder_text_active:
             self._deactivate_placeholder()
 
         super().delete(first_index, last_index)
 
-        # _is_focused STARTS True AND IS NEVER RELIABLE; DEFER THE RESTORE CHECK INSTEAD
+        # `_is_focused` starts True and is never reliable; defer the restore check instead:
         if not self._placeholder_text_active and not self._entry.get():
             self.after_idle(self._restore_placeholder_if_empty)
 
@@ -107,14 +109,16 @@ class SingleLineEntry(ctk.CTkEntry):
 
     def configure(self, **kwargs: object) -> None:
         if "placeholder_text" in kwargs and not self._placeholder_text_active:
-            # CTkEntry.configure() WOULD ACTIVATE THE PLACEHOLDER EVEN IN A FOCUSED FIELD
+            # `CTkEntry.configure()` would activate the placeholder even in a focused field:
             self._placeholder_text = kwargs.pop("placeholder_text")
+
             if self._entry.focus_get() is not self._entry:
                 self._activate_placeholder()
             if kwargs:
-                super().configure(**kwargs)  # type:ignore[arg-type]
+                super().configure(**kwargs)  # pyright:ignore[reportArgumentType]
+
         else:
-            super().configure(**kwargs)  # type:ignore[arg-type]
+            super().configure(**kwargs)  # pyright:ignore[reportArgumentType]
 
 
 class MultilineEntry(ctk.CTkTextbox):
@@ -127,13 +131,13 @@ class MultilineEntry(ctk.CTkTextbox):
         self._showing_placeholder: bool = False
 
         kwargs.pop("height", None)
-        super().__init__(master, **kwargs)  # type:ignore[arg-type]
+        super().__init__(master, **kwargs)  # pyright:ignore[reportArgumentType]
 
         self._expanded: bool | None = None
         self._always_expanded = always_expanded
 
-        # REMOVE tk.Text INTERNAL PADDING AND TRIM THE SCROLLBAR-ROW/COL MINSIZE SO THE
-        # COLLAPSED HEIGHT MATCHES CTkEntry (42px RENDERED AT 1.5x SCALING)
+        # Remove `tk.Text` internal padding and trim the scrollbar-row/col minsize so the
+        # collapsed height matches `CTkEntry` (42px rendered at 1.5x scaling):
         self._textbox.configure(pady=0)
         self.grid_rowconfigure(1, minsize=7)
         self.grid_columnconfigure(1, minsize=7)
@@ -180,7 +184,7 @@ class MultilineEntry(ctk.CTkTextbox):
 
     def _on_placeholder_focus_in(self, _event: object = None) -> None:
         self._hide_placeholder()
-        # ENSURE CURSOR COLOR MATCHES TEXT COLOR, NOT THE PLACEHOLDER TAG COLOR
+        # Ensure cursor color matches text color, not the placeholder tag color:
         self._textbox.configure(insertbackground=self._apply_appearance_mode(self._text_color))
 
     def _on_placeholder_focus_out(self, _event: object = None) -> None:
@@ -188,12 +192,12 @@ class MultilineEntry(ctk.CTkTextbox):
             self._show_placeholder()
 
     def _on_modified(self, _event: object = None) -> None:
-        # DEFER VIA after_idle SO RAPID-FIRE EVENTS (INCLUDING THE SPURIOUS RE-TRIGGER
-        # THAT TKINTER EMITS WHEN edit_modified(False) IS CALLED) ARE COLLAPSED
+        # Defer via `after_idle` so rapid-fire events (including the spurious re-trigger
+        # that tkinter emits when `edit_modified(False)` is called) are collapsed:
         self.after_idle(self._do_modified)
 
     def _do_modified(self) -> None:
-        # IF THE FLAG WAS ALREADY CLEARED BY A PREVIOUS IDLE CALLBACK, SKIP
+        # If the flag was already cleared by a previous idle callback, skip:
         if not self._textbox.edit_modified():
             return
         self._textbox.edit_modified(False)
@@ -205,7 +209,7 @@ class MultilineEntry(ctk.CTkTextbox):
         expanded = self._always_expanded or (result[0] if result else 1) > 1
 
         if expanded == self._expanded:
-            return  # STATE UNCHANGED, NO REDRAW NEEDED
+            return  # State unchanged, no redraw needed.
 
         self._expanded = expanded
         if not expanded:
@@ -223,7 +227,7 @@ class MultilineEntry(ctk.CTkTextbox):
             self._placeholder_text_color = str(color)
             self._textbox.tag_configure("placeholder", foreground=self._placeholder_text_color)
         if kwargs:
-            super().configure(**kwargs)  # type:ignore[arg-type]
+            super().configure(**kwargs)  # pyright:ignore[reportArgumentType]
 
     def get(self) -> str:
         return "" if self._showing_placeholder else super().get("1.0", "end").rstrip("\n")
@@ -274,7 +278,7 @@ class ToolTip:
             "fg": COLORS["light"]["card"],
         },
     }
-    _TIP_TRANSPARENT = "#010203"  # UNIQUE NEAR-BLACK USED AS TRANSPARENCY KEY ON WINDOWS
+    _TIP_TRANSPARENT = "#010203"  # Unique near-black used as transparency key on Windows.
 
     def _show(self, event: object = None) -> None:
         self._after_id = None
@@ -297,7 +301,7 @@ class ToolTip:
         PARA_GAP = round(6 * scaling)
         WRAP = round(280 * scaling)
 
-        # MEASURE WIDTH FROM FULL TEXT, THEN EACH PARAGRAPH SEPARATELY FOR HEIGHT
+        # Measure width from full text, then each paragraph separately for height:
         probe = tk.Label(self._widget, text=self._text, font=FONT, justify="left", wraplength=WRAP, padx=0, pady=0, bd=0)
         probe.update_idletasks()
         tw = probe.winfo_reqwidth() + TIP_PX * 2
@@ -327,10 +331,10 @@ class ToolTip:
         cv = tk.Canvas(self._tip, width=tw, height=th, bg=self._TIP_TRANSPARENT, highlightthickness=0)
         cv.pack()
 
-        # DESTROY TOOLTIP WHEN MOUSE LEAVES IT
+        # Destroy tooltip when mouse leaves it:
         self._tip.bind("<Leave>", self._hide)
 
-        # ROUNDED RECTANGLE VIA smooth=True POLYGON; BORDER DRAWN FIRST (1px LARGER), FILL ON TOP
+        # Rounded rectangle via `smooth=True` polygon; border drawn first (1px larger), fill on top:
         pts = [cr, 0, tw - cr, 0, tw, 0, tw, cr, tw, th - cr, tw, th, tw - cr, th, cr, th, 0, th, 0, th - cr, 0, cr, 0, 0]
         cv.create_polygon(pts, smooth=True, fill=tip_border, outline="")
 
@@ -372,9 +376,10 @@ class ToolTip:
         self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
 
     def _hide(self, event: object = None) -> None:
-        """Moving between a CTkButton's internal sub-widgets (canvas → text label etc.) fires<br>
+        """Moving between a `CTkButton`'s internal sub-widgets (canvas → text label etc.) fires<br>
         spurious Leave events. Ignore them if the pointer is still within the outer widget."""
-        try:
+
+        with suppress(tk.TclError):
             wx = self._widget.winfo_rootx()
             wy = self._widget.winfo_rooty()
             ww = self._widget.winfo_width()
@@ -383,10 +388,7 @@ class ToolTip:
             py = self._widget.winfo_pointery()
 
             if wx <= px < wx + ww and wy <= py < wy + wh:
-                return  # POINTER STILL INSIDE; NOT A REAL LEAVE
-
-        except tk.TclError:
-            pass
+                return  # Pointer still inside; not a real leave.
 
         if self._after_id:
             self._widget.after_cancel(self._after_id)
@@ -402,11 +404,12 @@ class ToolTip:
         """Periodic check while the tooltip is visible; hides it if the pointer has left<br>
         both the anchor widget and the tooltip (guards against missed Leave events, e.g.<br>
         when the mouse exits through the OS title-bar area without re-entering the window)."""
+
         if not self._tip:
             self._poll_id = None
             return
 
-        try:
+        with suppress(tk.TclError):
             px, py = self._widget.winfo_pointerx(), self._widget.winfo_pointery()
             wx = self._widget.winfo_rootx()
             wy = self._widget.winfo_rooty()
@@ -426,9 +429,6 @@ class ToolTip:
                 self._poll_id = self._widget.after(self._POLL_MS, self._visibility_poll)
                 return
 
-        except tk.TclError:
-            pass
-
         self._poll_id = None
 
         if self._tip:
@@ -444,7 +444,7 @@ class SpinnerButton(ctk.CTkButton):
     _INTERVAL_MS: int = 33
 
     def __init__(self, *args: object, **kwargs: object) -> None:
-        super().__init__(*args, **kwargs)  # type:ignore[arg-type]
+        super().__init__(*args, **kwargs)  # pyright:ignore[reportArgumentType]
         self._spin_frames: list[ctk.CTkImage] = []
         self._spin_idx: int = 0
         self._spin_after_id: str | None = None
@@ -453,17 +453,17 @@ class SpinnerButton(ctk.CTkButton):
         self._saved_state: str = "normal"
 
     def _build_frames(self, color_hex: str, size: int = 18) -> None:
-        # RENDER LOADER SVG AT 3x FOR ANTI-ALIASING, THEN GENERATE ONE ROTATED FRAME PER STEP
+        # Render loader SVG at 3x for anti-aliasing, then generate one rotated frame per step:
         HI = size * 3
         r, g, b, a = _svg_to_pil(ICONS["loader"], HI, color_hex).split()
-        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # type:ignore[attr-defined]
+        base = Image.merge("RGBA", (r, g, b, a.point(lambda v: round(v * 0.5))))  # pyright:ignore[reportArgumentType]
 
         step = 360.0 / self._FRAME_COUNT
         self._spin_frames = []
 
         for i in range(self._FRAME_COUNT):
-            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # type:ignore[attr-defined]
-            lo = rotated.resize((size, size), Image.LANCZOS)  # type:ignore[attr-defined]
+            rotated = base.rotate(-i * step, resample=Image.BICUBIC, expand=False)  # pyright:ignore[reportAttributeAccessIssue]
+            lo = rotated.resize((size, size), Image.LANCZOS)  # pyright:ignore[reportAttributeAccessIssue]
             self._spin_frames.append(ctk.CTkImage(light_image=lo, dark_image=lo, size=(size, size)))
 
     def start(self, color_hex: str = "#FFFFFF") -> None:
@@ -501,8 +501,8 @@ class SpinnerButton(ctk.CTkButton):
 
 
 class SegmentedButton(ctk.CTkFrame):
-    """Bordered segmented-button built from plain CTkButtons.\n
-    -------------------------------------------------------------------------------------------
+    """Bordered segmented-button built from plain `CTkButton`s.\n
+    ----------------------------------------------------------------------------------------------------
     The frame itself provides the border and rounded corners – no CTk-internal artifacts.<br>
     Buttons fill the interior with a 2 px gap on every side so the frame's rounded corners<br>
     are always visible and filled by `fg_color`, not by an overlapping child widget."""
@@ -518,7 +518,8 @@ class SegmentedButton(ctk.CTkFrame):
         tooltip: str = "",
         **kwargs: object,
     ) -> None:
-        super().__init__(master, border_width=1, corner_radius=6, **kwargs)  # type:ignore[arg-type]
+        super().__init__(master, border_width=1, corner_radius=6, **kwargs)  # pyright:ignore[reportArgumentType]
+
         self._values = list(values)
         self._command = command
         self._selected: str = self._values[0] if self._values else ""
@@ -565,7 +566,7 @@ class SegmentedButton(ctk.CTkFrame):
         self._refresh_buttons()
 
         if self._command:
-            self._command(value)  # type:ignore[call-arg]
+            self._command(value)  # pyright:ignore[reportCallIssue]
 
     def _refresh_buttons(self) -> None:
         for val, btn in self._buttons.items():
@@ -597,7 +598,8 @@ class SegmentedButton(ctk.CTkFrame):
             self._unselected_hover = str(v)
         if (v := kwargs.pop("text_color", None)) is not None:
             self._text_color = str(v)
+
         if kwargs:
-            super().configure(**kwargs)  # type:ignore[arg-type]
+            super().configure(**kwargs)  # pyright:ignore[reportArgumentType]
 
         self._refresh_buttons()

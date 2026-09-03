@@ -1061,11 +1061,9 @@ class TreeRenderer:
                 cat = EXT_TO_CAT.get(ext)
 
             if cat is None and not ext:
-                try:
+                with suppress(Exception):
                     if entry.stat(follow_symlinks=False).st_mode & 0o111:
                         cat = "exec"
-                except Exception:
-                    pass
 
         if cat is not None:
             colors = self.chrs.category_colors[cat]

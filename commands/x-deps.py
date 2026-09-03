@@ -7,6 +7,7 @@ Filters out local project modules, showing only installable packages."""
 import re
 import subprocess
 import sys
+from contextlib import suppress
 from pathlib import Path
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, Throbber
@@ -14,50 +15,50 @@ from xulbux import ArgumentParser, FormatCodes, Throbber
 
 def extract_imports(file_path: Path) -> set[str]:
     """Extract all imported module names from a Python file."""
+
     imports: set[str] = set()
     import_pattern = re.compile(r"^\s*(?:from\s+(\S+)|import\s+(\S+))", re.MULTILINE)
 
-    try:
-        with open(file_path, encoding="utf-8") as f:
-            content = f.read()
+    with suppress(Exception), open(file_path, encoding="utf-8") as f:
+        content = f.read()
 
-            # REMOVE DOCSTRINGS AND COMMENTS BEFORE PROCESSING
-            # TRIPLE-QUOTED STRINGS (DOCSTRINGS)
-            content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', "", content)
-            # SINGLE/DOUBLE QUOTED STRINGS
-            content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', "", content)
-            # COMMENTS (LINES STARTING WITH #)
-            content = re.sub(r"#.*$", "", content, flags=re.MULTILINE)
+        # REMOVE DOCSTRINGS AND COMMENTS BEFORE PROCESSING
+        # TRIPLE-QUOTED STRINGS (DOCSTRINGS)
+        content = re.sub(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', "", content)
+        # SINGLE/DOUBLE QUOTED STRINGS
+        content = re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'', "", content)
+        # COMMENTS (LINES STARTING WITH #)
+        content = re.sub(r"#.*$", "", content, flags=re.MULTILINE)
 
-            for match in import_pattern.finditer(content):
-                module = match.group(1) or match.group(2)
-                # SKIP RELATIVE IMPORTS (starting with .)
-                if module.startswith("."):
-                    continue
-                # ADD TOP-LEVEL MODULE NAME
-                imports.add(module.split(".")[0])
-    except Exception:
-        pass
+        for match in import_pattern.finditer(content):
+            module = match.group(1) or match.group(2)
+            # SKIP RELATIVE IMPORTS (starting with .)
+            if module.startswith("."):
+                continue
+            # ADD TOP-LEVEL MODULE NAME
+            imports.add(module.split(".")[0])
 
     return imports
 
 
 def get_local_module_names(directory: Path) -> set[str]:
     """Collect all local Python module names (file stems and package dirs) in the tree."""
+
     names: set[str] = set()
-    try:
+
+    with suppress(PermissionError):
         for item in directory.rglob("*"):
             if item.is_file() and item.suffix in (".py", ".pyw"):
                 names.add(item.stem)
             elif item.is_dir() and (item / "__init__.py").exists():
                 names.add(item.name)
-    except PermissionError:
-        pass
+
     return names
 
 
 def get_all_modules(directory: Path, recursive: bool = False, external_only: bool = False) -> dict[str, list[str]]:
     """Get all modules used across Python files, grouped by module name."""
+
     module_usage: dict[str, list[str]] = {}
 
     if not directory.is_dir():
@@ -67,9 +68,11 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
 
     def scan_directory(dir_path: Path, base_path: Path | None = None) -> None:
         """Scan a directory for Python files and extract imports."""
+
         if base_path is None:
             base_path = dir_path
-        try:
+
+        with suppress(PermissionError):
             for full_path in dir_path.iterdir():
                 if full_path.is_file() and full_path.suffix in (".py", ".pyw"):
                     for module in extract_imports(full_path):
@@ -82,8 +85,6 @@ def get_all_modules(directory: Path, recursive: bool = False, external_only: boo
                         module_usage[module].append(str(full_path.relative_to(base_path).with_suffix("")))
                 elif recursive and full_path.is_dir():
                     scan_directory(full_path, base_path)
-        except PermissionError:
-            pass  # SKIP DIRECTORIES WE CAN'T ACCESS
 
     scan_directory(directory)
     return module_usage

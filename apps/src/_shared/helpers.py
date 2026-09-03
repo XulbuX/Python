@@ -1,16 +1,17 @@
-import contextlib
 import ctypes
 import subprocess
 import sys
 import tempfile
 import tkinter.font as tkfont
+from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from PIL import Image, ImageTk
 
 
-def get_system_theme() -> str:
+def get_system_theme() -> Literal["light", "dark"]:
     """Get the system appearance as `"light"` or `"dark"`, falling back to dark."""
+
     try:
         if sys.platform == "win32":
             import winreg
@@ -37,6 +38,7 @@ def get_system_theme() -> str:
 
 def resolve_mono_font(size: int) -> tuple[str, int]:
     """Return the first available modern monospace font, falling back to Courier New."""
+
     for name in [
         "Cascadia Code",
         "Cascadia Mono",
@@ -54,6 +56,7 @@ def resolve_mono_font(size: int) -> tuple[str, int]:
 
 def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
     """Set the window and taskbar icon from a PNG file."""
+
     if not icon_png.is_file():
         return None
 
@@ -65,20 +68,22 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
         pil_icon.save(ico_tmp.name, format="ICO", sizes=[(512, 512), (256, 256), (128, 128), (64, 64)])
         ico_path: Path = Path(ico_tmp.name)
 
-        with contextlib.suppress(Exception):
+        with suppress(Exception):
             window.iconbitmap(str(ico_path))
 
-        # ALSO PUSH VIA WIN32 API AFTER RENDERING, COVERING ANY TASKBAR REFRESH EDGE CASES
+        # Also push via Win32 API after rendering, covering any taskbar refresh edge cases:
         def _apply_win32() -> None:
             if not ico_path.exists():
                 return
-            try:
+
+            with suppress(Exception):
                 GA_ROOT = 2
                 LR_LOADFROMFILE = 0x10
                 IMAGE_ICON = 1
                 WM_SETICON = 0x80
                 ICON_SMALL = 0
                 ICON_BIG = 1
+
                 user32 = ctypes.windll.user32
                 inner_hwnd = window.winfo_id()
                 hwnd = user32.GetAncestor(inner_hwnd, GA_ROOT) or inner_hwnd
@@ -88,12 +93,11 @@ def setup_window_icon(window: Any, icon_png: Path) -> Path | None:
                 sm_cy_small = user32.GetSystemMetrics(50)  # SM_CYSMICON
                 hicon_big = user32.LoadImageW(None, str(ico_path), IMAGE_ICON, sm_cx_icon, sm_cy_icon, LR_LOADFROMFILE)
                 hicon_small = user32.LoadImageW(None, str(ico_path), IMAGE_ICON, sm_cx_small, sm_cy_small, LR_LOADFROMFILE)
+
                 if hicon_big:
                     user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_big)
                 if hicon_small:
                     user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_small)
-            except Exception:
-                pass
 
         _apply_win32()
         window.after(201, _apply_win32)

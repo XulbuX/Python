@@ -259,7 +259,6 @@ def on_press(key) -> None:
                 play_sound(char_lower)
     except AttributeError:
         Console.debug(f"AttributeError for key: {key}", active=DEBUG)
-        pass
     except Exception as exc:
         Console.fail(f"Error in 'on_press()': {exc}", exit=False)
 

@@ -13,29 +13,6 @@ import xulbux as xx
 from xulbux import ArgumentParser, S
 
 
-# fmt: off
-def print_help() -> None:
-    title = ["  VS Code Extensions", " — List all installed Visual Studio Code extensions  "]
-    S(
-        "",
-        ("▄" * len("".join(title))),
-        (S.INVERSE | S.BG.BLACK)(S.BOLD(title[0]), title[1]),
-        ("▀" * len("".join(title))),
-        "",
-        (S.BOLD("Usage: "), S.BR.GREEN("vscode-ext "), S.BR.BLUE("[options]")),
-        "",
-        S.BOLD("Options:"),
-        ("  ", S.BR.BLUE("-j"), ", ", S.BR.BLUE("--json"), "    Output as a JSON list"),
-        "",
-        S.BOLD("Examples:"),
-        ("  ", S.BR.GREEN("vscode-ext"), "           ", S.DIM("# ", S.ITALIC("List all installed extensions"))),
-        ("  ", S.BR.GREEN("vscode-ext "), S.BR.BLUE("--json"), "    ", S.DIM("# ", S.ITALIC("Output all extension as a JSON list"))),  # ruff:ignore[line-too-long]
-        "",
-        sep="\n",
-    ).print()
-# fmt: on
-
-
 def get_common_vscode_locations() -> list[tuple[str, str]]:
     """Returns a list of `(executable_name, path)` tuples for common VS Code locations."""
 
@@ -47,13 +24,11 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
         programfiles = os.environ.get("PROGRAMFILES", "")
         programfiles_x86 = os.environ.get("PROGRAMFILES(X86)", "")
 
+        # fmt: off
         if localappdata:
             locations.extend([
                 ("code", str(Path(localappdata) / "Programs" / "Microsoft VS Code" / "bin" / "code.cmd")),
-                (
-                    "code-insiders",
-                    str(Path(localappdata) / "Programs" / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
-                ),
+                ("code-insiders", str(Path(localappdata) / "Programs" / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),  # ruff:ignore[line-too-long]
             ])
         if programfiles:
             locations.extend([
@@ -63,38 +38,22 @@ def get_common_vscode_locations() -> list[tuple[str, str]]:
         if programfiles_x86:
             locations.extend([
                 ("code", str(Path(programfiles_x86) / "Microsoft VS Code" / "bin" / "code.cmd")),
-                (
-                    "code-insiders",
-                    str(Path(programfiles_x86) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd"),
-                ),
+                ("code-insiders", str(Path(programfiles_x86) / "Microsoft VS Code Insiders" / "bin" / "code-insiders.cmd")),
             ])
+        # fmt: on
 
     elif system == "Darwin":
+        # fmt: off
+        # ruff:ignore[line-too-long]
         locations.extend([
             ("code", "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"),
             ("code-insiders", "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code-insiders"),
-            (
-                "code",
-                str(
-                    Path.home() / "Applications" / "Visual Studio Code.app" / "Contents" / "Resources" / "app" / "bin" / "code"
-                ),
-            ),
-            (
-                "code-insiders",
-                str(
-                    Path.home()
-                    / "Applications"
-                    / "Visual Studio Code - Insiders.app"
-                    / "Contents"
-                    / "Resources"
-                    / "app"
-                    / "bin"
-                    / "code-insiders"
-                ),
-            ),
+            ("code", str(Path.home() / "Applications" / "Visual Studio Code.app" / "Contents" / "Resources" / "app" / "bin" / "code")),
+            ("code-insiders", str(Path.home() / "Applications" / "Visual Studio Code - Insiders.app" / "Contents" / "Resources" / "app" / "bin" / "code-insiders")),
             ("code", "/usr/local/bin/code"),
             ("code-insiders", "/usr/local/bin/code-insiders"),
         ])
+        # fmt: on
 
     elif system == "Linux":
         locations.extend([
@@ -118,8 +77,7 @@ def find_vscode_executable() -> tuple[str, str] | None:
         try:
             command = "where" if platform.system() == "Windows" else "which"
             result = subprocess.run([command, variant], capture_output=True, check=True, text=True)
-            executable = result.stdout.strip().split("\n")[0]  # Get first result.
-            if executable:
+            if executable := result.stdout.strip().split("\n")[0]:  # Get first result.
                 return (variant, executable)
         except subprocess.CalledProcessError:
             continue
@@ -160,7 +118,7 @@ def main() -> None:
         "",
         xx.data.render(extensions, indent=2, as_json=True, syntax_highlighting=True).ansi
         if ARGS.as_json.exists
-        else S.WHITE("\n".join(extensions)),
+        else "\n".join(extensions),
         "",
         sep="\n",
     ).print()

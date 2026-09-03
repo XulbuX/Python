@@ -5,9 +5,10 @@
 
 import re
 import subprocess
-import tempfile
 import xml.etree.ElementTree as ET
+from contextlib import suppress
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import qrcode
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S, Throbber
@@ -170,29 +171,25 @@ class WiFi:
     def _export_xml_method(self, ssid: str) -> str | None:
         """Try to get password by exporting profile to XML."""
 
-        try:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                result = subprocess.run(
-                    ["netsh", "wlan", "export", "profile", f"name={ssid}", f"folder={temp_dir}", "key=clear"],
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="ignore",
-                    timeout=15,
-                )
+        with suppress(Exception), TemporaryDirectory() as temp_dir:
+            result = subprocess.run(
+                ["netsh", "wlan", "export", "profile", f"name={ssid}", f"folder={temp_dir}", "key=clear"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                timeout=15,
+            )
 
-                if result.returncode == 0:
-                    for file_item in Path(temp_dir).iterdir():
-                        if file_item.suffix == ".xml":
-                            try:
-                                for elem in ET.parse(file_item).getroot().iter():
-                                    if elem.tag.endswith("keyMaterial") and elem.text:
-                                        return elem.text
-                            except ET.ParseError:
-                                continue
-
-        except Exception:
-            pass
+            if result.returncode == 0:
+                for file_item in Path(temp_dir).iterdir():
+                    if file_item.suffix == ".xml":
+                        try:
+                            for elem in ET.parse(file_item).getroot().iter():
+                                if elem.tag.endswith("keyMaterial") and elem.text:
+                                    return elem.text
+                        except ET.ParseError:
+                            continue
 
         return None
 
@@ -223,7 +220,7 @@ class WiFi:
     def _get_security_type(self, ssid: str) -> str:
         """Determine the security type of the network."""
 
-        try:
+        with suppress(Exception):
             result = subprocess.run(
                 ["netsh", "wlan", "show", "profile", ssid],
                 capture_output=True,
@@ -243,9 +240,6 @@ class WiFi:
                             return "WEP"
                         elif "OPEN" in auth:
                             return "nopass"
-
-        except Exception:
-            pass
 
         return "WPA"
 

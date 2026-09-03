@@ -67,7 +67,7 @@ A small desktop app for trimming the start and/or end off a video file – power
 
 -   **Lossless trimming** – Uses FFmpeg's stream-copy mode (`-c copy`), so trimming is fast<br>
     and doesn't re-encode or recompress the video or audio.
--   **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g. `1:23.5`).
+-   **Flexible time format** – Accepts `SS`, `MM:SS`, or `HH:MM:SS` (decimals allowed, e.g., `1:23.5`).
 -   **Frame-number mode** – Toggle between time and frame-number input for precise, frame-accurate trim points.
 -   **Optional bounds** – Leave start blank to trim from the beginning; leave end blank to trim to the end of the file.
 -   **Interactive timeline** – Drag the start/end handles or use the stepper buttons to adjust trim points.

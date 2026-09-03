@@ -7,6 +7,7 @@ import json
 import re
 import socket
 import subprocess
+from contextlib import suppress
 from typing import Any
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S
@@ -68,14 +69,12 @@ class IPInfo:
                     interface_info["ipv6"] = ipv6_addr
 
                 # GET GATEWAY INFORMATION
-                try:
+                with suppress(Exception):
                     gateways = netifaces.gateways()
                     if "default" in gateways and netifaces.AF_INET in gateways["default"]:
                         default_gateway_info = gateways["default"][netifaces.AF_INET]
                         if len(default_gateway_info) >= 2 and default_gateway_info[1] == interface:
                             interface_info["gateway"] = default_gateway_info[0]
-                except Exception:
-                    pass
 
                 if interface_info:
                     interfaces[interface] = interface_info
@@ -88,7 +87,7 @@ class IPInfo:
         """Fallback method to get interfaces using system commands."""
         interfaces: dict[str, dict[str, str]] = {}
 
-        try:
+        with suppress(Exception):
             result = subprocess.run(["ipconfig"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 current_interface = None
@@ -155,9 +154,6 @@ class IPInfo:
                     for name, addrs in interfaces.items()
                     if addrs and (any(key in addrs for key in ["ipv4", "ipv6"]) or "status" in addrs)
                 }
-
-        except Exception:
-            pass
 
         return interfaces
 

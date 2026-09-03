@@ -9,6 +9,7 @@ There's no number size limit — the only limit is your system's memory."""
 import re
 import sys
 from collections.abc import Callable, Generator
+from contextlib import suppress
 from typing import Any, ClassVar
 import numpy
 import sympy
@@ -428,7 +429,7 @@ class Calc:
 
         # CHECK IF RESULT IS AN EXACT INTEGER TO AVOID FLOAT PRECISION ERRORS
         is_exact_integer = False
-        try:
+        with suppress(Exception):
             if (
                 (hasattr(result, "is_integer") and getattr(result, "is_integer", False))
                 or isinstance(result, sympy.Integer)
@@ -436,8 +437,6 @@ class Calc:
                 or isinstance(result, int)
             ):
                 is_exact_integer = True
-        except Exception:
-            pass
 
         if is_exact_integer:
             result_str = str(result)

@@ -595,18 +595,21 @@ class MetadataTaggerApp(ctk.CTk):
                 try:
                     rel = Path(cover_src).relative_to(Path(filepath).parent, walk_up=True)
                     template_data["__cover_art__"] = rel.as_posix()
-                except ValueError:  # DIFFERENT DRIVES ON WINDOWS; FALL BACK TO ABSOLUTE
+                except ValueError:  # Different drives on Windows; fall back to absolute.
                     template_data["__cover_art__"] = cover_src
+
             try:
                 with open(filepath, "w", encoding="utf-8") as file:
                     json.dump(template_data, file, indent=4)
                 messagebox.showinfo("Saved", "Template saved successfully!")
+
             except Exception as exc:
                 messagebox.showerror("Error", f"Failed to save template:\n{exc}")
 
     def _extract_cover_bytes_from_video(self, video_path: str) -> bytes:
         """Run ExifTool to extract embedded cover art bytes from a video file.<br>
         Tries ItemList then QuickTime atom locations. Returns `b""` if none found."""
+
         if not self.exiftool_path:
             return b""
 
@@ -619,11 +622,10 @@ class MetadataTaggerApp(ctk.CTk):
 
     def _apply_cover_from_video_bytes(self, cover_bytes: bytes, video_source: str) -> None:
         """Load cover art from raw bytes (extracted from `video_source`) and update the UI."""
-        try:
+
+        with suppress(Exception):  # Silently ignore malformed data.
             self._cover_video_source = video_source
             self._set_cover_from_image(Image.open(io.BytesIO(cover_bytes)).convert("RGB"))
-        except Exception:
-            pass  # MALFORMED COVER DATA; SILENTLY IGNORE
 
     def load_from_video(self) -> None:
         if not (filepath := filedialog.askopenfilename(title="Load Metadata from Video", filetypes=VIDEO_FILE_TYPES)):
@@ -919,9 +921,9 @@ class MetadataTaggerApp(ctk.CTk):
                     result = subprocess.run(cmd, capture_output=True, text=True, **_POPEN_FLAGS)
 
                     if result.returncode == 0:
-                        pass  # CLEAN SUCCESS
+                        pass  # Clean success.
                     elif result.returncode == 1:
-                        # EXIT CODE 1 = MINOR WARNING (E.G. SPEC VIOLATION); NOT A REAL ERROR
+                        # Exit code 1 = minor warning (e.g., spec violation); not a real error:
                         if result.stderr.strip():
                             warnings.append(result.stderr.strip())
                     else:
@@ -941,8 +943,8 @@ if __name__ == "__main__":
     ctk.set_appearance_mode(get_system_theme())
     ctk.set_default_color_theme("blue")
 
-    # ON WINDOWS, SET THE APP USER MODEL ID BEFORE CREATING THE WINDOW SO THE
-    # TASKBAR GROUPS THE APP UNDER ITS OWN ICON RATHER THAN THE PYTHON INTERPRETER
+    # On Windows, set the app user model ID before creating the window so the
+    # taskbar groups the app under its own icon rather than the Python interpreter:
     if sys.platform == "win32":
         with suppress(Exception):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FilmCreditsTagger.app")
@@ -954,7 +956,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         app.destroy()
 
-    # CLEAN UP TEMP FILES
+    # Clean up temp files:
     if app.cover_art_embed_path and Path(app.cover_art_embed_path).exists():
         Path(app.cover_art_embed_path).unlink()
     if app._temp_ico_path and app._temp_ico_path.exists():

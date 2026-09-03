@@ -16,14 +16,14 @@ if TYPE_CHECKING:
     from xulbux.ansi import Renderable
 
 REFERENCE_TIMES: dict[int, float] = {
-    1000: 0.01,  # 1K DIGITS
-    5000: 0.175,  # 5K DIGITS
-    10000: 0.75,  # 10K DIGITS
-    25000: 5.10,  # 25K DIGITS
-    50000: 25,  # 50K DIGITS
-    100000: 120,  # 100K DIGITS
-    500000: 3000,  # 500K DIGITS
-    1000000: 75000,  # 1M DIGITS
+    1000: 0.01,  # 1K digits
+    5000: 0.175,  # 5K digits
+    10000: 0.75,  # 10K digits
+    25000: 5.10,  # 25K digits
+    50000: 25,  # 50K digits
+    100000: 120,  # 100K digits
+    500000: 3000,  # 500K digits
+    1000000: 75000,  # 1M digits
 }
 
 
@@ -39,7 +39,7 @@ def get_hardware_score() -> float:
         return ((max_freq * math.sqrt(cpu_count)) / 4000) / memory_factor
 
     except (ImportError, AttributeError):
-        # FALLBACK: USE DEFAULT HARDWARE SCORE (ASSUMES MODERN MID-RANGE SYSTEM)
+        # Fallback: use default hardware score (assumes modern mid-range system):
         return 1.0
 
 
@@ -155,7 +155,7 @@ def format_time(seconds: float, short: bool = False, pretty_print: bool = False)
     parts: list[Renderable] = []
 
     b_val_st = S.BR.MAGENTA if pretty_print else ""
-    val_name_st = ("" if short else " ", S.ITALIC | S.MAGENTA if pretty_print else "")
+    val_name_st = ("" if short else " ", S.MAGENTA if pretty_print else "")
     a_name_st = S.BR.MAGENTA if pretty_print else ""
     r_st = S.RESET if pretty_print else ""
 

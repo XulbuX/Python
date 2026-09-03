@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import winreg
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -182,7 +183,7 @@ def looks_like_path(value: str) -> bool:
     if expanded.startswith("\\\\"):
         return True
 
-    # ENVIRONMENT VARIABLE REFERENCES THAT LOOK LIKE PATHS (E.G. %SYSTEMROOT%\…)
+    # ENVIRONMENT VARIABLE REFERENCES THAT LOOK LIKE PATHS (e.g., %SYSTEMROOT%\…)
     if "%" in stripped and ("\\" in stripped or "/" in stripped):
         return True
 
@@ -238,7 +239,7 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
                     continue
 
                 # CHECK DEFAULT VALUE (THE APP PATH)
-                try:
+                with suppress(OSError):
                     val_data, val_type = winreg.QueryValueEx(subkey, "")
                     if val_type in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and val_data:
                         path = extract_path_from_value(str(val_data))
@@ -249,8 +250,6 @@ def scan_registry_app_paths() -> list[dict[str, Any]]:
                                 "subkey": subkey_name,
                                 "broken_path": str(val_data),
                             })
-                except OSError:
-                    pass
 
                 winreg.CloseKey(subkey)
         finally:
@@ -497,14 +496,12 @@ def scan_temp_files() -> dict[str, list[dict[str, Any]]]:
     for label, dir_path in temp_dirs_to_check:
         file_count = 0
         total_size = 0
-        try:
+        with suppress(PermissionError, OSError):
             for f in dir_path.rglob("*"):
                 if f.is_file():
                     file_count += 1
                     with contextlib.suppress(OSError, PermissionError):
                         total_size += f.stat().st_size
-        except (PermissionError, OSError):
-            pass
 
         if file_count > 0:
             result.append({"label": label, "path": dir_path, "file_count": file_count, "size_bytes": total_size})
@@ -649,7 +646,7 @@ def restore_env_vars(backup_path: Path) -> None:
 
 def _broadcast_env_change() -> None:
     """Broadcast `WM_SETTINGCHANGE` so other processes pick up env var changes."""
-    try:
+    with suppress(Exception):
         import ctypes
 
         HWND_BROADCAST = 0xFFFF
@@ -658,8 +655,6 @@ def _broadcast_env_change() -> None:
         ctypes.windll.user32.SendMessageTimeoutW(
             HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 5000, None
         )
-    except Exception:
-        pass
 
 
 # **************************************** CLEANUP EXECUTION ****************************************

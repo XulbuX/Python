@@ -28,7 +28,7 @@ def interpolate_oklch(
 
     try:
         import numpy as np
-        from colorspacious import cspace_convert  # type:ignore[no-stubs]
+        from colorspacious import cspace_convert  # pyright:ignore[reportMissingTypeStubs,reportUnknownVariableType]
 
     except ImportError as exc:
         raise ImportError(

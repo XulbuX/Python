@@ -10,7 +10,7 @@ def normalize_multi(val: str) -> str:
 def parse_date(val: str) -> str:
     """Parse a user-entered date (`DD/MM/YYYY`, flexible separators) into ExifTool format `YYYY:MM:DD 00:00:00`.<br>
     Raises `ValueError` with a human-readable message if the input cannot be parsed."""
-    fmt = "Expected format: DD/MM/YYYY (e.g. 25/12/2026)"
+    fmt = "Expected format: DD/MM/YYYY (e.g., 25/12/2026)"
 
     if not (match := re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})[./\- ](\d{4})", val.strip())):
         raise ValueError(f'Cannot parse "{val}" as a date.\n{fmt}')
@@ -46,7 +46,7 @@ def validate_field(val: str, value_type: ValueType) -> str | None:
             if not re.fullmatch(r"[a-z]{3}", val.strip()):
                 return (
                     f'"{val}" is not a valid ISO 639-2 language code.\n'
-                    "Expected exactly 3 lowercase letters (e.g. eng, fra, deu)."
+                    "Expected exactly 3 lowercase letters (e.g., eng, fra, deu)."
                 )
 
         case _:

@@ -265,7 +265,7 @@ class VideoTrimmerApp(ctk.CTk):
         # -- HINT TEXT --
         self.lbl_hint = ctk.CTkLabel(
             self.sec_trim,
-            text="Format: SS, MM:SS or HH:MM:SS  (decimals allowed, e.g. 1:23.5)",
+            text="Format: SS, MM:SS or HH:MM:SS  (decimals allowed, e.g., 1:23.5)",
             font=ctk.CTkFont(size=11),
         )
         self.lbl_hint.pack(anchor="w", pady=(6, 0))
@@ -352,11 +352,9 @@ class VideoTrimmerApp(ctk.CTk):
         self._preview_generation += 1
 
         if (proc := self._strip_proc) is not None and proc.poll() is None:
-            try:
+            with suppress(Exception):
                 proc.kill()
                 proc.wait(timeout=2)
-            except Exception:
-                pass
 
         self.destroy()
 
@@ -388,7 +386,7 @@ class VideoTrimmerApp(ctk.CTk):
 
         threading.Thread(target=self._probe_duration, args=(filename,), daemon=True).start()
 
-    def _probe_duration(self, filename: str) -> None:  # ruff:ignore[complex-structure]
+    def _probe_duration(self, filename: str) -> None:
         """Probe the file's duration and FPS via FFprobe; called in a background thread."""
         if not self.ffprobe_path:
             return
@@ -408,17 +406,18 @@ class VideoTrimmerApp(ctk.CTk):
                 if st.get("codec_type") == "video":
                     if duration is None and (d := st.get("duration")):
                         duration = float(d)
-                    # PARSE r_frame_rate OR avg_frame_rate (FORMAT: "num/den")
+
+                    # parse `r_frame_rate` or `avg_frame_rate` (format: num/den):
                     for key in ("r_frame_rate", "avg_frame_rate"):
                         if (fr := st.get(key)) and "/" in fr:
-                            try:
+                            with suppress(ValueError, ZeroDivisionError):
                                 num, den = fr.split("/", 1)
                                 candidate = float(num) / float(den)
+
                                 if 1.0 < candidate < 500.0:
                                     fps = candidate
                                     break
-                            except (ValueError, ZeroDivisionError):
-                                pass
+
                     break
 
         except Exception:
@@ -536,18 +535,16 @@ class VideoTrimmerApp(ctk.CTk):
             "pipe:1",
         ]
 
-        try:
+        with suppress(Exception):
             res = subprocess.run(cmd, capture_output=True, timeout=10, **_POPEN_FLAGS)
             if res.returncode == 0 and res.stdout:
                 return Image.open(io.BytesIO(res.stdout)).copy()
-        except Exception:
-            pass
 
         return None
 
     # ************************************************** SCRUB STRIP **************************************************
 
-    def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:  # ruff:ignore[complex-structure]
+    def _build_thumb_strip(self, video_path: str, duration: float, generation: int) -> None:
         """Background: extract `_STRIP_COUNT` evenly-spaced low-res frames in a single ffmpeg pass."""
         if not self.ffmpeg_path or duration <= 0:
             return
@@ -620,11 +617,8 @@ class VideoTrimmerApp(ctk.CTk):
 
             strip: list[Image.Image] = []
             for f in sorted(Path(td).glob("f*.jpg")):
-                try:
-                    with Image.open(f) as im:
-                        strip.append(im.copy())
-                except Exception:
-                    pass
+                with suppress(Exception), Image.open(f) as im:
+                    strip.append(im.copy())
 
         if not strip:
             self.after(0, lambda: self._set_strip_status("error", 0.0, generation))
@@ -841,7 +835,7 @@ class VideoTrimmerApp(ctk.CTk):
             self.entry_end.configure(placeholder_text="last frame")
 
         else:
-            hint = "Format: SS, MM:SS or HH:MM:SS  (decimals allowed, e.g. 1:23.5)"
+            hint = "Format: SS, MM:SS or HH:MM:SS  (decimals allowed, e.g., 1:23.5)"
             self.entry_start.configure(placeholder_text="00:00")
             self.entry_end.configure(placeholder_text="end of file")
 

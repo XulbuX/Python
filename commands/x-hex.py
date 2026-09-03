@@ -180,7 +180,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     elif ARGS.rotate.exists:
         if (degrees := ARGS.rotate.val(int, default=None)) is None:
             xx.console.fail(
-                "[br:blue](--rotate) requires a degree value (0-360), e.g. [br:blue](--rotate=180)", start="\n", end="\n\n"
+                "[br:blue](--rotate) requires a degree value (0-360), e.g., [br:blue](--rotate=180)", start="\n", end="\n\n"
             )
             return
         operation = Operation.ROTATE

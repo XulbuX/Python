@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import suppress
 from pathlib import Path
 import psutil
 import xulbux as xx
@@ -244,11 +245,9 @@ def find_processes_using_path(path: Path) -> list[psutil.Process]:
 
             # On Unix systems, also check current working directory:
             if system != "Windows":
-                try:
+                with suppress(psutil.AccessDenied, psutil.NoSuchProcess):
                     if ((p := str(path).lower()) in (c := proc.cwd().lower()) or c in p) and proc not in processes:
                         processes.append(proc)
-                except (psutil.AccessDenied, psutil.NoSuchProcess):
-                    pass
 
         except (psutil.AccessDenied, psutil.NoSuchProcess, AttributeError):
             continue
@@ -279,11 +278,9 @@ def is_protected_process(proc: psutil.Process) -> bool:
 
         # On Unix, protect processes owned by root running critical services:
         if platform.system() != "Windows":
-            try:
+            with suppress(psutil.AccessDenied, psutil.NoSuchProcess):
                 if proc.username() == "root" and proc.pid < 1000:
                     return True
-            except (psutil.AccessDenied, psutil.NoSuchProcess):
-                pass
 
         return False
     except (psutil.AccessDenied, psutil.NoSuchProcess):

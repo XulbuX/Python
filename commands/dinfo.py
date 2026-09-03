@@ -9,6 +9,7 @@ import re
 import stat
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from pathlib import Path
 import xulbux as xx
 from xulbux import ArgumentParser, S, Term, Throbber
@@ -21,13 +22,11 @@ def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
     """Check if a file or directory is hidden, system, or protected."""
 
     if os.name == "nt":
-        try:
+        with suppress(AttributeError, OSError):
             attrs = entry.stat(follow_symlinks=False).st_file_attributes
             if entry.is_dir(follow_symlinks=False):
                 return bool(attrs & stat.FILE_ATTRIBUTE_HIDDEN)
             return bool(attrs & (stat.FILE_ATTRIBUTE_HIDDEN | stat.FILE_ATTRIBUTE_SYSTEM))
-        except (AttributeError, OSError):
-            pass
 
     else:
         path = entry.path
@@ -64,11 +63,9 @@ def load_gitignore_patterns(directory: str) -> list[tuple[re.Pattern[str], bool]
 
                         full = str(parent / clean[1:]) if clean.startswith("/") else str(parent / clean)
 
-                        try:
+                        with suppress(re.error):
                             flags = re.IGNORECASE if os.name == "nt" else 0
                             patterns.append((re.compile(fnmatch.translate(full), flags), is_dir))
-                        except re.error:
-                            pass
 
             except (OSError, UnicodeDecodeError):
                 continue
@@ -237,9 +234,11 @@ def scan_and_calc_scope(directory: str) -> tuple[int, int, int]:  # ruff:ignore[
         executor.submit(_scan, directory)
         while not done.wait(0.1):
             pass
+
     except KeyboardInterrupt:
         canceled[0] = True
         raise
+
     finally:
         executor.shutdown(wait=False)
 

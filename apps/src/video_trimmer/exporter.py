@@ -2,13 +2,13 @@
 ----------------------------------------------------------------------
 The exporter runs ffmpeg in a background thread and reports<br>
 progress via callbacks. The caller is responsible for marshalling<br>
-those callbacks back onto its UI thread (e.g. with `tk.after`).
+those callbacks back onto its UI thread (e.g., with `tk.after`).
 """
 
-import contextlib
 import subprocess
 import threading
 from collections.abc import Callable
+from contextlib import suppress
 from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
 from helpers import format_time
 
@@ -50,7 +50,7 @@ class TrimExporter:
     def cancel(self) -> None:
         """Kill the in-flight ffmpeg process if any."""
         if (proc := self._proc) is not None and proc.poll() is None:
-            with contextlib.suppress(Exception):
+            with suppress(Exception):
                 proc.kill()
 
     # **************************************** INTERNAL ****************************************
@@ -87,7 +87,7 @@ class TrimExporter:
             return None
 
         # TRY STREAM-LEVEL BITRATE FIRST
-        try:
+        with suppress(Exception):
             res = subprocess.run(
                 [
                     self.ffprobe_path,
@@ -110,11 +110,8 @@ class TrimExporter:
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
                 return int(val)
 
-        except Exception:
-            pass
-
         # FALL BACK TO FORMAT (CONTAINER) BITRATE MINUS A TYPICAL AUDIO ESTIMATE
-        try:
+        with suppress(Exception):
             res = subprocess.run(
                 [
                     self.ffprobe_path,
@@ -134,9 +131,6 @@ class TrimExporter:
 
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
                 return max(1, int(val) - 192_000)  # SUBTRACT TYPICAL AUDIO BITRATE
-
-        except Exception:
-            pass
 
         return None
 

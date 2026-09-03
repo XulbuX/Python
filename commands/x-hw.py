@@ -6,6 +6,7 @@
 import platform
 import re
 import subprocess
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any, TypedDict
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes
@@ -149,7 +150,7 @@ class HardwareInfo:
         system = platform.system()
 
         if system == "Windows":
-            try:
+            with suppress(Exception):
                 result = subprocess.run(
                     ["wmic", "path", "win32_VideoController", "get", "name"], capture_output=True, text=True, timeout=5
                 )
@@ -159,11 +160,9 @@ class HardwareInfo:
                         gpu_name = line.strip()
                         if gpu_name:
                             info["gpus"].append({"name": gpu_name})
-            except Exception:
-                pass
 
         elif system == "Linux":
-            try:
+            with suppress(Exception):
                 # TRY 'lspci' FOR GPU INFO
                 result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
@@ -172,11 +171,9 @@ class HardwareInfo:
                             match = re.search(r": (.+)$", line)
                             if match:
                                 info["gpus"].append({"name": match.group(1).strip()})
-            except Exception:
-                pass
 
         elif system == "Darwin":  # macOS
-            try:
+            with suppress(Exception):
                 result = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     lines = result.stdout.split("\n")
@@ -184,8 +181,6 @@ class HardwareInfo:
                         if "Chipset Model:" in line:
                             gpu_name = line.split(":", 1)[1].strip()
                             info["gpus"].append({"name": gpu_name})
-            except Exception:
-                pass
 
         return info
 
@@ -221,7 +216,7 @@ class HardwareInfo:
         info: dict[str, Any] = {"has_battery": False, "percent": None, "power_plugged": None, "time_left": None}
 
         if PSUTIL_AVAILABLE:
-            try:
+            with suppress(AttributeError):
                 battery = psutil.sensors_battery()
                 if battery:
                     info["has_battery"] = True
@@ -231,8 +226,6 @@ class HardwareInfo:
                         hours = battery.secsleft // 3600
                         minutes = (battery.secsleft % 3600) // 60
                         info["time_left"] = f"{hours}h {minutes}m"
-            except AttributeError:
-                pass
 
         return info
 

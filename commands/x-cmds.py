@@ -6,6 +6,7 @@ A short description and command arguments are displayed if available."""
 
 import hashlib
 import re
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Literal, TypedDict, cast
 import requests
@@ -15,7 +16,7 @@ from xulbux.base.types import ArgParseConfigs
 
 """
 [1] WHICH FILES ARE CONSIDERED COMMANDS?
-Only files, starting with a python shebang line (e.g. `#!/usr/bin/env python3`), are considered commands.
+Only files, starting with a python shebang line (e.g., `#!/usr/bin/env python3`), are considered commands.
 
 [2] WHICH FILES WILL BE CHECKED FOR UPDATES?
 Only files that include the comment `# x-cmds:file[update]` at the top of the file will be checked for updates from GitHub.
@@ -136,21 +137,20 @@ def get_xcmds_options(filepath: str) -> dict[str, bool]:
     """Get options for `x-cmds` set using special `# x-cmds:file[…]` comments."""
 
     options: dict[str, bool] = {}
-    try:
-        with open(filepath, encoding="utf-8") as file:
-            for line in file:
-                if PATTERNS.python_shebang.match(line):
-                    continue  # SKIP SHEBANG LINE
-                elif match := PATTERNS.update_marker.match(line):
-                    for option in (opt.strip().lower() for opt in match.group(1).split(",")):
-                        if option == "update":
-                            options["update_check"] = True
-                        elif option == "unlisted":
-                            options["unlisted"] = True
-                else:
-                    break  # STOP AT FIRST NON-MATCHING LINE
-    except Exception:
-        pass
+
+    with suppress(Exception), open(filepath, encoding="utf-8") as file:
+        for line in file:
+            if PATTERNS.python_shebang.match(line):
+                continue  # SKIP SHEBANG LINE
+            elif match := PATTERNS.update_marker.match(line):
+                for option in (opt.strip().lower() for opt in match.group(1).split(",")):
+                    if option == "update":
+                        options["update_check"] = True
+                    elif option == "unlisted":
+                        options["unlisted"] = True
+            else:
+                break  # STOP AT FIRST NON-MATCHING LINE
+
     return options
 
 
@@ -249,7 +249,7 @@ def parse_file_args(content: str) -> ArgParseConfigs | None:
 
     arg_parse_configs: ArgParseConfigs = {}
 
-    try:
+    with suppress(Exception):
         if get_args_funcs:
             func_args = ""
 
@@ -275,9 +275,6 @@ def parse_file_args(content: str) -> ArgParseConfigs | None:
             for comment in sys_argv_comments:
                 if (comment := comment.strip()).startswith("["):
                     arg_parse_configs.update(parse_args_comment(comment))
-
-    except Exception:
-        pass
 
     return arg_parse_configs
 
@@ -369,13 +366,13 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
         "fetch_failed": False,
     }
 
-    try:
+    with suppress(Exception):
         # MERGE FILES FROM ALL GITHUB REPO URLS
         github_files: dict[str, dict[str, str]] = {}
         successful_fetches = 0
 
         for repo_url in CONFIG["github_updates"]["github_repo_urls"]:
-            try:
+            with suppress(Exception):
                 # PARSE THE URL TO EXTRACT REPO INFO
                 url_pattern = re.match(r"https?://github\.com/([^/]+)/([^/]+)(?:/(?:tree|blob)/([^/]+)(/.*)?)?", repo_url)
                 if not url_pattern:
@@ -404,9 +401,6 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
 
                 successful_fetches += 1
 
-            except Exception:
-                pass  # SKIP REPOS THAT CAN'T BE ACCESSED
-
         if successful_fetches == 0 and len(CONFIG["github_updates"]["github_repo_urls"]) > 0:
             result["fetch_failed"] = True
             return result  # BAIL OUT TO PREVENT FALSE DELETIONS WHEN GITHUB API REQUESTS FAIL
@@ -434,7 +428,7 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
         if CONFIG["github_updates"]["check_for_command_updates"]:
             for cmd_name in local_updateable_files:
                 if cmd_name in github_files:
-                    try:
+                    with suppress(Exception):
                         local_filename = local_file_map[cmd_name]
                         local_path = CONFIG["command_dir"] / local_filename
 
@@ -451,17 +445,12 @@ def get_github_diffs(local_files: set[str]) -> GithubDiffs:  # ruff:ignore[compl
                             result["download_urls"][github_files[cmd_name]["filename"]] = github_files[cmd_name][
                                 "download_url"
                             ]
-                    except Exception:
-                        pass  # SKIP FILES THAT CAN'T BE COMPARED
 
         # CHECK FOR DELETED FILES (LOCAL FILES WITH UPDATE MARKER NOT IN GITHUB)
         if CONFIG["github_updates"]["check_for_new_commands"]:
             for cmd_name in local_updateable_files:
                 if cmd_name not in github_files and cmd_name not in result["updated_commands"]:
                     result["deleted_commands"].append(cmd_name)
-
-    except Exception:
-        pass  # RETURN EMPTY LISTS IF GITHUB CHECK FAILS
 
     return result
 

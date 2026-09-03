@@ -32,13 +32,17 @@ class GameOfLife:
 
     def count_neighbors(self, x: int, y: int) -> int:
         count = 0
+
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
                 if dx == 0 and dy == 0:
                     continue
+
                 nx, ny = x + dx, y + dy
+
                 if 0 <= nx < self.width and 0 <= ny < self.height and self.grid[ny][nx]:
                     count += 1
+
         return count
 
     def update(self) -> None:
@@ -46,19 +50,23 @@ class GameOfLife:
             for x in range(self.width):
                 neighbors = self.count_neighbors(x, y)
                 current_state = self.grid[y][x]
+
                 if current_state:
                     self.next_grid[y][x] = neighbors in [2, 3]
                 else:
                     self.next_grid[y][x] = neighbors == 3
+
         self.grid, self.next_grid = self.next_grid, self.grid
 
     def render(self) -> None:
         frame = bytearray()
         for i, row in enumerate(range(0, self.height - 1, 2)):
             line = bytearray()
+
             for col in range(self.width):
                 upper_filled = self.grid[row][col]
                 lower_filled = self.grid[row + 1][col]
+
                 if upper_filled and lower_filled:
                     char_bytes = self.c_full
                 elif upper_filled:
@@ -67,17 +75,23 @@ class GameOfLife:
                     char_bytes = self.c_lower
                 else:
                     char_bytes = self.c_empty
+
                 line.extend(char_bytes)
+
             frame.extend(line)
+
             if i < (self.height - 1) // 2 - 1:
                 frame.extend(b"\n")
+
         sys.stdout.write(f"\x1bc{frame.decode('utf-8')}")
 
     def add_glider(self, x: int, y: int) -> None:
         glider = [[False, True, False], [False, False, True], [True, True, True]]
+
         for dy in range(3):
             for dx in range(3):
                 nx, ny = x + dx, y + dy
+
                 if 0 <= nx < self.width and 0 <= ny < self.height:
                     self.grid[ny][nx] = glider[dy][dx]
 
@@ -96,6 +110,7 @@ class GameOfLife:
 
                 if new_width != self.width or new_height != self.height:
                     old_grid = self.grid
+
                     self.width = new_width
                     self.height = new_height
                     self.grid = [[False for _ in range(self.width)] for _ in range(self.height)]
@@ -109,6 +124,7 @@ class GameOfLife:
                 self.update()
                 gen += 1
                 time.sleep(delay)
+
         except KeyboardInterrupt:
             sys.stdout.write("\x1bc")
 
@@ -131,10 +147,12 @@ def main() -> None:
             game.add_glider(15, 8)
             game.add_oscillator(25, 10)
             game.add_oscillator(30, 15)
+
             for _ in range(20):
                 x = random.randint(0, game.width - 1)
                 y = random.randint(0, game.height - 1)
                 game.grid[y][x] = True
+
         case _:
             density = 0.2
             density = xx.console.input(
