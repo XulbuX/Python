@@ -19,11 +19,11 @@ from xulbux import ArgumentParser, S
 try:
     import pyperclip
 except Exception as exc:
-    fmt_error = "\n  ".join(str(exc).splitlines())
     S(
-        "", S.RED(S.BOLD("[ERROR] "), "'pyperclip' module failed to initialize:"), S.BR.RED(f"  {fmt_error}"), "", sep="\n"
+        S.RED(S.BOLD("\n[ERROR] "), "'pyperclip' module failed to initialize:"),
+        S.BR.RED(f"\n  {'\n  '.join(str(exc).splitlines())}\n"),
     ).print()
-    sys.exit(1)
+    raise SystemExit(1) from exc
 
 
 def format_time(elapsed: float) -> str:
@@ -128,7 +128,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         exit_code = process.wait()
 
     except KeyboardInterrupt:
-        S("\n", S.BR.YELLOW("━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
+        S(S.BR.YELLOW("\n━━━ Command cancelled by user ━━━", S.DIM(" (Ctrl+C)"))).print()
         add_nl_before_end = False
         exit_code = 130  # `SIGINT`
 
@@ -139,8 +139,10 @@ def main() -> None:  # ruff:ignore[complex-structure]
         exit_code = 127  # Command not found.
 
     except Exception as exc:
-        fmt_error = "\n  ".join(str(exc).splitlines())
-        error_msg = S(S.RED(S.BOLD("[ERROR] "), "Command execution failed:"), S.BR.RED(f"\n  {fmt_error}"), "\n")
+        error_msg = S(
+            S.RED(S.BOLD("\n[ERROR] "), "Command execution failed:"),
+            S.BR.RED(f"\n  {'\n  '.join(str(exc).splitlines())}\n"),
+        )
         captured_output.append(error_msg.raw)
         error_msg.print()
         exit_code = 1  # General error.
@@ -177,9 +179,11 @@ def main() -> None:  # ruff:ignore[complex-structure]
     try:
         pyperclip.copy(clipboard_content)
     except Exception as exc:
-        fmt_error = "\n  ".join(str(exc).splitlines())
-        S("", S.BR.RED(S.BOLD("[ERROR] "), "Failed to copy to clipboard:"), f"  {fmt_error}", "", sep="\n").print()
-        sys.exit(1)
+        S(
+            S.BR.RED(S.BOLD("\n[ERROR] "), "Failed to copy to clipboard:"),
+            f"\n  {'\n  '.join(str(exc).splitlines())}\n",
+        ).print()
+        raise SystemExit(1) from exc
 
     lines_count = len(captured_output)
 
@@ -189,7 +193,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
         (S.BR.GREEN if exit_code == 0 else S.BR.RED)(
             "━━━ Output copied to clipboard ━━━ ",
             S.DIM(
-                S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''}, ",
+                S.BOLD(str(lines_count)), S.DIM, f" line{'s' if lines_count != 1 else ''} in ",
                 S.BOLD(duration_str), S.DIM, ", exit ", S.BOLD(str(exit_code))
             )
         ),
