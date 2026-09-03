@@ -2,7 +2,6 @@
 import ctypes
 import io
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,16 +19,15 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
-from _shared.consts import COLORS
-from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
-from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon
+from _shared.consts import COLORS, POPEN_FLAGS
+from _shared.helpers import get_system_theme, resolve_binary, resolve_mono_font, setup_window_icon
 from _shared.widgets import SegmentedButton, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
 
 if TYPE_CHECKING:
-    from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]
-    from .._shared.consts import POPEN_FLAGS as _POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.consts import COLORS, POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
     from .._shared.helpers import (  # ruff:ignore[runtime-import-in-type-checking-block]
         get_system_theme,
+        resolve_binary,
         resolve_mono_font,
         setup_window_icon,
     )
@@ -78,8 +76,9 @@ class VideoTrimmerApp(ctk.CTk):
         self._temp_ico_path: Path | None = setup_window_icon(self, APP_ICON_PNG)
 
         # Check for FFmpeg / FFprobe:
-        self.ffmpeg_path: str | None = shutil.which("ffmpeg")
-        self.ffprobe_path: str | None = shutil.which("ffprobe")
+        self.ffmpeg_path: str | None = resolve_binary("ffmpeg")
+        self.ffprobe_path: str | None = resolve_binary("ffprobe")
+        self._fps_mode_flag: str = "-fps_mode"
 
         self.selected_file: str | None = None
         self.duration: float | None = None  # In seconds.
@@ -105,7 +104,7 @@ class VideoTrimmerApp(ctk.CTk):
         # Low-res thumbnail strip for scrub feedback:
         self._thumb_strip: list[Image.Image] = []
         self._thumb_strip_generation: int = -1
-        self._strip_proc: subprocess.Popen | None = None  # In-flight FFmpeg index process.
+        self._strip_proc: subprocess.Popen[str] | None = None  # In-flight FFmpeg index process.
 
         # ************************************************** UI LAYOUT **************************************************
         PAD: int = 16
@@ -391,7 +390,7 @@ class VideoTrimmerApp(ctk.CTk):
         fps: float | None = None
 
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, **_POPEN_FLAGS)
+            res = subprocess.run(cmd, capture_output=True, text=True, **POPEN_FLAGS)
             data = json.loads(res.stdout or "{}")
 
             if dur_str := data.get("format", {}).get("duration"):
@@ -533,7 +532,7 @@ class VideoTrimmerApp(ctk.CTk):
         ]
 
         with suppress(Exception):
-            res = subprocess.run(cmd, capture_output=True, timeout=10, **_POPEN_FLAGS)
+            res = subprocess.run(cmd, capture_output=True, timeout=10, **POPEN_FLAGS)
             if res.returncode == 0 and res.stdout:
                 return Image.open(io.BytesIO(res.stdout)).copy()
 
@@ -568,7 +567,7 @@ class VideoTrimmerApp(ctk.CTk):
                     f"scale={_STRIP_W}:{_STRIP_H}:force_original_aspect_ratio=decrease:flags=fast_bilinear,"
                     f"pad={_STRIP_W}:{_STRIP_H}:({_STRIP_W}-iw)/2:({_STRIP_H}-ih)/2"
                 ),
-                "-vsync",
+                self._fps_mode_flag,
                 "vfr",
                 "-q:v",
                 "6",
@@ -585,7 +584,7 @@ class VideoTrimmerApp(ctk.CTk):
                     text=True,
                     encoding="utf-8",
                     errors="replace",
-                    **_POPEN_FLAGS,
+                    **POPEN_FLAGS,
                 )
                 self._strip_proc = proc
             except Exception:
@@ -1020,18 +1019,27 @@ class VideoTrimmerApp(ctk.CTk):
         """Verify FFmpeg and FFprobe run; called in a background thread."""
 
         ok = False
+        fps_mode_flag = "-fps_mode"
         if self.ffmpeg_path and self.ffprobe_path:
             try:
-                subprocess.run([self.ffmpeg_path, "-version"], capture_output=True, timeout=5, check=True, **_POPEN_FLAGS)
-                subprocess.run([self.ffprobe_path, "-version"], capture_output=True, timeout=5, check=True, **_POPEN_FLAGS)
+                subprocess.run([self.ffmpeg_path, "-version"], capture_output=True, timeout=5, check=True, **POPEN_FLAGS)
+                subprocess.run([self.ffprobe_path, "-version"], capture_output=True, timeout=5, check=True, **POPEN_FLAGS)
                 ok = True
             except Exception:
                 ok = False
+
+        if ok and self.ffmpeg_path:
+            with suppress(Exception):
+                res = subprocess.run([self.ffmpeg_path, "-fps_mode"], capture_output=True, text=True, timeout=5, **POPEN_FLAGS)
+                if "Unrecognized option 'fps_mode'" in res.stderr:
+                    fps_mode_flag = "-vsync"
 
         def _done() -> None:
             if not ok:
                 self.ffmpeg_path = None
                 self.ffprobe_path = None
+            else:
+                self._fps_mode_flag = fps_mode_flag
 
             state = "normal" if ok else "disabled"
             self.btn_select_file.configure(state=state)

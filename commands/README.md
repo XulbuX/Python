@@ -83,7 +83,7 @@ This makes your commands available from any location in your terminal. ⚙️
 *   **Assure correct file associations for `.py` and `.pyw` files:**
     1.  In the File Explorer, right-click on any `.py` file and select `Open with` > `Choose another app`.
     2.  Scroll all the way down and click `Choose an app on your PC`.
-    3.  Navigate to your Python installation directory (*e.g.* `C:\Program Files\Python\`), select `python.exe`, and click `Open`.
+    3.  Navigate to your Python installation directory (*e.g.,* `C:\Program Files\Python\`), select `python.exe`, and click `Open`.
     4.  Now click on `Always` to set Python as the default app for `.py` files.
     5.  Lastly, repeat the same steps for a <code>.py**w**</code> file, but select <code>python**w**.exe</code> instead of `python.exe` under step 3.
 
@@ -101,7 +101,7 @@ This makes your commands available from any location in your terminal. ⚙️
 *   **Add the directory to your terminal's PATH:**
     1.  For modern **macOS** (*and Linux with Zsh*), edit `~/.zshrc`.
     2.  For most **Linux** distributions, edit `~/.bashrc`.
-    3.  Open the file (*e.g.* `nano ~/.zshrc`) and add this line to the end:
+    3.  Open the file (*e.g.,* `nano ~/.zshrc`) and add this line to the end:
 
         ```bash
         export PATH="$PATH:/path/to/your/commands-directory"
@@ -114,7 +114,7 @@ This makes your commands available from any location in your terminal. ⚙️
 ### Step 4: Restart your Terminal
 
 Close and reopen your terminal.<br>
-The changes are now active, and you can run the files by typing their names (*e.g.* [`x-cmds`](#x-cmds)). ✅
+The changes are now active, and you can run the files by typing their names (*e.g.,* [`x-cmds`](#x-cmds)). ✅
 
 <br>
 <br>

@@ -36,7 +36,7 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     Replaces `currentColor` with `color` (CSS hex string) before rasterizing.<br>
     Pipeline: `svglib` → `ReportLab PDF` (no native Cairo needed) → `PyMuPDF` → `PIL`"""
 
-    import fitz  # PyMuPDF.
+    import pymupdf
     from reportlab.graphics.renderPDF import drawToString
     from svglib.svglib import svg2rlg
 
@@ -52,8 +52,8 @@ def _svg_to_pil(svg_path: Path, render_px: int, color: str) -> Image.Image:
     drawing.height = render_px
     drawing.transform = (scale, 0, 0, scale, 0, 0)
 
-    doc = fitz.open(stream=drawToString(drawing), filetype="pdf")
-    pix = doc.load_page(0).get_pixmap(matrix=fitz.Matrix(1, 1), alpha=True)
+    doc = pymupdf.open(stream=drawToString(drawing), filetype="pdf")
+    pix = doc.load_page(0).get_pixmap(matrix=pymupdf.Matrix(1, 1), alpha=True)
 
     return Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
 

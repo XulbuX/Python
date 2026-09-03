@@ -13,7 +13,7 @@ After making any changes, you must validate them by running the full suite of fo
 *   **Format & Lint:** Run `ruff format .` and `ruff check . --fix`.
 *   **Type Check:** Run `pyright`.
 *   **Tests:** If tests are present in the project or directory being modified, run `pytest`.
-*   Use the `test` skill for testing guidelines and commands, and the `docs` skill for documentation standards.
+*   Use the `check` skill for validation guidelines and commands, the `docs` skill for documentation standards, and the `apps` skill for desktop application conventions.
 
 ## 3. Ask, Don't Assume
 

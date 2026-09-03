@@ -3,7 +3,6 @@ import ctypes
 import io
 import json
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,16 +19,15 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Shared; absolute imports during runtime, relative ones during development so the types are linked correctly in the IDE:
-from _shared.consts import COLORS
-from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
-from _shared.helpers import get_system_theme, resolve_mono_font, setup_window_icon
+from _shared.consts import COLORS, POPEN_FLAGS
+from _shared.helpers import get_system_theme, resolve_binary, resolve_mono_font, setup_window_icon
 from _shared.widgets import MultilineEntry, SingleLineEntry, SpinnerButton, ToolTip, render_svg_icon
 
 if TYPE_CHECKING:
-    from .._shared.consts import COLORS  # ruff:ignore[runtime-import-in-type-checking-block]
-    from .._shared.consts import POPEN_FLAGS as _POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from .._shared.consts import COLORS, POPEN_FLAGS  # ruff:ignore[runtime-import-in-type-checking-block]
     from .._shared.helpers import (  # ruff:ignore[runtime-import-in-type-checking-block]
         get_system_theme,
+        resolve_binary,
         resolve_mono_font,
         setup_window_icon,
     )
@@ -62,7 +60,7 @@ class MetadataTaggerApp(ctk.CTk):
         self._temp_ico_path: Path | None = setup_window_icon(self, APP_ICON_PNG)
 
         # Check for ExifTool:
-        self.exiftool_path: str | None = shutil.which("exiftool")
+        self.exiftool_path: str | None = resolve_binary("exiftool")
 
         self.selected_files: list[str] = []
 
@@ -537,7 +535,7 @@ class MetadataTaggerApp(ctk.CTk):
         ok = False
         if self.exiftool_path:
             try:
-                subprocess.run([self.exiftool_path, "-ver"], capture_output=True, timeout=5, check=True, **_POPEN_FLAGS)
+                subprocess.run([self.exiftool_path, "-ver"], capture_output=True, timeout=5, check=True, **POPEN_FLAGS)
                 ok = True
             except Exception:
                 ok = False
@@ -628,7 +626,7 @@ class MetadataTaggerApp(ctk.CTk):
             return b""
 
         for cover_tag in {"-ItemList:CoverArt", "-QuickTime:CoverArt"}:
-            res = subprocess.run([self.exiftool_path, "-b", cover_tag, video_path], capture_output=True, **_POPEN_FLAGS)
+            res = subprocess.run([self.exiftool_path, "-b", cover_tag, video_path], capture_output=True, **POPEN_FLAGS)
             if res.stdout:
                 return res.stdout
 
@@ -666,7 +664,7 @@ class MetadataTaggerApp(ctk.CTk):
 
         def _worker() -> None:
             try:
-                result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True, **_POPEN_FLAGS)
+                result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=True, **POPEN_FLAGS)
                 records: list[dict[str, object]] = json.loads(result.stdout)
 
             except subprocess.CalledProcessError as err:
@@ -933,7 +931,7 @@ class MetadataTaggerApp(ctk.CTk):
                 cmd: list[str] = [exiftool, "-overwrite_original", "-@", argfile.name, filepath]
 
                 try:
-                    result = subprocess.run(cmd, capture_output=True, text=True, **_POPEN_FLAGS)
+                    result = subprocess.run(cmd, capture_output=True, text=True, **POPEN_FLAGS)
 
                     if result.returncode == 0:
                         pass  # Clean success.

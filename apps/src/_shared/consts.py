@@ -13,15 +13,15 @@ class PopenFlags(TypedDict, total=False):
 # Prevent a console window from flashing when calling external processes:
 POPEN_FLAGS: PopenFlags = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
-_ICON_DIR: Path = Path(__file__).resolve().parent / "assets" / "icons"
+ICON_DIR: Path = Path(__file__).resolve().parent / "assets" / "icons"
 """Absolute path to the shared icon assets directory."""
 
 ICONS: dict[str, Path] = {
-    "chevron-left": _ICON_DIR / "chevron-left.svg",
-    "chevron-right": _ICON_DIR / "chevron-right.svg",
-    "loader": _ICON_DIR / "loader.svg",
-    "refresh-ccw": _ICON_DIR / "refresh-ccw.svg",
-    "x": _ICON_DIR / "x.svg",
+    "chevron-left": ICON_DIR / "chevron-left.svg",
+    "chevron-right": ICON_DIR / "chevron-right.svg",
+    "loader": ICON_DIR / "loader.svg",
+    "refresh-ccw": ICON_DIR / "refresh-ccw.svg",
+    "x": ICON_DIR / "x.svg",
 }
 
 COLORS: dict[str, dict[str, str]] = {

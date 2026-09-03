@@ -13,7 +13,7 @@ This directory contains lots of small, useful desktop apps built with [**Python*
 
 ### General requirements
 
--   Python 3.10+
+-   Python 3.12+
 -   Python packages:
 
     ```bash
@@ -24,15 +24,15 @@ This directory contains lots of small, useful desktop apps built with [**Python*
 
 ### Launching an app
 
--   On **Windows**, double-click the app's `.vbs` file (*e.g.* `film-credits-tagger.vbs`).
--   On **macOS/Linux**, right-click the app's `.sh` file (*e.g.* `film-credits-tagger.sh`) and choose «Run in terminal».
--   (*Or manually run the app's* `src/<app-name>/app.pyw` *with Python.*)
+-   On **Windows**, double-click the app's `.vbs` file (*e.g.,* `video-trimmer.vbs`).
+-   On **macOS/Linux**, run the app's `.sh` file (*e.g.,* `video-trimmer.sh`) in a terminal (*or double-click it if your system allows*).
+-   (*Or manually run the app's* `src/<app_name>/app.pyw` *with Python.*)
 
 <br>
 <br>
 <br>
 
-# Film Credits Tagger<a href="#film-credits-tagger"><img src="./src/film_credits_tagger/assets/img/FilmCreditsTagger.svg" height="36" align="right" /></a>
+# Film Credits Tagger<a href="#film-credits-tagger"><img src="./src/film_credits_tagger/assets/img/film-credits-tagger.svg" height="36" align="right" /></a>
 
 A small desktop app for tagging film credits and metadata into video files – powered by [**ExifTool**](https://exiftool.org).
 
@@ -58,7 +58,7 @@ A small desktop app for tagging film credits and metadata into video files – p
 <br>
 <br>
 
-# Video Trimmer<a href="#video-trimmer"><img src="./src/video_trimmer/assets/img/VideoTrimmer.svg" height="36" align="right" /></a>
+# Video Trimmer<a href="#video-trimmer"><img src="./src/video_trimmer/assets/img/video-trimmer.svg" height="36" align="right" /></a>
 
 A small desktop app for trimming the start and/or end off a video file – powered by [**FFmpeg**](https://ffmpeg.org).
 

@@ -3,7 +3,7 @@ from pathlib import Path
 ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
 """Absolute path to the assets directory."""
 
-APP_ICON_PNG: Path = ASSET_DIR / "img" / "VideoTrimmer.png"
+APP_ICON_PNG: Path = ASSET_DIR / "img" / "video-trimmer.png"
 """Absolute path to the app icon image file."""
 
 VIDEO_FILE_TYPES: list[tuple[str, str]] = [

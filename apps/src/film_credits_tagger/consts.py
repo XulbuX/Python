@@ -1,6 +1,6 @@
 from enum import IntEnum
 from pathlib import Path
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 import customtkinter as ctk  # pyright:ignore[reportMissingTypeStubs]
 
 ASSET_DIR: Path = Path(__file__).resolve().parent / "assets"
@@ -22,18 +22,13 @@ class FieldType(IntEnum):
     MULTILINE = 3  # Free multi-line with newlines allowed.
 
 
-class _FieldDefRequired(TypedDict):
-    """Required attributes for a field definition."""
+class FieldDef(TypedDict):
+    """Complete definition specifying metadata field properties."""
 
     tags: tuple[str, ...]  # Primary (cross-platform) tag first; all are written, primary used for reading back.
     field_type: FieldType
-
-
-class FieldDef(_FieldDefRequired, total=False):
-    """Complete definition specifying metadata field properties."""
-
-    placeholder: str
-    value_type: ValueType
+    placeholder: NotRequired[str]
+    value_type: NotRequired[ValueType]
 
 
 class FieldEntry(TypedDict):
@@ -43,7 +38,7 @@ class FieldEntry(TypedDict):
     widget: ctk.CTkEntry  # `ctk.CTkEntry` or `MultilineEntry`.
 
 
-APP_ICON_PNG: Path = ASSET_DIR / "img" / "FilmCreditsTagger.png"
+APP_ICON_PNG: Path = ASSET_DIR / "img" / "film-credits-tagger.png"
 """Absolute path to the app icon image file."""
 
 VIDEO_FILE_TYPES: list[tuple[str, str]] = [("Video Files", "*.mp4 *.mov *.m4v *.m4a *.3gp *.3g2"), ("All Files", "*.*")]

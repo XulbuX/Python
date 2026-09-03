@@ -1,4 +1,6 @@
 import ctypes
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -53,6 +55,45 @@ def resolve_mono_font(size: int) -> tuple[str, int]:
             return (name, size)
 
     return ("Courier New", size)
+
+
+def resolve_binary(name: str) -> str | None:
+    """Resolve an executable binary path from `PATH` or known platform-specific locations.\n
+    ----------------------------------------------------------------------------------------------------
+    *   `name` – Basename of the binary to look up (e.g., `ffmpeg` or `exiftool`)."""
+
+    if path := shutil.which(name):
+        return path
+
+    if sys.platform == "win32":
+        if local_app_data := os.environ.get("LOCALAPPDATA"):
+            local_path = Path(local_app_data)
+            for candidate in [
+                local_path / "Microsoft" / "WinGet" / "Links" / f"{name}.exe",
+                local_path / "Programs" / name / f"{name}.exe",
+                local_path / "Programs" / name.capitalize() / f"{name}.exe",
+            ]:
+                if candidate.is_file():
+                    return str(candidate)
+
+        if program_files := os.environ.get("PROGRAMFILES"):
+            prog_path = Path(program_files)
+            for candidate in [
+                prog_path / name / f"{name}.exe",
+                prog_path / name.capitalize() / f"{name}.exe",
+            ]:
+                if candidate.is_file():
+                    return str(candidate)
+
+    else:
+        for candidate_path in [
+            Path(f"/usr/local/bin/{name}"),
+            Path(f"/opt/homebrew/bin/{name}"),
+        ]:
+            if candidate_path.is_file():
+                return str(candidate_path)
+
+    return None
 
 
 def setup_window_icon(window: ctk.CTk, icon_png: Path) -> Path | None:

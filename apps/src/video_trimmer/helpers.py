@@ -1,6 +1,7 @@
 import re
 
-_TIME_RE = re.compile(r"^\s*(?:(\d+):)?(?:(\d{1,2}):)?(\d+(?:\.\d+)?)\s*$")
+TIME_RX = re.compile(r"^\s*(?:(\d+):)?(?:(\d{1,2}):)?(\d+(?:\.\d+)?)\s*$")
+"""Compiled regex to match `HH:MM:SS(.ms)`, `MM:SS(.ms)`, or `SS(.ms)` time formats."""
 
 
 def parse_time(val: str) -> float | None:
@@ -9,7 +10,7 @@ def parse_time(val: str) -> float | None:
 
     if not val.strip():
         return None
-    if not (match := _TIME_RE.match(val)):
+    if not (match := TIME_RX.match(val)):
         return None
 
     parts: list[str] = [part for part in (match.group(1), match.group(2), match.group(3)) if part is not None]

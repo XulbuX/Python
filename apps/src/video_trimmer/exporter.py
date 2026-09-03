@@ -11,11 +11,14 @@ import subprocess
 import threading
 from collections.abc import Callable
 from contextlib import suppress
-from _shared.consts import POPEN_FLAGS as _POPEN_FLAGS
+from _shared.consts import POPEN_FLAGS
 from helpers import format_time
 
-ProgressCallback = Callable[[float], None]
-DoneCallback = Callable[[bool, str | None], None]
+type ProgressCallback = Callable[[float], None]
+"""Callback receiving export progress fraction in `[0.0, 1.0]`."""
+
+type DoneCallback = Callable[[bool, str | None], None]
+"""Callback receiving `(success, error_message)` upon export completion."""
 
 
 class TrimExporter:
@@ -109,7 +112,7 @@ class TrimExporter:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                **_POPEN_FLAGS,
+                **POPEN_FLAGS,
             )
 
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
@@ -131,7 +134,7 @@ class TrimExporter:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                **_POPEN_FLAGS,
+                **POPEN_FLAGS,
             )
 
             if (val := res.stdout.strip()).isdigit() and int(val) > 0:
@@ -159,7 +162,7 @@ class TrimExporter:
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                **_POPEN_FLAGS,
+                **POPEN_FLAGS,
             )
             self._proc = proc
         except Exception as exc:
