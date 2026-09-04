@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Transform all hex color codes in a file or directory:
-uppercase, lowercase, grayscale, hue rotation, inversion, and more."""
+"""
+Transform all hex color codes in a file or directory:
+uppercase, lowercase, grayscale, hue rotation, inversion, and more.
+"""
 
 import fnmatch
 from enum import Enum

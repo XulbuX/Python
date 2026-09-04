@@ -2,8 +2,10 @@
 # ruff:file-ignore[ambiguous-unicode-character-string]
 # x-cmds:file[update]
 
-"""Play a maze game in the console.
-Controls and options are shown on startup."""
+"""
+Play a maze game in the console.
+Controls and options are shown on startup.
+"""
 
 import array
 import math

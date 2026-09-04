@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""A really advanced directory tree generator
-with a lot of options and customization."""
+"""
+A really advanced directory tree generator
+with a lot of options and customization.
+"""
 
 from __future__ import annotations
 

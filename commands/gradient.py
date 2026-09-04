@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Quickly generate and preview a color gradient for a
-specified color channel with a specified number of steps."""
+"""
+Quickly generate and preview a color gradient for a
+specified color channel with a specified number of steps.
+"""
 
 import colorsys
 from typing import TYPE_CHECKING, Literal, cast

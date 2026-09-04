@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Process a list of items and display some statistics."""
+"""
+Process a list of items and display some statistics.
+"""
 
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S, StyledText

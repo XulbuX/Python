@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Displays an animated, random text character mess.
-The mess can be made faster and displayed in color."""
+"""
+Displays an animated, random text character mess.
+The mess can be made faster and displayed in color.
+"""
 
 import random as rnd
 import time

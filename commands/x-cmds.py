@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Lists all Python files, executable as commands, in the current directory.
-A short description and command arguments are displayed if available."""
+"""
+Lists all Python files, executable as commands, in the current directory.
+A short description and command arguments are displayed if available.
+"""
 
 import hashlib
 import re

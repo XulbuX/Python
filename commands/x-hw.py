@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Get detailed hardware information about your PC."""
+"""
+Get detailed hardware information about your PC.
+"""
 
 import platform
 import re

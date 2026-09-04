@@ -1,4 +1,5 @@
-"""Frame-accurate, lossless video trimming via FFmpeg.
+"""
+Frame-accurate, lossless video trimming via FFmpeg.
 
 ---
 

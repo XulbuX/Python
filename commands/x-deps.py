@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""List all library dependencies imported across Python files in the script directory.
-Filters out local project modules, showing only installable packages."""
+"""
+List all library dependencies imported across Python files in the script directory.
+Filters out local project modules, showing only installable packages.
+"""
 
 import re
 import subprocess

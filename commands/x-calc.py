@@ -2,9 +2,11 @@
 # ruff:file-ignore[complex-structure, ambiguous-unicode-character-string]
 # x-cmds:file[update]
 
-"""Do advanced calculations from the command line.
+"""
+Do advanced calculations from the command line.
 Supports a wide range of mathematical operations, functions and constants.
-There's no number size limit — the only limit is your system's memory."""
+There's no number size limit — the only limit is your system's memory.
+"""
 
 import re
 import sys

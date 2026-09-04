@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Calculate the value of π to a specified number of decimal places."""
+"""
+Calculate the value of π to a specified number of decimal places.
+"""
 
 import math
 import sys

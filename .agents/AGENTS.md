@@ -54,5 +54,5 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 ## 6. Documentation & Markdown Formatting
 
+*   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
 *   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, and comment conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Section separators must follow exact widths (127 chars for top-level, 65 chars for internal) with text centered between `*`s (left side has exactly one less `*` than right side if total `*` padding is odd). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
-

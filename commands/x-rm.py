@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Force delete files or directories, even if they are locked by processes."""
+"""
+Force delete files or directories, even if they are locked by processes.
+"""
 
 import contextlib
 import os

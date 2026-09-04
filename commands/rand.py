@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Generate a truly random number with a specific number of digits or within a range.
-Provide either the number of digits or a min and max range."""
+"""
+Generate a truly random number with a specific number of digits or within a range.
+Provide either the number of digits or a min and max range.
+"""
 
 import secrets
 import sys

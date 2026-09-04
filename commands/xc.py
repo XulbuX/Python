@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Execute a command and automatically copy the full output
-including metadata to the clipboard, after execution."""
+"""
+Execute a command and automatically copy the full output
+including metadata to the clipboard, after execution.
+"""
 
 import contextlib
 import platform

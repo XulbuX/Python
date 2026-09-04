@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Lists all installed Visual Studio Code extensions with
-the option to directly format them as a JSON list."""
+"""
+Lists all installed Visual Studio Code extensions with
+the option to directly format them as a JSON list.
+"""
 
 import os
 import platform

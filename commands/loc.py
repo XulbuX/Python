@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
-"""Quickly and accurately count lines of code in a directory or project."""
+"""
+Quickly and accurately count lines of code in a directory or project.
+"""
 
 import fnmatch
 import os
@@ -30,8 +32,7 @@ class GitIgnoreRule:
     """Represents a compiled Git ignore rule relative to a root folder.\n
     ----------------------------------------------------------------------------------------------------
     *   `base_dir` – Root folder containing the .gitignore file.
-    *   `raw_pattern` – Unparsed line from the .gitignore file.
-    """
+    *   `raw_pattern` – Unparsed line from the .gitignore file."""
 
     base_dir: Path
     """Directory where the .gitignore file is located."""
@@ -66,8 +67,7 @@ class GitIgnoreRule:
         """Check whether this rule matches a target path.\n
         ----------------------------------------------------------------------------------------------------
         *   `target_path` – Path to inspect.
-        *   `is_dir` – Whether the path refers to a directory.
-        """
+        *   `is_dir` – Whether the path refers to a directory."""
 
         try:
             rel_posix = target_path.relative_to(self.base_dir).as_posix()
@@ -97,8 +97,7 @@ class ScanResult(NamedTuple):
     *   `total_lines` – Total number of lines counted across all matched files.
     *   `total_files` – Total count of processed files.
     *   `files_data` – Dictionary mapping relative file paths to their individual line counts.
-    *   `extensions_data` – Dictionary mapping file extensions to counts of lines and files.
-    """
+    *   `extensions_data` – Dictionary mapping file extensions to counts of lines and files."""
 
     total_lines: int
     """Sum of lines of code across all processed files."""
@@ -119,8 +118,7 @@ class ScanResult(NamedTuple):
 def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
     """Check whether a directory entry represents a hidden or system item.\n
     ----------------------------------------------------------------------------------------------------
-    *   `entry` – Directory entry to inspect.
-    """
+    *   `entry` – Directory entry to inspect."""
 
     if entry.name.startswith("."):
         return True
@@ -146,8 +144,7 @@ def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
 def parse_glob_patterns(raw_input: str) -> list[str]:
     """Parse comma, pipe, or space delimited glob patterns from user input.\n
     ----------------------------------------------------------------------------------------------------
-    *   `raw_input` – Raw string containing one or more glob patterns.
-    """
+    *   `raw_input` – Raw string containing one or more glob patterns."""
 
     normalized = raw_input.replace("|", " ").replace(",", " ")
     return [token.strip() for token in normalized.split() if token.strip()]
@@ -156,8 +153,7 @@ def parse_glob_patterns(raw_input: str) -> list[str]:
 def compile_glob_patterns(patterns: list[str]) -> list[tuple[re.Pattern[str], bool]]:
     """Compile a list of glob patterns into regular expressions.\n
     ----------------------------------------------------------------------------------------------------
-    *   `patterns` – List of glob pattern strings.
-    """
+    *   `patterns` – List of glob pattern strings."""
 
     compiled: list[tuple[re.Pattern[str], bool]] = []
     pattern_flags = re.IGNORECASE if os.name == "nt" else 0
@@ -179,8 +175,7 @@ def matches_glob_patterns(name: str, rel_path: str, patterns: list[tuple[re.Patt
     ----------------------------------------------------------------------------------------------------
     *   `name` – Base name of the file or directory.
     *   `rel_path` – Relative POSIX path from the scanning root directory.
-    *   `patterns` – List of compiled pattern regexes with name-only flags.
-    """
+    *   `patterns` – List of compiled pattern regexes with name-only flags."""
 
     for pattern_regex, is_name_only in patterns:
         if is_name_only:
@@ -195,8 +190,7 @@ def matches_glob_patterns(name: str, rel_path: str, patterns: list[tuple[re.Patt
 def load_gitignore_rules(directory: Path) -> list[GitIgnoreRule]:
     """Load and compile .gitignore rules from a directory and all parent directories.\n
     ----------------------------------------------------------------------------------------------------
-    *   `directory` – Directory from which to discover .gitignore files.
-    """
+    *   `directory` – Directory from which to discover .gitignore files."""
 
     rules: list[GitIgnoreRule] = []
     hierarchy = [directory, *list(directory.parents)]
@@ -222,8 +216,7 @@ def load_gitignore_rules(directory: Path) -> list[GitIgnoreRule]:
 def parse_gitignore_file(gitignore_path: Path) -> list[GitIgnoreRule]:
     """Parse a single .gitignore file and return its compiled rules.\n
     ----------------------------------------------------------------------------------------------------
-    *   `gitignore_path` – Path to the .gitignore file.
-    """
+    *   `gitignore_path` – Path to the .gitignore file."""
 
     rules: list[GitIgnoreRule] = []
     parent_dir = gitignore_path.parent
@@ -246,8 +239,7 @@ def is_gitignored(target_path: Path, is_dir: bool, rules: list[GitIgnoreRule]) -
     ----------------------------------------------------------------------------------------------------
     *   `target_path` – Path to inspect.
     *   `is_dir` – Whether the path is a directory.
-    *   `rules` – List of active Git ignore rules.
-    """
+    *   `rules` – List of active Git ignore rules."""
 
     ignored = False
     for rule in rules:
@@ -272,8 +264,7 @@ def should_skip_directory(
     *   `skip_hidden` – Whether hidden directories should be skipped.
     *   `apply_gitignore` – Whether Git ignore rules are active.
     *   `rules` – List of active Git ignore rules.
-    *   `exclude_patterns` – List of compiled exclude glob patterns.
-    """
+    *   `exclude_patterns` – List of compiled exclude glob patterns."""
 
     if entry.name == ".git" and skip_hidden:
         return True
@@ -304,8 +295,7 @@ def should_include_file(
     *   `apply_gitignore` – Whether Git ignore rules are active.
     *   `rules` – List of active Git ignore rules.
     *   `include_patterns` – List of compiled include glob patterns.
-    *   `exclude_patterns` – List of compiled exclude glob patterns.
-    """
+    *   `exclude_patterns` – List of compiled exclude glob patterns."""
 
     if skip_hidden and is_hidden_entry(entry):
         return False
@@ -322,8 +312,7 @@ def should_include_file(
 def count_lines(file_path: str) -> int:
     """Count lines in a file, returning 0 for empty or binary files.\n
     ----------------------------------------------------------------------------------------------------
-    *   `file_path` – Path string of the file to count.
-    """
+    *   `file_path` – Path string of the file to count."""
 
     try:
         if (file_size := Path(file_path).stat().st_size) == 0:
@@ -373,8 +362,7 @@ class DirectoryScanner:
     *   `apply_gitignore` – Whether .gitignore rules should be discovered and enforced.
     *   `is_recursive` – Whether subdirectories should be traversed recursively.
     *   `include_patterns` – Compiled glob patterns to filter included files.
-    *   `exclude_patterns` – Compiled glob patterns to filter excluded files/directories.
-    """
+    *   `exclude_patterns` – Compiled glob patterns to filter excluded files/directories."""
 
     target_dir: Path
     """Root directory where scanning started."""
@@ -453,8 +441,7 @@ class DirectoryScanner:
         """Categorize directory entries into directories to visit and files to count.\n
         ----------------------------------------------------------------------------------------------------
         *   `entries` – List of scanned filesystem directory entries.
-        *   `active_rules` – Git ignore rules applicable to this directory level.
-        """
+        *   `active_rules` – Git ignore rules applicable to this directory level."""
 
         new_dirs: list[str] = []
         file_tasks: list[tuple[str, str, str]] = []
@@ -495,8 +482,7 @@ class DirectoryScanner:
         ----------------------------------------------------------------------------------------------------
         *   `file_path` – Full path to the file.
         *   `rel_path` – Relative path from the target directory.
-        *   `extension` – Lowercase file extension.
-        """
+        *   `extension` – Lowercase file extension."""
 
         if not self._canceled[0]:
             lines = count_lines(file_path)
@@ -516,8 +502,7 @@ class DirectoryScanner:
         """Worker task to inspect a directory and dispatch child tasks.\n
         ----------------------------------------------------------------------------------------------------
         *   `dir_path` – Directory path to read.
-        *   `current_rules` – Git ignore rules applicable to this directory level.
-        """
+        *   `current_rules` – Git ignore rules applicable to this directory level."""
 
         if self._canceled[0]:
             with self._lock:
@@ -581,8 +566,7 @@ class DirectoryScanner:
 def scan_directory(target_dir: Path) -> ScanResult:
     """Scan the target directory recursively and compute line count statistics.\n
     ----------------------------------------------------------------------------------------------------
-    *   `target_dir` – Root directory to scan.
-    """
+    *   `target_dir` – Root directory to scan."""
 
     include_patterns = (
         compile_glob_patterns(parse_glob_patterns(raw_val))

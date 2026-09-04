@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Quickly convert a HEX value to a percentage."""
+"""
+Quickly convert a HEX value to a percentage.
+"""
 
 import xulbux as xx
 from xulbux import ArgumentParser, S

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Show the foreground and background colors
-from the current terminal color scheme."""
+"""
+Show the foreground and background colors
+from the current terminal color scheme.
+"""
 
 from xulbux import ArgumentParser, S
 from xulbux.ansi import AnyStyle

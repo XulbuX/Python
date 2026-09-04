@@ -2,7 +2,9 @@
 # ruff:file-ignore[ambiguous-unicode-character-string]
 # x-cmds:file[update]
 
-"""Conway's game of life in the console."""
+"""
+Conway's game of life in the console.
+"""
 
 import random
 import sys

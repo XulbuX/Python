@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Lets you quickly generate QR codes directly within the terminal."""
+"""
+Lets you quickly generate QR codes directly within the terminal.
+"""
 
 import re
 import subprocess

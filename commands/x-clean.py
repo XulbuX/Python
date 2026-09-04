@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Clean broken registry entries, environment variables, shortcuts and temp files."""
+"""
+Clean broken registry entries, environment variables, shortcuts and temp files.
+"""
 
 import contextlib
 import json

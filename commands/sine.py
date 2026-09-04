@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # x-cmds:file[update]
 
-"""Show a sine wave animation inside the terminal."""
+"""
+Show a sine wave animation inside the terminal.
+"""
 
 import math
 import time
