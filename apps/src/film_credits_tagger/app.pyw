@@ -71,10 +71,12 @@ class MetadataTaggerApp(ctk.CTk):
 
         self._current_theme: str = get_system_theme()
 
-        # ************************************************** UI LAYOUT **************************************************
+        # ************************** UI LAYOUT **************************
+
         PAD: int = 16
 
         # ******************** TWO-COLUMN ROOT FRAME ********************
+
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True)
 
@@ -88,7 +90,8 @@ class MetadataTaggerApp(ctk.CTk):
         self.right_panel = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.right_panel.pack(side="left", fill="both", expand=True)
 
-        # ******************** SELECT MEDIA SECTION ********************
+        # ******************** SELECT MEDIA SECTION *********************
+
         self.sec1 = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.sec1.pack(fill="x", padx=PAD, pady=(PAD - 6, PAD))
         self.sec1.grid_columnconfigure(1, weight=1)
@@ -136,7 +139,8 @@ class MetadataTaggerApp(ctk.CTk):
         self.sep1 = ctk.CTkFrame(self.left_panel, height=1)
         self.sep1.pack(fill="x")
 
-        # ******************** LOAD/SAVE DATA SECTION ********************
+        # ******************* LOAD/SAVE DATA SECTION ********************
+
         self.sec2 = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.sec2.pack(fill="x", padx=PAD, pady=(PAD - 6, PAD))
 
@@ -158,7 +162,8 @@ class MetadataTaggerApp(ctk.CTk):
         )
         self.btn_load_from_video.pack(fill="x", pady=(6, 0))
 
-        # ******************** Apply Button -OR- ExifTool Not Found Banner ********************
+        # ********* APPLY BUTTON -OR- ExifTool NOT FOUND BANNER *********
+
         if self.exiftool_path:
             self._apply_bottom = ctk.CTkFrame(self.left_panel, fg_color="transparent")
             self._apply_bottom.pack(fill="x", side="bottom")
@@ -198,7 +203,8 @@ class MetadataTaggerApp(ctk.CTk):
             lbl_cmd.bind("<Button-1>", lambda _: webbrowser.open("https://exiftool.org"))
             self._banner_labels.append((lbl_cmd, "link"))
 
-        # ******************** METADATA FIELDS SECTION ********************
+        # ******************* METADATA FIELDS SECTION *******************
+
         self.sec3_header = ctk.CTkFrame(self.right_panel, fg_color="transparent")
         self.sec3_header.pack(fill="x", padx=PAD, pady=(PAD - 6, 0))
         self.sw_clear_empty = ctk.CTkCheckBox(

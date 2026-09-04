@@ -59,7 +59,7 @@ def terminate_process(process: subprocess.Popen[str] | None) -> None:
 
 
 def main() -> None:  # ruff:ignore[complex-structure]
-    # *********************************** PARSE ARGS & INIT ***********************************
+    # ********************** PARSE ARGS & INIT **********************
 
     command_args = ARGS.command.vals()
     exclude_cmd = bool(ARGS.no_command or ARGS.only)
@@ -87,7 +87,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     start_time = time.time()
     exit_code = 0
 
-    # ************************************ RUN THE COMMAND ************************************
+    # *********************** RUN THE COMMAND ***********************
 
     try:
         # `bufsize=1` and `text=True` enables line-by-line text streaming:
@@ -152,7 +152,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
     duration_str = format_time(time.time() - start_time)
 
-    # ******************************** BUILD CLIPBOARD CONTENT ********************************
+    # ******************* BUILD CLIPBOARD CONTENT *******************
 
     clipboard_parts: list[str] = []
 
@@ -174,7 +174,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
 
     clipboard_content = "".join(clipboard_parts)
 
-    # ******************************* COPY TO CLIPBOARD & EXIT ********************************
+    # ****************** COPY TO CLIPBOARD & EXIT *******************
 
     try:
         pyperclip.copy(clipboard_content)

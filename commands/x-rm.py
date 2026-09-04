@@ -16,7 +16,7 @@ import psutil
 import xulbux as xx
 from xulbux import ArgumentParser, FormatCodes, S
 
-# ************************* CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED *************************
+# ************************************ CRITICAL PROCESSES THAT SHOULD NEVER BE TERMINATED *************************************
 
 PROTECTED_PROCESSES_WINDOWS = {
     "csrss.exe",

@@ -46,7 +46,7 @@ class TrimTimeline(tk.Canvas):
         self.bind("<ButtonRelease-1>", self._on_release)
         self.bind("<Motion>", self._on_motion)
 
-    # **************************************** PUBLIC API ****************************************
+    # ************************* PUBLIC API **************************
 
     def apply_colors(self, colors: dict[str, str]) -> None:
         self._c_bg = colors["background"]
@@ -67,7 +67,7 @@ class TrimTimeline(tk.Canvas):
         self.configure(cursor="arrow")
         self._draw()
 
-    # **************************************** INTERNAL HELPERS ****************************************
+    # ********************** INTERNAL HELPERS ***********************
 
     def _pad(self) -> int:
         return self._HANDLE_W // 2 + 4
@@ -93,7 +93,7 @@ class TrimTimeline(tk.Canvas):
             return "range"
         return None
 
-    # **************************************** EVENT HANDLERS ****************************************
+    # *********************** EVENT HANDLERS ************************
 
     def _on_motion(self, event: tk.Event[tk.Misc]) -> None:
         if not self._enabled:
@@ -138,7 +138,7 @@ class TrimTimeline(tk.Canvas):
         if self.on_commit and self._enabled:
             self.on_commit(self._start_frac, self._end_frac)
 
-    # **************************************** DRAWING ****************************************
+    # *************************** DRAWING ***************************
 
     def _draw(self) -> None:
         self.delete("all")

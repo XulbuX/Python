@@ -132,7 +132,7 @@ def show_and_install_modules(modules: dict[str, list[str]], external_only: bool,
     output += "\n"
     FormatCodes.print(output)
 
-    # ************************************************** INSTALLATION **************************************************
+    # ************************ INSTALLATION *************************
     if not install:
         return
     if not xx.console.confirm("Proceed with installation?"):
