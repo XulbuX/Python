@@ -21,7 +21,6 @@ from xulbux import ArgumentParser, S, Term, Throbber
 
 _BUFFER_SIZE: int = 65536
 """Buffer size in bytes for reading file chunks during line counting."""
-
 _CHECK_LIMIT: int = 8192
 """Maximum number of bytes sampled from a file to determine if it is binary."""
 
@@ -36,16 +35,12 @@ class GitIgnoreRule:
 
     base_dir: Path
     """Directory where the .gitignore file is located."""
-
     negated: bool
     """Whether the pattern is negated with a leading exclamation mark."""
-
     dir_only: bool
     """Whether the pattern applies exclusively to directories."""
-
     anchored: bool
     """Whether the pattern is anchored to the base directory."""
-
     regex: re.Pattern[str]
     """Compiled regular expression for matching paths against the pattern."""
 
@@ -101,13 +96,10 @@ class ScanResult(NamedTuple):
 
     total_lines: int
     """Sum of lines of code across all processed files."""
-
     total_files: int
     """Number of files successfully processed."""
-
     files_data: dict[str, int]
     """Mapping of relative file path strings to line counts."""
-
     extensions_data: dict[str, dict[str, int]]
     """Mapping of file extensions to counts of lines and files."""
 
@@ -366,43 +358,30 @@ class DirectoryScanner:
 
     target_dir: Path
     """Root directory where scanning started."""
-
     skip_hidden: bool
     """Whether to skip hidden and system files/directories."""
-
     apply_gitignore: bool
     """Whether to load and follow .gitignore rules."""
-
     is_recursive: bool
     """Whether to recurse into subdirectories."""
-
     include_patterns: list[tuple[re.Pattern[str], bool]]
     """Compiled patterns for inclusion filtering."""
-
     exclude_patterns: list[tuple[re.Pattern[str], bool]]
     """Compiled patterns for exclusion filtering."""
-
     total_lines: int
     """Accumulated total code lines count."""
-
     files_data: dict[str, int]
     """Mapping of relative file path strings to line counts."""
-
     extensions_data: dict[str, dict[str, int]]
     """Mapping of file extensions to counts of lines and files."""
-
     _lock: threading.Lock
     """Lock synchronizing data mutation across worker threads."""
-
     _done: threading.Event
     """Event signaling when all queued tasks have completed."""
-
     _active_tasks: list[int]
     """Single-element list storing active work counter."""
-
     _canceled: list[bool]
     """Single-element list storing cancellation state."""
-
     _executor: ThreadPoolExecutor
     """Thread pool executor running scan and count tasks."""
 
