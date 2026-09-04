@@ -185,14 +185,11 @@ _REOCCURRING: dict[str, str] = {
     "uuid": rf"\{{?[a-zA-Z0-9]{{8}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9]{{12}}\}}?(?:[-_a-zA-Z0-9]+(?:{_SEP}|{_EXT}))?",
     "sid": r"S-[0-9]+-[0-9]+(?:-[0-9]+){2,}",
     "domain": r"[-a-z]+(?:\.[-a-z]+){2,}",
-    "rand_short": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{_SEP}|{_EXT}))(?![A-Z]+(?:{_SEP}|{_EXT}))(?![a-z]+(?:{_SEP}|{_EXT}))[a-zA-Z0-9]{{4,12}}(?:{_SEP}|{_EXT})",
-    "rand_long": rf"(?![A-Z][a-z]{{4,}})(?![0-9]+(?:{_SEP}|{_EXT}))(?![A-Z]+(?:{_SEP}|{_EXT}))(?![a-z]+(?:{_SEP}|{_EXT}))[a-zA-Z0-9]{{13,64}}(?:{_SEP}|{_EXT})",
 }
 """Reoccurring sub-patterns found in generated hash or cache file/folder names."""
 
 _STANDALONES: dict[str, str] = {
-    "hex2": r"[a-fA-F0-9]{2}",
-    "upper2": r"[A-Z]{2}" + _EXT,
+    "hex2": r"(?:[0-9][a-fA-F0-9]|[a-fA-F0-9][0-9])",
     "alt-lower2": r"alt-[a-z]{2}" + _EXT,
     "rand_num": r"[A-Z0-9]{2,6}_[a-z][0-9]" + _EXT,
     "id_num": r"(?:[a-zA-Z0-9]{6}-){2}[a-zA-Z0-9]{6}\s(?:[0-9]{2}|[a-z][0-9]{2})",

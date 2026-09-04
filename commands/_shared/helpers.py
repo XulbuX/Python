@@ -14,13 +14,16 @@ def is_likely_hash_name(name: str) -> bool:
     ----------------------------------------------------------------------------------------------------
     *   `name` – File or directory base name to inspect."""
 
-    if name.strip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/=") or len(name) < 2:
+    if (
+        (len(stem := name.rsplit(".", 1)[0] if "." in name else name) < 32 and stem.isalpha())
+        or name.strip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~@. \t{}+/=")
+        or len(name) < 2
+    ):
         return False
     elif bool(HASH_NAME_PATTERN.match(name)):
         return True
 
     # Cheap hex-segment check first; UUID regex (more expensive) only as fallback:
-    stem = name.rsplit(".", 1)[0] if "." in name else name
     for segment in SEP_SPLITTER_PATTERN.split(stem):
         if len(segment) >= 8 and HEX_SEGMENT_PATTERN.match(segment):
             return True
