@@ -8,131 +8,33 @@ Controls and options are shown on startup.
 """
 
 import array
-import atexit
 import math
-import os
 import random
-import select
 import sys
 import time
 from collections import deque
-from collections.abc import Generator
-from contextlib import contextmanager
 from heapq import heappop, heappush
 from pathlib import Path
-from typing import TypedDict
+from typing import Final, TypedDict
 import xulbux as xx
 from xulbux import ArgumentParser, S, Throbber
+from xulbux.base.consts import KEYS
 
-DIRECTIONS: dict[str, tuple[int, int]] = {
-    "\x1b[A": (-1, 0),
-    "\x1b[B": (1, 0),
-    "\x1b[D": (0, -1),
-    "\x1b[C": (0, 1),
-    "\x1bOA": (-1, 0),
-    "\x1bOB": (1, 0),
-    "\x1bOD": (0, -1),
-    "\x1bOC": (0, 1),
-    "\x00H": (-1, 0),
-    "\x00P": (1, 0),
-    "\x00K": (0, -1),
-    "\x00M": (0, 1),
-    "\xe0H": (-1, 0),
-    "\xe0P": (1, 0),
-    "\xe0K": (0, -1),
-    "\xe0M": (0, 1),
-    "w": (-1, 0),
-    "s": (1, 0),
+DIRECTIONS: Final[dict[str, tuple[int, int]]] = {
+    **dict.fromkeys(KEYS.UP, (-1, 0)),
+    **dict.fromkeys(KEYS.DOWN, (1, 0)),
+    **dict.fromkeys(KEYS.LEFT, (0, -1)),
+    **dict.fromkeys(KEYS.RIGHT, (0, 1)),
     "a": (0, -1),
     "d": (0, 1),
+    "s": (1, 0),
+    "w": (-1, 0),
 }
 """Mapping of movement keys, escape sequences, and scan codes to coordinate offsets (dy, dx)."""
-ENTER_KEYS: set[str] = {"\r", "\x1b[13u"}
+ENTER_KEYS: Final[frozenset[str]] = KEYS.ENTER
 """Key representations that trigger normal mode execution."""
-CTRL_ENTER_KEYS: set[str] = {"\n", "\x1b[13;5u", "\x1b[27;5;13~", "\x1b[10;5u", "a"}
+CTRL_ENTER_KEYS: Final[frozenset[str]] = KEYS.CTRL_ENTER | {"a"}
 """Key representations that trigger ASCII mode execution (Ctrl+Enter or A)."""
-
-
-@contextmanager
-def suppress_terminal_echo() -> Generator[None, None, None]:
-    """Temporarily disable terminal echo and line buffering while enabling enhanced key protocols."""
-
-    if sys.platform != "win32" and sys.stdin.isatty():
-        import termios
-
-        file_descriptor = sys.stdin.fileno()
-        original_attributes = termios.tcgetattr(file_descriptor)
-        modified_attributes = termios.tcgetattr(file_descriptor)
-        modified_attributes[3] &= ~(termios.ECHO | termios.ICANON)
-        modified_attributes[0] &= ~termios.ICRNL
-        modified_attributes[6][termios.VMIN] = 1
-        modified_attributes[6][termios.VTIME] = 0
-        termios.tcsetattr(file_descriptor, termios.TCSANOW, modified_attributes)
-        sys.stdout.write("\x1b[>1u\x1b[>4;2m")
-        sys.stdout.flush()
-        try:
-            yield
-        finally:
-            sys.stdout.write("\x1b[<u\x1b[>4;0m")
-            sys.stdout.flush()
-            termios.tcsetattr(file_descriptor, termios.TCSADRAIN, original_attributes)
-    else:
-        yield
-
-
-def restore_terminal() -> None:
-    """Restore terminal keyboard protocols, cursor visibility, and ANSI text styling upon exit."""
-
-    sys.stdout.write("\x1b[<u\x1b[>4;0m\x1b[?25h\x1b[0m")
-    sys.stdout.flush()
-
-
-atexit.register(restore_terminal)
-
-
-def _read_key() -> str:
-    """Read a single keypress or ANSI/CSI escape sequence from standard input.\n
-    ----------------------------------------------------------------------------------------------------
-    Raises `KeyboardInterrupt` if Ctrl+C is detected in raw byte or escape sequence form."""
-
-    if sys.platform == "win32":
-        import msvcrt
-
-        character = msvcrt.getwch()
-        if character == "\x03":
-            raise KeyboardInterrupt
-        if character in {"\x00", "\xe0"}:
-            return "\x00" + msvcrt.getwch()
-        return character
-
-    if not (raw_bytes := os.read(file_descriptor := sys.stdin.fileno(), 1)):
-        return ""
-    if raw_bytes == b"\x03":
-        raise KeyboardInterrupt
-    if raw_bytes != b"\x1b":
-        return raw_bytes.decode("utf-8", errors="replace")
-
-    sequence = bytearray(raw_bytes)
-
-    while select.select([file_descriptor], [], [], 0.05)[0]:
-        if not (next_byte := os.read(file_descriptor, 1)):
-            break
-
-        sequence.extend(next_byte)
-
-        if len(sequence) > 2 and 0x40 <= sequence[-1] <= 0x7E:
-            break
-        if len(sequence) == 2 and sequence[1] not in {ord("["), ord("O")}:
-            break
-
-    if (
-        (decoded := sequence.decode("utf-8", errors="replace")) == "\x03"
-        or decoded.startswith(("\x1b[99;5", "\x1b[67;5", "\x1b[99;6", "\x1b[67;6"))
-        or decoded.startswith(("\x1b[27;5;99~", "\x1b[27;5;67~", "\x1b[27;6;99~", "\x1b[27;6;67~"))
-    ):
-        raise KeyboardInterrupt
-
-    return decoded
 
 
 class RenderOpts(TypedDict):
@@ -554,7 +456,7 @@ class Maze:
                 time.sleep(wait)
 
             while not self.goal_reached:
-                key = _read_key()
+                key = xx.console.read_key(raw=False)
                 if len(key) == 1:
                     key = key.lower()
 
@@ -604,14 +506,13 @@ def main() -> None:
     )
 
     while True:
-        with suppress_terminal_echo():
-            key = _read_key()
+        key = xx.console.read_key()
 
         if key in ENTER_KEYS or key.lower() in CTRL_ENTER_KEYS:
             ascii_mode = key.lower() in CTRL_ENTER_KEYS
 
             try:
-                with suppress_terminal_echo():
+                with xx.console.raw_mode():
                     while True:
                         Maze(xx.console.get_width() // 2, xx.console.get_height(), render_ascii=ascii_mode).play()
 
@@ -619,7 +520,7 @@ def main() -> None:
                 print("\x1bc\x1b[<u\x1b[>4;0m\x1b[?25h\x1b[0m", end="", flush=True)
                 raise SystemExit(0) from exc
 
-        elif key == " ":
+        elif key in KEYS.SPACE:
             width, height = (
                 int(num.strip())
                 for num in smart_split(
