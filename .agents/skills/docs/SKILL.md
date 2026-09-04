@@ -34,6 +34,7 @@ When working in this repository, any AI agent or automated assistant MUST adhere
     *   **Bold:** Use Markdown `**bold text**`.
     *   **Italics:** Do **NOT** use italics (it breaks in some IDEs).
     *   **Inline Code/Expressions:** Use backticks `` ` `` for variables, expression parts, and inline code.
+    *   **Ellipsis Character:** Always use the single Unicode character `…` instead of three dots `...` in docstrings, comments, and documentation text (follow `AGENTS.md` Section 5 for full ellipsis rules).
     *   **Headers:** Use `#### Some Title` (Markdown H4) only for section headers, and only as the first thing inside a docstring's section.
     *   **HTML:** Do NOT use any HTML tags besides `<br>`.
 
@@ -95,7 +96,7 @@ Additional paragraphs or sections separated by markdown horizontal rules.
     *   For multi-line comments (max 2 lines), preceding lines can end normally in a period `.`, and only the last line must end with a colon `:`.
 4.  **Inline Comments:** If a comment is written on the same line, behind code, always end it with a period `.`.
 5.  **Numbered Comments:** When writing numbered step comments (e.g., step-by-step logic), ALWAYS format numbers with square brackets like `[1]`, `[2]`, `[3]`, etc. (e.g., `# [1] Parse input:`, `# [2] Validate options:`), NEVER with trailing periods like `1.`, `2.`, etc.
-6.  **No `# type:ignore` Pragmas:** `# type:ignore` comments are completely forbidden. Use only `# pyright:ignore[…]` or `# ruff:ignore[…]` with explicit rule IDs and no spaces after commas.
+6.  **Type Ignore Pragmas:** Follow the strict typing and ignore rules in `AGENTS.md` Section 1.
 
 ### Section Separators
 

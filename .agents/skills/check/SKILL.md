@@ -39,8 +39,7 @@ ruff format . ; if ($?) { ruff check . --fix } ; if ($?) { pyright }
 
 -   **Zero Issues Policy:** Every edit session must end with 0 errors, 0 warnings, and 0 lint issues.
 -   **Fix Real Bugs in Code:** If a check fails due to an issue or typing mismatch, **fix the code**. Do not suppress or work around real bugs.
--   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden. Only MyPy requires `# type:ignore`, but this repository does not use MyPy. When suppression is fundamentally unavoidable, only use specific `# pyright:ignore[…]` comments for Pyright or `# ruff:ignore[…]` comments for Ruff.
--   **Ignore Comment Formatting:** When using `# pyright:ignore[…]` or `# ruff:ignore[…]` (only when fundamentally unavoidable), **NEVER** put spaces after commas between rule names (e.g., `# pyright:ignore[reportUnknownMemberType,reportAttributeAccessIssue]`). Always specify explicit rule IDs.
+-   **Type Ignore Pragmas:** Follow the strict typing and ignore rules in `AGENTS.md` Section 1.
 
 ---
 
@@ -61,7 +60,4 @@ All code must be reliable across platforms without platform-dependent crashes:
 
 ## 5. Coding Standards & Best Practices
 
--   **Strict Typing:** All functions, methods, and helpers must be fully and strictly type-hinted.
--   **No Generator Expressions in Iteration Builtins:** Avoid passing generator expressions to `any()`, `all()`, `sum()`, `max()`, `min()`, `join()`, `tuple()`. Use list comprehensions `[…]` or unrolled loops.
--   **Descriptive Variable Names:** No single-letter variable names (except `i`, `j` for loop indices, `n` for counts/math, and `x`, `y`, `z` for spatial/cartesian coordinates).
--   **Walrus Operator & Single-Use Variables:** Follow the repository guidelines for walrus operators and single-use variable inlining.
+All code across the repository must strictly comply with the core coding standards and idioms defined in `AGENTS.md` (Section 1 for strict typing, Section 4 for performance and Python idioms, and Section 5 for code structure and naming conventions).

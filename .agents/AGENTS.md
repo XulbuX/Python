@@ -5,7 +5,7 @@ When working on this repository, any AI agent or automated assistant must adhere
 ## 1. Strict Typing
 
 All Python code across this repository must be meticulously and strictly type-hinted to pass Pyright strict type checking. Do not ever use `Any` unless it is fundamentally impossible to type-hint otherwise. All changes must be fully statically analyzable.
-*   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden across the repository. Only MyPy requires `# type:ignore`, but since this repository does not use MyPy, they must never be used. When suppression is fundamentally unavoidable, only specific `# pyright:ignore[…]` comments for Pyright or `# ruff:ignore[…]` comments for Ruff are allowed.
+*   **No `# type:ignore` Comments:** `# type:ignore` comments are completely forbidden across the repository. Only MyPy requires `# type:ignore`, but since this repository does not use MyPy, they must never be used. When suppression is fundamentally unavoidable, only specific `# pyright:ignore[…]` comments for Pyright or `# ruff:ignore[…]` comments for Ruff with explicit rule IDs and no spaces after commas between rule names (e.g., `# pyright:ignore[reportUnknownMemberType,reportAttributeAccessIssue]`) are allowed.
 
 ## 2. Validation & Testing
 
@@ -51,8 +51,18 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 *   **Single-Use Variables & Inlining:** Avoid assigning values to temporary variables that are only accessed once. Pass expressions directly into the consuming function, return statement, or assertion (e.g., `print(process_whatever(arg))` instead of `result = process_whatever(arg); print(result)`).
     *   **Exceptions:** Assigning a single-use variable is acceptable and encouraged when inlining would cause an expression to become overly convoluted, hurt readability, or force an otherwise clean call across four or more lines (e.g., complex multi-branch ternaries or calculations), or when caching a costly property or calculation outside a loop to avoid redundant re-evaluations during iteration.
 *   **Organization:** When introducing large data structures (like hardcoded iterables or dictionaries), keep them strictly organized and structured. Default to sorting elements alphabetically unless a specific logical order is required.
+*   **Ellipsis Usage (`…` vs `...`):** Always use the single Unicode ellipsis character `…` instead of three consecutive dots `...` in all documentation, docstrings, comments, and string truncations (even in console/terminal output). The ONLY exceptions are active processing-indicating prints in the console (e.g., `Loading...`, `Connecting...`), which must use three ASCII dots `...`, and native Python syntax ellipsis in code (`...`).
 
 ## 6. Documentation & Markdown Formatting
 
 *   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
-*   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, and comment conventions. Numbered step comments must always use square brackets like `# [1]`, `# [2]` (never `1.`, `2.`). Section separators must follow exact widths (127 chars for top-level, 65 chars for internal) with text centered between `*`s (left side has exactly one less `*` than right side if total `*` padding is odd). Always provide at least a one-line docstring for private variables, functions, and classes explaining their purpose.
+*   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, and comment/separator conventions.
+
+## 7. Rule & Skill Authoring (Single Source of Truth)
+
+To keep agent guidelines clean, maintainable, and free of contradictions, adhere strictly to the Single Source of Truth (SSOT) principle:
+*   **Define Once:** Every rule, standard, or guideline must be defined in exactly ONE canonical location:
+    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, performance and Python idioms, code structure, naming conventions).
+    *   **Skills (`.agents/skills/<skill>/SKILL.md`):** Specialized domain-specific workflows and detailed formatting specifications (`docs` for docstrings, comments, and section separators; `check` for linting, formatting, and validation commands; `apps` for desktop GUI architecture and shared conventions).
+*   **Reference, Never Duplicate:** When a rule defined in one location also applies in another, do NOT duplicate or re-explain the rule. Instead, reference and point directly to its canonical definition in the respective skill or `AGENTS.md`.
+*   **Synchronize References:** If a canonical rule is updated or moved, verify that all external references pointing to it are kept accurate.
