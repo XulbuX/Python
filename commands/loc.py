@@ -701,19 +701,24 @@ def main() -> None:
             scan_result = scan_directory(target_path)
 
     # [1] Raw numeric output:
-    if ARGS.raw_output.exists:
+    if (raw_output := ARGS.raw_output.exists) and not ARGS.as_json.exists:
         print(scan_result.total_lines)
         return
 
     # [2] Formatted JSON output:
     if ARGS.as_json.exists:
-        json_data = {
-            "target_dir": str(target_path),
-            "total_lines": scan_result.total_lines,
-            "total_files": scan_result.total_files,
-            "extensions": scan_result.extensions_data,
-        }
-        xx.data.render(json_data, indent=2, as_json=True, syntax_highlighting=True).print()
+        xx.data.render(
+            {
+                "target_dir": str(target_path),
+                "total_files": scan_result.total_files,
+                "total_lines": scan_result.total_lines,
+                "extensions": dict(sorted(scan_result.extensions_data.items())),
+            },
+            indent=2,
+            compactness=2 if raw_output else 1,
+            as_json=True,
+            syntax_highlighting=not raw_output,
+        ).print()
         return
 
     # [3] Formatted banner output:
@@ -770,8 +775,8 @@ if __name__ == "__main__":
             ('{cmd} -i="*.py | *.toml"', "Count lines only in matching file patterns"),
             ('{cmd} -e="tests/** | build/**"', "Exclude files or directories matching patterns"),
             ("{cmd} -H", "Include hidden and system files/directories"),
-            ("{cmd} -ng", "Do not apply .gitignore ignore rules"),
-            ("{cmd} -a", "Disable all ignore filters (hidden, system, and .gitignore)"),
+            ("{cmd} -a", "Disable all ignore filters; hidden, system, and .gitignore"),
+            ("{cmd} -j -r", "Output all gathered statistics as unformatted JSON"),
         ],
     )
 
@@ -780,17 +785,17 @@ if __name__ == "__main__":
         {"-i", "--include"},
         "include_patterns",
         expects_value="PATTERNS",
-        help=("Include only files matching glob patterns ", S.DIM("(e.g., ", S.WHITE("*.py | *.toml"), ")")),
+        help=("Include only files matching glob patterns"),
     )
     args.add_opt(
         {"-e", "--exclude"},
         "exclude_patterns",
         expects_value="PATTERNS",
-        help=("Exclude files or directories matching glob patterns ", S.DIM("(e.g., ", S.WHITE("tests/** | *.min.js"), ")")),
+        help=("Exclude files or directories matching glob patterns"),
     )
     args.add_opt({"-ng", "--no-gitignore"}, help="Do not ignore files/directories specified in .gitignore")
     args.add_opt({"-H", "--hidden"}, "include_hidden", help="Do not ignore hidden and system files/directories")
-    args.add_opt({"-a", "--all"}, "include_all", help="Disable all ignore filters (hidden, system, and .gitignore)")
+    args.add_opt({"-a", "--all"}, "include_all", help="Disable all ignore filters")
     args.add_opt({"-nr", "--no-recursive"}, help="Do not scan subdirectories recursively")
     args.add_opt({"-j", "--json"}, "as_json", help="Output all gathered statistics as formatted JSON")
     args.add_opt({"-r", "--raw"}, "raw_output", help="Output only the bare total line count number")
