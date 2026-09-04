@@ -122,8 +122,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\x1b[2K\r[b|br:red](✗)\n")
     except MemoryError:
-        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n")
+        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\x1b[2K\r", end="\n\n", exit_code=1)
     except OverflowError as exc:
-        xx.console.fail(f"[b](OverflowError:) {exc}", start="\x1b[2K\r", end="\n\n")
+        xx.console.fail(f"[b](OverflowError:) {exc}", start="\x1b[2K\r", end="\n\n", exit_code=1)
     except Exception as exc:
-        xx.console.fail(exc, start="\x1b[2K\r", end="\n\n")
+        xx.console.fail(exc, start="\x1b[2K\r", end="\n\n", exit_code=1)

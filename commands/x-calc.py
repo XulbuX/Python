@@ -997,6 +997,7 @@ def main() -> None:
             "[b](ValueError:) Precision must be positive or [br:cyan](-1) "
             f"for infinite precision, got [br:cyan]({precision_value})",
             end="\n\n",
+            exit_code=1,
         )
         return
 
@@ -1077,10 +1078,11 @@ if __name__ == "__main__":
             "[b](RecursionError:) Maximum recursion depth exceeded [dim]((possible infinite loop in calculation))",
             start="\n\n",
             end="\n\n",
+            exit_code=1,
         )
     except MemoryError:
-        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n")
+        xx.console.fail("[b](MemoryError:) The operation ran out of memory", start="\n\n", end="\n\n", exit_code=1)
     except OverflowError as exc:
-        xx.console.fail(f"[b](OverflowError:) {exc}", start="\n\n", end="\n\n")
+        xx.console.fail(f"[b](OverflowError:) {exc}", start="\n\n", end="\n\n", exit_code=1)
     except Exception as exc:
-        xx.console.fail(exc, start="\n\n", end="\n\n")
+        xx.console.fail(exc, start="\n\n", end="\n\n", exit_code=1)

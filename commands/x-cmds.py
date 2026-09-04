@@ -25,7 +25,7 @@ Only files that include the comment `# x-cmds:file[update]` at the top of the fi
 
 [3] UNLISTED FILES
 Files that include the comment `# x-cmds:file[unlisted]` at the top of the file will not appear in the commands list.
-Combine options to apply both: `# x-cmds:file[unlisted, update]`
+Combine options to apply both: `# x-cmds:file[unlisted,update]`
 This is useful for shared helper/library files that should be auto-updated but are not standalone commands.
 
 [4] COMMAND DESCRIPTION
@@ -617,4 +617,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

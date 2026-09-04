@@ -204,7 +204,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     # fmt: on
 
     # Exit with the same code as the command:
-    sys.exit(exit_code)
+    raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":
@@ -241,4 +241,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

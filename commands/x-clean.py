@@ -599,16 +599,14 @@ def backup_env_vars(backup_dir: Path) -> bool:
 def restore_env_vars(backup_path: Path) -> None:
     """Restore environment variables from a JSON backup file."""
     if not backup_path.exists():
-        xx.console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n")
-        return
+        xx.console.fail(f"Backup file does not exist: [br:cyan]({backup_path})", start="\n", end="\n\n", exit_code=1)
 
     FormatCodes.print(f"\n[b](Loading backup from [br:cyan|link:file:///{backup_path.resolve()}]({backup_path.name})[b]…)")
 
     try:
         data = json.loads(backup_path.read_text(encoding="utf-8"))
     except Exception as exc:
-        xx.console.fail(f"Failed to read backup file: {exc}", start="\n", end="\n\n")
-        return
+        xx.console.fail(f"Failed to read backup file: {exc}", start="\n", end="\n\n", exit_code=1)
 
     # Show what will be restored:
     for scope in ("user", "system"):
@@ -616,8 +614,7 @@ def restore_env_vars(backup_path: Path) -> None:
             FormatCodes.print(f"\n  [b]({scope.upper()} variables:) [dim]({len(data[scope])} entries)")
 
     if not xx.console.confirm("\n[b](Restore these environment variables?)", default_is_yes=False):
-        xx.console.exit("Restore canceled.", start="\n", end="\n\n", exit_code=0)
-        return
+        xx.console.exit("Restore canceled.", start="\n", end="\n\n")
 
     failures: list[str] = []
     restored = 0
@@ -1072,6 +1069,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
                 "  Usage: [br:green](x-clean) [br:blue](--restore) [br:cyan](path/to/backup.json)",
                 start="\n",
                 end="\n\n",
+                exit_code=1,
             )
             return
         restore_env_vars(Path(restore_path_str))
@@ -1093,8 +1091,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
     selected = choose_options()
 
     if not any(selected.values()):
-        xx.console.exit("Nothing selected.", start="\n", end="\n\n", exit_code=0)
-        return
+        xx.console.exit("Nothing selected.", start="\n", end="\n\n")
 
     # [2] Create backups:
     FormatCodes.print("\n\n\n[b|in|green|bg:black]( CREATING BACKUPS )\n\n")
@@ -1118,8 +1115,8 @@ def main() -> None:  # ruff:ignore[complex-structure]
             f"\n  [dim|br:red](Backup directory: [link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name}))",
             start="\n",
             end="\n\n",
+            exit_code=1,
         )
-        return
 
     FormatCodes.print(
         f"\n[b|green](✓ Backups saved to:) [br:green|link:file:///{backup_dir.resolve()}]({backup_dir.parent.name}/{backup_dir.name})"
@@ -1225,4 +1222,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("\n[dim|br:magenta](✗ [i](Canceled by user.))\n")
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

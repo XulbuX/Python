@@ -6,7 +6,6 @@ Calculate the value of π to a specified number of decimal places.
 """
 
 import math
-import sys
 import time
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
@@ -239,9 +238,9 @@ def main() -> None:
                 (format_time(estimated_secs, pretty_print=True), S.RESET, "\n"),
                 sep="\n",
             ).print()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as exc:
             S((S.BOLD | S.BR.RED)("\r✗"), "  \n").print()
-            sys.exit(0)
+            raise SystemExit(0) from exc
 
         if result:
             S((S.BOLD | S.BR.CYAN)("\r", result), "\n").print()
@@ -269,4 +268,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

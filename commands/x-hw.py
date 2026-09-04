@@ -410,8 +410,7 @@ def main() -> None:
     try:
         hw_info.gather_info(detailed=ARGS.detailed.exists)
     except Exception as exc:
-        xx.console.fail(f"Error gathering hardware information: {exc}", end="\n\n")
-        return
+        xx.console.fail(f"Error gathering hardware information: {exc}", end="\n\n", exit_code=1)
 
     if ARGS.json_output.exists:
         FormatCodes.print(f"\n{xx.data.render(hw_info.as_dict(), indent=2, as_json=True, syntax_highlighting=True)}\n")
@@ -441,4 +440,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

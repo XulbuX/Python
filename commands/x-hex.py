@@ -164,7 +164,6 @@ def process_file(file_path: Path, root_dir: str, operation: Operation, degrees: 
             f"Error processing [br:red|link:file:///{file_path.resolve()}]({log_path}):\n[red]{exc}[_]",
             start="",
             end="\n",
-            exit=False,
         )
 
 
@@ -182,7 +181,10 @@ def main() -> None:  # ruff:ignore[complex-structure]
     elif ARGS.rotate.exists:
         if (degrees := ARGS.rotate.val(int, default=None)) is None:
             xx.console.fail(
-                "[br:blue](--rotate) requires a degree value (0-360), e.g., [br:blue](--rotate=180)", start="\n", end="\n\n"
+                "[br:blue](--rotate) requires a degree value (0-360), e.g., [br:blue](--rotate=180)",
+                start="\n",
+                end="\n\n",
+                exit_code=1,
             )
             return
         operation = Operation.ROTATE
@@ -195,6 +197,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
             "[br:blue](--rotate[dim](=)DEG) or [br:blue](--invert).",
             start="\n",
             end="\n\n",
+            exit_code=1,
         )
         return
 
@@ -216,7 +219,7 @@ def main() -> None:  # ruff:ignore[complex-structure]
                     process_file(file_path, path, operation, degrees, dry_run)
 
         else:
-            xx.console.fail(f"Path not found [white]{path}[_]", exit=False)
+            xx.console.fail(f"Path not found [white]{path}[_]")
 
     print()
 
@@ -263,4 +266,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

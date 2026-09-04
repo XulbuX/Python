@@ -410,7 +410,7 @@ def ascii_qr(text: str) -> str | None:  # ruff:ignore[complex-structure]
         return "  " + "\n  ".join(lines)
 
     except ValueError as exc:
-        xx.console.fail(exc)
+        xx.console.fail(exc, exit_code=1)
 
 
 def main() -> None:
@@ -474,4 +474,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print()
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

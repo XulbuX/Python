@@ -8,21 +8,51 @@ import fnmatch
 import os
 import re
 import stat
+import sys
 import threading
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 import xulbux as xx
 from xulbux import ArgumentParser, S, Term, Throbber
 
+# Make the `_shared` package (commands/_shared) importable when running this script directly:
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _shared.consts import AUTO_IGNORE_FOLDERS, NON_TEXT_EXTS
+from _shared.helpers import is_likely_hash_name
+
+if TYPE_CHECKING:
+    from ._shared.consts import AUTO_IGNORE_FOLDERS, NON_TEXT_EXTS  # ruff:ignore[runtime-import-in-type-checking-block]
+    from ._shared.helpers import is_likely_hash_name  # ruff:ignore[runtime-import-in-type-checking-block]
+
+
 # ********************************************************* CONSTANTS *********************************************************
 
-_BUFFER_SIZE: int = 65536
+BUFFER_SIZE: int = 65536
 """Buffer size in bytes for reading file chunks during line counting."""
-_CHECK_LIMIT: int = 8192
+CHECK_LIMIT: int = 8192
 """Maximum number of bytes sampled from a file to determine if it is binary."""
+
+EXACT_IGNORE_NAMES: frozenset[str] = frozenset({
+    path.lower() for path in AUTO_IGNORE_FOLDERS if "*" not in path and "[" not in path and "/" not in path
+})
+"""Pre-computed set of exact folder names to skip in `O(1)` time."""
+
+WILDCARD_IGNORE_NAMES: list[re.Pattern[str]] = [
+    re.compile(fnmatch.translate(path.lower()))
+    for path in AUTO_IGNORE_FOLDERS
+    if ("*" in path or "[" in path) and "/" not in path
+]
+"""Pre-compiled regex patterns for wildcard folder ignores without path separators."""
+
+PATH_IGNORE_PARTS: tuple[str, ...] = tuple(
+    path.lower() for path in AUTO_IGNORE_FOLDERS if "/" in path and "*" not in path and "[" not in path
+)
+"""Pre-computed tuple of multi-part directory paths to auto-ignore."""
+
 
 # ****************************************************** HELPER CLASSES *******************************************************
 
@@ -30,11 +60,11 @@ _CHECK_LIMIT: int = 8192
 class GitIgnoreRule:
     """Represents a compiled Git ignore rule relative to a root folder.\n
     ----------------------------------------------------------------------------------------------------
-    *   `base_dir` – Root folder containing the .gitignore file.
+    *   `base_dir_posix` – Normalized POSIX string of the folder containing the .gitignore file.
     *   `raw_pattern` – Unparsed line from the .gitignore file."""
 
-    base_dir: Path
-    """Directory where the .gitignore file is located."""
+    base_dir_posix: str
+    """Directory POSIX path string where the .gitignore file is located."""
     negated: bool
     """Whether the pattern is negated with a leading exclamation mark."""
     dir_only: bool
@@ -44,43 +74,42 @@ class GitIgnoreRule:
     regex: re.Pattern[str]
     """Compiled regular expression for matching paths against the pattern."""
 
-    def __init__(self, base_dir: Path, raw_pattern: str) -> None:
-        self.base_dir = base_dir
-        pattern_str = raw_pattern.strip()
-        self.negated = pattern_str.startswith("!")
+    def __init__(self, base_dir_posix: str, raw_pattern: str) -> None:
+        self.base_dir_posix = base_dir_posix.rstrip("/")
+        self.negated = (pattern_str := raw_pattern.strip()).startswith("!")
+
         if self.negated:
             pattern_str = pattern_str[1:].strip()
 
         self.dir_only = pattern_str.endswith("/")
-        clean_pattern = pattern_str.rstrip("/")
-        self.anchored = "/" in clean_pattern.lstrip("/") or clean_pattern.startswith("/")
-        pattern_flags = re.IGNORECASE if os.name == "nt" else 0
-        compile_target = clean_pattern.lstrip("/") if self.anchored else clean_pattern
-        self.regex = re.compile(fnmatch.translate(compile_target), pattern_flags)
+        self.anchored = "/" in (clean_pattern := pattern_str.rstrip("/")).lstrip("/") or clean_pattern.startswith("/")
+        self.regex = re.compile(
+            fnmatch.translate(clean_pattern.lstrip("/") if self.anchored else clean_pattern),
+            re.IGNORECASE if os.name == "nt" else 0,
+        )
 
-    def matches(self, target_path: Path, is_dir: bool) -> bool | None:
+    def matches(self, target_full_posix: str, name: str, is_dir: bool) -> bool | None:
         """Check whether this rule matches a target path.\n
         ----------------------------------------------------------------------------------------------------
-        *   `target_path` – Path to inspect.
+        *   `target_full_posix` – Full POSIX path of the target item.
+        *   `name` – Base name of the target item.
         *   `is_dir` – Whether the path refers to a directory."""
 
-        try:
-            rel_posix = target_path.relative_to(self.base_dir).as_posix()
-        except ValueError:
+        if (self.dir_only and not is_dir) or not target_full_posix.startswith(self.base_dir_posix):
             return None
 
+        rel = target_full_posix[len(self.base_dir_posix) :].lstrip("/")
+
         if self.anchored:
-            if self.dir_only and not is_dir:
-                return None
-            if self.regex.fullmatch(rel_posix):
+            if self.regex.fullmatch(rel):
                 return not self.negated
+
         else:
-            if not (self.dir_only and not is_dir) and self.regex.fullmatch(target_path.name):
+            if self.regex.fullmatch(name) or self.regex.fullmatch(rel):
                 return not self.negated
-            for parent_dir in target_path.parents:
-                if parent_dir == self.base_dir:
-                    break
-                if self.regex.fullmatch(parent_dir.name):
+
+            for segment in rel.split("/")[:-1]:
+                if self.regex.fullmatch(segment):
                     return not self.negated
 
         return None
@@ -91,15 +120,12 @@ class ScanResult(NamedTuple):
     ----------------------------------------------------------------------------------------------------
     *   `total_lines` – Total number of lines counted across all matched files.
     *   `total_files` – Total count of processed files.
-    *   `files_data` – Dictionary mapping relative file paths to their individual line counts.
     *   `extensions_data` – Dictionary mapping file extensions to counts of lines and files."""
 
     total_lines: int
     """Sum of lines of code across all processed files."""
     total_files: int
     """Number of files successfully processed."""
-    files_data: dict[str, int]
-    """Mapping of relative file path strings to line counts."""
     extensions_data: dict[str, dict[str, int]]
     """Mapping of file extensions to counts of lines and files."""
 
@@ -121,11 +147,12 @@ def is_hidden_entry(entry: os.DirEntry[str]) -> bool:
             if entry.is_dir(follow_symlinks=False):
                 return bool(file_attrs & stat.FILE_ATTRIBUTE_HIDDEN)
             return bool(file_attrs & (stat.FILE_ATTRIBUTE_HIDDEN | stat.FILE_ATTRIBUTE_SYSTEM))
+
     else:
-        entry_path = entry.path
         system_dirs = {"/proc", "/sys", "/dev", "/tmp"}
-        if entry_path in system_dirs:
+        if (entry_path := entry.path) in system_dirs:
             return True
+
         for sys_dir in system_dirs:
             if entry_path.startswith(sys_dir):
                 return True
@@ -138,8 +165,7 @@ def parse_glob_patterns(raw_input: str) -> list[str]:
     ----------------------------------------------------------------------------------------------------
     *   `raw_input` – Raw string containing one or more glob patterns."""
 
-    normalized = raw_input.replace("|", " ").replace(",", " ")
-    return [token.strip() for token in normalized.split() if token.strip()]
+    return [token.strip() for token in raw_input.replace("|", " ").replace(",", " ").split() if token.strip()]
 
 
 def compile_glob_patterns(patterns: list[str]) -> list[tuple[re.Pattern[str], bool]]:
@@ -151,11 +177,11 @@ def compile_glob_patterns(patterns: list[str]) -> list[tuple[re.Pattern[str], bo
     pattern_flags = re.IGNORECASE if os.name == "nt" else 0
 
     for pattern in patterns:
-        clean_pattern = pattern.replace("\\", "/").strip()
-        if not clean_pattern:
+        if not (clean_pattern := pattern.replace("\\", "/").strip()):
             continue
-        is_name_only = "/" not in clean_pattern
-        target = clean_pattern if is_name_only else clean_pattern.lstrip("/")
+
+        target = clean_pattern if (is_name_only := "/" not in clean_pattern) else clean_pattern.lstrip("/")
+
         with suppress(re.error):
             compiled.append((re.compile(fnmatch.translate(target), pattern_flags), is_name_only))
 
@@ -189,16 +215,19 @@ def load_gitignore_rules(directory: Path) -> list[GitIgnoreRule]:
     hierarchy.reverse()
 
     for folder in hierarchy:
-        ignore_path = folder / ".gitignore"
-        if not ignore_path.is_file():
+        if not (ignore_path := folder / ".gitignore").is_file():
             continue
+
+        folder_posix = str(folder).replace("\\", "/")
+
         try:
             with open(ignore_path, encoding="utf-8", errors="ignore") as file_handle:
                 for line in file_handle:
                     if not (stripped_line := line.strip()) or stripped_line.startswith("#"):
                         continue
                     with suppress(re.error):
-                        rules.append(GitIgnoreRule(folder, stripped_line))
+                        rules.append(GitIgnoreRule(folder_posix, stripped_line))
+
         except (OSError, UnicodeDecodeError):
             continue
 
@@ -211,31 +240,32 @@ def parse_gitignore_file(gitignore_path: Path) -> list[GitIgnoreRule]:
     *   `gitignore_path` – Path to the .gitignore file."""
 
     rules: list[GitIgnoreRule] = []
-    parent_dir = gitignore_path.parent
+    parent_posix = str(gitignore_path.parent).replace("\\", "/")
 
-    try:
-        with open(gitignore_path, encoding="utf-8", errors="ignore") as file_handle:
-            for line in file_handle:
-                if not (stripped_line := line.strip()) or stripped_line.startswith("#"):
-                    continue
-                with suppress(re.error):
-                    rules.append(GitIgnoreRule(parent_dir, stripped_line))
-    except (OSError, UnicodeDecodeError):
-        pass
+    with suppress(OSError, UnicodeDecodeError), open(gitignore_path, encoding="utf-8", errors="ignore") as file_handle:
+        for line in file_handle:
+            if not (stripped_line := line.strip()) or stripped_line.startswith("#"):
+                continue
+            with suppress(re.error):
+                rules.append(GitIgnoreRule(parent_posix, stripped_line))
 
     return rules
 
 
-def is_gitignored(target_path: Path, is_dir: bool, rules: list[GitIgnoreRule]) -> bool:
+def is_gitignored(target_full_posix: str, name: str, is_dir: bool, rules: list[GitIgnoreRule]) -> bool:
     """Check whether a path is ignored according to active Git ignore rules.\n
     ----------------------------------------------------------------------------------------------------
-    *   `target_path` – Path to inspect.
+    *   `target_full_posix` – Full POSIX path string to inspect.
+    *   `name` – Base name of the file or directory.
     *   `is_dir` – Whether the path is a directory.
     *   `rules` – List of active Git ignore rules."""
 
+    if not rules:
+        return False
+
     ignored = False
     for rule in rules:
-        if (rule_match := rule.matches(target_path, is_dir)) is not None:
+        if (rule_match := rule.matches(target_full_posix, name, is_dir)) is not None:
             ignored = rule_match
 
     return ignored
@@ -244,19 +274,42 @@ def is_gitignored(target_path: Path, is_dir: bool, rules: list[GitIgnoreRule]) -
 def should_skip_directory(
     entry: os.DirEntry[str],
     rel_posix: str,
+    target_full_posix: str,
     skip_hidden: bool,
     apply_gitignore: bool,
     rules: list[GitIgnoreRule],
     exclude_patterns: list[tuple[re.Pattern[str], bool]],
+    include_all: bool,
 ) -> bool:
     """Check whether a directory entry should be skipped during scanning.\n
     ----------------------------------------------------------------------------------------------------
     *   `entry` – Directory entry to inspect.
     *   `rel_posix` – Relative POSIX path from the scanning root.
+    *   `target_full_posix` – Full POSIX path of the directory.
     *   `skip_hidden` – Whether hidden directories should be skipped.
     *   `apply_gitignore` – Whether Git ignore rules are active.
     *   `rules` – List of active Git ignore rules.
-    *   `exclude_patterns` – List of compiled exclude glob patterns."""
+    *   `exclude_patterns` – List of compiled exclude glob patterns.
+    *   `include_all` – Whether all ignore filters are disabled."""
+
+    name_lower = entry.name.lower()
+
+    if not include_all:
+        if name_lower in EXACT_IGNORE_NAMES:
+            return True
+
+        if is_likely_hash_name(entry.name):
+            return True
+
+        if PATH_IGNORE_PARTS:
+            rel_lower = rel_posix.lower()
+            for part in PATH_IGNORE_PARTS:
+                if part in rel_lower:
+                    return True
+
+        for pattern in WILDCARD_IGNORE_NAMES:
+            if pattern.fullmatch(name_lower):
+                return True
 
     if entry.name == ".git" and skip_hidden:
         return True
@@ -264,7 +317,7 @@ def should_skip_directory(
     if skip_hidden and is_hidden_entry(entry):
         return True
 
-    if apply_gitignore and is_gitignored(Path(entry.path), True, rules):
+    if apply_gitignore and is_gitignored(target_full_posix, entry.name, True, rules):
         return True
 
     return bool(exclude_patterns and matches_glob_patterns(entry.name, rel_posix, exclude_patterns))
@@ -273,6 +326,7 @@ def should_skip_directory(
 def should_include_file(
     entry: os.DirEntry[str],
     rel_posix: str,
+    target_full_posix: str,
     skip_hidden: bool,
     apply_gitignore: bool,
     rules: list[GitIgnoreRule],
@@ -283,6 +337,7 @@ def should_include_file(
     ----------------------------------------------------------------------------------------------------
     *   `entry` – File entry to inspect.
     *   `rel_posix` – Relative POSIX path from the scanning root.
+    *   `target_full_posix` – Full POSIX path of the file.
     *   `skip_hidden` – Whether hidden files should be skipped.
     *   `apply_gitignore` – Whether Git ignore rules are active.
     *   `rules` – List of active Git ignore rules.
@@ -292,7 +347,7 @@ def should_include_file(
     if skip_hidden and is_hidden_entry(entry):
         return False
 
-    if apply_gitignore and is_gitignored(Path(entry.path), False, rules):
+    if apply_gitignore and is_gitignored(target_full_posix, entry.name, False, rules):
         return False
 
     if exclude_patterns and matches_glob_patterns(entry.name, rel_posix, exclude_patterns):
@@ -307,30 +362,15 @@ def count_lines(file_path: str) -> int:
     *   `file_path` – Path string of the file to count."""
 
     try:
-        if (file_size := Path(file_path).stat().st_size) == 0:
-            return 0
-
         with open(file_path, "rb") as file_handle:
-            if file_size < 1024 * 1024:
-                content = file_handle.read()
-                if b"\x00" in content:
-                    return 0
-                line_count = content.count(b"\n")
-                if not content.endswith(b"\n"):
-                    line_count += 1
-                return line_count
+            chunk = file_handle.read(BUFFER_SIZE)
+            if not chunk or b"\x00" in chunk[:CHECK_LIMIT]:
+                return 0
 
-            line_count = 0
-            bytes_read = 0
-            last_chunk: bytes = b""
+            line_count = chunk.count(b"\n")
+            last_chunk = chunk
 
-            while chunk := file_handle.read(_BUFFER_SIZE):
-                if bytes_read < _CHECK_LIMIT:
-                    sample_size = min(len(chunk), _CHECK_LIMIT - bytes_read)
-                    if b"\x00" in chunk[:sample_size]:
-                        return 0
-                    bytes_read += sample_size
-
+            while chunk := file_handle.read(BUFFER_SIZE):
                 line_count += chunk.count(b"\n")
                 last_chunk = chunk
 
@@ -352,6 +392,7 @@ class DirectoryScanner:
     *   `target_dir` – Root directory to scan.
     *   `skip_hidden` – Whether hidden and system items should be ignored.
     *   `apply_gitignore` – Whether .gitignore rules should be discovered and enforced.
+    *   `include_all` – Whether all ignore filters are disabled.
     *   `is_recursive` – Whether subdirectories should be traversed recursively.
     *   `include_patterns` – Compiled glob patterns to filter included files.
     *   `exclude_patterns` – Compiled glob patterns to filter excluded files/directories."""
@@ -362,6 +403,8 @@ class DirectoryScanner:
     """Whether to skip hidden and system files/directories."""
     apply_gitignore: bool
     """Whether to load and follow .gitignore rules."""
+    include_all: bool
+    """Whether all ignore filters are disabled."""
     is_recursive: bool
     """Whether to recurse into subdirectories."""
     include_patterns: list[tuple[re.Pattern[str], bool]]
@@ -370,10 +413,12 @@ class DirectoryScanner:
     """Compiled patterns for exclusion filtering."""
     total_lines: int
     """Accumulated total code lines count."""
-    files_data: dict[str, int]
-    """Mapping of relative file path strings to line counts."""
+    total_files: int
+    """Accumulated total processed files count."""
     extensions_data: dict[str, dict[str, int]]
     """Mapping of file extensions to counts of lines and files."""
+    _target_dir_posix: str
+    """Normalized POSIX path string of target directory."""
     _lock: threading.Lock
     """Lock synchronizing data mutation across worker threads."""
     _done: threading.Event
@@ -390,6 +435,7 @@ class DirectoryScanner:
         target_dir: Path,
         skip_hidden: bool,
         apply_gitignore: bool,
+        include_all: bool,
         is_recursive: bool,
         include_patterns: list[tuple[re.Pattern[str], bool]],
         exclude_patterns: list[tuple[re.Pattern[str], bool]],
@@ -397,13 +443,15 @@ class DirectoryScanner:
         self.target_dir = target_dir
         self.skip_hidden = skip_hidden
         self.apply_gitignore = apply_gitignore
+        self.include_all = include_all
         self.is_recursive = is_recursive
         self.include_patterns = include_patterns
         self.exclude_patterns = exclude_patterns
 
         self.total_lines = 0
-        self.files_data = {}
+        self.total_files = 0
         self.extensions_data = defaultdict(lambda: {"files": 0, "lines": 0})
+        self._target_dir_posix = str(target_dir).replace("\\", "/").rstrip("/")
 
         self._lock = threading.Lock()
         self._done = threading.Event()
@@ -414,80 +462,139 @@ class DirectoryScanner:
 
     def _process_entries(
         self,
+        dir_path: str,
         entries: list[os.DirEntry[str]],
         active_rules: list[GitIgnoreRule],
-    ) -> tuple[list[str], list[tuple[str, str, str]]]:
+    ) -> tuple[list[str], list[tuple[str, str]]]:
         """Categorize directory entries into directories to visit and files to count.\n
         ----------------------------------------------------------------------------------------------------
+        *   `dir_path` – Directory path currently being processed.
         *   `entries` – List of scanned filesystem directory entries.
         *   `active_rules` – Git ignore rules applicable to this directory level."""
 
         new_dirs: list[str] = []
-        file_tasks: list[tuple[str, str, str]] = []
+        file_tasks: list[tuple[str, str]] = []
+
+        dir_posix = dir_path.replace("\\", "/").rstrip("/")
+        if dir_posix == self._target_dir_posix:
+            dir_rel = ""
+        elif dir_posix.startswith(self._target_dir_posix):
+            dir_rel = dir_posix[len(self._target_dir_posix) :].lstrip("/")
+        else:
+            dir_rel = dir_posix
 
         for entry in entries:
-            entry_path_obj = Path(entry.path)
-            try:
-                rel_posix = entry_path_obj.relative_to(self.target_dir).as_posix()
-            except ValueError:
-                rel_posix = entry.name
+            name = entry.name
+            rel_posix = f"{dir_rel}/{name}" if dir_rel else name
+            target_full_posix = f"{dir_posix}/{name}"
 
             if entry.is_dir(follow_symlinks=False):
                 if self.is_recursive and not should_skip_directory(
                     entry,
                     rel_posix,
+                    target_full_posix,
                     self.skip_hidden,
                     self.apply_gitignore,
                     active_rules,
                     self.exclude_patterns,
+                    self.include_all,
                 ):
                     new_dirs.append(entry.path)
-            elif entry.is_file(follow_symlinks=False) and should_include_file(
-                entry,
-                rel_posix,
-                self.skip_hidden,
-                self.apply_gitignore,
-                active_rules,
-                self.include_patterns,
-                self.exclude_patterns,
-            ):
-                extension = Path(entry.name).suffix.lower() or "(no ext)"
-                file_tasks.append((entry.path, rel_posix, extension))
+
+            elif entry.is_file(follow_symlinks=False):
+                dot = name.rfind(".")
+                raw_ext = name[dot + 1 :].lower() if dot >= 0 else ""
+                if raw_ext in NON_TEXT_EXTS:
+                    continue
+
+                if should_include_file(
+                    entry,
+                    rel_posix,
+                    target_full_posix,
+                    self.skip_hidden,
+                    self.apply_gitignore,
+                    active_rules,
+                    self.include_patterns,
+                    self.exclude_patterns,
+                ):
+                    extension = f".{raw_ext}" if raw_ext else "(no ext)"
+                    file_tasks.append((entry.path, extension))
 
         return new_dirs, file_tasks
 
-    def _count_lines_worker(self, file_path: str, rel_path: str, extension: str) -> None:
-        """Worker task to count lines in a file and record statistics.\n
+    def _count_dir_files(self, file_tasks: list[tuple[str, str]]) -> None:
+        """Count lines for all files in a directory and merge into global statistics.\n
         ----------------------------------------------------------------------------------------------------
-        *   `file_path` – Full path to the file.
-        *   `rel_path` – Relative path from the target directory.
-        *   `extension` – Lowercase file extension."""
+        *   `file_tasks` – List of file path and extension pairs to count."""
 
-        if not self._canceled[0]:
+        local_lines = 0
+        local_files = 0
+        local_ext_stats: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+
+        for file_path, extension in file_tasks:
+            if self._canceled[0]:
+                break
             lines = count_lines(file_path)
+            local_lines += lines
+            local_files += 1
+            stats = local_ext_stats[extension]
+            stats[0] += 1
+            stats[1] += lines
+
+        if local_files > 0 and not self._canceled[0]:
             with self._lock:
-                self.total_lines += lines
-                self.files_data[rel_path] = lines
-                stats = self.extensions_data[extension]
-                stats["files"] += 1
-                stats["lines"] += lines
+                self.total_lines += local_lines
+                self.total_files += local_files
+                for ext, (f_cnt, l_cnt) in local_ext_stats.items():
+                    global_stats = self.extensions_data[ext]
+                    global_stats["files"] += f_cnt
+                    global_stats["lines"] += l_cnt
+
+    def _finish_task(self) -> None:
+        """Decrement the active task counter and signal completion if all work finished."""
 
         with self._lock:
             self._active_tasks[0] -= 1
             if self._active_tasks[0] == 0:
                 self._done.set()
 
+    @staticmethod
+    def _resolve_dir_rules(entries: list[os.DirEntry[str]], current_rules: list[GitIgnoreRule]) -> list[GitIgnoreRule]:
+        """Discover and append local .gitignore rules if present in directory entries.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `entries` – List of scanned filesystem directory entries.
+        *   `current_rules` – Git ignore rules from parent directories."""
+
+        for entry in entries:
+            if entry.name == ".gitignore":
+                return [*current_rules, *parse_gitignore_file(Path(entry.path))]
+
+        return current_rules
+
+    @staticmethod
+    def _is_hash_dominated_dir(entries: list[os.DirEntry[str]]) -> bool:
+        """Check whether a directory is dominated by generated hash or UUID artifacts.\n
+        ----------------------------------------------------------------------------------------------------
+        *   `entries` – List of scanned filesystem directory entries."""
+
+        if (total_count := len(entries)) <= 5:
+            return False
+
+        hash_count = 0
+        for entry in entries:
+            if not entry.name.startswith(".") and is_likely_hash_name(entry.name):
+                hash_count += 1
+
+        return (hash_count / total_count) > 0.8
+
     def _scan_dir_worker(self, dir_path: str, current_rules: list[GitIgnoreRule]) -> None:
-        """Worker task to inspect a directory and dispatch child tasks.\n
+        """Worker task to inspect a directory, dispatch child directories, and count file lines.\n
         ----------------------------------------------------------------------------------------------------
         *   `dir_path` – Directory path to read.
         *   `current_rules` – Git ignore rules applicable to this directory level."""
 
         if self._canceled[0]:
-            with self._lock:
-                self._active_tasks[0] -= 1
-                if self._active_tasks[0] == 0:
-                    self._done.set()
+            self._finish_task()
             return
 
         try:
@@ -496,48 +603,47 @@ class DirectoryScanner:
         except OSError:
             entries = []
 
-        active_rules = current_rules
-        if self.apply_gitignore:
-            for entry in entries:
-                if entry.name == ".gitignore":
-                    active_rules = [*current_rules, *parse_gitignore_file(Path(entry.path))]
-                    break
+        if not self.include_all and self._is_hash_dominated_dir(entries):
+            self._finish_task()
+            return
 
-        new_dirs, file_tasks = self._process_entries(entries, active_rules)
+        active_rules = self._resolve_dir_rules(entries, current_rules) if self.apply_gitignore else current_rules
+        new_dirs, file_tasks = self._process_entries(dir_path, entries, active_rules)
 
-        with self._lock:
-            self._active_tasks[0] += len(new_dirs) + len(file_tasks)
+        if new_dirs and not self._canceled[0]:
+            with self._lock:
+                self._active_tasks[0] += len(new_dirs)
+            for next_directory in new_dirs:
+                self._executor.submit(self._scan_dir_worker, next_directory, active_rules)
 
-        for next_directory in new_dirs:
-            self._executor.submit(self._scan_dir_worker, next_directory, active_rules)
+        if file_tasks and not self._canceled[0]:
+            self._count_dir_files(file_tasks)
 
-        for task_file_path, task_rel_posix, task_extension in file_tasks:
-            self._executor.submit(self._count_lines_worker, task_file_path, task_rel_posix, task_extension)
-
-        with self._lock:
-            self._active_tasks[0] -= 1
-            if self._active_tasks[0] == 0:
-                self._done.set()
+        self._finish_task()
 
     def run(self) -> ScanResult:
         """Start the parallel scanning process and wait until complete."""
 
-        base_rules = load_gitignore_rules(self.target_dir) if self.apply_gitignore else []
-
         try:
-            self._executor.submit(self._scan_dir_worker, str(self.target_dir), base_rules)
+            self._executor.submit(
+                self._scan_dir_worker,
+                str(self.target_dir),
+                load_gitignore_rules(self.target_dir) if self.apply_gitignore else [],
+            )
+
             while not self._done.wait(0.05):
                 pass
+
         except KeyboardInterrupt:
             self._canceled[0] = True
             raise
+
         finally:
             self._executor.shutdown(wait=False, cancel_futures=True)
 
         return ScanResult(
             total_lines=self.total_lines,
-            total_files=len(self.files_data),
-            files_data=self.files_data,
+            total_files=self.total_files,
             extensions_data=dict(self.extensions_data),
         )
 
@@ -558,14 +664,17 @@ def scan_directory(target_dir: Path) -> ScanResult:
         else []
     )
 
+    include_all = bool(ARGS.include_all.exists)
     scanner = DirectoryScanner(
         target_dir=target_dir,
-        skip_hidden=not (ARGS.include_hidden.exists or ARGS.include_all.exists),
-        apply_gitignore=not (ARGS.no_gitignore.exists or ARGS.include_all.exists),
+        skip_hidden=not (ARGS.include_hidden.exists or include_all),
+        apply_gitignore=not (ARGS.no_gitignore.exists or include_all),
+        include_all=include_all,
         is_recursive=not ARGS.no_recursive.exists,
         include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
     )
+
     return scanner.run()
 
 
@@ -575,29 +684,21 @@ def scan_directory(target_dir: Path) -> ScanResult:
 def main() -> None:
     """Execute the lines of code counter command."""
 
-    raw_path = ARGS.target_dir.val()
-    target_path = Path(raw_path).resolve() if raw_path else Path.cwd()
+    target_path = ARGS.target_dir.val(Path, default=Path.cwd())
 
     if not target_path.exists():
-        xx.console.fail(f"Path does not exist: {target_path}", start="\n", end="\n\n")
-        raise SystemExit(1)
+        xx.console.fail(f"Path does not exist: {target_path}", start="\n", end="\n\n", exit_code=1)
 
-    if target_path.is_file():
-        file_lines = count_lines(str(target_path))
-        file_extension = target_path.suffix.lower() or "(no ext)"
-        scan_result = ScanResult(
-            total_lines=file_lines,
-            total_files=1,
-            files_data={target_path.name: file_lines},
-            extensions_data={file_extension: {"files": 1, "lines": file_lines}},
-        )
-    else:
-        if ARGS.raw_output.exists or ARGS.as_json.exists:
-            scan_result = scan_directory(target_path)
+    with Throbber(label="Counting lines of code...").context():
+        if target_path.is_file():
+            file_lines = count_lines(str(target_path))
+            scan_result = ScanResult(
+                total_lines=file_lines,
+                total_files=1,
+                extensions_data={target_path.suffix.lower() or "(no ext)": {"files": 1, "lines": file_lines}},
+            )
         else:
-            print()
-            with Throbber(label="Counting lines of code...").context():
-                scan_result = scan_directory(target_path)
+            scan_result = scan_directory(target_path)
 
     # [1] Raw numeric output:
     if ARGS.raw_output.exists:
@@ -611,48 +712,26 @@ def main() -> None:
             "total_lines": scan_result.total_lines,
             "total_files": scan_result.total_files,
             "extensions": scan_result.extensions_data,
-            "files": scan_result.files_data,
         }
-        print(xx.data.render(json_data, indent=2, as_json=True, syntax_highlighting=True).ansi)
+        xx.data.render(json_data, indent=2, as_json=True, syntax_highlighting=True).print()
         return
 
     # [3] Formatted banner output:
     file_count_formatted = f"{scan_result.total_files:,}"
     files_label = f"({file_count_formatted} file)" if scan_result.total_files == 1 else f"({file_count_formatted} files)"
 
-    banner_content = S(
-        (S.INVERSE | S.BG.BLACK)(
-            "  ",
-            S.BOLD(f"{scan_result.total_lines:,}"),
-            " total lines  ",
-            S.DIM(files_label),
-            "  ",
-        )
-    )
+    banner_content = S((S.INVERSE | S.BG.BLACK)(S.BOLD(f"{scan_result.total_lines:,}"), " total lines  ", files_label))
 
     S(
-        (Term.CLEAR_LINE, "▄" * (len(banner_content) + 2)),
-        (banner_content, S.INVERSE("  ")),
-        ("▀" * (len(banner_content) + 2)),
+        Term.CLEAR_LINE,
+        ("▄" * (len(banner_content) + 4)),
+        (S.INVERSE("  "), banner_content, S.INVERSE("  ")),
+        ("▀" * (len(banner_content) + 4)),
         sep="\n",
     ).print(end="\n\n")
 
-    # [4] Detailed matched files list or extension breakdown:
-    if ARGS.show_files.exists:
-        if not scan_result.files_data:
-            S.DIM("  No matching files found.").print(end="\n\n")
-        else:
-            sorted_files = sorted(scan_result.files_data.items(), key=lambda item: item[1], reverse=True)
-            max_line_width = max((len(f"{line_num:,}") for _, line_num in sorted_files), default=0)
-            file_rows: list[S] = [S(S.BOLD("  Matched Files:"), S.DIM(f" ({len(sorted_files)} files)\n"))]
-
-            for file_path_key, file_line_count in sorted_files:
-                formatted_count = f"{file_line_count:,}".rjust(max_line_width)
-                file_rows.append(S("   ", S.BR.CYAN(formatted_count), "  ", S.DIM("lines"), "  ", S.WHITE(file_path_key)))
-
-            S(*file_rows, sep="\n").print(end="\n\n")
-
-    elif len(scan_result.extensions_data) > 1:
+    # [4] Detailed matched extension breakdown:
+    if len(scan_result.extensions_data) > 1:
         sorted_extensions = sorted(
             scan_result.extensions_data.items(),
             key=lambda item: item[1]["lines"],
@@ -668,10 +747,10 @@ def main() -> None:
             count_label = "file" if extension_stats["files"] == 1 else "files"
             extension_rows.append(
                 S(
-                    "   ",
+                    "  ",
                     S.BR.BLUE(padded_ext),
                     "  ",
-                    S.WHITE(lines_str),
+                    S.BR.WHITE(lines_str),
                     " lines  ",
                     S.DIM(f"({extension_stats['files']:,} {count_label})"),
                 )
@@ -687,12 +766,9 @@ if __name__ == "__main__":
         controls=[("Ctrl+C", "Cancel and exit")],
         examples=[
             ("{cmd}", "Count lines of code in the current working directory"),
-            ('{cmd} "my_project"', "Count lines in a specific directory"),
+            ('{cmd} "path/to/my_project"', "Count lines in a specific directory"),
             ('{cmd} -i="*.py | *.toml"', "Count lines only in matching file patterns"),
             ('{cmd} -e="tests/** | build/**"', "Exclude files or directories matching patterns"),
-            ("{cmd} -f", "Show list of all included files and their line counts"),
-            ("{cmd} --json", "Output full statistics as formatted JSON"),
-            ("{cmd} --raw", "Output only the raw total line count number"),
             ("{cmd} -H", "Include hidden and system files/directories"),
             ("{cmd} -ng", "Do not apply .gitignore ignore rules"),
             ("{cmd} -a", "Disable all ignore filters (hidden, system, and .gitignore)"),
@@ -704,19 +780,18 @@ if __name__ == "__main__":
         {"-i", "--include"},
         "include_patterns",
         expects_value="PATTERNS",
-        help=("Include only files matching glob patterns ", S.DIM("(e.g. ", S.WHITE("*.py | *.toml"), ")")),
+        help=("Include only files matching glob patterns ", S.DIM("(e.g., ", S.WHITE("*.py | *.toml"), ")")),
     )
     args.add_opt(
         {"-e", "--exclude"},
         "exclude_patterns",
         expects_value="PATTERNS",
-        help=("Exclude files or directories matching glob patterns ", S.DIM("(e.g. ", S.WHITE("tests/** | *.min.js"), ")")),
+        help=("Exclude files or directories matching glob patterns ", S.DIM("(e.g., ", S.WHITE("tests/** | *.min.js"), ")")),
     )
     args.add_opt({"-ng", "--no-gitignore"}, help="Do not ignore files/directories specified in .gitignore")
     args.add_opt({"-H", "--hidden"}, "include_hidden", help="Do not ignore hidden and system files/directories")
     args.add_opt({"-a", "--all"}, "include_all", help="Disable all ignore filters (hidden, system, and .gitignore)")
     args.add_opt({"-nr", "--no-recursive"}, help="Do not scan subdirectories recursively")
-    args.add_opt({"-f", "--files"}, "show_files", help="Show all matched files and their line counts")
     args.add_opt({"-j", "--json"}, "as_json", help="Output all gathered statistics as formatted JSON")
     args.add_opt({"-r", "--raw"}, "raw_output", help="Output only the bare total line count number")
 
@@ -728,4 +803,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         S(Term.CLEAR_LINE, S.RESET, S.BR.RED("✗ Canceled by user.")).print(end="\n\n")
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)

@@ -10,7 +10,6 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -440,14 +439,14 @@ def main() -> None:
         target_path_str = xx.console.input("\n[b](Path to file/directory to delete > )", validator=path_validator)
 
     if not (target_path := Path(target_path_str)).exists():
-        xx.console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n")
+        xx.console.fail(f"Path [br:cyan]({target_path}) does not exist!", start="\n", end="\n\n", exit_code=1)
 
     if not ARGS.confirmed.exists and not xx.console.confirm(
         f"\n[b](Are you sure you want to delete [br:cyan|bg:black]({target_path.name})?)", default_is_yes=False
     ):
-        xx.console.exit("Deletion aborted.", start="\n", end="\n\n", exit_code=0)
+        xx.console.exit("Deletion aborted.", start="\n", end="\n\n")
 
-    sys.exit(0 if force_delete(target_path) else 1)
+    raise SystemExit(0 if force_delete(target_path) else 1)
 
 
 if __name__ == "__main__":
@@ -476,4 +475,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         FormatCodes.print("[b|red](✗ Canceled by user.)\n")
     except Exception as exc:
-        xx.console.fail(exc, start="\n", end="\n\n")
+        xx.console.fail(exc, start="\n", end="\n\n", exit_code=1)
