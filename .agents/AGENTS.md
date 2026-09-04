@@ -9,7 +9,7 @@ All Python code across this repository must be meticulously and strictly type-hi
 
 ## 2. Validation & Testing
 
-After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved.
+After making any changes, you must validate them by running the full suite of formatters, linters, type checkers, and tests. Fix all problems until they are completely resolved (zero errors, zero warnings, and zero lint issues).
 *   **Format & Lint:** Run `ruff format .` and `ruff check . --fix`.
 *   **Type Check:** Run `pyright`.
 *   **Tests:** If tests are present in the project or directory being modified, run `pytest`.
@@ -55,14 +55,15 @@ If you run into anything you are not sure about (ambiguous requirements, complex
 
 ## 6. Documentation & Markdown Formatting
 
-*   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
+*   **Mandatory Documentation:** Everything in the repository's source code (including private variables, constants, functions, classes, and helper constructs) requires at least a one-line docstring quickly describing what it does or what it is for. The only exceptions are internal dunderscore methods where a docstring is truly redundant.
 *   **Docstrings & Comments:** Follow the `docs` skill for all docstring structure, styling, `<br>` line wraps, horizontal rules, and comment/separator conventions.
+*   **Markdown Linting:** All Markdown files (`.md`) must strictly adhere to the formatting and linting rules defined in `.markdownlint.json`.
 
 ## 7. Rule & Skill Authoring (Single Source of Truth)
 
 To keep agent guidelines clean, maintainable, and free of contradictions, adhere strictly to the Single Source of Truth (SSOT) principle:
 *   **Define Once:** Every rule, standard, or guideline must be defined in exactly ONE canonical location:
-    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, performance and Python idioms, code structure, naming conventions).
+    *   **`AGENTS.md`:** Repository-wide core policies (strict typing and ignore rules, mandatory documentation, performance and Python idioms, code structure, naming conventions).
     *   **Skills (`.agents/skills/<skill>/SKILL.md`):** Specialized domain-specific workflows and detailed formatting specifications (`docs` for docstrings, comments, and section separators; `check` for linting, formatting, and validation commands; `apps` for desktop GUI architecture and shared conventions).
 *   **Reference, Never Duplicate:** When a rule defined in one location also applies in another, do NOT duplicate or re-explain the rule. Instead, reference and point directly to its canonical definition in the respective skill or `AGENTS.md`.
 *   **Synchronize References:** If a canonical rule is updated or moved, verify that all external references pointing to it are kept accurate.

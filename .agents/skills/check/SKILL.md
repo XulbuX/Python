@@ -9,9 +9,9 @@ Use this skill to format, lint, type check, and validate code in this repository
 
 ---
 
-## 1. Mandatory Validation After Every Edit
+## 1. Validation Policy
 
-After making any changes across the repository (in `apps`, `commands`, `projects`, or scripts), you MUST validate your changes by running the full suite of formatters, linters, and type checkers. Fix all problems until they are completely resolved. Never assume code is correct without running the checks.
+Follow `AGENTS.md` Section 2 for the mandatory validation and testing policy after any edits across the repository. Never assume code is correct without running the checks.
 
 ---
 
